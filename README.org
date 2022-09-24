@@ -1,0 +1,5 @@
+* Noon
+
+A library to compose MIDI music.
+
+[[file:src/noon/doc/intro.clj][tutorial]]
