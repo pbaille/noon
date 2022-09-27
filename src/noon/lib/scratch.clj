@@ -2,7 +2,9 @@
   (:use noon.score)
   (:require [noon.lib.harmony :as h]
             [noon.lib.melody :as m]
-            [noon.lib.rythmn :as r]))
+            [noon.lib.rythmn :as r]
+            [noon.utils.misc :as u]
+            [noon.midi :as midi]))
 
 (comment
 
@@ -34,8 +36,8 @@
             [(patch :woodblock) C0 (dupt 4)]
             [(patch :tinkle-bell) C0 (r/gen-tup 12 5 {:durations [1 2 3]})]
             ;; comping
-            [(patch :marimba) o1- (r/euclidean-tup 5 12) ($ (par s0 s2)) ($ (one-of s0 s1 s1-))]
-            [(patch :acoustic-bass) t2- vel10 (r/rand-euclidean-tup 5 12 true)]
+            [(patch :marimba) o1- (r/gen-tup 12 5 :euclidean) ($ (par s0 s2)) ($ (one-of s0 s1 s1-))]
+            [(patch :acoustic-bass) t2- vel10 (r/gen-tup 12 5 :euclidean :shifted)]
             ;; ornementation
             [(patch :music-box) o1
              (one-of s0 s1 s1-)
@@ -207,7 +209,7 @@
               ;; parts
               vel4
               (chans [(patch :acoustic-bass) o2-
-                      tonic-round]
+                      t-round]
 
                      [(patch :electric-piano-1) vel3 o1-
                       ($ (par> d0 d3 d3 d3 d3))]
@@ -229,7 +231,9 @@
 
              "There is a problem between tonic interval and grid zip"
 
-             (play ESP_fullgrid (dupt 2) (h/align-contexts :s)
+             (play ESP_fullgrid
+                   (dupt 2)
+                   (h/align-contexts :s)
 
                    (h/grid-zipped
 
@@ -239,7 +243,7 @@
                       (fill (/ 1 (* 2 64)) (voices> d0 d3 d3 d3 d3))]
 
                      [(patch :acoustic-bass) vel2 o2-
-                      (fill (/ 1 (* 2 64)) tonic-round)] ;; HERE this do not result in playing tonics
+                      (fill (/ 1 (* 2 64)) t-round)] ;; HERE this do not result in playing tonics
 
                      [(patch :flute) vel6
                       (fill> (/ 1 (* 6 64))
@@ -295,7 +299,7 @@
                    [lydian sus47
                     (tup* (map root [:C :Eb :F# :A]))
                     (dupt 2)
-                    (align-contexts :s)]
+                    (h/align-contexts :s)]
 
                    (h/grid-zipped
 
@@ -323,7 +327,7 @@
                    #_(sub {:channel 5} ($ tonic-round))
 
                    (adjust 32)
-                   (catn 4 (interval 0 -1)))
+                   (catn 4 (s-shift -1)))
 
 
 
@@ -371,20 +375,20 @@
 
          (do :tries
 
-             (play d:2
+             (play dur:2
                    lydian+2
                    (cat C0 Eb0 F#0 A0)
-                   (rep (si 1) 4)
-                   ($ (tup si0 (si 1 1) si1 si2 (si 2 -1))))
+                   (rep 4 (si 1))
+                   ($ (tup s0 (si 1 1) s1 s2 (si 2 -1))))
 
              (play [lydian+2 sus47]
                    [dur:2 (cat C0 Eb0 F#0 A0)]
                    ($ (chans
                        (si 0)
-                       (! (tup* (shuffle [si0 si1 si2 si3])))))
-                   (rep (sub {:channel 0} (si -1)
-                             {:channel 1} (si 1))
-                        8)))
+                       (shuftup s0 s1 s2 s3)))
+                   (rep 8
+                        (parts (chan 0) s1-
+                               (chan 1) s1))))
 
          (do :grid-zipped
 
@@ -393,7 +397,7 @@
                    ;; a simplistic grid
                    harmonic-minor
                    (tup* (map root [:C :Eb :Gb :A]))
-                   (align-contexts :s)
+                   (h/align-contexts :s)
                    ;; a melodic pattern
                    (h/grid-zipped
                     (tupn 4 (tup s0 s1 s2))

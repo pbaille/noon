@@ -6,22 +6,22 @@
 
 (do :impl
 
-    (def additive-merge (partial merge-with +)))
+    (defn safe-add [a b] (+ (or a 0) (or b 0)))
+    (def additive-merge (partial merge-with safe-add))
+    (defn zero-or-nil? [x] (or (nil? x) (zero? x))))
 
 (do :bidirectional-seq
 
     (defn bds
       "bidirectional lazy sequence"
       [seq mod]
-      {:fw (flatten
-            (map #(map (partial + (* mod %)) seq)
-                 (range)))
+      {:fw (mapcat #(map (partial + (* mod %)) seq)
+                   (range))
        :bw (cons
             (first seq)
-            (flatten
-             (map
-              #(reverse (map (partial + (* (- mod) %)) seq))
-              (next (range)))))})
+            (mapcat
+             #(reverse (map (partial + (* (- mod) %)) seq))
+             (next (range))))})
 
     (defn bds-get
       "access value at index idx, neg idxs go backward"
@@ -68,15 +68,21 @@
     (defn bds-go
       "shift the bds to the given val, ignoring reminder"
       [bds val]
-      (bds-shift bds (first (bds-idx bds val)))))
+      (bds-shift bds (first (bds-idx bds val))))
+
+    #_(take 10 (:bw (bds [0 2 4 5] 6)))
+    )
 
 (do :ctx
+
+    (def POSITION_ZERO
+      {:t 0 :s 0 :d 0 :c 0})
 
     (def DEFAULT_HARMONIC_CONTEXT
       {:scale [0 2 4 5 7 9 11]
        :struct [0 2 4]
        :origin {:d 35 :c 60}
-       :position {:t 0 :s 0 :d 0 :c 0}})
+       :position POSITION_ZERO})
 
     (defn hc
       "harmonic context constructor"
@@ -94,70 +100,158 @@
 
     (do :position
 
-        (defclosure position
-          "an update that reposition the harmonic context
-           o: octave idx
-           s: structural idx
-           d: diatonic index
-           c: chromatic index"
-          ([] (position 0 0 0 0))
-          ([t] (position t 0 0 0))
-          ([t s] (position t s 0 0))
-          ([t s d] (position t s d 0))
-          ([t s d c]
-           (fn [ctx]
-             (assoc ctx :position
-                    {:t t :s s :d d :c c}))))
+        (defn position [& [t s d c]]
+          (let [p (into {} (filter val {:t t :s s :d d :c c}))]
+            (fn [ctx] (assoc ctx :position p))))
 
-        (do :absolute
-
-            (def structural-position
-              (partial position 0))
-            (def diatonic-position
-              (partial position 0 0))
-            (def chromatic-position
-              (partial position 0 0 0))
-
-            (def tp position)
-            (def sp structural-position)
-            (def dp diatonic-position)
-            (def cp chromatic-position))
+        (def s-position (partial position nil))
+        (def d-position (partial position nil nil))
+        (def c-position (partial position nil nil nil))
 
         (defn tonic?
           "Does the given context is positioned exactly on the tonic layer ?"
           [ctx]
           (let [{:keys [s d c]} (:position ctx)]
-            (if (and (zero? s) (zero? d) (zero? c))
+            (if (and (not s) (not d) (not c))
               ctx)))
 
         (defn structural?
           "Does the given context is positioned exactly on the structural layer (or above) ?"
           [ctx]
           (let [{:keys [d c]} (:position ctx)]
-            (if (and (zero? d) (zero? c))
+            (if (and (not d) (not c))
               ctx)))
 
         (defn diatonic?
           "Does the given context is positioned exactly on the diatonic layer (or above) ?"
           [ctx]
-          (if (zero? (:c (:position ctx)))
+          (if (not (:c (:position ctx)))
             ctx)))
+
+    (do :position-converters
+
+        (do :upward
+
+            (defn c->d
+              "feed as much as possible of the c value into the d value"
+              [{{:keys [s d c]} :position :as ctx}]
+              (if-not c
+                ctx
+                (let [d (or d 0)
+                      {:keys [struct scale]} (hc-seqs ctx)
+                      ds (if s (bds-shift scale (bds-get struct s)) scale)
+                      dv (bds-get ds d)
+                      [d c] (bds-idx ds (+ dv c))]
+                  (update ctx :position merge {:d d :c c}))))
+
+            (defn d->s
+              "feed as much as possible of the d value into the s value"
+              [{{:keys [s d]} :position :as ctx}]
+              (if-not d
+                ctx
+                (let [s (or s 0)
+                      {:keys [struct]} (hc-seqs ctx)
+                      sv (bds-get struct s)
+                      [s d] (bds-idx struct (+ sv d))]
+                  (update ctx :position merge {:s s :d d}))))
+
+            (defn s->t
+              "feed as much as possible of the s value into the o value"
+              [{{:keys [t s]} :position :as ctx}]
+              (if-not s
+                ctx
+                (let [struct-size (count (:struct ctx))
+                      tonic-delta (quot s struct-size)]
+                  (update ctx :position merge {:t (+ t tonic-delta) :s (rem s struct-size)}))))
+
+            (defn d->t
+              "feed as much as possible of the d value into the upward layers"
+              [x]
+              (-> x d->s s->t))
+
+            (defn c->s
+              "feed as much as possible of the c value into the d value and s value"
+              [x]
+              (-> x c->d d->s))
+
+            (defn c->t
+              "feed as much as possible of the c value to the upward layers"
+              [x]
+              (-> x c->s s->t)))
+
+        (do :downward
+
+            (defn t->s
+              [{:as ctx {:keys [t]} :position}]
+              (if-not t
+                ctx
+                (let [struct-size (count (:struct ctx))]
+                  (update ctx :position
+                          (fn [{:as p :keys [t]}]
+                            (-> (dissoc p :t)
+                                (update :s safe-add (* struct-size t))))))))
+
+            (defn s->d
+              [{:as ctx {:keys [s]} :position}]
+              (if-not s
+                ctx
+                (let [{:keys [struct]} (hc-seqs ctx)]
+                  (update ctx :position
+                          (fn [p]
+                            (-> (dissoc p :s)
+                                (update :d safe-add (bds-get struct s))))))))
+
+            (defn d->c
+              [{:as ctx {:keys [d]} :position}]
+              (if-not d
+                ctx
+                (let [{:keys [scale]} (hc-seqs ctx)]
+                  (update ctx :position
+                          (fn [p]
+                            (-> (dissoc p :d)
+                                (update :c safe-add (bds-get scale d))))))))
+
+            (defn t->d [ctx]
+              (-> ctx t->s s->d))
+
+            (defn s->c [ctx]
+              (-> ctx s->d d->c))
+
+            (defn t->c [ctx]
+              (-> ctx t->s s->c))
+
+            (defn layer-idx [layer ctx]
+              (let [[converter k]
+                    (case layer
+                      (:tonic :t) [identity :t]
+                      (:structural :s) [t->s :s]
+                      (:diatonic :d) [t->d :d]
+                      (:chromatic :c) [t->c :c])]
+                (get-in (converter ctx)
+                        [:position k])))
+
+            (comment :to-move
+
+                     (layer-idx :s (upd (hc) (position 3 2 1 0)))
+                     (layer-idx :d (upd (hc) (position 3 2 1 0)))
+                     (layer-idx :d (upd (hc) (position 0 0 1 0)))
+
+
+                     (t->s (upd (hc) (position 3 2 1 0)))
+                     (s->d (upd (hc) (position 0 2 1 0))))))
 
     (do :views
 
         (def hc->pitch
           "given a context, compute the corresponding pitch"
           (memoize
-           (fn [{:as ctx
-                {:keys [t s d c]} :position}]
-             (let [struct-size (count (:struct ctx))
-                   {:keys [scale struct]} (hc-seqs ctx)
-                   s (+ s (* t struct-size))
-                   d (+ (bds-get struct s) d)
-                   c (+ (bds-get scale d) c)]
+           (fn [ctx]
+             (let [dctx (t->d ctx)
+                   cctx (d->c dctx)]
                (additive-merge
                 (:origin ctx)
-                {:d d :c c})))))
+                {:d (get-in dctx [:position :d])
+                 :c (get-in cctx [:position :c])})))))
 
         (def hc->chromatic-value (comp :c hc->pitch))
         (def hc->diatonic-value (comp :d hc->pitch))
@@ -196,256 +290,108 @@
                 s** (rem s* struct-size)]
             (position t* s** d* c*))))
 
-    (do :position-converters
-
-        (do :upward
-
-            (defn c->d
-              "feed as much as possible of the c value into the d value"
-              [{{:keys [t s d c]} :position :as ctx}]
-              (let [{:keys [struct scale]} (hc-seqs ctx)
-                    sv (bds-get struct s)
-                    ds (bds-shift scale sv)
-                    dv (bds-get ds d)
-                    [d c] (bds-idx ds (+ dv c))]
-                ((position t s d c) ctx)))
-
-            (defn d->s
-              "feed as much as possible of the d value into the s value"
-              [{{:keys [t s d c]} :position :as ctx}]
-              (let [{:keys [struct]} (hc-seqs ctx)
-                    sv (bds-get struct s)
-                    [s d] (bds-idx struct (+ sv d))]
-                ((position t s d c) ctx)))
-
-            (defn s->t
-              "feed as much as possible of the s value into the o value"
-              [{{:keys [t s d c]} :position :as ctx}]
-              (let [struct-size (count (:struct ctx))
-                    tonic-delta (quot s struct-size)]
-                ((position (+ t tonic-delta)
-                           (rem s struct-size)
-                           d c)
-                 ctx)))
-
-            (defn d->t
-              "feed as much as possible of the d value into the upward layers"
-              [x]
-              (-> x d->s s->t))
-
-            (defn c->s
-              "feed as much as possible of the c value into the d value and s value"
-              [x]
-              (-> x c->d d->s))
-
-            (defn c->t
-              "feed as much as possible of the c value to the upward layers"
-              [x]
-              (-> x c->s s->t)))
-
-        (do :downward
-
-            (defn t->s
-              [{{:keys [t s d c]} :position :as ctx}]
-              (let [struct-size (count (:struct ctx))]
-                ((position 0 (+ s (* struct-size t)) d c)
-                 ctx)))
-
-            (defn s->d
-              [{{:keys [t s d c]} :position :as ctx}]
-              (let [{:keys [struct]} (hc-seqs ctx)]
-                ((position t 0 (+ d (bds-get struct s)) c)
-                 ctx)))
-
-            (defn d->c
-              [{{:keys [t s d c]} :position :as ctx}]
-              (let [{:keys [scale]} (hc-seqs ctx)]
-                ((position t s 0 (+ c (bds-get scale d)))
-                 ctx)))
-
-            (defn t->d [ctx]
-              (-> ctx t->s s->d))
-
-            (defn s->c [ctx]
-              (-> ctx s->d d->c))
-
-            (defn t->c [ctx]
-              (-> ctx t->s s->c))
-
-            (defn layer-idx [layer ctx]
-              (let [[converter k]
-                    (case layer
-                      (:tonic :t) [identity :t]
-                      (:structural :s) [t->s :s]
-                      (:diatonic :d) [t->d :d]
-                      (:chromatic :c) [t->c :c])]
-                (get-in (converter ctx)
-                        [:position k])))
-
-            (comment :to-move
-
-                     (layer-idx :s ((position 3 2 1 0) (hc)))
-                     (layer-idx :d ((position 3 2 1 0) (hc)))
-                     (layer-idx :d ((position 0 0 1 0) (hc)))
-
-
-                     (t->s ((position 3 2 1 0) (hc)))
-                     (s->d ((position 0 2 1 0) (hc)))))
-
-        (defn tonic-trim
-          "push as much as possible onto the tonic layer and trim the remaining"
-          [ctx]
-          (update (c->t ctx) :position assoc :s 0 :d 0 :c 0))
-
-        (defn structural-trim
-          "push as much as possible onto the structural layer and trim the remaining"
-          [ctx]
-          (update (c->s ctx) :position assoc :d 0 :c 0))
-
-        (defn diatonic-trim
-          "push as much as possible onto the diatonic layer and trim the remaining"
-          [ctx]
-          (update (c->d ctx) :position assoc :c 0))
-
-        (defn trimmer
-          [layer]
-          (case layer
-            (:tonic :t) tonic-trim
-            (:structural :s) structural-trim
-            (:diatonic :d) diatonic-trim
-            (:chromatic :c) identity)))
-
     (do :intervals
 
-        (defclosure interval
-          "an update to shift the position of an harmonic context"
-          ([t] (interval t 0 0 0))
-          ([t s] (interval t s 0 0))
-          ([t s d] (interval t s d 0))
-          ([t s d c]
-           (fn [ctx]
-             (update ctx :position
-                     additive-merge
-                     {:t t :s s :d d :c c}))))
+        (do :intervals
 
-        (defclosure tonic-interval [t s d c]
-          (let [i (interval t s d c)]
-            (fn [ctx] (i (tonic-trim ctx)))))
+            (defn t-trim [{:as ctx p :position}]
+              (update (c->t ctx) :position dissoc :s :d :c))
 
-        (defclosure structural-interval [s d c]
-          (let [i (interval 0 s d c)]
-            (fn [ctx] (i (structural-trim ctx)))))
-
-        (defclosure diatonic-interval [d c]
-          (let [i (interval 0 0 d c)]
-            (fn [ctx] (i (diatonic-trim ctx)))))
-
-        (defclosure chromatic-interval [c]
-          (interval 0 0 0 c))
-
-
-        (defclosure octave-interval [v]
-          (interval v 0 0 0))
-
-        (do :shifts
-
-            (def structural-shift (partial interval 0))
-
-            (def diatonic-shift (partial interval 0 0)))
-
-        (do :tonic-interval-alternative
-
-            "the issue with tonic interval occurs when struct do not contains the tonic."
-            "In this case the first struct note is considered to be the tonic which do not make sense"
-            "But we can shift the diatonic layer to put the ctx on the real tonic."
-
-            (defn tonic-trim'
-              "push as much as possible onto the tonic layer and trim the remaining"
-              [ctx]
-              (update (c->t ctx)
-                      :position
-                      assoc
-                      :s 0
-                      :d (- (get-in ctx [:struct 0]))
-                      :c 0))
-
-            (defclosure tonic-interval' [offset]
+            (defn t-step [n]
               (fn [ctx]
-                (update-in (tonic-trim' ctx)
-                           [:position :t] + offset)))
+                (-> (t-trim ctx)
+                    (update-in [:position :t] safe-add n))))
 
-            (def ti' tonic-interval'))
+            (defn s-trim [{:as ctx p :position}]
+              (update (c->s ctx) :position dissoc :d :c))
 
-        (do :shorthands
+            (defn s-step [n]
+              (fn [ctx]
+                (-> (s-trim ctx)
+                    (update-in [:position :s] safe-add n))))
 
-            (def ci chromatic-interval)
+            (defn d-trim [{:as ctx p :position}]
+              (update (c->d ctx) :position dissoc :c))
 
-            (def oi octave-interval)
+            (defn d-step [n]
+              (fn [ctx]
+                (-> (d-trim ctx)
+                    (update-in [:position :d] safe-add n))))
 
-            (defn di [d & [c]]
-              (diatonic-interval d (or c 0)))
+            (defn c-step [n]
+              (fn [ctx] (update-in ctx [:position :c] safe-add n)))
 
-            (defn si [s & [d c]]
-              (structural-interval s (or d 0) (or c 0)))
+            (defn layer-shift [l]
+              (fn [n]
+                (fn [ctx]
+                  (if-let [v (get-in ctx [:position l])]
+                    (update-in ctx [:position l] + n)
+                    ctx))))
 
-            (defn ti [t & [s d c]]
-              (tonic-interval t (or s 0) (or d 0) (or c 0)))
+            (def t-shift (layer-shift :t))
+            (def s-shift (layer-shift :s))
+            (def d-shift (layer-shift :d))
+            (def c-shift (layer-shift :c))
 
-            (def s-shift structural-shift)
-            (def d-shift diatonic-shift))
+            #_(upd (hc)
+                 (t-step 2)
+                 (d-step 2)
+                 (s-step 1))
+            )
 
         (do :roundings
 
-            (def tonic-round
+            (def t-round
               (fn [ctx]
                 (or (tonic? ctx)
-                    (closest ctx [((ti -1) ctx) (tonic-trim ctx) ((ti 1) ctx)]))))
-            (def tonic-ceil
+                    (closest ctx [((t-step -1) ctx) (t-trim ctx) ((t-step 1) ctx)]))))
+            (def t-ceil
               (fn [ctx]
                 (or (tonic? ctx)
-                    (closest ctx [(tonic-trim ctx) ((ti 1) ctx)]))))
-            (def tonic-floor
+                    (closest ctx [(t-trim ctx) ((t-step 1) ctx)]))))
+            (def t-floor
               (fn [ctx]
                 (or (tonic? ctx)
-                    (closest ctx [(tonic-trim ctx) ((ti -1) ctx)]))))
+                    (closest ctx [(t-trim ctx) ((t-step -1) ctx)]))))
 
-            (def structural-round
+            (def s-round
               (fn [ctx]
                 (or (structural? ctx)
-                    (closest ctx [((si -1) ctx) (structural-trim ctx) ((si 1) ctx)]))))
-            (def structural-ceil
+                    (closest ctx [((s-step -1) ctx) (s-trim ctx) ((s-step 1) ctx)]))))
+            (def s-ceil
               (fn [ctx]
                 (or (structural? ctx)
-                    (closest ctx [(structural-trim ctx) ((si 1) ctx)]))))
-            (def structural-floor
+                    (closest ctx [(s-trim ctx) ((s-step 1) ctx)]))))
+            (def s-floor
               (fn [ctx]
                 (or (structural? ctx)
-                    (closest ctx [(structural-trim ctx) ((si -1) ctx)]))))
+                    (closest ctx [(s-trim ctx) ((s-step -1) ctx)]))))
 
-            (def diatonic-round
+            (def d-round
               (fn [ctx]
                 (or (diatonic? ctx)
-                    (closest ctx [((di -1) ctx) (diatonic-trim ctx) ((di 1) ctx)]))))
-            (def diatonic-ceil
+                    (closest ctx [((d-step -1) ctx) (d-trim ctx) ((d-step 1) ctx)]))))
+            (def d-ceil
               (fn [ctx]
                 (or (diatonic? ctx)
-                    (closest ctx [(diatonic-trim ctx) ((di 1) ctx)]))))
-            (def diatonic-floor
+                    (closest ctx [(d-trim ctx) ((d-step 1) ctx)]))))
+            (def d-floor
               (fn [ctx]
                 (or (diatonic? ctx)
-                    (closest ctx [(diatonic-trim ctx) ((di -1) ctx)])))))
+                    (closest ctx [(d-trim ctx) ((d-step -1) ctx)])))))
 
         (defn normalise
           "normalise the context position to its simplest form."
           [ctx]
           (let [cval (hc->chromatic-value ctx)
-                {:as tctx {t :t} :position} (tonic-round (c->t ctx))
+                {:as tctx {t :t} :position} (t-round (c->t ctx))
                 tdelta (- cval (hc->chromatic-value tctx))
-                {:as sctx {s :s} :position} (structural-round (c->s ((ci tdelta) tctx)))
+                {:as sctx {s :s} :position} (s-round (c->s ((c-step tdelta) tctx)))
                 sdelta (- cval (hc->chromatic-value sctx))
-                {:as dctx {d :d} :position} (diatonic-round (c->d ((ci sdelta) sctx)))
-                c (- cval (hc->chromatic-value dctx))]
-            ((position t s d c) ctx)))
+                {:as dctx {d :d} :position} (d-round (c->d ((c-step sdelta) sctx)))
+                c (- cval (hc->chromatic-value dctx))
+                position (into {} (filter val {:t t :s s :d d :c c}))]
+            (assoc ctx :position position)))
 
         (comment :normalise-tries
 
@@ -464,21 +410,26 @@
 
         (do :vars
 
+            (def t0 t-trim)
+            (def s0 s-trim)
+            (def d0 d-trim)
+            (def c0 (c-step 0))
+
             (doseq [i (range 1 37)]
-              (eval (list 'def (symbol (str "ci" i)) `(ci ~i)))
-              (eval (list 'def (symbol (str "ci" i "-")) `(ci ~(- i)))))
+              (eval (list 'def (symbol (str "c" i)) `(c-step ~i)))
+              (eval (list 'def (symbol (str "c" i "-")) `(c-step ~(- i)))))
             (doseq [i (range 1 22)]
-              (eval (list 'def (symbol (str "di" i)) `(di ~i)))
-              (eval (list 'def (symbol (str "di" i "-")) `(di ~(- i)))))
+              (eval (list 'def (symbol (str "d" i)) `(d-step ~i)))
+              (eval (list 'def (symbol (str "d" i "-")) `(d-step ~(- i)))))
             (doseq [i (range 1 13)]
-              (eval (list 'def (symbol (str "si" i)) `(si ~i)))
-              (eval (list 'def (symbol (str "si" i "-")) `(si ~(- i)))))
+              (eval (list 'def (symbol (str "s" i)) `(s-step ~i)))
+              (eval (list 'def (symbol (str "s" i "-")) `(s-step ~(- i)))))
             (doseq [i (range 1 13)]
-              (eval (list 'def (symbol (str "ti" i)) `(ti ~i)))
-              (eval (list 'def (symbol (str "ti" i "-")) `(ti ~(- i)))))
+              (eval (list 'def (symbol (str "t" i)) `(t-step ~i)))
+              (eval (list 'def (symbol (str "t" i "-")) `(t-step ~(- i)))))
             (doseq [i (range 1 9)]
-              (eval (list 'def (symbol (str "oi" i)) `(oi ~i)))
-              (eval (list 'def (symbol (str "oi" i "-")) `(oi ~(- i))))))
+              (eval (list 'def (symbol (str "o" i)) `(t-shift ~i)))
+              (eval (list 'def (symbol (str "o" i "-")) `(t-shift ~(- i))))))
 
         )
 
@@ -505,14 +456,14 @@
             (fn [ctx] (assoc ctx :struct s))
             (u/throw* "cannot make a struct from: " x)))
 
+        (declare upd)
+
         (defclosure repitch
           "reposition the context based on the given pitch"
           [x]
           (if-let [p (constants/get-pitch x)]
-            (fn [ctx] (normalise ((pitch->position ctx p) ctx)))
+            (fn [ctx] (normalise (upd ctx (pitch->position ctx p))))
             (u/throw* "cannot make a pitch from: " x)))
-
-        (declare upd)
         (defclosure rebase
           "Apply the given transformations while preserving pitch"
           [& fs]
@@ -563,7 +514,7 @@
         (upd ctx
              (scale (get (constants/scale-modes sc)
                          (mod n (count sc))))
-             (origin (hc->pitch ((diatonic-position n) ctx))))))
+             (origin (hc->pitch (upd ctx (d-position n)))))))
 
     (def reroot (comp rebase root))
     (def redegree (comp rebase degree))
@@ -572,17 +523,22 @@
       "transpose the current origin by the given update"
       [x]
       (fn [ctx]
-        (assoc ctx :origin (hc->pitch (upd ctx (position 0 0 0 0) x)))))
+        (assoc ctx :origin (hc->pitch (upd ctx POSITION_ZERO x)))))
+
+    (defn position+ [ctx p]
+      (reduce
+       (fn [ctx [k v]] (upd ctx ((layer-shift k) v)))
+       ctx
+       p))
 
     (defclosure hc+
       "merging with another context.
        scale, struct and origin are replaced, position is additioned."
       [ctx1]
-      (fn [{:as ctx2 p2 :position}]
+      (fn [ctx2]
         (normalise
-         (assoc (merge ctx2 ctx1)
-                :position
-                (additive-merge p2 (:position ctx1))))))
+         (position+ (merge ctx2 (dissoc ctx1 :position))
+                    (:position ctx1)))))
 
     (defn align
       "align context b on context a, rounding on the given layer
@@ -590,9 +546,9 @@
       [layer a b]
       (let [ret (upd b (repitch (hc->pitch a)))]
         (case layer
-          (:tonic :t) (tonic-round ret)
-          (:structural :s) (structural-round ret)
-          (:diatonic :d) (diatonic-round ret)
+          (:tonic :t) (t-round ret)
+          (:structural :s) (s-round ret)
+          (:diatonic :d) (d-round ret)
           (:chromtatic :c) ret)))
 
     ;; passing-tones
@@ -600,20 +556,20 @@
     (defn s+
       "melodic superior diatonic passing note"
       [ctx]
-      (let [ctx+ (upd ctx (structural-interval 0 1 0))
+      (let [ctx+ (upd ctx s0 d1)
             dist (chromatic-distance ctx ctx+)]
         (if (< dist 3)
           ctx+
-          (upd ctx (structural-interval 0 1 (- 2 dist))))))
+          (upd ctx s0 d1 (c-step (- 2 dist))))))
 
     (defn s-
       "melodic inferior diatonic passing note"
       [ctx]
-      (let [ctx- (upd ctx (structural-interval 0 -1 0))
+      (let [ctx- (upd ctx s0 d1-)
             dist (chromatic-distance ctx ctx-)]
         (if (< dist 3)
           ctx-
-          (upd ctx (structural-interval 0 -1 (- dist 2))))))
+          (upd ctx s0 d1- (c-step (- dist 2))))))
 
     (def passings
       {:approach {:simple {:+ [s+ nil]
@@ -661,6 +617,9 @@
 
 (comment :tries
 
+         (position+ POSITION_ZERO p2)
+         (upd (hc) (hc+ (upd (hc) t1 d3)))
+
          (upd (hc) (transpose di1))
 
          (hc->chromatic-value (upd (hc) ti2))
@@ -678,10 +637,16 @@
 
          (upd hc0 (degree 3))
 
-         (upd hc0 altdim s-)
-         (upd hc0 lyd+2 s+)
+         (upd hc0 superlocriano7 s-)
+         (upd hc0 lydian+2 s+)
 
          (upd hc0 (scale alt) (root B-1))
 
          (scale melm)
          (hc melm))
+
+(comment :positions
+
+         (upd (hc) t2 s2)
+         (upd (hc) t2 s3 t0)
+         (upd (hc) t2 s2 (d-shift 3)))

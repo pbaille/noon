@@ -203,27 +203,27 @@
 
             (import-wrap-harmony-update-constructors
              ;; positions
-             tp sp dp cp
-             octave-interval structural-position diatonic-position chromatic-position
+             position s-position d-position c-position
 
              ;; intervals
-             ti si di ci oi
-             interval tonic-interval structural-interval diatonic-interval chromatic-interval
+             t-step s-step d-step c-step
+             t-shift s-shift d-shift c-shift
+
              ;; context tweaks
              origin scale struct degree root degree
              repitch rescale restruct reorigin reroot redegree)
 
             (import-wrap-harmony-updates
-             tonic-round tonic-ceil tonic-floor
-             structural-round structural-ceil structural-floor
-             diatonic-round diatonic-ceil diatonic-floor
+             t-round t-ceil t-floor
+             s-round s-ceil s-floor
+             d-round d-ceil d-floor
              s+ s-)
 
             (defclosure transpose
               "transpose the pitch origin of all events by the given update."
               [f]
               (assert (event-update? f) "transpose only takes event-update")
-              (ef_ (let [new-origin (h/hc->pitch (:pitch (f ((tp 0) _))))]
+              (ef_ (let [new-origin (h/hc->pitch (:pitch (f ((position 0) _))))]
                      (assoc-in _ [:pitch :origin] new-origin))))
 
             (defclosure rebase
@@ -257,26 +257,26 @@
                      :tonic 't
                      :octave 'o}
 
-                    (def c0 (ci 0))
-                    (def d0 (di 0))
-                    (def s0 (si 0))
-                    (def t0 (ti 0))
+                    (def c0 (c-step 0))
+                    (def d0 (d-step 0))
+                    (def s0 (s-step 0))
+                    (def t0 (t-step 0))
 
                     (doseq [i (range 1 37)]
-                      (eval (list 'def (symbol (str "c" i)) `(ci ~i)))
-                      (eval (list 'def (symbol (str "c" i "-")) `(ci ~(- i)))))
+                      (eval (list 'def (symbol (str "c" i)) `(c-step ~i)))
+                      (eval (list 'def (symbol (str "c" i "-")) `(c-step ~(- i)))))
                     (doseq [i (range 1 22)]
-                      (eval (list 'def (symbol (str "d" i)) `(di ~i)))
-                      (eval (list 'def (symbol (str "d" i "-")) `(di ~(- i)))))
+                      (eval (list 'def (symbol (str "d" i)) `(d-step ~i)))
+                      (eval (list 'def (symbol (str "d" i "-")) `(d-step ~(- i)))))
                     (doseq [i (range 1 13)]
-                      (eval (list 'def (symbol (str "s" i)) `(si ~i)))
-                      (eval (list 'def (symbol (str "s" i "-")) `(si ~(- i)))))
+                      (eval (list 'def (symbol (str "s" i)) `(s-step ~i)))
+                      (eval (list 'def (symbol (str "s" i "-")) `(s-step ~(- i)))))
                     (doseq [i (range 1 13)]
-                      (eval (list 'def (symbol (str "t" i)) `(ti ~i)))
-                      (eval (list 'def (symbol (str "t" i "-")) `(ti ~(- i)))))
+                      (eval (list 'def (symbol (str "t" i)) `(t-step ~i)))
+                      (eval (list 'def (symbol (str "t" i "-")) `(t-step ~(- i)))))
                     (doseq [i (range 1 13)]
-                      (eval (list 'def (symbol (str "o" i)) `(oi ~i)))
-                      (eval (list 'def (symbol (str "o" i "-")) `(oi ~(- i))))))
+                      (eval (list 'def (symbol (str "o" i)) `(t-shift ~i)))
+                      (eval (list 'def (symbol (str "o" i "-")) `(t-shift ~(- i))))))
 
                 (doseq [[n v] (map vector '[I II III IV V VI VII] (range))]
                   (eval (list 'def n (degree v))))
