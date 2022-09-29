@@ -220,6 +220,13 @@
             (defn t->c [ctx]
               (-> ctx t->s s->c))
 
+            (defn down-to-layer [layer ctx]
+              (case layer
+                (:tonic :t) ctx
+                (:structural :s) (t->s ctx)
+                (:diatonic :d) (t->d ctx)
+                (:chromatic :c) (t->c ctx)))
+
             (defn layer-idx [layer ctx]
               (let [[converter k]
                     (case layer

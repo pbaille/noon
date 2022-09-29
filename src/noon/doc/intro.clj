@@ -541,7 +541,7 @@
      "In the first expression (the shift) we have transposed the score (a E0 note) by 1 tonic layer index."
      "In the second one (the step) we have stepped to the next tonic layer index."
 
-     "In practice, apart for octaves, shifts are not used so often, thats the reason why they don't have defined vars as steps has."
+     "In practice, apart for octaves, shifts are not used so often, thats the reason why they don't have defined vars as steps have."
      "They are mainly used in more complex harmonic operations (voice leading etc...)."]
 
     [:tonality
@@ -673,7 +673,7 @@
      ]
 
     [:permutations
-     "Another way to transform a melody while preserving a bit of its idenity is to permute it."
+     "Another way to transform a melody while preserving a bit of its identity is to permute it."
      "But for long melody, a random permutation can make it so distant to the original that it miss the point."
      "For this reason, permutations are ordered and requested by complexity (similarity degree with the original)"
 
@@ -713,7 +713,7 @@
 
        "We can leverage those grades via our 'm/permutation function like this:"
        (m/permutation 0 {:grade 1}) "get the first grade 1 permutation."
-       (m/permutation -1 {:grade [1 3]}) "get the last permutation for a randomly picked a grade between 1 and 3."]
+       (m/permutation -1 {:grade [1 3]}) "get the last permutation for a randomly picked grade between 1 and 3."]
 
       [:layers
        "As we've seen, our melodies are built on different harmonic layers (chromatic, diatonic, structural and tonic),
@@ -788,7 +788,7 @@
         <options>
         a map that may contain some of those keys:
 
-        :layer : (all commands, default to :chromatic)
+        :layer : (all commands, default to score's lowest harmonic layer)
             The harmonic layer on which the contour transformation is performed
 
         :pick | :nth : (:rotation and :similar commands, default to :random)
@@ -806,34 +806,45 @@
       (play (tup s0 s1 s2 s3 s1 s2))
       {:contour [0 1 2 3 1 2]}
 
-      "We are using the structural layer here, so our contour transformation will take :s as first argument."
       "Here the way to obtain the mirror contour of the previous arpegio."
       (play (tup s0 s1 s2 s3 s1 s2)
-            (m/contour :mirror {:layer :s}))
+            (m/contour :mirror))
       {:contour [3 2 1 0 3 2]}
 
       "Next let's try contour rotations:"
       "Here we are picking the first rotation (with the option :nth)"
       (play (tup s0 s1 s2 s3 s1 s2)
-            (m/contour :rotation {:nth 1 :layer :s}))
+            (m/contour :rotation {:nth 1}))
       {:contour [1 2 3 0 2 3]}
       "Every contour index has been shifted one step up, the highest one returning all the way down."
 
       "Lets get the last rotation using a 'member-pick argument."
       (play (tup s0 s1 s2 s3 s1 s2)
-            (m/contour :rotation {:pick -1 :layer :s}))
+            (m/contour :rotation {:pick -1}))
       {:contour [3 0 1 2 0 1]}
 
       "If no :pick or :nth option is given, select a random one."
       (play (tup s0 s1 s2 s3 s1 s2)
-            (m/contour :rotation {:layer :s}))
+            (m/contour :rotation))
 
       "One of the nice things with contours is that it can serve to generate many melodies."
       "Using the :similar commands we can do this."
       "Here we are randomly picking a similar score that is one structural step wider (:delta 1) that the original one."
       (play (tup s0 s1 s2 s3 s1 s2)
-            (m/contour :similar {:delta 1 :layer :s}))
-      "Here one of the similar scores between those shrinked by 2 diatonic step and those expanded by 3 diatonic steps (:extent [-2 3] :layer :d)."
+            (m/contour :similar {:delta 1}))
+
+      "In all the previous exemples, the contour was computed over the structural layer."
+      "When the layer is not specified, the score's lowest harmonic layer is used, here the structural layer."
+
+      "As an illustration let's look at the effect of specifying the layer within the :mirror contour operation:"
+      (play (tup s0 s1 s2 s3 s1 s2)
+            (m/contour :mirror)) "Original example"
+      (play (tup s0 s1 s2 s3 s1 s2)
+            (m/contour :mirror {:layer :d})) "Mirrored diatonically, resulting in a F major arpegio"
+      (play (tup s0 s1 s2 s3 s1 s2)
+            (m/contour :mirror {:layer :c})) "Mirror chromatically, resulting in a F minor arpegio (it can help with 'negative harmony')"
+
+      "One of the similar scores between those shrinked by 2 diatonic step and those expanded by 3 diatonic steps (:extent [-2 3] :layer :d)."
       (play (tup s0 s1 s2 s3 s1 s2)
             (m/contour :similar {:extent [-2 3] :layer :d}))
 
