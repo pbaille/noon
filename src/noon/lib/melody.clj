@@ -137,13 +137,22 @@
         (:diatonic :d) :d
         (:chromatic :c) :c))
 
+    (defn score-lowest-layer
+      "return the lowest harmonic layer of a score.
+       (:c < :d < :s < :t)"
+      [s]
+      (let [layers (into #{} (mapcat (comp keys :position :pitch) s))]
+        (first (keep layers [:c :d :s :t]))))
+
     (defn contour-change [layer f]
 
       (sfn s
            (assert (apply = (map (fn [e] (dissoc (:pitch e) :position)) s))
                    "for now only mono harmony scores are supported here")
 
-           (let [splits (sort-by :position (layer-split layer s))
+           (let [layer (or layer (score-lowest-layer s))
+                 layer-converter (partial h/down-to-layer layer)
+                 splits (sort-by :position (layer-split layer s))
                  idxs (map :layer-idx splits)
                  contour (mapv (sub (apply min idxs)) idxs)
                  new-contour (f contour)
@@ -155,7 +164,8 @@
               (map-indexed (fn [i {:keys [position score layer-idx]}]
                              (->> score
                                   (map (fn [e]
-                                         (-> (update e :position - position)
+                                         (-> (update e :pitch layer-converter)
+                                             (update :position - position)
                                              (update-in [:pitch :position position-key] + (deltas i)))))
                                   (into #{})))
                            splits)))))
@@ -171,7 +181,7 @@
        <options>
        a map that may contain some of those keys:
 
-       :layer : (all commands, default to :chromatic)
+       :layer : (all commands, default to lowest common layer)
            The harmonic layer on which the contour transformation is performed
 
        :pick|:nth : (:rotation and :similar commands, default to :random)
@@ -185,8 +195,7 @@
       ([cmd]
        (contour cmd {}))
       ([cmd
-        {:as opts :keys [pick nth layer extent delta]
-         :or {layer :chromatic}}]
+        {:as opts :keys [pick nth layer extent delta]}]
        (let [pick (or pick nth :random)]
          (contour-change
           layer
