@@ -208,6 +208,7 @@
              ;; intervals
              t-step s-step d-step c-step
              t-shift s-shift d-shift c-shift
+             layer-step layer-shift
 
              ;; context tweaks
              origin scale struct degree root degree

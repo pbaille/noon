@@ -328,6 +328,13 @@
             (defn c-step [n]
               (fn [ctx] (update-in ctx [:position :c] safe-add n)))
 
+            (defn layer-step [layer n]
+              (case layer
+                (:tonic :t) (t-step n)
+                (:structural :s) (s-step n)
+                (:diatonic :d) (d-step n)
+                (:chromatic :c) (c-step n)))
+
             (defn layer-shift [l]
               (fn [n]
                 (fn [ctx]
