@@ -58,20 +58,20 @@
     (defn sums
 
       ([total size steps]
-       (sums total size steps (apply min steps) (apply max steps)))
+       (sums total size (sort steps) (apply min steps) (apply max steps)))
       ([total size steps floor ceil]
        #_(println "sums3" total size steps floor ceil)
        (if (>= (* size ceil) total (* size floor))
-         (cond
-           (= 1 size) (if ((set steps) total)
-                        (list (list total)))
-           :else (mapcat (fn [step]
-                           (map (partial cons step)
-                                (sums (- total step) (dec size)
-                                      (filter (fn [s] (>= s step)) steps)
-                                      step
-                                      ceil)))
-                         steps)))))
+         (if (= 1 size)
+           (if (contains? (set steps) total)
+             (list (list total)))
+           (mapcat (fn [step]
+                     (map (partial cons step)
+                          (sums (- total step) (dec size)
+                                (drop-while #(< % step) steps)
+                                step
+                                ceil)))
+                   steps)))))
 
     (defn lazy-primes
       ([] (lazy-primes 2 []))
