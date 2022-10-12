@@ -254,6 +254,9 @@
        :chorium "midi/choriumreva.sf2"
        :squid "midi/squid.sf2"})
 
+    (defn reset-filestream []
+      (filepath->buffered-input-stream "midi/reset.mid"))
+
     (defn init-sequencer2 [sf2-path]
       (let [bank (MidiSystem/getSoundbank (filepath->buffered-input-stream sf2-path))
             sq (MidiSystem/getSequencer false)
@@ -274,10 +277,11 @@
          (SOUNDFONTS ([:chorium :yami :squid] 0)))))
 
     (defn stop2 [] (.stop play-sequencer2))
-    (defn play2 [] (stop2) (.start play-sequencer2))
+    (defn reset2 [] (stop2) (.setSequence play-sequencer2 (reset-filestream)) (.start play-sequencer2) (Thread/sleep 100))
+    (defn play2 [] (.start play-sequencer2))
 
     (defn play-file2 [filename]
-      (stop2)
+      (reset2)
       (let [stream (filepath->buffered-input-stream filename)]
         (.setSequence play-sequencer2 stream)
         (play2))))
