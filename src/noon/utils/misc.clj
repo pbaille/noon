@@ -184,7 +184,9 @@
 
 (do :colls
 
-    (defn snoc [l x]
+    (defn snoc
+      "put 'x at the end of 'l"
+      [l x]
       (concat l (list x)))
 
     (defn $ [x f]
