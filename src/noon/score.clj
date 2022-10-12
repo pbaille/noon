@@ -15,7 +15,7 @@
 
     (defn pp [& xs]
       (mapv clojure.pprint/pprint xs)
-      nil)
+      (last xs))
 
     (defmacro dbg [& xs]
       `(do (println '------)
@@ -276,8 +276,8 @@
                       (eval (list 'def (symbol (str "t" i)) `(t-step ~i)))
                       (eval (list 'def (symbol (str "t" i "-")) `(t-step ~(- i)))))
                     (doseq [i (range 1 13)]
-                      (eval (list 'def (symbol (str "o" i)) `(t-shift ~i)))
-                      (eval (list 'def (symbol (str "o" i "-")) `(t-shift ~(- i))))))
+                      (eval (list 'def (symbol (str "o" i)) `(t-shift ~i :forced)))
+                      (eval (list 'def (symbol (str "o" i "-")) `(t-shift ~(- i) :forced)))))
 
                 (doseq [[n v] (map vector '[I II III IV V VI VII] (range))]
                   (eval (list 'def n (degree v))))
@@ -688,9 +688,10 @@
       "iterate the given transformation 'f while 'test is passing."
       ([test f] (while test f same))
       ([test f after]
-       (sf_ (if-let [nxt (not-empty (upd _ (lin f test)))]
-              (recur nxt)
-              (upd _ after)))))
+       (sf_ (let [nxt (upd _ f)]
+              (if (not-empty (upd nxt test))
+                (recur nxt)
+                (upd nxt after))))))
 
     (defclosure* fst
       "tries given transformations in order until the first success (non empty score)."
@@ -790,7 +791,9 @@
           [beg end]
           ($ (efn {:as evt :keys [position duration]}
                   (let [end-pos (+ position duration)]
-                    (cond (>= position beg)
+                    (cond (or (>= position end)
+                              (<= end-pos beg)) nil
+                          (>= position beg)
                           (if (<= end-pos end)
                             evt
                             (update evt :duration - (- end-pos end)))
@@ -1002,6 +1005,7 @@
         (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score))
             (midi/add-events midifiable-score)
             (midi/write-midi-file midi-filename))
+        #_(u/copy-file midi-filename "generated/last.mid")
         (if play
           (midi/play-file2 midi-filename))
         (if source
@@ -1018,7 +1022,11 @@
                     :source '~&form
                     :play true))
 
+    (defmacro stop []
+      `(play vel0))
+
     (comment
+      (play (tupn> 7 d2))
       (show
        (mk (patch :vibraphone)
            (tup d0 d1 d2)
