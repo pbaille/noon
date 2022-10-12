@@ -6,7 +6,8 @@
             [noon.utils.contour :as c]
             [noon.utils.sequences :as s]
             [noon.utils.misc :as u :refer [f_ defclosure]]
-            [noon.harmony :as h]))
+            [noon.harmony :as h]
+            [clojure.math.combinatorics :as comb]))
 
 (do :help
 
@@ -267,10 +268,149 @@
 
              (play {:description "another way to build a melodic line from a bunch of randomly chosen updates"}
                    (patch :acoustic-guitar-nylon)
-                   (while (within-time-bounds? 0 18)
+                   (while (within-time-bounds? 0 32)
                      (append [start-from-last
                               (any-that (within-pitch-bounds? :C-1 :C2)
-                                        (rep 3 d3)
-                                        (rep 3 d3-)
+                                        (rep 3 d3 :skip-first)
+                                        (rep 3 d3- :skip-first)
                                         d1 d1-)]))
                    (adjust 3))))
+
+(defn stup
+  "build a tup of steps on the specified layer
+   form: (stup layer steps)
+     layer: :c | :d | :s | :t
+     steps: a sequence of ints."
+  [layer steps]
+  (tup* (map (partial layer-step layer) steps)))
+
+(defn stup>
+  "build a tup of successive steps on the specified layer
+   form: (stup layer steps)
+     layer: :c | :d | :s | :t
+     steps: a sequence of ints."
+  [layer steps]
+  (tup>* (map (partial layer-step layer) steps)))
+
+(defclosure* append>
+  "accumulative append"
+  [xs]
+  (lin* (map append xs)))
+
+(comment :gen-tup
+
+    (defn gen-line [{:as opts :keys [contour grow layer pick]}]
+      (tup* (map (partial layer-step layer) (c/gen-line opts))))
+
+    (play dur:2
+          (patch :whistle)
+          (gen-line {:contour [6 4] :grow 6 :layer :c})
+          (append c3)
+          (append c4)
+          (append c2)
+          (append rev)
+          (append ($ (maybe o1 o1-)))
+          )
+
+    (play dur:2
+          (patch :whistle)
+          (gen-line {:contour [6 4] :grow 6 :layer :c})
+          (append> c3 c4 c2 rev)
+          (dup 2)
+          )
+
+    (defn gen-steps [{:keys [min max ]}])
+
+    (defn gen-tup
+      ""
+      ([{:as options
+         :keys [layer size steps pick delta]
+         :or {layer :d steps (range -7 8) pick :rand delta 0}}]
+       (let [step (partial layer-step layer)]
+         (tup>* (map step (shuffle (s/member (u/sums delta size steps)
+                                             pick)))))))
+
+    (def DEFAULT_LAYERS_DELTAS
+      {:c 12 :d 7 :s 3 :t 1})
+
+    (defn gen-tup2
+      ""
+      ([{:as options
+         :keys [layer length size steps bounds]
+         :or {layer :d size 0}}]
+       (let [delta (DEFAULT_LAYERS_DELTAS layer)
+             steps (or steps (let [abs-rng (range 1 (inc delta))]
+                               (concat (map - abs-rng) abs-rng)))
+             bounds (or bounds [(- delta) delta])]
+         (tup>* (map (partial layer-step layer)
+                     (shuffle (rand-nth (u/sums size length steps)))))))
+      ([layer length size & {:as options}]
+       (gen-tup2 (assoc options :layer layer :length length :size size)))))
+
+(comment :sum-scratch-useless
+
+         "When building a step line it is important to be aware of the intermediate values of the sum we use"
+
+         (def SAMPLE_SUMS
+           (u/sums 0 4 (remove zero? (range -5 6))))
+
+         (def SAMPLE_STEP_LINES
+           (mapcat comb/permutations SAMPLE_SUMS))
+
+
+         (defn step-line-infos [steps]
+           (let [vals (reductions + steps)
+                 abs-steps (map u/abs steps)
+                 abs-vals (map u/abs vals)
+                 cnt (count steps)]
+             {:steps steps
+              :values vals
+              :step-bounds (c/bounds steps)
+              :val-bounds (c/bounds vals)
+              :abs-step-bounds (c/bounds abs-steps)
+              :abs-vals-bounds (c/bounds abs-vals)
+              :val-repetitions (- cnt (count (set vals)))
+              :step-repetitions (- cnt (count (set steps)))
+              :mean-step (/ (reduce + (map u/abs steps)) cnt)}))
+
+         (step-line-infos (rand-nth SAMPLE_STEP_LINES))
+
+         (play (patch :electric-piano-1)
+               (tup* (take 32 (map (partial stup> :d) (shuffle SAMPLE_STEP_LINES))))
+               (append>
+                (superpose [(chan 1) o1 d3 (patch :flute) vel7]
+                           [(k (tup IV VI)) (dupt 2) (chan 2) (patch :acoustic-bass) t2- vel10])
+                (transpose c3)
+
+                #_ [(transpose c4-)
+                    (superpose [(chan 2) o1 d5 (patch :vibraphone) ($ (probs {vel0 3 _ 1}))])])
+               (adjust 48))
+
+         (count SAMPLE_STEP_LINES)
+         (sort-by (comp (juxt :val-repetitions :abs-step-bounds)
+                        step-line-infos)
+                  SAMPLE_STEP_LINES)
+
+         (defn sums
+
+           ([total size steps]
+            (let [smin (apply min steps)
+                  smax (apply max steps)]
+              (sums total size (sort steps) (* size smin) (* size smax) smin smax)))
+           ([total size steps tmin tmax]
+            (sums total size (sort steps) tmin tmax (apply min steps) (apply max steps)))
+           ([total size steps tmin tmax min-step max-step]
+            (if (and (>= tmax total tmin)
+                     (>= (* size max-step) total (* size min-step)))
+              (cond
+                (= 1 size) (if ((set steps) total)
+                             (list (list total)))
+                :else (mapcat (fn [step]
+                                (map (partial cons step)
+                                     (sums (- total step) (dec size)
+                                           (drop-while (fn [s] (< s step)) steps)
+                                           tmin tmax step max-step)))
+                              steps)))))
+
+         (count (sums 10 5 [-5 -1 0 1 5] -5 15))
+         (count (sums 10 5 (range -10 11) -50 50)))
