@@ -185,11 +185,18 @@
               [{:as ctx {:keys [t]} :position}]
               (if-not t
                 ctx
-                (let [struct-size (count (:struct ctx))]
+                (let [struct (:struct ctx)
+                      struct-size (count struct)
+                      contains-tonic? (zero? (first struct))]
                   (update ctx :position
                           (fn [{:as p :keys [t]}]
-                            (-> (dissoc p :t)
-                                (update :s safe-add (* struct-size t))))))))
+
+                            (if contains-tonic?
+                              (-> (dissoc p :t)
+                                  (update :s safe-add (* struct-size t)))
+                              (-> (dissoc p :t)
+                                  (update :s safe-add (* struct-size t))
+                                  (update :d safe-add (- (first struct))))))))))
 
             (defn s->d
               [{:as ctx {:keys [s]} :position}]
@@ -245,7 +252,8 @@
 
 
                      (t->s (upd (hc) (position 3 2 1 0)))
-                     (s->d (upd (hc) (position 0 2 1 0))))))
+                     (s->d (upd (hc) (position 0 2 1 0)))
+                     (t->s (upd (hc) superlocrian (struct [2 3 5 6]) (t-step 0))))))
 
     (do :views
 
@@ -336,11 +344,12 @@
                 (:chromatic :c) (c-step n)))
 
             (defn layer-shift [l]
-              (fn [n]
+              (fn [n & [forced]]
                 (fn [ctx]
-                  (if-let [v (get-in ctx [:position l])]
-                    (update-in ctx [:position l] + n)
-                    ctx))))
+                  (cond
+                    forced (update-in ctx [:position l] safe-add n)
+                    (get-in ctx [:position l]) (update-in ctx [:position l] + n)
+                    :else ctx))))
 
             (def t-shift (layer-shift :t))
             (def s-shift (layer-shift :s))
@@ -442,8 +451,8 @@
               (eval (list 'def (symbol (str "t" i)) `(t-step ~i)))
               (eval (list 'def (symbol (str "t" i "-")) `(t-step ~(- i)))))
             (doseq [i (range 1 9)]
-              (eval (list 'def (symbol (str "o" i)) `(t-shift ~i)))
-              (eval (list 'def (symbol (str "o" i "-")) `(t-shift ~(- i))))))
+              (eval (list 'def (symbol (str "o" i)) `(t-shift ~i :forced)))
+              (eval (list 'def (symbol (str "o" i "-")) `(t-shift ~(- i) :forced)))))
 
         )
 
