@@ -515,6 +515,16 @@
           [s filt x]
           (ms/split-upd s filt (->upd x)))
 
+        (defn partial-upd2
+          "use 'filt to match some events of the score 's, apply 'x to the resulting subscore,
+           then merge unselected events into the updated subscore."
+          [s filt x]
+          (ms/split-upd s
+                        (if (event-update? filt)
+                          (fn [evt] (= evt (filt evt)))
+                          filt)
+                        (->upd x)))
+
         (do :casting
 
             "casting various clojure's values to score-updates or event-updates."
@@ -681,7 +691,7 @@
        (parts sel1 upd1 sel2 upd2 ...)"
       [xs]
       (sf_ (reduce (fn [s [filt upd]]
-                     (partial-upd s filt upd))
+                     (partial-upd2 s filt upd))
                    _ (partition 2 xs))))
 
     (defclosure while
@@ -834,7 +844,8 @@
           "takes a non deterministic expression resulting in a score update.
            return a score update that wraps the expression so that it is evaluated each time the update is called."
           [expr]
-          `(sfn score# (upd score# ~expr)))
+          `(vary-meta (sfn score# (upd score# ~expr))
+                      assoc :non-deterministic true))
 
         (defclosure* one-of
           "return an update that choose randomly one of the given updates before applying it."
@@ -856,7 +867,7 @@
         (defclosure* any-that
           "tries given transformations in random order until one passes the given test."
           [test fs]
-          (sf_ (upd _ (fst-that* test (shuffle fs)))))
+          (! (fst-that* test (shuffle fs))))
 
         (defclosure* shuftup
           "a tup that shuffles its elements"
@@ -974,7 +985,16 @@
                                    chunk (upd updated (between position (+ position duration)))]
                                (f (set xs) chunk)))
                            (group-by :position _))
-                      (reduce into #{}))))))
+                      (reduce into #{})))))
+
+        (defn try-until
+          "given the undeterministic update 'u
+           tries it on the score until the result of it passes 'test"
+          [test u & {:keys [max] :or {max 100}}]
+          (sf_ (loop [n 0]
+                 (or (upd _ (lin u test))
+                     (if (>= max n)
+                       (recur (inc n))))))))
 
     )
 
