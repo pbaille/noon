@@ -4,7 +4,8 @@
             [noon.lib.melody :as m]
             [noon.lib.rythmn :as r]
             [noon.utils.misc :as u]
-            [noon.midi :as midi]))
+            [noon.midi :as midi]
+            [clojure.math.combinatorics :as comb]))
 
 (comment :motivation
 
@@ -177,18 +178,6 @@
 
 
          )
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -742,7 +731,7 @@
          (stop)
          (play
           phrygian6
-          dur:8
+          dur:10
           (while (within-time-bounds? 0 8)
             (append
              (any-that (within-pitch-bounds? :C0 :C3)
@@ -764,6 +753,274 @@
                          [(d-shift 2) (transpose c3-)]
                          [(d-shift 1) (transpose c1-)]
                          [(d-shift -3) (transpose c6)]))
-          ))
+          )
 
-(mk [d1 o1] (d-shift 2))
+
+
+
+         )
+
+
+
+
+
+(comment :passings
+
+         (defn lowest-layer [n]
+           (let [p (get-in n [:pitch :position])]
+             (cond
+               (:c p) :c
+               (:d p) :d
+               (:s p) :s
+               (:t p) :t)))
+
+         (defn neibourhood [n]
+           (let [s (hash-set n)]
+             {:up {:c (upd s c1)
+                   :d (upd s d1)
+                   :s (upd s s1)
+                   :t (upd s t1)}
+              :down {:c (upd s c1-)
+                     :d (upd s d1-)
+                     :s (upd s s1-)
+                     :t (upd s t1-)}}))
+
+         (defn passing-notes [n]
+           (let [layer (lowest-layer n)]))
+
+         (defn passing-note [n1 n2]
+           ())
+
+         (def add-passings
+           (sf_ (into _ (map passing-note (partition 2 1 (sort-by :position _))))))
+
+         (play dorian
+               (rep 4 s1)
+               ($ (tup c1- s2 s1 s0))
+               (tup _ rev)
+               (rep 4 (transpose c3))
+               (append rev))
+
+         (play dorian
+               (rep 4 s1)
+               ($ (tup _ s2))
+               ($ (tup c1- d2 d1 d0))
+               )
+
+         (play melodic-minor
+               dur4
+               (append (transpose c3) (transpose c6) (transpose c3))
+               (dup 2)
+               ($ (shuftup s0 s1 s2 s3 s4))
+               ($ (tup _ (one-of s1 s2 s1- s2- s3 s3-)))
+               ($ (one-of (tup c1- d2 d1 d0)
+                          (tup c1- s1- s0 s2)))
+               )
+
+         (stop)
+         (play dur4
+               (append (transpose c3) (transpose c6) (transpose c3))
+               ($ (one-of phrygian6 lydian melodic-minor))
+               (dup 2)
+               ($ (chans [(patch :acoustic-bass) t2- (tup _ s2 s1- _)]
+                         [(patch :flute) vel8]
+                         [(patch :vibraphone) vel4 (par s0 d4 d6 d8 d10 d12)]
+                         [(patch :taiko-drum)
+                          (r/gen-tup 10 4 :euclidean)
+                          ($ [(one-of s0 s1 s1-) (one-of vel1 vel3 vel5)])]))
+               (parts (chan 1)
+                      [($ (shuftup s0 s1 s2 s3 s4))
+                       ($ (tup _ (one-of s1 s2 s1- s2- s3 s3-)))
+                       ($ (one-of (tup c1- d2 d1 d0)
+                                  (tup c1- s1- s0 s2)
+                                  (tup c1- s1- s2- s0)))
+                       ($ (one-of vel5 vel6 vel7 vel9))])
+
+               )
+
+         (play melodic-minor
+               (shufcat s0 s1 s2 s3)
+               ($ (let [step (one-of s1 s2 s3 s1- s2- s3-)
+                        ap (cat c1- d1 s1-)]
+                    (tup [_ ap] [step ap] _ step)))
+               (append c2- c2-))
+
+         (play melodic-minor
+               (cat (shufcat s0 s1 s2 s3)
+                    [{:passing true} (shufcat s0 s1 s2 s3)]
+                    )
+               ($ (let [step (one-of s1 s2 s3 s1- s2- s3-)
+                        ap (cat c1- d1)]
+                    (tup [_ ap] [step ap] _ (par s2- s2))))
+               (append c4-)
+               (dup 2))
+
+         (play melodic-minor
+               dur"3"
+               (shufcat s0 s2 s4)
+               ($ (one-of (shuftup _ c1- d1)
+                          (shuftup _ d1 d1-)))
+               shuffle-line
+               (rep 3 (one-of (s-shift 1) (s-shift -1)))
+               (rep 3 (transpose c3))
+               (dup 2))
+
+         (play harmonic-minor
+
+               (cat I IV)
+               ($cat [(shuftup s0 s2 s4)
+                      (one-of (tup c1- _) (tup d1 _))
+                      shuffle-line
+                      (rep 4 (one-of (s-shift 1) (s-shift -1)))])
+               (append (transpose c3))
+               (append (s-shift -1)))
+
+         (require '[noon.harmony :as nh])
+         (defn chromatic-double-passing [side]
+           (sf_
+            (assert (= 1 (count _))
+                    (str `chromatic-double-passing
+                         "one works on single note scores"))
+            (let [target (first _)
+                  d-suroundings (nh/diatonic-suroundings (:pitch target))
+                  c-space (get d-suroundings (case side :up 1 :down 0))
+                  step (case side :up 1 :down -1)]
+              (upd _
+                   (if (= c-space 2)
+                     (tup (d-step step) (c-step step) _)
+                     (tup (d-step step) (case side :up c1- :down d1) _))))))
+
+         (play (rup 4 d1)
+               ($ (chromatic-double-passing :down)))
+
+         (def diatonic?
+           (sf_ (if (every? (comp nh/diatonic? nh/normalise :pitch)
+                            _)
+                  _)))
+
+         (mk c2
+             diatonic?)
+
+         (nh/neibourhood (:pitch (first (mk d1-))))
+
+         (play harmonic-minor
+               dur2
+               (cat I IV V I)
+               (append (transpose c3) (transpose c6))
+               (h/align-contexts :s)
+               ($ (chans [(patch :string-ensemble-1) vel4 (par s2- s0 s2)]
+                         [(patch :ocarina) (shuftup s0 s1 s2) ($ (tup c1- [s2- (cat d1 _)] d1 _ s1 s2))])))
+
+         (let [c-d+ (efn e (if-let [p- (get-in (nh/neibourhood (:pitch e)) [:down :c])]
+                             (assoc e :pitch p-)
+                             (d1 e)))]
+           (play dur:4
+                 (rep 14 d1)
+                 ($ (tup c-d+ _))))
+
+         (defn interpose-with [f]
+           (sf_ (if (line? _)
+                  (set (mapcat (fn [[a b]] (if b ((f a b)) a))
+                               (partition 2 1 nil (sort-by :position _)))))))
+
+         (play dur:2
+               (rep 8 d1)
+               (interpose-with (fn [a b]
+                                 (let []
+                                   (if ())))))
+
+         (defn interleaved [& xs]
+           (sf_ (let [scores (map (partial upd _) xs)
+                      counts (map count scores)
+                      durations (map score-duration scores)]
+                  (assert (apply = counts)
+                          "interleaved scores should have same number of elements")
+                  (assert (apply = durations)
+                          "interleaved scores should have same duration")
+                  (assert (apply = (mapcat (partial map :duration) scores))
+                          "interleaved scores should have even durations")
+                  (let [duration (/ (first durations) (first counts))
+                        shift (/ duration (count scores))]
+                    (:score
+                     (reduce (fn [{:as state :keys [at]} xs]
+                               (-> state
+                                   (update :at + duration)
+                                   (update :score into (map-indexed (fn [i n] (assoc n :position (+ at (* i shift)) :duration shift)) xs))))
+                             {:score #{} :at 0}
+                             (apply map vector (map sort-score scores))))))))
+
+         (play dur4
+               (interleaved
+                (rup 8 d1 :skip-first)
+                (rup 8 d1- :skip-first)))
+
+         (let [up (one-of d1 s1)
+               down (one-of c1- d1- s1-)
+               rand-double-passing
+               (one-of (tup up _ down _)
+                       (tup down _ up _)
+                       (tup down up down _)
+                       (tup up down up _))]
+           (play harmonic-minor
+                 dur4
+                 (interleaved
+                  [(catn 4 (shuftup s0 s1 s2 s3)) ($ rand-double-passing)]
+                  [(catn 4 (shuftup s0 s1 s2 s3)) s2 ($ rand-double-passing)])))
+
+         (defn interleaving [polarities a b]
+           (loop [s [] ps polarities a a b b]
+             (if-let [[p & ps] (seq ps)]
+               (let [[nxt a' b'] (case p 0 [(first a) (next a) b] 1 [(first b) a (next b)])]
+                 (recur (conj s nxt) ps a' b'))
+               s)))
+
+         (defn rand-interleaving
+           ([a b]
+            (interleaving (shuffle (concat (repeat (count a) 0) (repeat (count b) 1)))
+                          a b))
+           ([a b & xs]
+            (reduce rand-interleaving
+                    (rand-interleaving a b)
+                    xs)))
+
+         (defn interleavings [a b]
+           (reduce (fn [ret perm]
+                     (conj ret (interleaving perm a b)))
+                   []
+                   (comb/permutations (concat (repeat (count a) 0) (repeat (count b) 1)))))
+
+         (defclosure* randomly-interleaved
+           "randomly interleave the result of the given updates"
+           [xs]
+           (sf_ (:score
+                 (reduce (fn [state n]
+                           (-> state
+                               (update :score conj (assoc n :position (:at state)))
+                               (update :at + (:duration n))))
+                         {:at 0 :score #{}}
+                         (apply rand-interleaving (map (fn [u] (sort-by :position (upd _ u))) xs))))))
+
+         (defn n-firsts [n]
+           (sf_ (->> (group-by :position _)
+                     (sort)
+                     (take n)
+                     (map second)
+                     (reduce into #{}))))
+
+         (let [up (one-of d1 s1)
+               down (one-of c1- d1- s1-)
+               rand-double-passing
+               (one-of (tup _ up down _)
+                       (tup _ down up _)
+                       (tup up _ down _)
+                       (tup down _ up _)
+                       (tup down up down _)
+                       (tup up down up _))]
+           (play harmonic-minor
+                 dur2
+                 (randomly-interleaved
+                  [(chan 1) (catn 4 (shuftup s0 s1 s2 s3)) ($ rand-double-passing)]
+                  [(chan 2) (catn 4 (shuftup s0 s1 s2 s3)) s4- ($ rand-double-passing)]
+                  [(chan 3) (catn 4 (shuftup s0 s1 s2 s3)) s4 ($ rand-double-passing)])))
+
+         )
