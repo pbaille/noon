@@ -583,7 +583,7 @@
             dist (chromatic-distance ctx ctx+)]
         (if (< dist 3)
           ctx+
-          (upd ctx s0 d1 (c-step (- 2 dist))))))
+          (upd ctx+ (c-step (- 2 dist))))))
 
     (defn s-
       "melodic inferior diatonic passing note"
@@ -592,7 +592,7 @@
             dist (chromatic-distance ctx ctx-)]
         (if (< dist 3)
           ctx-
-          (upd ctx s0 d1- (c-step (- dist 2))))))
+          (upd ctx- (c-step (- dist 2))))))
 
     (def passings
       {:approach {:simple {:+ [s+ nil]
@@ -613,6 +613,78 @@
     (def all-passings
       (map (fn [[p v]] (apply u/flagged (conj p v)))
            (u/hm-leaves passings)))
+
+    (defn lowest-layer [{p :position}]
+      (cond
+        (:c p) :c
+        (:d p) :d
+        (:s p) :s
+        (:t p) :t))
+
+    (defn resolution-layer [ctx]
+      (get {:s :t :d :s :c :d}
+           (lowest-layer ctx)
+           :t))
+
+    (defn tension-layer [ctx]
+      (get {:t :s :s :d :d :c}
+           (lowest-layer ctx)
+           :c))
+
+    (defn decorate-upward [ctx]
+      (upd ctx (layer-step (lowest-layer ctx) 1)))
+
+    (defn decorate-downward [ctx]
+      (upd ctx (layer-step (lowest-layer ctx) -1)))
+
+    (defn resolve-upward [ctx]
+      (upd ctx (layer-step (resolution-layer ctx) 1)))
+
+    (defn resolve-downward [ctx]
+      (upd ctx (layer-step (resolution-layer ctx) -1)))
+
+    (defn tense-upward [ctx]
+      (upd ctx (layer-step (tension-layer ctx) 1)))
+
+    (defn tense-downward [ctx]
+      (upd ctx (layer-step (tension-layer ctx) -1)))
+
+
+
+    (defn diatonic-equivalent?
+      "the current position is equivalent to a diatonic one. "
+      [ctx]
+      (zero? (chromatic-distance ctx (d-round ctx))))
+
+    (defn structural-equivalent?
+      "the current position is equivalent to a structural one. "
+      [ctx]
+      (zero? (chromatic-distance ctx (s-round ctx))))
+
+    (defn tonic-equivalent?
+      "the current position is equivalent to a tonic one. "
+      [ctx]
+      (zero? (chromatic-distance ctx (t-round ctx))))
+
+
+
+    (defn neibourhood
+      [ctx]
+      {:up {:c (let [ctx' (upd ctx c1)] (if-not (diatonic-equivalent? ctx') ctx'))
+            :d (let [ctx' (upd ctx d1)] (if-not (structural-equivalent? ctx') ctx'))
+            :s (let [ctx' (upd ctx s1)] (if-not (tonic-equivalent? ctx') ctx'))
+            :t (upd ctx t1)}
+       :down {:c (let [ctx' (upd ctx c1-)] (if-not (diatonic-equivalent? ctx') ctx'))
+              :d (let [ctx' (upd ctx d1-)] (if-not (structural-equivalent? ctx') ctx'))
+              :s (let [ctx' (upd ctx s1-)] (if-not (tonic-equivalent? ctx') ctx'))
+              :t (upd ctx t1-)}})
+
+    (defn diatonic-suroundings
+      "return the chromatic distances of the surroundings diatonic degrees
+       [c-dist-downward c-dist-upward]"
+      [ctx]
+      [(chromatic-distance (upd ctx d1-) ctx)
+       (chromatic-distance (upd ctx d1) ctx)])
 
     (defn mirror [pitch]
       (fn [ctx]
