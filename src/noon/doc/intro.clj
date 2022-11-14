@@ -149,17 +149,55 @@
      "Those higher level abstractions are available in this system and in fact it is the whole point of it."
      "Some really nice libraries already exists to deal with low levels aspects of music notation and sound synthesis."
 
-     [:chromatic
-      "A chromatic interval represant a pitch shift in semitones."
-      (chromatic-interval 3) "going up 3 semitones from wherever we are."
-      (ci 3) "short notation"
-      c3 "var notation"
+     "In noon there is two types of intervals: steps and shifts."
 
-      "If we apply this interval to the default score, it transpose the default middle C (C0) 3 semitones up to Eb0 (or D#0)."
-      (play c3)
-      "Interval can represent descending motions to."
-      (play (ci -3))
-      (play c12-)]
+     [:steps
+      "Steps are the most commonly used type of interval."
+      "The 2 most common type of steps are chromatic steps and diatonic steps"
+
+      [:chromatic
+       "A chromatic step is a movement by semitones."
+       (c-step 3) "going up 3 semitones from wherever we are."
+       (c-step -1) "going down one semitone."
+
+       "Those kind of transformation are so common that they are available as vars:"
+       c1 "is equivalent to" (c-step 1)
+       c2- "is equivalent to" (c-step -2)
+       "all chromatic steps from c36 to c36- are available."
+
+       "If we apply the 'c3 step to the default score, it transpose the default middle C (C0) 3 semitones up to Eb0 (or D#0)."
+       (play c3)
+
+       (play (c-step -3)) "going down 3 semitones to A-1"
+       (play c12-) "going 12 semitones down (one octave) to C-1"]
+
+      [:diatonic
+       "A diatonic step is a movement toward a note that belong to the current scale."
+       (d-step 1) "move to the upper scale note (or degree)."
+       (d-step -1) "moves to the above scale note (or degree)."
+       (d-step 4) "moves four scale degree up..."
+
+       "Those kind of transformation are so common that they are available as vars:"
+       d1 "is equivalent to" (d-step 1)
+       d2- "is equivalent to" (d-step -2)
+       "all diatonic steps from d21 to d21- are available."
+
+       [:example
+        "An ascending scale"
+        (play dur:4 (cat d0 d1 d2 d3 d4 d5 d6 d7))
+        "A broken scale pattern"
+        (play dur:4 (cat d0 d2 d1 d3 d2 d4 d3 d5 d4))
+        "The same downward"
+        (play dur:4 (cat d0 d2- d1- d3- d2- d4- d3- d5- d4-))]
+
+       "By default, we are in the C major scale, but of course it can be changed. (see :harmony section)"
+
+       "As a quick example, pretty self explanatory (but explained in more detailed later)."
+       (play dur:4
+             (root :Eb) (scale :hungarian)
+             (cat d0 d1 d2 d3 d4 d5 d6 d7))]
+
+      "There is 2 more type of steps: structural and tonic, but we will see them later."]
 
      [:octaves
       "paraphrasing wiki:
@@ -167,30 +205,11 @@
        The octave relationship is a natural phenomenon that has been referred to as 'the basic miracle of music'.
        The interval between the first and second harmonics of the harmonic series is an octave."
 
-      (play (octave-interval 1)) "one octave up. "
-      (play (oi -1)) "one octave down in short notation"
-      (play o2-) "2 octaves down in var notation"]
-
-     [:diatonic
-      "A diatonic interval represent a pitch shift in 'scale steps' (or scale degrees)."
-      (diatonic-interval 5 0)
-      "going up 5 steps of the current scale.
-       (the second argument is a chromatic offset, offering the opportunity to alter the resulting scale degree. more on this later...)"
-      (di -5) "going down 5 steps with short notation. (here the second argument can be ommited)"
-      d3 "going up 3 steps in var notation"
-
-      "here how we can play a scale."
-      (play dur:4
-            (cat d0 d1 d2 d3 d4 d5 d6 d7))
-
-      "By default, we are in the C major scale, but of course it can be changed. (see :harmony section)"
-
-      "As a quick example, pretty self explanatory (but explained in more detailed later)."
-      (play dur:4
-            (root :Eb) (scale :hungarian)
-            (cat d0 d1 d2 d3 d4 d5 d6 d7))]
-
-     "There is 2 more type of intervals, structural and tonic, but we will see them later."]
+      "In noon, octaves are a different kind of interval, they are belonging to the 'shift family."
+      "The nuance will appear more clearly later, until then let see how to use them:"
+      (play (t-shift 1)) "one octave up."
+      (play (t-shift -1)) "one octave down."
+      (play o2-) "2 octaves down in var notation"]]
 
     [:cat
      "As we have seen, 'cat let you create a succession of events:"
@@ -443,51 +462,54 @@
 
     [:intervals-2
 
-     "So far we've seen 3 types of intervals, chromatic, diatonic and octave."
-     "Let see the two remaining kinds."
+     "So far we've seen 3 types of intervals, chromatic steps, diatonic steps and octaves (aka tonic shifts)."
+     "Let see the two remaining kinds of steps."
 
-     [:structural
-      "Most of the time, our music is based on chords."
-      "Structural intervals are targeting the notes of the chords."
-      "By default the harmony is set to C Major scale, and C Major chord (C major triad)."
-      {:ascending-third (play (structural-interval 1 0 0))
-       :ascending-fifth (play (structural-interval 2 0 0))}
-      "structural-interval take 2 extras arguments denoting diatonic and chromatic offsets."
-      [:aliases
-       {:short-notation (si 1)
-        :var-notation s1}]
+     [:steps
+      [:structural
+       "Most of the time, our music is based on chords."
+       "Structural steps are targeting chord notes."
+       "By default the harmony is set to C Major scale, and C Major chord (C major triad)."
+       {:ascending-third (play (s-step 1))
+        :ascending-fifth (play (s-step 2))}
 
-      [:examples
-       {:arpegios
-        [(play (tup s0 s1 s2 s3))
-         (play (rup 6 s1))
-         (play (rep 4 s1-)
-               ($ (tup> s2 s2 s2 s1- s2- s1-)))]
+       "As other steps corresponding vars are defined:"
+       (play s1)
+       (play s2)
+       (play s1-)
 
-        :passing-tones
-        (play (scale :eolian)
-              dur:2 o2
-              (rep 12 s1-)
-              ($ (tup s0 c1- d1 s0)))}]]
+       [:examples
+        {:arpegios
+         [(play (tup s0 s1 s2 s3))
+          (play (rup 6 s1))
+          (play (rep 4 s1-)
+                ($ (tup> s2 s2 s2 s1- s2- s1-)))]
 
-     [:tonic
-      "The last kind of interval is the tonic one."
-      "It let you jump to the root of the tonality."
-      (mk (tonic-interval 1 0 0 0))
-      "like diatonic and structural intervals, it takes extra arguments to denote offsets (structural, diatonic, chromatic)"
-      [:aliases
-       (ti 1)
-       (ti -1 -1)
-       t1
-       t2-]
-      [:examples
-       (play (rup 4 t1))
-       (play (rep 3 t1)
-             ($ (tup> s0 s1 s1 d1-)))]]]
+         :passing-tones
+         (play (scale :eolian)
+               dur:2 o2
+               (rep 12 s1-)
+               ($ (tup s0 c1- d1 s0)))}]]
+
+      [:tonic
+       "The last kind of step is the tonic one."
+       "It let you jump to the root of the tonality."
+       {:upper-tonic (play (t-step 1))
+        :above-tonic (play (t-step -1))}
+
+       "As other steps corresponding vars are defined:"
+       (play t1)
+       (play t2)
+       (play t1-)
+
+       [:examples
+        (play (rup 4 t1))
+        (play (rep 3 t1)
+              ($ (tup> s0 s1 s1 d1-)))]]]]
 
     [:implementation
 
-     "Those four types of intervals can be seen as belonging to 4 successive layers build on each others."
+     "Those four types of steps can be seen as belonging to 4 successive layers build on each others."
 
      {:chromatic [0 1 2 3 4 5 6 7 8 9 10 11] ; the chromatic layer, 12 successive semitones
       :diatonic [0 2 4 5 7 9 11] ; we select indexes from the above layer (chromatic) to form the diatonic layer (here the major scale)
@@ -504,10 +526,23 @@
 
      "The :origin key hold the pitch from where our layers starts (in both directions)."
      "The :position key holds a map with the 4 layers indexes"
-     {:t "tonic" :s "structural" :d "diatonic" :c "chromatic"}
+     {:t "tonic" :s "structural" :d "diatonic" :c "chromatic"}]
 
+    [:shifts
+     "At least we will understand the nuance between steps and shifts"
+     "To do so let's compare tonic steps and tonic shifts (aka octaves)."
+     "At first glance they seems to be equivalent:"
+     (play (t-shift 1))
+     (play (t-step 1))
+     "In this case they are indeed equivalent, in each case a C1 is played."
+     "But how about this"
+     (play s1 (t-shift 1)) "plays a E1"
+     (play s1 (t-step 1)) "plays a C1"
+     "In the first expression (the shift) we have transposed the score (a E0 note) by 1 tonic layer index."
+     "In the second one (the step) we have stepped to the next tonic layer index."
 
-     ]
+     "In practice, apart for octaves, shifts are not used so often, thats the reason why they don't have defined vars as steps have."
+     "They are mainly used in more complex harmonic operations (voice leading etc...)."]
 
     [:tonality
 
@@ -638,7 +673,7 @@
      ]
 
     [:permutations
-     "Another way to transform a melody while preserving a bit of its idenity is to permute it."
+     "Another way to transform a melody while preserving a bit of its identity is to permute it."
      "But for long melody, a random permutation can make it so distant to the original that it miss the point."
      "For this reason, permutations are ordered and requested by complexity (similarity degree with the original)"
 
@@ -678,7 +713,7 @@
 
        "We can leverage those grades via our 'm/permutation function like this:"
        (m/permutation 0 {:grade 1}) "get the first grade 1 permutation."
-       (m/permutation -1 {:grade [1 3]}) "get the last permutation for a randomly picked a grade between 1 and 3."]
+       (m/permutation -1 {:grade [1 3]}) "get the last permutation for a randomly picked grade between 1 and 3."]
 
       [:layers
        "As we've seen, our melodies are built on different harmonic layers (chromatic, diatonic, structural and tonic),
@@ -719,7 +754,7 @@
              (rup 16
                   (probs {(m/permutation :rand) 1
                           (m/rotation :rand) 3
-                          (one-of* (map di (range -3 4))) 5}))])
+                          (one-of* (map d-step (range -3 4))) 5}))])
 
            (adjust 10)
            (append [d2- (transpose c3)]
@@ -753,7 +788,7 @@
         <options>
         a map that may contain some of those keys:
 
-        :layer : (all commands, default to :chromatic)
+        :layer : (all commands, default to score's lowest harmonic layer)
             The harmonic layer on which the contour transformation is performed
 
         :pick | :nth : (:rotation and :similar commands, default to :random)
@@ -771,34 +806,45 @@
       (play (tup s0 s1 s2 s3 s1 s2))
       {:contour [0 1 2 3 1 2]}
 
-      "We are using the structural layer here, so our contour transformation will take :s as first argument."
       "Here the way to obtain the mirror contour of the previous arpegio."
       (play (tup s0 s1 s2 s3 s1 s2)
-            (m/contour :mirror {:layer :s}))
+            (m/contour :mirror))
       {:contour [3 2 1 0 3 2]}
 
       "Next let's try contour rotations:"
       "Here we are picking the first rotation (with the option :nth)"
       (play (tup s0 s1 s2 s3 s1 s2)
-            (m/contour :rotation {:nth 1 :layer :s}))
+            (m/contour :rotation {:nth 1}))
       {:contour [1 2 3 0 2 3]}
       "Every contour index has been shifted one step up, the highest one returning all the way down."
 
       "Lets get the last rotation using a 'member-pick argument."
       (play (tup s0 s1 s2 s3 s1 s2)
-            (m/contour :rotation {:pick -1 :layer :s}))
+            (m/contour :rotation {:pick -1}))
       {:contour [3 0 1 2 0 1]}
 
       "If no :pick or :nth option is given, select a random one."
       (play (tup s0 s1 s2 s3 s1 s2)
-            (m/contour :rotation {:layer :s}))
+            (m/contour :rotation))
 
       "One of the nice things with contours is that it can serve to generate many melodies."
       "Using the :similar commands we can do this."
       "Here we are randomly picking a similar score that is one structural step wider (:delta 1) that the original one."
       (play (tup s0 s1 s2 s3 s1 s2)
-            (m/contour :similar {:delta 1 :layer :s}))
-      "Here one of the similar scores between those shrinked by 2 diatonic step and those expanded by 3 diatonic steps (:extent [-2 3] :layer :d)."
+            (m/contour :similar {:delta 1}))
+
+      "In all the previous exemples, the contour was computed over the structural layer."
+      "When the layer is not specified, the score's lowest harmonic layer is used, here the structural layer."
+
+      "As an illustration let's look at the effect of specifying the layer within the :mirror contour operation:"
+      (play (tup s0 s1 s2 s3 s1 s2)
+            (m/contour :mirror)) "Original example"
+      (play (tup s0 s1 s2 s3 s1 s2)
+            (m/contour :mirror {:layer :d})) "Mirrored diatonically, resulting in a F major arpegio"
+      (play (tup s0 s1 s2 s3 s1 s2)
+            (m/contour :mirror {:layer :c})) "Mirror chromatically, resulting in a F minor arpegio (it can help with 'negative harmony')"
+
+      "One of the similar scores between those shrinked by 2 diatonic step and those expanded by 3 diatonic steps (:extent [-2 3] :layer :d)."
       (play (tup s0 s1 s2 s3 s1 s2)
             (m/contour :similar {:extent [-2 3] :layer :d}))
 

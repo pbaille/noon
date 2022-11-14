@@ -11,6 +11,28 @@
         splited (split-at n coll)]
     (concat (splited 1) (splited 0))))
 
+(def shuffle-no-rep
+  "shuffle a sequence while avoiding to produce successive equal elements."
+  (letfn [(remove-nth [xs i]
+            (concat (take i xs) (drop (inc i) xs)))
+          (nth->first [xs i]
+            (cons (nth xs i) (remove-nth xs i)))]
+    (fn [xs]
+      (let [cnt (count xs)
+            safe-nth (fn [xs i]
+                       (if (and (not (neg? i)) (< i cnt))
+                         (nth xs i)))]
+        (reduce
+         (fn [xs i]
+           (if (or (= (first xs) (nth xs i))
+                   (= (safe-nth xs (dec i))
+                      (safe-nth xs (inc i))))
+             xs
+             (nth->first xs i)))
+         xs (take cnt (repeatedly #(rand-int cnt))))))))
+
+;; member ---------
+
 (defn mirror-idx [s idx]
   (- (dec (count s)) idx))
 
@@ -28,8 +50,8 @@
     (if mirror?
       (- (dec cnt) abs-idx)
       abs-idx)))
-
 (= 2 (mirror-idx (list 1 2 3 4) 1))
+
 (= 0 (mirror-idx (list 1 2 3 4) 3))
 
 (defn seq-idx [s x]
@@ -55,10 +77,11 @@
    (member s <:rand|:random>) picks a random member"
   [s x]
   (cond (number? x) (nth s (seq-idx s x))
-        (u/random-kw? x) (nth s (rand-int (count s)))
+        (or (u/random-kw? x) (nil? x)) (nth s (rand-int (count s)))
         (vector? x) (if (= 2 (count x))
                       (rand-nth (seq-section s x))
                       (u/throw* `member "expected a vector of two elements and got: " x))
+        (fn? x) (x s)
         :else (u/throw* `member "unexpected argument: " x)))
 
 (do :member-tries

@@ -51,7 +51,7 @@
                  (sort (map (juxt pitch-value identity) _))]
              (->> others
                   (map (fn [[v note]]
-                         ((oi (quot (c/- v1 v) 12)) note)))
+                         ((t-shift (quot (c/- v1 v) 12)) note)))
                   (into #{bass})))))
 
     (def drops
@@ -61,7 +61,7 @@
                   _ (assert (c/< size 8) "cannot drop more than 7 notes")
                   notes (vec (sort-by pitch-value (closed s)))]
               (map (fn [d] (set (cons (notes 0)
-                                      (mapcat (fn [o idxs] (map (fn [idx] ((oi o) (notes (inc idx)))) idxs))
+                                      (mapcat (fn [o idxs] (map (fn [idx] ((t-shift o) (notes (inc idx)))) idxs))
                                               (range) d))))
                    (abstract-drops (dec size)))))))
 
@@ -92,7 +92,7 @@
                shift (fn [dir x]
                        (set (map (fn [n]
                                    (update n :pitch
-                                           (comp h/c->t (h/ci (get (get-neighbourhood n) dir)))))
+                                           (comp h/c->t (h/c-step (get (get-neighbourhood n) dir)))))
                                  x)))
 
                space-upward (- (bounds 1) (last pitch-values))
