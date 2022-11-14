@@ -1,7 +1,8 @@
 (ns noon.utils.contour
   "an experiment around simple int sequence development"
   (:require [clojure.math.combinatorics :as c]
-            [noon.utils.misc :as u]))
+            [noon.utils.misc :as u]
+            [noon.utils.sequences :as s]))
 
 (defn bounds [s]
   [(apply min s)
@@ -48,9 +49,15 @@
 
 (defn lines
   "given a contour returns a seq of increasingly wide lines following it"
-  [contour max-size]
-  (mapcat (partial contour-growths contour)
-          (range (apply max contour) (inc max-size))))
+  [contour growth]
+  (let [base-size (apply max contour)]
+    (cond (int? growth)
+          (mapcat (partial contour-growths contour)
+                  (range base-size (inc (+ base-size growth))))
+          (vector? growth)
+          (mapcat (partial contour-growths contour)
+                  (map (partial + base-size) (range (growth 0) (inc (growth 1)))))
+          )))
 
 (defn similars [s extent]
   (cond
@@ -70,6 +77,30 @@
     :else (u/throw* `similars
                     "unexpected 2nd argument: "
                     extent)))
+
+(defn gen-contour
+  "produce a contour vector of length 'x and height 'y"
+  ([x]
+   (cond (int? x) (gen-contour x x)
+         (vector? x) (gen-contour (x 0) (x 1))))
+  ([x y]
+   (let [base (range y)]
+     (->> (concat base (cycle base))
+          (take x)
+          s/shuffle-no-rep
+          vec))))
+
+(defn gen-line
+  ""
+  [{:keys [contour grow pick]}]
+  (-> (gen-contour contour)
+      (lines grow)
+      (s/member pick)))
+
+(comment :gen-line
+         (gen-line {:contour [6 4] :grow [0 3]})
+
+         (lines (vec (gen-contour [6 4])) 6))
 
 (comment :tries
          (defn summary [s]

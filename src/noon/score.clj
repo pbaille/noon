@@ -15,7 +15,7 @@
 
     (defn pp [& xs]
       (mapv clojure.pprint/pprint xs)
-      nil)
+      (last xs))
 
     (defmacro dbg [& xs]
       `(do (println '------)
@@ -203,27 +203,28 @@
 
             (import-wrap-harmony-update-constructors
              ;; positions
-             tp sp dp cp
-             octave-interval structural-position diatonic-position chromatic-position
+             position s-position d-position c-position
 
              ;; intervals
-             ti si di ci oi
-             interval tonic-interval structural-interval diatonic-interval chromatic-interval
+             t-step s-step d-step c-step
+             t-shift s-shift d-shift c-shift
+             layer-step layer-shift
+
              ;; context tweaks
              origin scale struct degree root degree
              repitch rescale restruct reorigin reroot redegree)
 
             (import-wrap-harmony-updates
-             tonic-round tonic-ceil tonic-floor
-             structural-round structural-ceil structural-floor
-             diatonic-round diatonic-ceil diatonic-floor
+             t-round t-ceil t-floor
+             s-round s-ceil s-floor
+             d-round d-ceil d-floor
              s+ s-)
 
             (defclosure transpose
               "transpose the pitch origin of all events by the given update."
               [f]
               (assert (event-update? f) "transpose only takes event-update")
-              (ef_ (let [new-origin (h/hc->pitch (:pitch (f ((tp 0) _))))]
+              (ef_ (let [new-origin (h/hc->pitch (:pitch (f ((position 0) _))))]
                      (assoc-in _ [:pitch :origin] new-origin))))
 
             (defclosure rebase
@@ -257,26 +258,26 @@
                      :tonic 't
                      :octave 'o}
 
-                    (def c0 (ci 0))
-                    (def d0 (di 0))
-                    (def s0 (si 0))
-                    (def t0 (ti 0))
+                    (def c0 (c-step 0))
+                    (def d0 (d-step 0))
+                    (def s0 (s-step 0))
+                    (def t0 (t-step 0))
 
                     (doseq [i (range 1 37)]
-                      (eval (list 'def (symbol (str "c" i)) `(ci ~i)))
-                      (eval (list 'def (symbol (str "c" i "-")) `(ci ~(- i)))))
+                      (eval (list 'def (symbol (str "c" i)) `(c-step ~i)))
+                      (eval (list 'def (symbol (str "c" i "-")) `(c-step ~(- i)))))
                     (doseq [i (range 1 22)]
-                      (eval (list 'def (symbol (str "d" i)) `(di ~i)))
-                      (eval (list 'def (symbol (str "d" i "-")) `(di ~(- i)))))
+                      (eval (list 'def (symbol (str "d" i)) `(d-step ~i)))
+                      (eval (list 'def (symbol (str "d" i "-")) `(d-step ~(- i)))))
                     (doseq [i (range 1 13)]
-                      (eval (list 'def (symbol (str "s" i)) `(si ~i)))
-                      (eval (list 'def (symbol (str "s" i "-")) `(si ~(- i)))))
+                      (eval (list 'def (symbol (str "s" i)) `(s-step ~i)))
+                      (eval (list 'def (symbol (str "s" i "-")) `(s-step ~(- i)))))
                     (doseq [i (range 1 13)]
-                      (eval (list 'def (symbol (str "t" i)) `(ti ~i)))
-                      (eval (list 'def (symbol (str "t" i "-")) `(ti ~(- i)))))
+                      (eval (list 'def (symbol (str "t" i)) `(t-step ~i)))
+                      (eval (list 'def (symbol (str "t" i "-")) `(t-step ~(- i)))))
                     (doseq [i (range 1 13)]
-                      (eval (list 'def (symbol (str "o" i)) `(oi ~i)))
-                      (eval (list 'def (symbol (str "o" i "-")) `(oi ~(- i))))))
+                      (eval (list 'def (symbol (str "o" i)) `(t-shift ~i :forced)))
+                      (eval (list 'def (symbol (str "o" i "-")) `(t-shift ~(- i) :forced)))))
 
                 (doseq [[n v] (map vector '[I II III IV V VI VII] (range))]
                   (eval (list 'def n (degree v))))
@@ -514,6 +515,16 @@
           [s filt x]
           (ms/split-upd s filt (->upd x)))
 
+        (defn partial-upd2
+          "use 'filt to match some events of the score 's, apply 'x to the resulting subscore,
+           then merge unselected events into the updated subscore."
+          [s filt x]
+          (ms/split-upd s
+                        (if (event-update? filt)
+                          (fn [evt] (= evt (filt evt)))
+                          filt)
+                        (->upd x)))
+
         (do :casting
 
             "casting various clojure's values to score-updates or event-updates."
@@ -680,16 +691,17 @@
        (parts sel1 upd1 sel2 upd2 ...)"
       [xs]
       (sf_ (reduce (fn [s [filt upd]]
-                     (partial-upd s filt upd))
+                     (partial-upd2 s filt upd))
                    _ (partition 2 xs))))
 
     (defclosure while
       "iterate the given transformation 'f while 'test is passing."
       ([test f] (while test f same))
       ([test f after]
-       (sf_ (if-let [nxt (not-empty (upd _ (lin f test)))]
-              (recur nxt)
-              (upd _ after)))))
+       (sf_ (let [nxt (upd _ f)]
+              (if (not-empty (upd nxt test))
+                (recur nxt)
+                (upd nxt after))))))
 
     (defclosure* fst
       "tries given transformations in order until the first success (non empty score)."
@@ -789,7 +801,9 @@
           [beg end]
           ($ (efn {:as evt :keys [position duration]}
                   (let [end-pos (+ position duration)]
-                    (cond (>= position beg)
+                    (cond (or (>= position end)
+                              (<= end-pos beg)) nil
+                          (>= position beg)
                           (if (<= end-pos end)
                             evt
                             (update evt :duration - (- end-pos end)))
@@ -830,7 +844,8 @@
           "takes a non deterministic expression resulting in a score update.
            return a score update that wraps the expression so that it is evaluated each time the update is called."
           [expr]
-          `(sfn score# (upd score# ~expr)))
+          `(vary-meta (sfn score# (upd score# ~expr))
+                      assoc :non-deterministic true))
 
         (defclosure* one-of
           "return an update that choose randomly one of the given updates before applying it."
@@ -852,7 +867,7 @@
         (defclosure* any-that
           "tries given transformations in random order until one passes the given test."
           [test fs]
-          (sf_ (upd _ (fst-that* test (shuffle fs)))))
+          (! (fst-that* test (shuffle fs))))
 
         (defclosure* shuftup
           "a tup that shuffles its elements"
@@ -970,7 +985,16 @@
                                    chunk (upd updated (between position (+ position duration)))]
                                (f (set xs) chunk)))
                            (group-by :position _))
-                      (reduce into #{}))))))
+                      (reduce into #{})))))
+
+        (defn try-until
+          "given the undeterministic update 'u
+           tries it on the score until the result of it passes 'test"
+          [test u & {:keys [max] :or {max 100}}]
+          (sf_ (loop [n 0]
+                 (or (upd _ (lin u test))
+                     (if (>= max n)
+                       (recur (inc n))))))))
 
     )
 
@@ -1001,6 +1025,7 @@
         (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score))
             (midi/add-events midifiable-score)
             (midi/write-midi-file midi-filename))
+        #_(u/copy-file midi-filename "generated/last.mid")
         (if play
           (midi/play-file2 midi-filename))
         (if source
@@ -1017,7 +1042,11 @@
                     :source '~&form
                     :play true))
 
+    (defmacro stop []
+      `(play vel0))
+
     (comment
+      (play (tupn> 7 d2))
       (show
        (mk (patch :vibraphone)
            (tup d0 d1 d2)
