@@ -37,14 +37,18 @@
     (def hm* (partial apply hash-map))
 
     (defn ?reduce
-      "like reduce but shorts on first falsy result"
+      "like reduce but short-circuits (returns nil) on first falsy result"
       [f init xs]
       (reduce (fn [a e]
                 (or (f a e) (reduced nil)))
               init xs))
 
     (defmacro defclosure*
-      "like defclosure but also defines a variadic version."
+      "Like defclosure but last argument is bound to the variadicaly.
+       it defines two functions,
+       - one that binds the last argument as to variadic arguments.
+       - one (postfixed by *) that takes it as a seq.
+       This is somehow analogous to #'list and #'list*"
       [name doc argv & body]
       (let [applied-name (symbol (str name "*"))
             variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
@@ -347,7 +351,7 @@
 
     (do :transformations
 
-        "some score transformation helpers, those should not be used directly but are used in score-updates definitions."
+        "some score transformation helpers, low level building blocks used in score-updates definitions."
 
         (defn scale-score
           "scale score timing by given ratio"
@@ -517,7 +521,9 @@
 
         (defn partial-upd2
           "use 'filt to match some events of the score 's, apply 'x to the resulting subscore,
-           then merge unselected events into the updated subscore."
+           then merge unselected events into the updated subscore.
+           This second version allows you to provide an event update as a filter.
+           If the result of the update is equal to the original event, it is considered a match."
           [s filt x]
           (ms/split-upd s
                         (if (event-update? filt)
