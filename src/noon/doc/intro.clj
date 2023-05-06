@@ -25,7 +25,7 @@
   [:part-1
 
    "We can create a score with the 'mk function"
-   "With no arguments it simply return the default score containing only a middle C."
+   "With no arguments it simply returns the default score containing only a middle C."
    (= (mk)
       #{{:position 0,
          :channel 0,
@@ -61,7 +61,7 @@
      (play Gb2)
 
      "Pitches are not often used as is, we will prefer more relative constructs like intervals, patterns etc...
-      But it may be a little overwhelming to start with so for now we will use them to introduce the basics building blocks of the system."]
+      But it may be a little overwhelming to start with, so for now we will use them to introduce the basics building blocks of the system."]
 
     [:first-melody
      "Using the 'cat function we can create our first melody."
@@ -206,7 +206,7 @@
        The interval between the first and second harmonics of the harmonic series is an octave."
 
       "In noon, octaves are a different kind of interval, they are belonging to the 'shift family."
-      "The nuance will appear more clearly later, until then let see how to use them:"
+      "The nuance will appear more clearly later... Until then, let see how to use them:"
       (play (t-shift 1)) "one octave up."
       (play (t-shift -1)) "one octave down."
       (play o2-) "2 octaves down in var notation"]]
@@ -431,7 +431,7 @@
            (rep 24 (probs {c1 6 c6- 1 (par c0 o1-) 1})))]
 
     [:any-that
-     "'any-that is similar to one-of execpt it takes an extra first argument that check if the picked transformation is valid."
+     "'any-that is similar to one-of except it takes an extra first argument that check if the picked transformation is valid."
      (play dur:8
            (rep 60 (any-that (within-pitch-bounds? :C-1 :C1)
                              ;; 6 chromatic intervals to choose from
@@ -1217,14 +1217,14 @@
 
       "It is a really smooth way to transition between voicings but it would be nice to get the original bass motion back."
       (play (cat I VI II V)
-            (chans [(patch :acoustic-bass) C-2 ($ tonic-round)]
+            (chans [(patch :acoustic-bass) C-2 ($ t-round)]
                    [(patch :electric-piano-1) ($ (par s0 s1 s2)) h/voice-led])
             (dup 2))
 
       "It works on any voicings"
       (play (struct :tetrad)
             (cat I VI II V)
-            (chans [(patch :acoustic-bass) C-2 ($ [tonic-round (tup _ s2-)])]
+            (chans [(patch :acoustic-bass) C-2 ($ [t-round (tup _ s2-)])]
                    [(patch :electric-piano-1) ($ [(par s0 s1 s2 s3) (h/inversion -3) (h/drop 1/2)]) h/voice-led])
             (dup 2))
 
