@@ -1019,6 +1019,9 @@
     (defn gen-midi-filename [& [prefix]]
       (str (gen-filename prefix) ".mid"))
 
+    (defn midifiable-score [score]
+      (vec (-> score numerify-pitches dedupe-patches)))
+
     (defn write-score
       [score & {:as opts}]
       (let [{:keys [filename bpm play source]} (merge MIDI_DEFAULT_OPTIONS opts)
@@ -1057,3 +1060,37 @@
        (mk (patch :vibraphone)
            (tup d0 d1 d2)
            (tup same (patch :flute))))))
+
+(do :reaper
+    "things to help reaper interaction"
+
+    (defn note-event->reaper-note
+      [resolution {:as event :keys [pitch position duration]}]
+      (when pitch
+        (let [start-position (* position resolution)
+              end-position (+ start-position (* duration resolution))]
+          (assoc event
+                 :start-position start-position
+                 :end-position end-position
+                 :selected true
+                 :muted false))))
+
+    (def REAPER_MIDI_RESOLUTION 960)
+
+    (defn score->reaper-notes [score]
+      (mapv (partial note-event->reaper-note REAPER_MIDI_RESOLUTION)
+           (numerify-pitches score)))
+
+    (require '[clojure.data.json :as json])
+
+    (defn score->json [score]
+      (-> score
+          (score->reaper-notes)
+          (json/write-str)))
+
+    (defn mk-json [& xs]
+      (score->json (mk* xs))))
+
+(comment :scratch
+
+         (score->reaper-notes (mk (lin d2 d3))))
