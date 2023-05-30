@@ -1,7 +1,7 @@
 (ns noon.lib.reaper
   (:use noon.score)
   (:require [noon.harmony :as harmony]
-            [noon.utils.reaper :as reaper]))
+            [noon.utils.reaper :as reaper :refer [>>]]))
 
 (defn note-event->reaper-note
   [{:as event :keys [pitch position duration]} resolution]
@@ -41,22 +41,20 @@
 
          (score->reaper-notes (mk (lin d2 d3))))
 
-(defmacro nean
-  [& xs]
-  (let [score-data (noon.score/score->reaper-notes (eval `(noon.score/mk ~@xs)))]
-    (compile-send (template (global score ~score-data)))))
+(comment (require [])
 
+         (>> (+ 4 5))
 
-(comment (>> (+ 4 5))
+         (>> {:a 1 :b 2})
 
          (>> (global u (require :utils)))
 
          (>> (global u (u.reload :utils))
              (global ru (u.reload :ruteal)))
 
-         (>> (ru.take.get-active))
+         (>> (global json (require :dkjson)))
 
-         (require '[noon.score :as noon])
+         (>> (ru.take.get-active))
 
          (nean (noon/cat noon/d1 noon/d2 noon/d3))
 
