@@ -1,58 +1,30 @@
 (ns noon.utils.reaper
-  (:import (java.net InetAddress DatagramPacket DatagramSocket)
-           (java.io ByteArrayOutputStream))
-  (:require [bencode.core :as bc]
-            [clojure.java.shell :refer [sh]]
+  (:require [noon.utils.socket :as socket]
+            [noon.utils.fennel :as fennel]
+            [bencode.core :as bc]
             [backtick :refer [template]]
             [clojure.string :as str]))
 
-(def socket (DatagramSocket.))
-
-(defn message [text]
-  (DatagramPacket. (.getBytes text)
-                   (.length text)
-                   (InetAddress/getByName "127.0.0.1")
-                   9999))
+(def REAPER_HOST "127.0.0.1")
+(def REAPER_PORT 9999)
 
 (defn encode [data]
-  (-> (doto (ByteArrayOutputStream.)
+  (-> (doto (java.io.ByteArrayOutputStream.)
         (bc/write-bencode data))
       .toString))
 
-(defn send-message [text]
-  (.send socket (message (encode text))))
-
-(defn compile-fennel-string [code-string]
-  (->> (template (let [fen (require :fennel)
-                       (compiled) (fen.compile-string ~code-string)]
-                   compiled))
-       (str)
-       (sh "fennel" "-e")))
-
-(defn compile-send [code]
-  (let [code-string (str/replace (str code) "," " ")
-         compiled (compile-fennel-string code-string)]
-     (println "\n---\n" compiled)
-     (if (not-empty (:err compiled))
-       (println compiled)
-       `(send-message {:code ~code-string
-                       :compiled ~(:out compiled)}))))
+(defn send [code]
+  (socket/send-message REAPER_HOST REAPER_PORT
+                       (encode {:code (str code)
+                                :compiled (fennel/compile code)})))
 
 (defmacro >>
   ([code]
-   (compile-send code))
+   `(send '~code))
   ([x & xs]
    `(>> (do ~x ~@xs))))
 
-(defmacro nean
-  [& xs]
-  (let [score-data (noon.score/score->reaper-notes (eval `(noon.score/mk ~@xs)))]
-    (compile-send (template (global score ~score-data)))))
-
-
-(comment (.length (str (noon/mk (noon/cat noon/d1 noon/d2 noon/d3))))
-
-         (>> (+ 4 5))
+(comment (>> (+ 4 5))
 
          (>> (global u (require :utils)))
 
@@ -65,6 +37,8 @@
 
          (nean (noon/cat noon/d1 noon/d2 noon/d3))
 
+         (>> (. (ru.take.insert-note (ru.take.get-active) {:pitch 47})
+                :idx))
          (>> (let [ru (u.reload :ruteal)
                    t (ru.take.get-active)
                    pos (ru.cursor.position t)]
