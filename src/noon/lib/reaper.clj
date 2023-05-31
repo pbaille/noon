@@ -1,74 +1,80 @@
 (ns noon.lib.reaper
   (:use noon.score)
   (:require [noon.harmony :as harmony]
-            [noon.utils.reaper :as reaper :refer [>>]]))
-
-(defn note-event->reaper-note
-  [{:as event :keys [pitch position duration]} resolution]
-  (when pitch
-    (let [start-position (* position resolution)
-          end-position (+ start-position (* duration resolution))]
-      (assoc event
-             :start-position start-position
-             :end-position end-position
-             :selected true
-             :muted false))))
+            [noon.utils.reaper :as reaper :refer [<<]]
+            [backtick :refer [template]]))
 
 (def REAPER_MIDI_RESOLUTION 960)
 
-(def scores* (atom {}))
+(defmacro nean [& xs]
+  (let [score (vec (numerify-pitches (eval `(mk ~@xs))))]
+    (template (>> (ru.take.insert-notes (ru.take.get-active)
+                                        ~score)))))
 
-(def notes* (atom {}))
+(def score* (atom score0))
 
-(defn score->hash [score]
-  (or (some-> score meta :hash)
-      (hash score)))
+(defn upd-score! [& xs]
+  (swap! score*
+         (lin* xs)))
 
-(defn reg-score! [score]
-  (let [score-hash (score->hash score)]
-    (swap! scores* assoc score-hash score)
-    (doseq [note score]
-      (let [hash (hash (assoc note :score-hash score-hash))]
-        (swap! notes* assoc hash (assoc note :hash hash))))))
+(defn ppq-pos->q-pos [ppq]
+  (/ ppq REAPER_MIDI_RESOLUTION))
 
-(defn get-notes [score-hash]
-  (mapv (fn [note]
-          (-> (update note :pitch harmony/hc->chromatic-value)
-              (note-event->reaper-note REAPER_MIDI_RESOLUTION)))
-        (get @scores* score-hash)))
+(defn q-pos->ppq-pos [q]
+  (* q REAPER_MIDI_RESOLUTION))
 
-(comment :scratch
+(defn equivalent-notes? [reaper-note noon-event]
+  (and (= (:channel noon-event) (:channel reaper-note))
+       (= (:velocity noon-event) (:velocity reaper-note))
+       (let [start-position (ppq-pos->q-pos (:start-position reaper-note))
+             end-position (ppq-pos->q-pos (:end-position reaper-note))]
+         (and (= start-position (:position noon-event))
+              (= (- end-position start-position) (:duration noon-event))
+              (= (harmony/hc->pitch (:pitch noon-event)) (:pitch reaper-note))))))
 
-         (score->reaper-notes (mk (lin d2 d3))))
+(defn retrieve-reaper-note [reaper-note]
+  (first (filter (partial equivalent-notes? reaper-note)
+                 @score*)))
+
+(defn reaper-selection->split-score [xs]
+  (reduce (fn [[selected remaining] n]
+            (if-let [picked (retrieve-reaper-note n remaining)]
+              [(conj selected picked) (disj remaining picked)]
+              (throw (Exception. (str "not found note: " n)))))
+          [#{} @score*] xs))
 
 (comment (require [])
 
-         (>> (+ 4 5))
+         (<< (+ 4 5))
 
-         (>> {:a 1 :b 2})
+         (<< {:a 1 :b 2})
 
-         (>> (global u (require :utils)))
+         (<< (global u (require :utils)))
 
-         (>> (global u (u.reload :utils))
+         (<< (global u (u.reload :utils))
              (global ru (u.reload :ruteal)))
 
-         (>> (global json (require :dkjson)))
+         (<< (ru.take.note-selection (ru.take.get-active)))
 
-         (>> (ru.take.get-active))
+         (<< (ru.take.get-active))
+         (<< (ru.take.time-selection (ru.take.get-active)))
 
-         (nean (noon/cat noon/d1 noon/d2 noon/d3))
+         (numerify-pitches (mk (cat d1 d2 d3)))
 
-         (>> (let [ru (u.reload :ruteal)
-                   t (ru.take.get-active)
-                   pos (ru.cursor.position t)]
-               (each [_ n (ipairs score)]
-                     (tset n :take t)
-                     (ru.note.shift-position n pos)
-                     (ru.note.insert n)
-                     ))))
+         (nean (cat d1 d2 d3)))
 
-         (defn send-score-to-reaper []
-           (let [midifiable (score->reaper-notes @score*)]))
+(comment )
+
+
+
+
+
+
+
+
+
+
+
 
 
 
