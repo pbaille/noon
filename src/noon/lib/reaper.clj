@@ -74,14 +74,20 @@
               (throw (Exception. (str "not found note: " n)))))
           [#{} @score*] xs))
 
-(defn upd-selection! [& xs]
-  (let [reaper-notes (<< (ru.take.note-selection (ru.take.get-active)))
-        [selected remaining] (reaper-selection->split-score reaper-notes)]
-    (reset! score* (into (upd selected (lin* xs))
-                         remaining))))
-
 (defn score->notes [score]
   (mapv noon-note->reaper-note (numerify-pitches score)))
+
+(defn upd-selection! [& xs]
+  (let [reaper-notes (<< (ru.take.note-selection (ru.take.get-active)))
+        [selected remaining] (reaper-selection->split-score reaper-notes)
+        updated (upd selected (lin* xs))]
+    (reset! score*
+            (into updated remaining))
+    (<< (global T (ru.take.get-active))
+        (ru.take.delete-selection T))
+    (doseq [notes (partition-all 32 (score->notes updated))]
+      (reaper/ask
+       (template (ru.take.insert-notes T ~(vec notes)))))))
 
 (defmacro sync-score! []
   (let [notes (score->notes @score*)]
@@ -94,32 +100,65 @@
 
 (comment (require [])
 
-         (<< (+ 4 5))
+         (do :checks
 
-         (<< {:a 1 :b 2})
+             (<< (+ 4 5))
 
-         (<< (global u (require :utils)))
+             (<< {:a 1 :b 2}))
 
-         (<< (global u (u.reload :utils))
-             (global ru (u.reload :ruteal)))
+         (<< (global u (u.reload :utils)))
 
-         (<< (ru.take.clear (ru.take.get-active)))
+         (<< (global u (require :utils))
+             (global ru (u.reload :ruteal))
+             (global T (ru.take.get-active)))
 
-         (sync-score!)
-         (upd-score! (cat d1 d2 d3)
-                     ($ (tup d0 d3 d6)))
-         (upd-score! (cat s0 s1 s2 s3))
+         (<< (ru.take.clear T))
+         (<< (ru.take.delete-selection T))
 
-         (upd-selection! d6-)
+         (<< (ru.take.time-selection T))
+         (<< (ru.take.set-time-selection T 960 (* 4 960)))
 
-         (<< (ru.take.note-selection (ru.take.get-active)))
+         (<< (reaper.SetMIDIEditorGrid 0 (/ 1 12)))
+         (<< (reaper.MIDI_GetGrid T))
 
-         (<< (ru.take.get-active))
-         (<< (ru.take.time-selection (ru.take.get-active)))
 
-         (numerify-pitches (mk (cat d1 d2 d3)))
+         (<< (ru.take.set-time-selection T 0 0))
+         (<< (fn change-time-selection [t side delta]
+               (let [sel (ru.take.time-selection t)
+                     increment (* delta 960 (reaper.MIDI_GetGrid t))]
+                 (case side
+                   :fw (ru.take.set-time-selection t sel.start (+ sel.end increment))
+                   :bw (ru.take.set-time-selection t (+ sel.start increment) sel.end)
+                   _ (ru.take.set-time-selection t (+ sel.start increment) (+ sel.end increment)))
+                 :ok))
+             (change-time-selection T nil 2))
 
-         (nean (cat d1 d2 d3)))
+
+         (<< (ru.cursor.position T))
+         (<< (fn cursor-get-position [t]
+               (let [curs-pos (reaper.GetCursorPosition)]
+                 (/ (ru.take.project-time->ppq t curs-pos)
+                    960)))
+             (fn cursor-set-position [t p]
+               (reaper.SetEditCurPos (ru.take.ppq->project-time t (* p 960)) true false))
+             (fn cursor-move [t delta]
+               (cursor-set-position t (+ (cursor-get-position t) delta)))
+             (cursor-set-position T 3)
+             (cursor-move T 2))
+
+
+
+         (do :score
+
+             (reset! score* score0)
+             (sync-score!)
+             (upd-score! (cat d1 d2 d3)
+                         ($ (tup d0 d3 d6)))
+             (upd-score! (cat s0 s1 s2 s3))
+
+             (upd-selection! ($ {:selected false}))
+             (upd-selection! ($ (tup d1- d1 d3 d0)))
+             (upd-score! ($ (tup d1 d3)))))
 
 (comment )
 
