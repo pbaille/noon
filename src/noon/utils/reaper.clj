@@ -15,10 +15,14 @@
         (bc/write-bencode data))
       .toString))
 
+(defn message [code]
+  {:code (str code)
+   :compiled (fennel/compile code)})
+
 (defn send [code]
   (socket/send-message REAPER_HOST REAPER_PORT
-                       (encode {:code (str code)
-                                :compiled (fennel/compile code)})))
+                       (encode (assoc (message code)
+                                      :no-return true))))
 
 (defmacro >>
   ([code]
@@ -29,11 +33,15 @@
 (defonce reaper-input-chan
   (socket/udp-chan 9997))
 
+(defn ask [code]
+  (socket/send-message REAPER_HOST REAPER_PORT
+                       (encode (message code)))
+  (json/read-str (async/<!! reaper-input-chan)
+                 :key-fn keyword))
+
 (defmacro <<
   ([code]
-   `(do (send '~code)
-        (json/read-str (async/<!! reaper-input-chan)
-                       :key-fn keyword)))
+   `(ask '~code))
   ([x & xs]
    `(<< (do ~x ~@xs))))
 
