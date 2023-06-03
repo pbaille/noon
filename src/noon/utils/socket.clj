@@ -2,6 +2,8 @@
   (:import (java.net InetAddress DatagramPacket DatagramSocket))
   (:require [clojure.core.async :as async]))
 
+(def PACKET_SIZE 66000)
+
 (def socket (DatagramSocket.))
 
 (defn message [host port text]
@@ -21,7 +23,7 @@
   (let [buffer (async/chan)]
     (async/go
       (let [socket (DatagramSocket. port)
-            packet (DatagramPacket. (byte-array 1024) 1024)]
+            packet (DatagramPacket. (byte-array PACKET_SIZE) PACKET_SIZE)]
         (while true
           (.receive socket packet)
           (async/>! buffer (new String (.getData packet) 0 (.getLength packet))))))
