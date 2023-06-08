@@ -97,58 +97,7 @@
                     :ok)))))
 
 
-
-(comment (require [])
-
-         (do :checks
-
-             (<< (+ 4 5))
-
-             (<< {:a 1 :b 2}))
-
-         (<< (global u (u.reload :utils)))
-
-         (<< (global u (require :utils))
-             (global ru (u.reload :ruteal))
-             (global T (ru.take.get-active)))
-
-         (<< (ru.take.clear T))
-         (<< (ru.take.delete-selection T))
-
-         (<< (ru.take.time-selection T))
-         (<< (ru.take.set-time-selection T 960 (* 4 960)))
-
-         (<< (reaper.SetMIDIEditorGrid 0 (/ 1 12)))
-         (<< (reaper.MIDI_GetGrid T))
-
-
-         (<< (ru.take.set-time-selection T 0 0))
-         (<< (fn change-time-selection [t side delta]
-               (let [sel (ru.take.time-selection t)
-                     increment (* delta 960 (reaper.MIDI_GetGrid t))]
-                 (case side
-                   :fw (ru.take.set-time-selection t sel.start (+ sel.end increment))
-                   :bw (ru.take.set-time-selection t (+ sel.start increment) sel.end)
-                   _ (ru.take.set-time-selection t (+ sel.start increment) (+ sel.end increment)))
-                 :ok))
-             (change-time-selection T nil 2))
-
-
-         (<< (ru.cursor.position T))
-         (<< (fn cursor-get-position [t]
-               (let [curs-pos (reaper.GetCursorPosition)]
-                 (/ (ru.take.project-time->ppq t curs-pos)
-                    960)))
-             (fn cursor-set-position [t p]
-               (reaper.SetEditCurPos (ru.take.ppq->project-time t (* p 960)) true false))
-             (fn cursor-move [t delta]
-               (cursor-set-position t (+ (cursor-get-position t) delta)))
-             (cursor-set-position T 3)
-             (cursor-move T 2))
-
-
-
-         (do :score
+(comment (do :score
 
              (reset! score* score0)
              (sync-score!)
@@ -159,42 +108,3 @@
              (upd-selection! ($ {:selected false}))
              (upd-selection! ($ (tup d1- d1 d3 d0)))
              (upd-score! ($ (tup d1 d3)))))
-
-(comment )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-(comment :json
-         (require '[clojure.data.json :as json])
-
-         (defn score->json [score]
-           (-> score
-               (score->reaper-notes)
-               (json/write-str)))
-
-         (defn mk-json [& xs]
-           (score->json (mk* xs))))
