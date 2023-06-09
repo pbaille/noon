@@ -71,7 +71,17 @@
          (<< (ru.take.delete-selection T))
 
          (<< (ru.take.grid.get T))
+         (<< (/ (ru.take.grid.get T) 2))
          (<< (ru.take.grid.set T (/ 1 24)))
+         (<< (let [(_ bpi) (reaper.GetProjectTimeSignature2 0)]
+               bpi))
+         (<< (ru.take.grid.set T 0.125))
+         (<< (let [x (ru.take.grid.get T)]
+               (ru.misc.log x)
+               (ru.take.grid.set T (/ x 2))))
+         (<< (let [x (* 2 (ru.take.grid.get T))]
+               (ru.take.grid.set T x)))
+
 
          (<< (ru.take.time-selection.get T))
          (<< (ru.take.time-selection.set T 0 0))
@@ -87,96 +97,162 @@
 
          (>> (ru.take.insert-note T {:pitch 57 :position 1 :duration 3})))
 
-(def actions
-  '{:grid {:toggle-triplet ()
-           :double ()
-           :half ()}
-    :time-selection {:shift {:fw ()
-                             :bw ()}
-                     :shrink {:fw ()
-                              :bw ()}
-                     :grow {:fw ()
-                            :bw ()}
-                     :clear ()}
-    :cursor {:step {:grid {:fw () :bw ()}
-                    :level {:fw () :bw ()}
-                    :parent {:fw () :bw ()}}
-             :goto {:beginning ()
-                    :end ()}}
-    :note {:insert {}
-           }})
-
 (comment :direct-osc-actions
 
-  (def action-prelude
-    '[(global ru (require :ruteal))
-      (global T (ru.take.get-active))])
+         (def action-prelude
+           '[(global ru (require :ruteal))
+             (global T (ru.take.get-active))])
 
-  (defn reg-action! [name code]
-    (let [lua-file (str "/Users/pierrebaille/Code/Lua/reascripts/" name ".lua")]
-      (spit lua-file (fennel/compile-string (clojure.string/join "\n" (concat action-prelude code))))
-      (<< (reaper.AddRemoveReaScript true 0 ~lua-file true))))
+         (defn action-name [x]
+           (str "pb_"(cond (keyword? x) (name x)
+                           (sequential? x) (str/join "_" (map name x)))))
 
-  (reg-action! "cursor-fw-grid-step"
-               '[(ru.take.cursor.update T 1)])
+         (defn reg-action! [name code]
+           (let [lua-file (str "/Users/pierrebaille/Code/Lua/reascripts/" (action-name name) ".lua")]
+             (spit lua-file (fennel/compile-string (clojure.string/join "\n" (concat action-prelude code))))
+             (<< (reaper.AddRemoveReaScript true 0 ~lua-file true))))
 
-  (defn reg-actions!
-    [m]
-    (let [name->id
-          (->> (mapv (fn [[nam binding & code]]
-                       [nam (reg-action! (name nam) (vec code))])
-                     m)
-               (into {}))]
-      (spit "reaper-bindings.el"
-            (template
-             (progn (setq reaper-osc-client (osc-make-client "192.168.1.60" 8001))
-                    (defvar reaper-mode-map (make-sparse-keymap))
-                    (map! (:map reaper-mode-map
-                                ~@(mapcat (fn [[nam binding id]]
-                                            [:n binding
-                                             (template (lambda ()
-                                                               (interactive)
-                                                               (osc-send-message reaper-osc-client "/action" ~(get name->id nam))))])
-                                          m)))
-                    (define-minor-mode reaper-mode
-                      "reaper mode"
-                      :init-value nil
-                      :lighter " Reaper"
-                      :keymap reaper-mode-map))))))
+         (defn reg-actions!
+           [m]
+           (let [name->id
+                 (->> (mapv (fn [[name binding & code]]
+                              [name (reg-action! name (vec code))])
+                            m)
+                      (into {}))]
+             (spit "reaper-bindings.el"
+                   (template
+                    (progn (setq reaper-osc-client (osc-make-client "192.168.1.60" 8001))
+                           (defvar reaper-mode-map (make-sparse-keymap))
+                           (map! (:map reaper-mode-map
+                                       ~@(mapcat (fn [[name binding id]]
+                                                   (if binding
+                                                     [:n binding
+                                                      (template (lambda ()
+                                                                        (interactive)
+                                                                        (osc-send-message reaper-osc-client "/action" ~(get name->id name))))]))
+                                                 m)))
+                           (define-minor-mode reaper-mode
+                             "reaper mode"
+                             :init-value nil
+                             :lighter " Reaper"
+                             :keymap reaper-mode-map))))))
 
-  (reg-actions!
-   '[[:cursor-fw-grid-step "l"
-      (ru.take.cursor.update T 1)]
-     [:cursor-bw-grid-step "h"
-      (ru.take.cursor.update T -1)]
-     [:pitch-cursor-semitone-up "k"
-      (let [me ru.midi-editor]
-        (me.pitch-cursor.update (me.get-active) 1))]
-     [:pitch-cursor-semitone-down "j"
-      (let [me ru.midi-editor]
-        (me.pitch-cursor.update (me.get-active) -1))]
-     [:pitch-cursor-goto-closest-note "f"
-      (let [log ru.misc.log
-            me ru.midi-editor
-            M (me.get-active)
-            t ru.take
-            cursor-ppq (t.cursor.get T)
-            candidates (t.select-notes T (fn [n] (= n.start-position cursor-ppq)))
-            pitch-cursor (me.pitch-cursor.get M)
-            deltas (accumulate [ret [] i n (ipairs candidates)]
-                               (do (table.insert ret (- n.pitch pitch-cursor))
-                                   ret))]
-        (table.sort deltas (fn [a b] (< (math.abs a) (math.abs b))))
-        (me.pitch-cursor.update M (. deltas 1)))]
-     [:time-selection-shift-fw "M-l"
-      (ru.take.time-selection.update T nil 1)]
-     [:time-selection-shift-bw "M-h"
-      (ru.take.time-selection.update T nil -1)]
-     [:time-selection-clear "M-d"
-      (ru.take.time-selection.set T 0 0)]
-     [:time-selection-at-cursor "M-i"
-      (let [t ru.take
-            grid-size (t.grid.get T)
-            cursor-pos (t.cursor.get T)
-            end-pos (+ cursor-pos (ru.time.qpos->ppq grid-size))]
-        (ru.take.time-selection.set T cursor-pos end-pos))]]))
+         (comment
+           (reg-action! "cursor-fw-grid-step"
+                        '[(ru.take.cursor.update T 1)])
+
+           (reg-actions!
+            '[[:cursor-fw-grid-step "l"
+               (ru.take.cursor.update T 1)]
+              [:cursor-bw-grid-step "h"
+               (ru.take.cursor.update T -1)]
+              [:pitch-cursor-semitone-up "k"
+               (let [me ru.midi-editor]
+                 (me.pitch-cursor.update (me.get-active) 1))]
+              [:pitch-cursor-semitone-down "j"
+               (let [me ru.midi-editor]
+                 (me.pitch-cursor.update (me.get-active) -1))]
+              [:pitch-cursor-goto-closest-note "f"
+               (let [log ru.misc.log
+                     me ru.midi-editor
+                     M (me.get-active)
+                     t ru.take
+                     cursor-ppq (t.cursor.get T)
+                     candidates (t.select-notes T (fn [n] (= n.start-position cursor-ppq)))
+                     pitch-cursor (me.pitch-cursor.get M)
+                     deltas (accumulate [ret [] i n (ipairs candidates)]
+                                        (do (table.insert ret (- n.pitch pitch-cursor))
+                                            ret))]
+                 (table.sort deltas (fn [a b] (< (math.abs a) (math.abs b))))
+                 (me.pitch-cursor.update M (. deltas 1)))]
+              [:time-selection-shift-fw "M-l"
+               (ru.take.time-selection.update T nil 1)]
+              [:time-selection-shift-bw "M-h"
+               (ru.take.time-selection.update T nil -1)]
+              [:time-selection-clear "M-d"
+               (ru.take.time-selection.set T 0 0)]
+              [:time-selection-at-cursor "M-i"
+               (let [t ru.take
+                     grid-size (t.grid.get T)
+                     cursor-pos (t.cursor.get T)
+                     end-pos (+ cursor-pos (ru.time.qpos->ppq grid-size))]
+                 (ru.take.time-selection.set T cursor-pos end-pos))]]))
+
+         (defn all-paths
+           ([m] (all-paths m []))
+           ([x at]
+            (if (map? x)
+              (->> (mapcat (fn [[k v]] (all-paths v [k])) x)
+                   (map (fn [[p v]] [(concat at p) v])))
+              [[at x]])))
+
+         (all-paths actions)
+
+         (defn reg-action-tree!
+           [t]
+           (->> (all-paths t)
+                (filter (comp seq second))
+                (mapv (fn [[p v]] (cons p v)))
+                (reg-actions!)))
+
+         (reg-action-tree!
+          '{:grid {:quarters [nil (ru.take.grid.set T 1)]
+                   :mul3 [nil (ru.take.grid.set T (* 3 (ru.take.grid.get T)))]
+                   :mul2 [nil (ru.take.grid.set T (* 2 (ru.take.grid.get T)))]
+                   :div2 [nil (ru.take.grid.set T (/ (ru.take.grid.get T) 2))]
+                   :div3 [nil (ru.take.grid.set T (/ (ru.take.grid.get T) 3))]}
+
+            :time-selection {:shift {:fw ["M-l" (ru.take.time-selection.update T nil 1)]
+                                     :bw ["M-h" (ru.take.time-selection.update T nil -1)]}
+                             :shrink {:fw [nil (ru.take.time-selection.update T :fw -1)]
+                                      :bw [nil (ru.take.time-selection.update T :bw 1)]}
+                             :grow {:fw [nil (ru.take.time-selection.update T :fw 1)]
+                                    :bw [nil (ru.take.time-selection.update T :bw -1)]}
+                             :clear ["M-d" (ru.take.time-selection.set T 0 0)]}
+
+            :cursor {:step {:grid {:fw ["l" (ru.take.cursor.update T 1)]
+                                   :bw ["h" (ru.take.cursor.update T -1)]}
+                            :level {:fw [] :bw []}
+                            :parent {:fw [] :bw []}}
+                     :goto {:beginning []
+                            :end []}}
+
+            :pitch-cursor {:step {:semitone
+                                  {:up ["k" (let [me ru.midi-editor]
+                                              (me.pitch-cursor.update (me.get-active) 1))]
+                                   :down ["j" (let [me ru.midi-editor]
+                                                (me.pitch-cursor.update (me.get-active) -1))]}
+
+                                  :note
+                                  {:up []
+                                   :down []
+                                   :closest ["f" (let [log ru.misc.log
+                                                       me ru.midi-editor
+                                                       M (me.get-active)
+                                                       t ru.take
+                                                       cursor-ppq (t.cursor.get T)
+                                                       candidates (t.select-notes T (fn [n] (= n.start-position cursor-ppq)))
+                                                       pitch-cursor (me.pitch-cursor.get M)
+                                                       deltas (accumulate [ret [] i n (ipairs candidates)]
+                                                                          (do (table.insert ret (- n.pitch pitch-cursor))
+                                                                              ret))]
+                                                   (table.sort deltas (fn [a b] (< (math.abs a) (math.abs b))))
+                                                   (me.pitch-cursor.update M (. deltas 1)))]}}}
+
+            :note {:insert [nil (let [t ru.take
+                                      me ru.midi-editor
+                                      pos (t.cursor.get T)
+                                      grid (t.grid.get-ppq T)]
+                                  (t.insert-note T {:start-position pos
+                                                    :end-position (+ pos grid)
+                                                    :pitch (me.pitch-cursor.get (me.get-active))}))]
+                   :step {:fw []
+                          :bw []
+                          :up []
+                          :down []}}
+
+            :selection {:toggle []
+                        :shrink {:fw []
+                                 :bw []}
+                        :grow {:fw []
+                               :bw []}}}))
