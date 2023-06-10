@@ -100,7 +100,8 @@
 (comment :direct-osc-actions
 
          (def action-prelude
-           '[(global ru (require :ruteal))
+           '[(global u (require :utils))
+             (global ru (require :ruteal))
              (global T (ru.take.get-active))])
 
          (defn action-name [x]
@@ -139,44 +140,7 @@
 
          (comment
            (reg-action! "cursor-fw-grid-step"
-                        '[(ru.take.cursor.update T 1)])
-
-           (reg-actions!
-            '[[:cursor-fw-grid-step "l"
-               (ru.take.cursor.update T 1)]
-              [:cursor-bw-grid-step "h"
-               (ru.take.cursor.update T -1)]
-              [:pitch-cursor-semitone-up "k"
-               (let [me ru.midi-editor]
-                 (me.pitch-cursor.update (me.get-active) 1))]
-              [:pitch-cursor-semitone-down "j"
-               (let [me ru.midi-editor]
-                 (me.pitch-cursor.update (me.get-active) -1))]
-              [:pitch-cursor-goto-closest-note "f"
-               (let [log ru.misc.log
-                     me ru.midi-editor
-                     M (me.get-active)
-                     t ru.take
-                     cursor-ppq (t.cursor.get T)
-                     candidates (t.select-notes T (fn [n] (= n.start-position cursor-ppq)))
-                     pitch-cursor (me.pitch-cursor.get M)
-                     deltas (accumulate [ret [] i n (ipairs candidates)]
-                                        (do (table.insert ret (- n.pitch pitch-cursor))
-                                            ret))]
-                 (table.sort deltas (fn [a b] (< (math.abs a) (math.abs b))))
-                 (me.pitch-cursor.update M (. deltas 1)))]
-              [:time-selection-shift-fw "M-l"
-               (ru.take.time-selection.update T nil 1)]
-              [:time-selection-shift-bw "M-h"
-               (ru.take.time-selection.update T nil -1)]
-              [:time-selection-clear "M-d"
-               (ru.take.time-selection.set T 0 0)]
-              [:time-selection-at-cursor "M-i"
-               (let [t ru.take
-                     grid-size (t.grid.get T)
-                     cursor-pos (t.cursor.get T)
-                     end-pos (+ cursor-pos (ru.time.qpos->ppq grid-size))]
-                 (ru.take.time-selection.set T cursor-pos end-pos))]]))
+                        '[(ru.take.cursor.update T 1)]))
 
          (defn all-paths
            ([m] (all-paths m []))
@@ -214,45 +178,38 @@
                                    :bw ["h" (ru.take.cursor.update T -1)]}
                             :level {:fw [] :bw []}
                             :parent {:fw [] :bw []}}
-                     :goto {:beginning []
+                     :goto {:beginning ["g g" (ru.take.focus.set {:x 0 :y 60})]
                             :end []}}
 
             :pitch-cursor {:step {:semitone
                                   {:up ["k" (let [me ru.midi-editor]
                                               (me.pitch-cursor.update (me.get-active) 1))]
                                    :down ["j" (let [me ru.midi-editor]
-                                                (me.pitch-cursor.update (me.get-active) -1))]}
+                                                (me.pitch-cursor.update (me.get-active) -1))]}}}
 
-                                  :note
-                                  {:up []
-                                   :down []
-                                   :closest ["f" (let [log ru.misc.log
-                                                       me ru.midi-editor
-                                                       M (me.get-active)
-                                                       t ru.take
-                                                       cursor-ppq (t.cursor.get T)
-                                                       candidates (t.select-notes T (fn [n] (= n.start-position cursor-ppq)))
-                                                       pitch-cursor (me.pitch-cursor.get M)
-                                                       deltas (accumulate [ret [] i n (ipairs candidates)]
-                                                                          (do (table.insert ret (- n.pitch pitch-cursor))
-                                                                              ret))]
-                                                   (table.sort deltas (fn [a b] (< (math.abs a) (math.abs b))))
-                                                   (me.pitch-cursor.update M (. deltas 1)))]}}}
-
-            :note {:insert [nil (let [t ru.take
-                                      me ru.midi-editor
-                                      pos (t.cursor.get T)
+            :note {:insert ["i" (let [t ru.take
+                                      focus (t.focus.get T)
                                       grid (t.grid.get-ppq T)]
-                                  (t.insert-note T {:start-position pos
-                                                    :end-position (+ pos grid)
-                                                    :pitch (me.pitch-cursor.get (me.get-active))}))]
-                   :step {:fw []
-                          :bw []
-                          :up []
-                          :down []}}
+                                  (t.insert-note T {:start-position focus.x
+                                                    :end-position (+ focus.x grid)
+                                                    :pitch focus.y}))]
+                   :step {:fw ["f" (ru.take.focus.next-note T)]
+                          :bw ["b" (ru.take.focus.previous-note T)]}
 
-            :selection {:toggle []
-                        :shrink {:fw []
+                   :toggle-selection ["s" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
+                                                                         {:selected u.hof.not}))]
+
+                   :channel {:up ["c k" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
+                                                                       {:channel (fn [c] (% (+ 1 c) 16))}))]
+                             :down ["c j" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
+                                                                         {:channel (fn [c] (% (- 1 c) 16))}))]}
+
+                   :velocity {:up ["v k" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
+                                                                        {:velocity (fn [v] (math.min 127 (+ 10 v)))}))]
+                              :down ["v j" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
+                                                                          {:velocity (fn [v] (math.min 127 (- 10 v)))}))]}}
+
+            :selection {:shrink {:fw []
                                  :bw []}
                         :grow {:fw []
                                :bw []}}}))
