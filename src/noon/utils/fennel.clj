@@ -6,7 +6,8 @@
 (def compile-string
   (memoize
    (fn [code-string]
-     (let [{:keys [out err]}
+     (let [code-string (str/replace code-string "," " ")
+           {:keys [out err]}
            (->> (template (let [fennel (require :fennel)
                                 (compiled) (fennel.compile-string ~code-string)]
                             compiled))
@@ -17,7 +18,7 @@
          (throw (Exception. err)))))))
 
 (defn compile [code]
-  (compile-string (str/replace (str code) "," " ")))
+  (compile-string (str code)))
 
 (defmacro lua [& forms]
   (compile (list 'do forms)))
