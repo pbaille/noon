@@ -78,23 +78,21 @@
   (mapv noon-note->reaper-note (numerify-pitches score)))
 
 (defn upd-selection! [& xs]
-  (let [reaper-notes (<< (ru.take.note-selection (ru.take.get-active)))
+  (let [reaper-notes (<< (ru.take.note-selection.get (ru.take.get-active)))
         [selected remaining] (reaper-selection->split-score reaper-notes)
         updated (upd selected (lin* xs))]
     (reset! score*
             (into updated remaining))
     (<< (global T (ru.take.get-active))
-        (ru.take.delete-selection T))
+        (ru.take.note-selection.delete-all T))
     (doseq [notes (partition-all 32 (score->notes updated))]
-      (reaper/ask
-       (template (ru.take.insert-notes T ~(vec notes)))))))
+      (reaper/>> (ru.take.insert-notes T ~(vec notes))))))
 
-(defmacro sync-score! []
-  (let [notes (score->notes @score*)]
-    (template (<< (let [t (ru.take.get-active)]
-                    (ru.take.clear t)
-                    (ru.take.insert-notes t ~notes)
-                    :ok)))))
+(defn sync-score! []
+  (<< (let [t (ru.take.get-active)]
+        (ru.take.notes.clear t)
+        (ru.take.insert-notes t ~(score->notes @score*))
+        :ok)))
 
 
 (comment (do :score
