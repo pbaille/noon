@@ -114,46 +114,28 @@
         (<< (reaper.AddRemoveReaScript true 0 ~lua-file true))))
 
     (defn reg-actions!
-      [m]
-      (let [name->id
-            (->> (mapv (fn [[name binding code]]
-                         [name (cond (seq? code) (reg-action! name [code])
-                                     (int? code) code)])
-                       m)
-                 (into {}))
-            lines (fn [xs] (str/join "\n" xs))
-            pretty-str (fn [& xs] (with-out-str (mapv clojure.pprint/pprint xs)))]
-        (spit "reaper-bindings.el"
-              (lines
-               (template [(setq reaper-osc-client (osc-make-client "192.168.1.60" 8001))
+      [action-tree]
+      (->> (mapv (fn [[name _binding code]]
+                   [name (cond (seq? code) (reg-action! name [code])
+                               (int? code) code)])
+                 action-tree)
+           (into {})))
 
-                          (defvar reaper-mode-map (make-sparse-keymap))
-
-                          (define-minor-mode reaper-mode
-                            "reaper mode"
-                            :init-value nil
-                            :lighter " Reaper"
-                            :keymap reaper-mode-map)
-
-                          (defun toggle-reaper-mode-cursor-color ()
-                            (if reaper-mode
-                              (progn (setq evil-normal-state-cursor '(box "#f09383"))
-                                     (evil-normal-state 1))
-                              (progn (setq evil-normal-state-cursor '(box "#e95678"))
-                                     (evil-normal-state 1))))
-
-                          (add-hook 'reaper-mode-hook 'toggle-reaper-mode-cursor-color)
-
-                          (map! "s-C-r" (lambda () (interactive) (reaper-mode 1))
-                                (:map reaper-mode-map
-                                      :n "<escape>" (lambda () (interactive) (reaper-mode -1))
-                                      ~@(mapcat (fn [[nam binding id]]
-                                                  (if binding
-                                                    [:desc (str/join "-" (map name nam)) :n binding
-                                                     (template (lambda ()
-                                                                       (interactive)
-                                                                       (osc-send-message reaper-osc-client "/action" ~(get name->id nam))))]))
-                                                m)))])))))
+    (defn install-actions!
+      [action-tree]
+      (let [name->action-id (reg-actions! action-tree)]
+        (spit "emacs/reaper-bindings.el"
+              (with-out-str
+                (clojure.pprint/pprint
+                 (template (map! (:map reaper-mode-map
+                                       :n "<escape>" (lambda () (interactive) (reaper-mode -1))
+                                       ~@(mapcat (fn [[nam binding id]]
+                                                   (if binding
+                                                     [:desc (str/join "-" (map name nam)) :n binding
+                                                      (template (lambda ()
+                                                                        (interactive)
+                                                                        (osc-send-message reaper-osc-client "/action" ~(get name->action-id nam))))]))
+                                                 action-tree)))))))))
 
     (comment
       (reg-action! "cursor-fw-grid-step"
@@ -167,76 +149,13 @@
               (map (fn [[p v]] [(concat at p) v])))
          [[at x]])))
 
-    (defn reg-action-tree!
+    (defn install-action-tree!
       [t]
       (->> (all-paths t)
            (filter (comp seq second))
            (mapv (fn [[p v]] (cons p v)))
-           (reg-actions!)))
+           (install-actions!)))
 
-    (reg-action-tree!
-     '{:repeat-last-command ["." 2999]
-       :undo ["u" 40013]
-       :redo ["C-r" 40014]
-
-       :grid {:quarters [nil (ru.take.grid.set T 1)]
-              :mul3 [nil (ru.take.grid.set T (* 3 (ru.take.grid.get T)))]
-              :mul2 [nil (ru.take.grid.set T (* 2 (ru.take.grid.get T)))]
-              :div2 [nil (ru.take.grid.set T (/ (ru.take.grid.get T) 2))]
-              :div3 [nil (ru.take.grid.set T (/ (ru.take.grid.get T) 3))]}
-
-       :time-selection {:shift {:fw ["M-l" (ru.take.time-selection.update T nil 1)]
-                                :bw ["M-h" (ru.take.time-selection.update T nil -1)]}
-                        :shrink {:fw ["M-H" (let [t ru.take]
-                                              (t.time-selection.update T :fw -1)
-                                            (t.cursor.set T (. (t.time-selection.get T) :end)))]
-                                 :bw ["M-L" (let [t ru.take]
-                                              (t.time-selection.update T :bw 1)
-                                            (t.cursor.set T (. (t.time-selection.get T) :start)))]}
-                        :grow {:fw ["L" (let [t ru.take]
-                                          (t.time-selection.update T :fw 1)
-                                          (t.cursor.set T (. (t.time-selection.get T) :end)))]
-                               :bw ["H" (let [t ru.take]
-                                          (t.time-selection.update T :bw -1)
-                                          (t.cursor.set T (. (t.time-selection.get T) :start)))]}
-                        :clear ["M-d" (ru.take.time-selection.set T 0 0)]}
-
-       :cursor {:step {:grid {:fw ["l" (ru.take.cursor.update T 1)]
-                              :bw ["h" (ru.take.cursor.update T -1)]}
-                       :level {:fw [] :bw []}
-                       :parent {:fw [] :bw []}}
-                :goto {:beginning ["g g" (ru.take.focus.set T {:x 0 :y 60})]
-                       :end []}}
-
-       :pitch-cursor {:step {:semitone
-                             {:up ["k" (let [me ru.midi-editor]
-                                         (me.pitch-cursor.update (me.get-active) 1))]
-                              :down ["j" (let [me ru.midi-editor]
-                                           (me.pitch-cursor.update (me.get-active) -1))]}}}
-
-       :note {:insert ["i" (let [t ru.take
-                                 focus (t.focus.get T)
-                                 grid (t.grid.get-ppq T)]
-                             (t.insert-note T {:start-position focus.x
-                                               :end-position (+ focus.x grid)
-                                               :pitch focus.y}))]
-              :step {:fw ["f" (ru.take.focus.next-note T)]
-                     :bw ["b" (ru.take.focus.previous-note T)]}
-
-              :toggle-selection ["t" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
-                                                                    {:selected u.hof.not}))]
-
-              :channel {:up ["c k" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
-                                                                  {:channel (fn [c] (% (+ 1 c) 16))}))]
-                        :down ["c j" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
-                                                                    {:channel (fn [c] (% (- c 1) 16))}))]}
-
-              :velocity {:up ["v k" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
-                                                                   {:velocity (fn [v] (math.min 127 (+ 10 v)))}))]
-                         :down ["v j" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
-                                                                     {:velocity (fn [v] (math.min 127 (- v 10)))}))]}}
-
-       :selection {:shrink {:fw []
-                            :bw []}
-                   :grow {:fw []
-                          :bw []}}}))
+    (defn install-edn-actions! []
+      (install-action-tree!
+       (read-string (slurp "emacs/reaper-actions.edn")))))
