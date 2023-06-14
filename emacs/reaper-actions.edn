@@ -1,0 +1,65 @@
+{:repeat-last-command ["." 2999]
+ :undo ["u" 40013]
+ :redo ["C-r" 40014]
+
+ :grid {:quarters [nil (ru.take.grid.set T 1)]
+        :mul3 [nil (ru.take.grid.set T (* 3 (ru.take.grid.get T)))]
+        :mul2 [nil (ru.take.grid.set T (* 2 (ru.take.grid.get T)))]
+        :div2 [nil (ru.take.grid.set T (/ (ru.take.grid.get T) 2))]
+        :div3 [nil (ru.take.grid.set T (/ (ru.take.grid.get T) 3))]}
+
+ :time-selection {:shift {:fw ["M-l" (ru.take.time-selection.update T nil 1)]
+                          :bw ["M-h" (ru.take.time-selection.update T nil -1)]}
+                  :shrink {:fw ["M-H" (let [t ru.take]
+                                        (t.time-selection.update T :fw -1)
+                                        (t.cursor.set T (. (t.time-selection.get T) :end)))]
+                           :bw ["M-L" (let [t ru.take]
+                                        (t.time-selection.update T :bw 1)
+                                        (t.cursor.set T (. (t.time-selection.get T) :start)))]}
+                  :grow {:fw ["L" (let [t ru.take]
+                                    (t.time-selection.update T :fw 1)
+                                    (t.cursor.set T (. (t.time-selection.get T) :end)))]
+                         :bw ["H" (let [t ru.take]
+                                    (t.time-selection.update T :bw -1)
+                                    (t.cursor.set T (. (t.time-selection.get T) :start)))]}
+                  :clear ["M-d" (ru.take.time-selection.set T 0 0)]}
+
+ :cursor {:step {:grid {:fw ["l" (ru.take.cursor.update T 1)]
+                        :bw ["h" (ru.take.cursor.update T -1)]}
+                 :level {:fw [] :bw []}
+                 :parent {:fw [] :bw []}}
+          :goto {:beginning ["g g" (ru.take.focus.set T {:x 0 :y 60})]
+                 :end []}}
+
+ :pitch-cursor {:step {:semitone
+                       {:up ["k" (let [me ru.midi-editor]
+                                   (me.pitch-cursor.update (me.get-active) 1))]
+                        :down ["j" (let [me ru.midi-editor]
+                                     (me.pitch-cursor.update (me.get-active) -1))]}}}
+
+ :note {:insert ["i" (let [t ru.take
+                           focus (t.focus.get T)
+                           grid (t.grid.get-ppq T)]
+                       (t.insert-note T {:start-position focus.x
+                                         :end-position (+ focus.x grid)
+                                         :pitch focus.y}))]
+        :step {:fw ["f" (ru.take.focus.next-note T)]
+               :bw ["b" (ru.take.focus.previous-note T)]}
+
+        :toggle-selection ["t" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
+                                                              {:selected u.hof.not}))]
+
+        :channel {:up ["c k" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
+                                                            {:channel (fn [c] (% (+ 1 c) 16))}))]
+                  :down ["c j" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
+                                                              {:channel (fn [c] (% (- c 1) 16))}))]}
+
+        :velocity {:up ["v k" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
+                                                             {:velocity (fn [v] (math.min 127 (+ 10 v)))}))]
+                   :down ["v j" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
+                                                               {:velocity (fn [v] (math.min 127 (- v 10)))}))]}}
+
+ :selection {:shrink {:fw []
+                      :bw []}
+             :grow {:fw []
+                    :bw []}}}

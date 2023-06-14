@@ -24,4 +24,8 @@
   (compile (list 'do forms)))
 
 (comment
-  (compile '(+ 1 2)))
+  (compile '(+ 1 2))
+  "there is some bug with comment"
+  (spit "comment-bug.lua"
+        (compile '(comment (let [s [1 2]]
+                             s)))))
