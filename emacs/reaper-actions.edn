@@ -22,7 +22,7 @@
                          :bw ["H" (let [t ru.take]
                                     (t.time-selection.update T :bw -1)
                                     (t.cursor.set T (. (t.time-selection.get T) :start)))]}
-                  :clear ["M-d" (ru.take.time-selection.set T 0 0)]}
+                  :clear ["X" (ru.take.time-selection.set T 0 0)]}
 
  :cursor {:step {:grid {:fw ["l" (ru.take.cursor.update T 1)]
                         :bw ["h" (ru.take.cursor.update T -1)]}
@@ -59,7 +59,8 @@
                    :down ["v j" (ru.take.set-note T (u.tbl.upd (ru.take.focused-note T)
                                                                {:velocity (fn [v] (math.min 127 (- v 10)))}))]}}
 
- :selection {:shrink {:fw []
+ :selection {:unselect-all ["T" (ru.take.notes.upd T {:selected false})]
+             :shrink {:fw []
                       :bw []}
              :grow {:fw []
                     :bw []}}}

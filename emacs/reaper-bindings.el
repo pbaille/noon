@@ -71,7 +71,7 @@
   :desc
   "time-selection-clear"
   :n
-  "M-d"
+  "X"
   (lambda
    ()
    (interactive)
@@ -187,4 +187,12 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65825))))
+   (osc-send-message reaper-osc-client "/action" 65825))
+  :desc
+  "selection-unselect-all"
+  :n
+  "T"
+  (lambda
+   ()
+   (interactive)
+   (osc-send-message reaper-osc-client "/action" 65847))))
