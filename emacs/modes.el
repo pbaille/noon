@@ -44,9 +44,37 @@
 
        (add-hook 'reaper-mode-hook 'toggle-reaper-mode-cursor-color))
 
+(defun my-cider/eval! (code)
+  (interactive)
+  (cider-interactive-eval code
+                          nil nil
+                          (cider--nrepl-pr-request-map)))
+
+(defun reaper/install-actions! ()
+  (interactive)
+  (my-cider/eval! "(noon.utils.reaper/install-edn-actions!)")
+  (load "/Users/pierrebaille/Code/WIP/noon/emacs/reaper-bindings.el"))
+
+(defun pb/current-s-expression-as-string ()
+  (interactive)
+  (buffer-substring-no-properties
+   (point)
+   (+ 1 (save-excursion (evil-jump-item) (point)))))
+
+(defun reaper-noon/update-selection! ()
+  (interactive)
+  (my-cider/eval! (concat "(noon.lib.reaper/upd-selection! " (pb/current-s-expression-as-string) ")")))
+
 (map! (:map cider-mode-map
-            "C-M-s-n" #'noon-mode
-            "C-M-s-m" (lambda () (interactive) (reaper-mode 1))))
+            "C-M-s-n" #'noon-mode)
+      (:map noon-mode-map
+            "C-M-s-m" (lambda () (interactive) (reaper-mode 1))
+            "C-M-s-r" #'reaper/install-actions!
+            "C-M-s-u" #'reaper-noon/update-selection!)
+      (:map reaper-mode-map
+            :n "<escape>" (lambda () (interactive) (reaper-mode -1))))
+
+(reaper/install-actions!)
 
 (provide 'noon-modes)
 ;;; modes.el ends here
