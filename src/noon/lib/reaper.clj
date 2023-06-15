@@ -2,7 +2,8 @@
   (:use noon.score)
   (:require [noon.harmony :as harmony]
             [noon.utils.reaper :as reaper :refer [<<]]
-            [backtick :refer [template]]))
+            [backtick :refer [template]]
+            [noon.utils.misc :as u]))
 
 (def REAPER_MIDI_RESOLUTION 960)
 
@@ -77,10 +78,19 @@
 (defn score->notes [score]
   (mapv noon-note->reaper-note (numerify-pitches score)))
 
+(defn time-framed-upd [time-selection upd]
+  (let [start (ppq-pos->q-pos (:start time-selection))]
+    (lin {:position #(- % start)}
+         upd
+         {:position #(+ % start)})))
+
 (defn upd-selection! [& xs]
-  (let [reaper-notes (<< (ru.take.note-selection.get (ru.take.get-active)))
+  (let [time-selection (<< (ru.take.time-selection.get (ru.take.get-active)))
+        reaper-notes (<< (ru.take.note-selection.get (ru.take.get-active)))
         [selected remaining] (reaper-selection->split-score reaper-notes)
-        updated (upd selected (lin* xs))]
+        updated (upd selected (if time-selection
+                                (time-framed-upd time-selection (lin* xs))
+                                (lin* xs)))]
     (reset! score*
             (into updated remaining))
     (<< (global T (ru.take.get-active))
@@ -89,20 +99,54 @@
       (reaper/>> (ru.take.insert-notes T ~(vec notes))))))
 
 (defn sync-score! []
-  (<< (let [t (ru.take.get-active)]
-        (ru.take.notes.clear t)
-        (ru.take.insert-notes t ~(score->notes @score*))
-        :ok)))
+  (let [notes (score->notes @score*)]
+    (<< (global T (ru.take.get-active))
+        (ru.take.notes.clear T))
+    (doseq [notes (partition-all 32 notes)]
+      (reaper/>> (ru.take.insert-notes T ~(vec notes))))))
 
 
 (comment (do :score
 
-             (reset! score* score0)
-             (sync-score!)
+             (<< (global ru (u.reload :ruteal)))
+             (<< (let [take ru.take
+                       seq u.seq
+                       t (take.get-active)]
+                   (take.note-selection.delete-all t)))
+
+             (do (reset! score* score0)
+                 (sync-score!))
+
              (upd-score! (cat d1 d2 d3)
                          ($ (tup d0 d3 d6)))
              (upd-score! (cat s0 s1 s2 s3))
 
+             (cat s0 d2 d4)
+             (tup s0 s1-)
+             (cat s0 s3)
+
              (upd-selection! ($ {:selected false}))
              (upd-selection! ($ (tup d1- d1 d3 d0)))
-             (upd-score! ($ (tup d1 d3)))))
+             (upd-score! ($ (tup d1 d3)))
+
+             (require '[noon.lib.melody :as m])
+             (upd-score!
+              (lin (chans
+
+                    [(patch :vibraphone)
+                     vel3
+                     (tupn 4 [(one-of IV II VI) tetrad (par [t2- vel5] s0 s1 s2 s3)])]
+
+                    [(patch :ocarina)
+                     vel5
+                     (shuftup d1 d2 d3 d4 d5)
+                     ($ (maybe (par d0 d3)))
+                     (rup 16
+                          (probs {(m/permutation :rand) 1
+                                  (m/rotation :rand) 3
+                                  (one-of* (map d-step (range -3 4))) 5}))])
+
+                   (adjust 10)
+                   (append [d2- (transpose c3)]
+                           [d2 (transpose c3-)]
+                           same)))))
