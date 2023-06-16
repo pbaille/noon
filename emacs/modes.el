@@ -52,8 +52,9 @@
 
 (defun reaper/install-actions! ()
   (interactive)
-  (my-cider/eval! "(noon.utils.reaper/install-edn-actions!)")
-  (load "/Users/pierrebaille/Code/WIP/noon/emacs/reaper-bindings.el"))
+  ;; (my-cider/eval! "(noon.utils.reaper/install-edn-actions!)")
+  ;;(load "/Users/pierrebaille/Code/WIP/noon/emacs/reaper-bindings.el")
+  (load "/Users/pierrebaille/Code/WIP/noon/emacs/cider-bindings.el"))
 
 (defun pb/current-s-expression-as-string ()
   (interactive)
@@ -69,6 +70,7 @@
             "C-M-s-n" #'noon-mode)
       (:map noon-mode-map
             "C-M-s-m" (lambda () (interactive) (reaper-mode 1))
+            "C-M-s-z" (lambda () (interactive) (reaper-mode 1))
             "C-M-s-r" #'reaper/install-actions!
             "C-M-s-u" #'reaper-noon/update-selection!)
       (:map reaper-mode-map
