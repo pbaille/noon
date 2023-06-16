@@ -28,6 +28,9 @@
                                                               (my-cider/eval! ~(str code))))]))
                                        bindings))))))))
 
+(defn emit-bindings [filename keymap-sym tree]
+  (spit filename (compile-cider-map! keymap-sym tree)))
+
 (spit "try-cider-keybindings.el"
       (compile-cider-map!
   'my-first-cider-map
