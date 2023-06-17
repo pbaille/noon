@@ -1,152 +1,180 @@
-(ns noon.lib.reaper
-  (:use noon.score)
-  (:require [noon.harmony :as harmony]
+(ns noon.lib.reaper2
+  (:require [noon.score :as noon]
+            [noon.harmony :as harmony]
             [noon.utils.reaper :as reaper :refer [<<]]
             [backtick :refer [template]]
-            [noon.utils.misc :as u]))
+            [noon.utils.misc :as u]
+            [noon.lib.melody :as m]
+            [noon.utils.cider-keybindings :as kbs]))
 
-(def REAPER_MIDI_RESOLUTION 960)
+(def REAPER_MIDI_RESOLUTION 2048)
+(def REAPER_SYNC_MIDI_FILE "/Users/pierrebaille/Code/WIP/noon/generated/reaper-sync.mid")
 
-(defmacro nean [& xs]
-  (let [score (vec (numerify-pitches (eval `(mk ~@xs))))]
-    (template (>> (ru.take.insert-notes (ru.take.get-active)
-                                        ~score)))))
+(def state*
+  (atom {:time-selection [0 0]
+         :cursor [0 60]
+         :grid 1/2
+         :focus nil
+         :score noon/score0}))
 
-(def score* (atom score0))
+(do :watching
 
-(defn convert-rationals [noon-event]
-  (-> noon-event
-      (update :position float)
-      (update :duration float)))
+    (defn position->ppq [q]
+      (Math/round (double (* q REAPER_MIDI_RESOLUTION))))
 
-(defn upd-score! [& xs]
-  (swap! score*
-         (lin* xs)))
+    (defn noon-note->reaper-note
+      [{:as e :keys [position duration pitch]}]
+      (let [start (+ 2 (position->ppq position))
+            end (+ start (position->ppq duration))]
+        (-> (dissoc e :position :duration)
+            (assoc :start-position start
+                   :end-position (- end 1)
+                   :pitch (harmony/hc->chromatic-value pitch)))))
 
-(defn ppq-pos->q-pos [ppq]
-  (/ ppq REAPER_MIDI_RESOLUTION))
+    (defn sync-selection! [score]
+      (<< (let [seq u.seq
+                tbl u.tbl
+                t ru.take
+                T (t.get-active)
+                selected-notes ~(mapv noon-note->reaper-note (filter :selected score))]
+            (each [_ n (ipairs (t.notes.get T))]
+                  (let [matching-note (seq.find selected-notes
+                                                (fn [sn]
+                                                  (and n
+                                                       (= sn.channel n.channel)
+                                                       (= sn.pitch n.pitch)
+                                                       (= sn.start-position n.start-position)
+                                                       (= sn.end-position n.end-position)
+                                                       (= sn.velocity n.velocity))))]
+                    (if matching-note
+                      (t.set-note T (tbl.put matching-note :idx n.idx))))))))
 
-(defn round [n]
-  (Math/round (double n) ))
+    (add-watch state* :state-sync
+               (fn [_ _ old {:as new :keys [score cursor time-selection grid]}]
+                 (let [score-changed? (not (= score (:score old)))]
+                   (if score-changed?
+                     (noon/write-score score :filename REAPER_SYNC_MIDI_FILE))
+                   (<< (let [t ru.take
+                             T (t.get-active)]
+                         (if ~score-changed?
+                           (let [item (reaper.GetSelectedMediaItem 0 0)]
+                             (if item
+                               (do (t.cursor.set (t.get-active) 0)
+                                   (reaper.DeleteTrackMediaItem (reaper.GetMediaItemTrack item) item)))
+                             (reaper.InsertMedia ~REAPER_SYNC_MIDI_FILE 0)))
+                         (if ~(not (= cursor (:cursor old)))
+                           (t.focus.set T {:x ~(position->ppq (cursor 0)) :y ~(cursor 1)}))
+                         (if ~(not (= time-selection (:time-selection old)))
+                           (t.time-selection.set T
+                                                 ~(position->ppq (time-selection 0))
+                                                 ~(position->ppq (time-selection 1))))
+                         (if ~(not (= grid (:grid old)))
+                           (t.grid.set T ~(float grid)))
+                         :ok))
+                   (if score-changed?
+                     (sync-selection! score))))))
 
-(defn q-pos->ppq-pos [q]
-  (round (* q REAPER_MIDI_RESOLUTION)))
+(do :updates
 
-(defn noon-note->reaper-note
-  [{:as e :keys [position duration]}]
-  (let [start (q-pos->ppq-pos position)
-        end (+ start (q-pos->ppq-pos duration))]
-    (-> (dissoc e :position :duration)
-        (assoc :start-position start
-               :end-position end))))
+    (defn upd-state! [& xs]
+      (apply swap! state* xs))
 
-(comment :old
-         (defn almost-eq [x y]
-           (or (= x y)
-               (>= 1 (- x y) -1)))
+    (defn upd-score! [& xs]
+      (swap! state* update :score (noon/lin* xs)))
 
-         (defn equivalent-notes? [reaper-note noon-event]
-           (and (= (:channel noon-event) (:channel reaper-note))
-                (= (:velocity noon-event) (:velocity reaper-note))
-                (let [start-position (:start-position reaper-note)
-                      end-position (:end-position reaper-note)]
-                  (and (almost-eq start-position (q-pos->ppq-pos (:position noon-event)))
-                       (almost-eq (- end-position start-position) (q-pos->ppq-pos (:duration noon-event)))
-                       (= (harmony/hc->chromatic-value (:pitch noon-event)) (:pitch reaper-note)))))))
+    (defn set-score! [& xs]
+      (swap! state* assoc :score (noon/mk* xs))))
 
-(defn equivalent-notes? [reaper-note noon-event]
-  (and (= (:channel noon-event) (:channel reaper-note))
-       (= (:velocity noon-event) (:velocity reaper-note))
-       (let [start-position (int (:start-position reaper-note))
-             end-position (int (:end-position reaper-note))]
-         (and (= start-position (q-pos->ppq-pos (:position noon-event)))
-              (= (- end-position start-position) (q-pos->ppq-pos (:duration noon-event)))
-              (= (harmony/hc->chromatic-value (:pitch noon-event)) (:pitch reaper-note))))))
+(defn framed-upd! [& xs]
+  (let [[start end] (:time-selection @state*)]
+    (if-not (= start end)
+      (upd-score! (noon/parts (fn [{:keys [duration position]}]
+                                (and (<= start position)
+                                     (<= (+ position duration) end)))
+                         (noon/lin (noon/start-from start)
+                                   (noon/until (- end start))
+                                   (noon/lin* xs)
+                                   (noon/$ {:position (partial + start)})))))))
 
-(defn retrieve-reaper-note [reaper-note score]
-  (first (filter (partial equivalent-notes? reaper-note)
-                 score)))
+(do :focus-moves
+    (def sort-score
+      (memoize (partial sort-by (juxt :position :duration))))
 
-(defn reaper-selection->split-score [xs]
-  (reduce (fn [[selected remaining] n]
-            (println "---")
-            (if-let [picked (retrieve-reaper-note n remaining)]
-              [(conj selected picked) (disj remaining picked)]
-              (throw (Exception. (str "not found note: " n)))))
-          [#{} @score*] xs))
+    (defn my-split-with [f s]
+      (loop [taken [] todo s]
+        (if-let [[x & xs] (seq todo)]
+          (if (f x)
+            (recur (conj taken x) xs)
+            [taken todo])
+          [taken todo])))
 
-(defn score->notes [score]
-  (mapv noon-note->reaper-note (numerify-pitches score)))
+    (defn get-sorted-score []
+      (sort-score (:score @state*)))
 
-(defn time-framed-upd [time-selection upd]
-  (let [start (ppq-pos->q-pos (:start time-selection))]
-    (lin {:position #(- % start)}
-         upd
-         {:position #(+ % start)})))
+    (defn set-focus! [{:as note :keys [position pitch]}]
+      (if note
+        (upd-state! assoc
+                    :focus note
+                    :cursor [position (harmony/hc->chromatic-value pitch)])))
 
-(defn upd-selection! [& xs]
-  (let [time-selection (<< (ru.take.time-selection.get (ru.take.get-active)))
-        reaper-notes (<< (ru.take.note-selection.get (ru.take.get-active)))
-        [selected remaining] (reaper-selection->split-score reaper-notes)
-        updated (upd selected (if time-selection
-                                (time-framed-upd time-selection (lin* xs))
-                                (lin* xs)))]
-    (reset! score*
-            (into updated remaining))
-    (<< (global T (ru.take.get-active))
-        (ru.take.note-selection.delete-all T))
-    (doseq [notes (partition-all 32 (score->notes updated))]
-      (reaper/>> (ru.take.insert-notes T ~(vec notes))))))
+    (defn focus-closest! []
+      (if-not (:focus @state*)
+        (let [[position pitch] (:cursor @state*)
+              sorted (get-sorted-score)
+              [before after] (my-split-with #(< (:position %) position) sorted)
+              [positioned after] (my-split-with #(= position (:position %)) after)
+              candidates (or (seq positioned)
+                             (concat (first (partition-by :position (reverse before)))
+                                     (first (partition-by :position after))))]
+          (set-focus! (first (sort-by #(vector (Math/abs (float (- position (:position %))))
+                                               (Math/abs (- pitch (:pitch %))))
+                                      candidates))))))
 
-(defn sync-score! []
-  (let [notes (score->notes @score*)]
-    (<< (global T (ru.take.get-active))
-        (ru.take.notes.clear T))
-    (doseq [notes (partition-all 32 notes)]
-      (reaper/>> (ru.take.insert-notes T ~(vec notes))))))
+    (defn focus-move! [delta]
+      (let [focus (:focus @state*)
+            sorted (get-sorted-score)
+            [before after] (my-split-with (fn [e] (not (= e focus)))
+                                          sorted)]
+        (if (seq after)
+          (set-focus! (if (neg? delta)
+                        (nth (reverse before) (dec (- delta)) nil)
+                        (nth after delta nil))))))
+
+    (defn focus-upd! [efn]
+      (let [{:as state :keys [score focus]} @state*
+            new-focus (efn focus)]
+        (upd-state! assoc
+                    :focus new-focus
+                    :score (-> score (disj focus) (conj new-focus)))))
 
 
-(comment (do :score
 
-             (<< (global ru (u.reload :ruteal)))
-             (<< (let [take ru.take
-                       seq u.seq
-                       t (take.get-active)]
-                   (take.note-selection.delete-all t)))
+    )
 
-             (do (reset! score* score0)
-                 (sync-score!))
+(do :keybindings
+    (kbs/emit-bindings
+       "emacs/cider-bindings.el"
+       'reaper-mode-map
+       '{:focus {:closest ["F" (focus-closest!)]
+                 :fw ["l" (focus-move! 1)]
+                 :bw ["h" (focus-move! -1)]
+                 :s1 ["K" (focus-upd! noon/s1)]
+                 :s1- ["J" (focus-upd! noon/s1-)]}
+         :cursor {:fw ["f" (upd-reaper! (fn [{:as reaper :keys [grid focus]}]
+                                          (update-in reaper [:focus 0] + grid)))]
+                  :bw ["b" (upd-reaper! (fn [{:as reaper :keys [grid focus]}]
+                                          (update-in reaper [:focus 0] - grid)))]}}))
 
-             (upd-score! (cat d1 d2 d3)
-                         ($ (tup d0 d3 d6)))
-             (upd-score! (cat s0 s1 s2 s3))
+(comment :tries
 
-             (cat s0 d2 d4)
-             (tup s0 s1-)
-             (cat s0 s3)
+         (do :basics
+             (set-score! (noon/cat noon/s0 noon/s1 noon/s2))
+             (upd-score! (parts {:channel 1} {:selected true}))
+             (upd-state! assoc :cursor [0 57] :grid 1/3)
+             (framed-upd! ($ d3)))
 
-             (upd-selection! ($ {:selected false}))
-             (upd-selection! ($ (tup d1- d1 d3 d0)))
-             (upd-score! ($ (tup d1 d3)))
-
-             (require '[noon.lib.melody :as m])
-             (upd-score!
-              (lin (chans
-
-                    [(patch :vibraphone)
-                     vel3
-                     (tupn 4 [(one-of IV II VI) tetrad (par [t2- vel5] s0 s1 s2 s3)])]
-
-                    [(patch :ocarina)
-                     vel5
-                     (shuftup d1 d2 d3 d4 d5)
-                     ($ (maybe (par d0 d3)))
-                     (rup 16
-                          (probs {(m/permutation :rand) 1
-                                  (m/rotation :rand) 3
-                                  (one-of* (map d-step (range -3 4))) 5}))])
-
-                   (adjust 10)
-                   (append [d2- (transpose c3)]
-                           [d2 (transpose c3-)]
-                           same)))))
+         (do :focus
+             (focus-upd! noon/s1)
+             (focus-closest!)
+             (focus-move! 1)
+             (focus-move! -1)))
