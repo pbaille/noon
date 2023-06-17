@@ -15,7 +15,7 @@
                 (sh "fennel" "-e"))]
        (if (= "" err)
          out
-         (throw (Exception. err)))))))
+         (throw (Exception. (str [:lua-error err]))))))))
 
 (defn compile [code]
   (compile-string (str code)))
