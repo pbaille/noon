@@ -52,8 +52,11 @@
 
 (defun reaper/install-actions! ()
   (interactive)
-  ;; (my-cider/eval! "(noon.utils.reaper/install-edn-actions!)")
-  ;;(load "/Users/pierrebaille/Code/WIP/noon/emacs/reaper-bindings.el")
+  (my-cider/eval! "(noon.utils.reaper/install-edn-actions!)")
+  (load "/Users/pierrebaille/Code/WIP/noon/emacs/reaper-bindings.el"))
+
+(defun noon/reload-bindings! ()
+  (interactive)
   (load "/Users/pierrebaille/Code/WIP/noon/emacs/cider-bindings.el"))
 
 (defun pb/current-s-expression-as-string ()
@@ -66,15 +69,23 @@
   (interactive)
   (my-cider/eval! (concat "(noon.lib.reaper/upd-selection! " (pb/current-s-expression-as-string) ")")))
 
-(map! (:map cider-mode-map
-            "C-M-s-n" #'noon-mode)
-      (:map noon-mode-map
-            "C-M-s-m" (lambda () (interactive) (reaper-mode 1))
-            "C-M-s-z" (lambda () (interactive) (reaper-mode 1))
-            "C-M-s-r" #'reaper/install-actions!
-            "C-M-s-u" #'reaper-noon/update-selection!)
+(map! :leader
+      (:map cider-mode-map
+       :desc "toggle noon mode" "t n" #'noon-mode))
+
+(map! (:map noon-mode-map
+       :prefix ("H-C-n" . "noon") ;; at system level H-* is rebound to H-C-* in order to avoid osx default bindings
+       (:prefix ("r" . "reload")
+        :desc "reload noon cider bindings" "b" #'noon/reload-bindings!
+        :desc "reload reaper actions" "a" #'reaper/reload-actions!)
+       (:prefix ("l" . "log")
+        :desc "focus" "f" (lambda () (interactive) (print "focus")))))
+
+(map! (:map noon-mode-map
+            ;; at the system level the fn key pressed alone emits C-M-s-<return> (via karabiner)
+            "C-M-s-<return>" (lambda () (interactive) (reaper-mode 1)))
       (:map reaper-mode-map
-            :n "<escape>" (lambda () (interactive) (reaper-mode -1))))
+       :n "<escape>" (lambda () (interactive) (reaper-mode -1))))
 
 (reaper/install-actions!)
 
