@@ -2,7 +2,8 @@
   (:use noon.score)
   (:use noon.lib.reaper0))
 
-(mk (rep 4 d2-))
+(mk (rep 6 d3)
+    (rep 4 d1-))
 
 (tup s1 s2-)
 (play (k (patch :vibraphone)
