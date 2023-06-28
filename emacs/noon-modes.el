@@ -1,4 +1,4 @@
-;;; modes.el --- Description -*- lexical-binding: t; -*-
+;;; noon-modes.el --- Description -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2023 pierre baille
 ;;
@@ -19,7 +19,9 @@
 ;;
 ;;; Code:
 
-(defvar reaper-osc-client (osc-make-client "192.168.1.60" 8001))
+(require 'pb-reaper)
+
+(defvar reaper-osc-client (osc-make-client (pb/get-local-ip) 8001))
 
 (progn :noon-mode
 
@@ -37,37 +39,21 @@
          :lighter " Reaper"
          :keymap reaper-mode-map)
 
-       (defun toggle-reaper-mode-cursor-color ()
+       (defun noon/toggle-reaper-mode-cursor-color ()
          (if reaper-mode
              (progn (setq evil-normal-state-cursor '(box "#f09383")) (evil-normal-state 1))
            (progn (setq evil-normal-state-cursor '(box "#e95678")) (evil-normal-state 1))))
 
-       (add-hook 'reaper-mode-hook 'toggle-reaper-mode-cursor-color))
+       (add-hook 'reaper-mode-hook 'noon/toggle-reaper-mode-cursor-color))
 
-(defun my-cider/eval! (code)
+(defun noon/install-reaper-actions! ()
   (interactive)
-  (cider-interactive-eval code
-                          nil nil
-                          (cider--nrepl-pr-request-map)))
-
-(defun reaper/install-actions! ()
-  (interactive)
-  (my-cider/eval! "(noon.utils.reaper/install-edn-actions!)")
-  (load "/Users/pierrebaille/Code/WIP/noon/emacs/reaper-bindings.el"))
+  (my-cider/eval! "(noon.utils.reaper/install-edn-actions!)"))
 
 (defun noon/reload-bindings! ()
   (interactive)
+  (load "/Users/pierrebaille/Code/WIP/noon/emacs/reaper-bindings.el")
   (load "/Users/pierrebaille/Code/WIP/noon/emacs/cider-bindings.el"))
-
-(defun pb/current-s-expression-as-string ()
-  (interactive)
-  (buffer-substring-no-properties
-   (point)
-   (+ 1 (save-excursion (evil-jump-item) (point)))))
-
-(defun reaper-noon/update-selection! ()
-  (interactive)
-  (my-cider/eval! (concat "(noon.lib.reaper/upd-selection! " (pb/current-s-expression-as-string) ")")))
 
 (map! :leader
       (:map cider-mode-map
@@ -76,8 +62,9 @@
 (map! (:map noon-mode-map
        :prefix ("H-C-n" . "noon") ;; at system level H-* is rebound to H-C-* in order to avoid osx default bindings
        (:prefix ("r" . "reload")
+        :desc "init-reaper-interop" "r" #'noon/init-reaper-interop!
         :desc "reload noon cider bindings" "b" #'noon/reload-bindings!
-        :desc "reload reaper actions" "a" #'reaper/reload-actions!)
+        :desc "reload reaper actions" "a" #'noon/install-reaper-actions!)
        (:prefix ("l" . "log")
         :desc "focus" "f" (lambda () (interactive) (print "focus")))))
 
@@ -87,7 +74,15 @@
       (:map reaper-mode-map
        :n "<escape>" (lambda () (interactive) (reaper-mode -1))))
 
-(reaper/install-actions!)
+(defun noon/init-reaper-interop! ()
+  (interactive)
+  ;; launch socket-repl script
+  (osc-send-message reaper-osc-client "/action/_RSb0f401791ac0eba7140bad3965dc7833c18e650d")
+
+  ;; register actions and install keybindings
+  (noon/install-reaper-actions!)
+
+  (noon/reload-bindings!))
 
 (provide 'noon-modes)
-;;; modes.el ends here
+;;; noon-modes.el ends here
