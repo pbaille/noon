@@ -19,6 +19,8 @@
           :pitch 60
           :velocity 80}))
 
+(def MIDI_RESOLUTION 2048)
+
 (do :control-changes
 
     ;; https://anotherproducer.com/online-tools-for-musicians/midi-cc-list/
@@ -99,7 +101,7 @@
   [& {:keys [bpm n-tracks connected]
       :or {bpm 60 n-tracks 1}}]
   (let [sequencer (new-midi-sequencer connected)
-        sq (Sequence. Sequence/PPQ 2048)]
+        sq (Sequence. Sequence/PPQ MIDI_RESOLUTION)]
 
     (doto sequencer
       (.setSequence sq)
