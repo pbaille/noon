@@ -27,7 +27,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65815))
+   (osc-send-message reaper-osc-client "/action" 65814))
   :desc
   "time-selection-shift-bw"
   :n
@@ -35,7 +35,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65816))
+   (osc-send-message reaper-osc-client "/action" 65815))
   :desc
   "time-selection-shrink-fw"
   :n
@@ -43,7 +43,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65817))
+   (osc-send-message reaper-osc-client "/action" 65816))
   :desc
   "time-selection-shrink-bw"
   :n
@@ -51,7 +51,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65818))
+   (osc-send-message reaper-osc-client "/action" 65817))
   :desc
   "time-selection-grow-fw"
   :n
@@ -59,7 +59,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65819))
+   (osc-send-message reaper-osc-client "/action" 65818))
   :desc
   "time-selection-grow-bw"
   :n
@@ -67,7 +67,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65820))
+   (osc-send-message reaper-osc-client "/action" 65819))
   :desc
   "time-selection-clear"
   :n
@@ -75,7 +75,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65821))
+   (osc-send-message reaper-osc-client "/action" 65820))
   :desc
   "cursor-step-grid-fw"
   :n
@@ -83,7 +83,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65822))
+   (osc-send-message reaper-osc-client "/action" 65821))
   :desc
   "cursor-step-grid-bw"
   :n
@@ -91,7 +91,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65823))
+   (osc-send-message reaper-osc-client "/action" 65822))
   :desc
   "cursor-goto-beginning"
   :n
@@ -99,7 +99,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65840))
+   (osc-send-message reaper-osc-client "/action" 65839))
   :desc
   "note-insert"
   :n
@@ -107,7 +107,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65836))
+   (osc-send-message reaper-osc-client "/action" 65835))
   :desc
   "note-step-fw"
   :n
@@ -115,7 +115,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65838))
+   (osc-send-message reaper-osc-client "/action" 65837))
   :desc
   "note-step-bw"
   :n
@@ -123,7 +123,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65839))
+   (osc-send-message reaper-osc-client "/action" 65838))
   :desc
   "note-toggle-selection"
   :n
@@ -131,7 +131,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65841))
+   (osc-send-message reaper-osc-client "/action" 65840))
   :desc
   "note-channel-up"
   :n
@@ -139,7 +139,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65842))
+   (osc-send-message reaper-osc-client "/action" 65841))
   :desc
   "note-channel-down"
   :n
@@ -147,7 +147,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65843))
+   (osc-send-message reaper-osc-client "/action" 65842))
   :desc
   "note-velocity-up"
   :n
@@ -155,7 +155,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65844))
+   (osc-send-message reaper-osc-client "/action" 65843))
   :desc
   "note-velocity-down"
   :n
@@ -163,7 +163,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65845))
+   (osc-send-message reaper-osc-client "/action" 65844))
   :desc
   "undo"
   :n
@@ -179,7 +179,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65824))
+   (osc-send-message reaper-osc-client "/action" 65823))
   :desc
   "pitch-cursor-step-semitone-down"
   :n
@@ -187,7 +187,7 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65825))
+   (osc-send-message reaper-osc-client "/action" 65824))
   :desc
   "selection-unselect-all"
   :n
@@ -195,4 +195,4 @@
   (lambda
    ()
    (interactive)
-   (osc-send-message reaper-osc-client "/action" 65847))))
+   (osc-send-message reaper-osc-client "/action" 65846))))
