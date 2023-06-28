@@ -446,8 +446,7 @@
      "Takes a non deterministic expression resulting in a score transformation.
        return a score transformation that wraps the expression so that it is evaluated each time the transformation is used."
      (play (catn 4 (! (tup* (shuffle [d0 d2 d4 d6])))))
-     (play (catn 4 (tup* (shuffle [d0 d2 d4 d6])))) "without the bang the shuffle expression is executed only one time."
-     ]
+     (play (catn 4 (tup* (shuffle [d0 d2 d4 d6])))) "without the bang the shuffle expression is executed only one time."]
 
     [:shuffling
      "As in the previews example, building a tup or a cat with shuffled sequence of transformation is quite fun."
@@ -669,8 +668,7 @@
       "Not only pure melodies can be rotated, if we feed chords into the 'rotation transformation it behaves as intended"
       (play (fit (rep 8 d1))
             ($ (par d0 d3 d6))
-            (m/rotation 1/4))]
-     ]
+            (m/rotation 1/4))]]
 
     [:permutations
      "Another way to transform a melody while preserving a bit of its identity is to permute it."
