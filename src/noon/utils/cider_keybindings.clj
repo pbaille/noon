@@ -1,7 +1,8 @@
 (ns noon.utils.cider-keybindings
   (:require [backtick :refer [template]]
             [clojure.string :as str]
-            [clojure.pprint :as pprint]))
+            [clojure.pprint :as pprint]
+            [clojure.walk :as walk]))
 
 (defn all-paths
       ([m] (all-paths m []))
@@ -25,14 +26,19 @@
                                            [:desc (path->binding-description path) :n binding
                                             (template (lambda ()
                                                               (interactive)
-                                                              (my-cider/eval! ~(str code))))]))
+                                                              (my-cider/eval! (format ~(str (walk/prewalk-replace '{*expr* %s} (list 'do code :ok)))
+                                                                                      (pb/thing-at-point)))))]))
                                        bindings))))))))
 
-(defn emit-bindings [filename keymap-sym tree]
-  (spit filename (compile-cider-map! keymap-sym tree)))
+(defn emit-bindings [filename & keymap-tree-pairs]
+  (spit filename
+        (str/join "\n"
+                  (map (fn [[keymap-sym tree]] (compile-cider-map! keymap-sym tree))
+                       (partition 2 keymap-tree-pairs)))))
 
-(spit "try-cider-keybindings.el"
-      (compile-cider-map!
-  'my-first-cider-map
-  '{:foo ["a" (+ 1 2)]
-    :bar {:qux ["M-w" (println "M-w")]}}))
+(comment
+  (spit "try-cider-keybindings.el"
+        (compile-cider-map!
+         'my-first-cider-map
+         '{:foo ["a" (+ 1 2)]
+           :bar {:qux ["M-w" (println "M-w")]}})))
