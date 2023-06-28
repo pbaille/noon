@@ -60,12 +60,13 @@
        :desc "toggle noon mode" "t n" #'noon-mode))
 
 (map! (:map noon-mode-map
-       :prefix ("H-C-n" . "noon") ;; at system level H-* is rebound to H-C-* in order to avoid osx default bindings
-       (:prefix ("r" . "reload")
-        :desc "init-reaper-interop" "r" #'noon/init-reaper-interop!
+       ;; at system level H-* is rebound to H-C-* in order to avoid osx default bindings
+       :desc "init reaper interop" "H-C-c" #'noon/init-reaper-interop!
+       (:prefix ("H-C-r" . "reload")
+        :desc "reload actions and bindings" "r" #'noon/init-actions-and-bindings!
         :desc "reload noon cider bindings" "b" #'noon/reload-bindings!
         :desc "reload reaper actions" "a" #'noon/install-reaper-actions!)
-       (:prefix ("l" . "log")
+       (:prefix ("H-C-l" . "log")
         :desc "focus" "f" (lambda () (interactive) (print "focus")))))
 
 (map! (:map noon-mode-map
@@ -74,15 +75,23 @@
       (:map reaper-mode-map
        :n "<escape>" (lambda () (interactive) (reaper-mode -1))))
 
-(defun noon/init-reaper-interop! ()
+(defun noon/connect-reaper! ()
   (interactive)
   ;; launch socket-repl script
-  (osc-send-message reaper-osc-client "/action/_RSb0f401791ac0eba7140bad3965dc7833c18e650d")
+  (osc-send-message reaper-osc-client "/action/_RSb0f401791ac0eba7140bad3965dc7833c18e650d"))
 
+(defun noon/init-actions-and-bindings! ()
+  (interactive)
   ;; register actions and install keybindings
   (noon/install-reaper-actions!)
 
   (noon/reload-bindings!))
+
+(defun noon/init-reaper-interop! ()
+  (interactive)
+  (noon/connect-reaper!)
+  (sleep-for 1)
+  (noon/init-actions-and-bindings!))
 
 (provide 'noon-modes)
 ;;; noon-modes.el ends here
