@@ -2,6 +2,8 @@
  :undo ["u" 40013]
  :redo ["C-r" 40014]
 
+ :play ["P" 40073]
+
  :grid {:quarters [nil (ru.take.grid.set T 1)]
         :mul3 [nil (ru.take.grid.set T (* 3 (ru.take.grid.get T)))]
         :mul2 [nil (ru.take.grid.set T (* 2 (ru.take.grid.get T)))]
