@@ -10,6 +10,16 @@
 (def REAPER_HOST "127.0.0.1")
 (def REAPER_PORT 9999)
 
+(defonce reaper-input-chan
+  (socket/udp-chan 9997))
+
+(defn reset-reaper-input-chan! []
+  (alter-var-root #'reaper-input-chan
+                  (fn [{:keys [socket channel]}]
+                    (.close socket)
+                    (async/close! channel)
+                    (socket/udp-chan 9997))))
+
 (defn encode [data]
   (-> (doto (java.io.ByteArrayOutputStream.)
         (bc/write-bencode data))
@@ -30,12 +40,9 @@
   ([x & xs]
    `(>> (do ~x ~@xs))))
 
-(defonce reaper-input-chan
-  (socket/udp-chan 9997))
-
 (defn get-response! [timeout]
   (let [timeout-chan (async/timeout timeout)
-        [v p] (async/alts!! [reaper-input-chan timeout-chan])]
+        [v p] (async/alts!! [(:buffer reaper-input-chan) timeout-chan])]
     (if (= p timeout-chan)
       ::reaper-timeout
       (json/read-str v :key-fn keyword))))
@@ -60,10 +67,13 @@
 
          (<< (global u (u.reload :utils)))
 
+
          (<< (global u (require :utils))
              (global ru (u.reload :ruteal))
              (global T (ru.take.get-active))
              (global E (ru.midi-editor.get-active)))
+
+         (<< (math.floor (reaper.MIDI_GetPPQPosFromProjQN (ru.take.get-active) 1)))
 
          (<< (ru.take.get-active))
          (<< (ru.midi-editor.get-active))
@@ -158,4 +168,7 @@
 
     (defn install-edn-actions! []
       (install-action-tree!
-       (read-string (slurp "emacs/reaper-actions.edn")))))
+       (read-string (slurp "emacs/reaper-actions.edn"))))
+
+    (comment
+      (all-paths (read-string (slurp "emacs/reaper-actions.edn")))))

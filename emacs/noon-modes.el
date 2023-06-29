@@ -80,6 +80,11 @@
   ;; launch socket-repl script
   (osc-send-message reaper-osc-client "/action/_RSb0f401791ac0eba7140bad3965dc7833c18e650d"))
 
+(defun noon/reset-reaper-connection! ()
+  (interactive)
+  (my-cider/eval! "(noon.utils.reaper/reset-reaper-input-chan!)")
+  (noon/connect-reaper!))
+
 (defun noon/init-actions-and-bindings! ()
   (interactive)
   ;; register actions and install keybindings
