@@ -10,6 +10,9 @@
 
 (def MIDI_RESOLUTION midi/MIDI_RESOLUTION)
 
+(def NOON_MIDI_NOTE_ON_SHIFT 2)
+(def NOON_MIDI_NOTE_OFF_SHIFT 1)
+
 (def REAPER_SYNC_MIDI_FILE
   "/Users/pierrebaille/Code/WIP/noon/generated/reaper-sync.mid")
 
@@ -40,8 +43,8 @@
       (let [start (qpos->ppq position)
             end (+ start (qpos->ppq duration))]
         (-> (dissoc e :position :duration)
-            (assoc :start-position start
-                   :end-position end))))
+            (assoc :start-position (+ start NOON_MIDI_NOTE_ON_SHIFT)
+                   :end-position (+ end NOON_MIDI_NOTE_OFF_SHIFT)))))
 
     (defn score->notes [score]
       (mapv noon-note->reaper-note (numerify-pitches score))))
@@ -53,8 +56,8 @@
        (fn [reaper-note noon-event]
          (and (= (:channel noon-event) (:channel reaper-note))
               (= (:velocity noon-event) (:velocity reaper-note))
-              (let [start-position (int (:start-position reaper-note))
-                    end-position (int (:end-position reaper-note))]
+              (let [start-position (- (int (:start-position reaper-note)) 2)
+                    end-position (- (int (:end-position reaper-note)) 1)]
                 (and (= start-position (qpos->ppq (:position noon-event)))
                      (= (- end-position start-position) (qpos->ppq (:duration noon-event)))
                      (= (harmony/hc->chromatic-value (:pitch noon-event)) (:pitch reaper-note))))))))
@@ -92,6 +95,20 @@
         (doseq [notes (partition-all 32 (score->notes updated))]
           (reaper/>> (ru.take.insert-notes T ~(vec notes))))))
 
+    (defn upd-focus! [u]
+      (let [score @score*
+            focused-note (<< (ru.take.focused-note (ru.take.get-active)))
+            noon-note (retrieve-reaper-note focused-note score)
+            _ (println noon-note)
+            updated-subscore (upd #{noon-note} u)
+            reaper-new-notes (score->notes updated-subscore)]
+        (reset! score* (-> (disj score noon-note)
+                           (into updated-subscore)))
+        (<< (let [t ru.take
+                  T (t.get-active)]
+              (t.delete-note T (. (t.focused-note T) :idx))
+              (t.insert-notes T ~reaper-new-notes)))))
+
     (defn sync-score! []
       (let [notes (score->notes @score*)]
         (<< (global T (ru.take.get-active))
@@ -100,6 +117,7 @@
           (reaper/>> (ru.take.insert-notes T ~(vec notes)))))))
 
 (defn reset-score! [score]
+  (reset! score* score)
   (noon/write-score score :filename REAPER_SYNC_MIDI_FILE)
   (reaper/>> (let [t ru.take
                    item (reaper.GetSelectedMediaItem 0 0)]
@@ -114,10 +132,16 @@
  '{:score {:upd ["H-C-u" (upd-selection! *expr*)]}}
  'reaper-mode-map
  '{:score {:upd ["U" (reset-score! *expr*)]}
-   :selection {:upd ["u" (upd-selection! *expr*)]}})
+   :selection {:upd ["u" (upd-selection! *expr*)]}
+   :focus {:d1 ["M-k" (upd-focus! noon.score/d1)]
+           :d1- ["M-j" (upd-focus! noon.score/d1-)]
+           :s1 ["M-S-k" (upd-focus! noon.score/s1)]
+           :s1- ["M-S-j" (upd-focus! noon.score/s1-)]}})
 
 (comment (do :score
 
+             (<< (ru.take.note-selection.get (ru.take.get-active)))
+             (score->notes @score*)
              (<< (global ru (u.reload :ruteal)))
              (<< (let [take ru.take
                        seq u.seq
