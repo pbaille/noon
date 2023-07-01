@@ -211,22 +211,16 @@
     (defn map-vals [f m]
       (apply merge (map (fn [[k v]] {k (f v)}) m)))
 
-    ;; TODO this do not seems to be correct, should be removed ?
     (defn all-paths
-      "return all the possible paths of a map"
-      [m & [ret]]
-      (let [ret (or ret [[]])
-            next-ret
-            (mapcat
-             (fn [path]
-               (map
-                (fn [[k _]]
-                  (conj path k))
-                (get-in m path)))
-             ret)]
-        (if (seq next-ret)
-          (concat ret (all-paths m next-ret))
-          ret)))
+      "given a nested map,
+       returns a seq of the form:
+       ([path val]*)"
+      ([m] (all-paths m []))
+      ([x at]
+       (if (map? x)
+         (->> (mapcat (fn [[k v]] (all-paths v [k])) x)
+              (map (fn [[p v]] [(concat at p) v])))
+         [[at x]])))
 
     (defn hm-nodes
       ([] (sorted-map))

@@ -57,7 +57,7 @@
   :desc
   "focus-s1"
   :n
-  "M-S-k"
+  "M-s-k"
   (lambda
    ()
    (interactive)
@@ -68,7 +68,7 @@
   :desc
   "focus-s1-"
   :n
-  "M-S-j"
+  "M-s-j"
   (lambda
    ()
    (interactive)
