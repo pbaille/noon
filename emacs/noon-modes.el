@@ -41,8 +41,8 @@
 
        (defun noon/toggle-reaper-mode-cursor-color ()
          (if reaper-mode
-             (progn (setq evil-normal-state-cursor '(box "#f09383")) (evil-normal-state 1))
-           (progn (setq evil-normal-state-cursor '(box "#e95678")) (evil-normal-state 1))))
+             (progn (setq-local evil-normal-state-cursor '(box "#f09383")) (evil-normal-state 1))
+           (progn (setq-local evil-normal-state-cursor '(box "#e95678")) (evil-normal-state 1))))
 
        (add-hook 'reaper-mode-hook 'noon/toggle-reaper-mode-cursor-color))
 
