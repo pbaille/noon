@@ -97,17 +97,18 @@
 
     (defn upd-focus! [u]
       (let [score @score*
-            focused-note (<< (ru.take.focused-note (ru.take.get-active)))
-            noon-note (retrieve-reaper-note focused-note score)
-            _ (println noon-note)
-            updated-subscore (upd #{noon-note} u)
-            reaper-new-notes (score->notes updated-subscore)]
-        (reset! score* (-> (disj score noon-note)
-                           (into updated-subscore)))
-        (<< (let [t ru.take
-                  T (t.get-active)]
-              (t.delete-note T (. (t.focused-note T) :idx))
-              (t.insert-notes T ~reaper-new-notes)))))
+            focused-note (<< (ru.take.focused-note (ru.take.get-active)))]
+        (if focused-note
+          (let [noon-note (retrieve-reaper-note focused-note score)
+                updated-subscore (upd #{noon-note} u)
+                reaper-new-notes (score->notes updated-subscore)]
+           (reset! score* (-> (disj score noon-note)
+                              (into updated-subscore)))
+           (<< (let [t ru.take
+                     T (t.get-active)]
+                 (t.delete-note T (. (t.focused-note T) :idx))
+                 (t.insert-notes T ~reaper-new-notes)
+                 (t.focus.closest-note T)))))))
 
     (defn sync-score! []
       (let [notes (score->notes @score*)]
