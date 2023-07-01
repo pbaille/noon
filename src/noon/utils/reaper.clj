@@ -5,7 +5,8 @@
             [backtick :refer [template]]
             [clojure.string :as str]
             [clojure.core.async :as async]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [noon.utils.misc :as u]))
 
 (def REAPER_HOST "127.0.0.1")
 (def REAPER_PORT 9999)
@@ -151,17 +152,9 @@
       (reg-action! "cursor-fw-grid-step"
                    '[(ru.take.cursor.update T 1)]))
 
-    (defn all-paths
-      ([m] (all-paths m []))
-      ([x at]
-       (if (map? x)
-         (->> (mapcat (fn [[k v]] (all-paths v [k])) x)
-              (map (fn [[p v]] [(concat at p) v])))
-         [[at x]])))
-
     (defn install-action-tree!
       [t]
-      (->> (all-paths t)
+      (->> (u/all-paths t)
            (filter (comp seq second))
            (mapv (fn [[p v]] (cons p v)))
            (install-actions!)))

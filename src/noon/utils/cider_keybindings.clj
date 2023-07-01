@@ -2,22 +2,15 @@
   (:require [backtick :refer [template]]
             [clojure.string :as str]
             [clojure.pprint :as pprint]
-            [clojure.walk :as walk]))
-
-(defn all-paths
-      ([m] (all-paths m []))
-      ([x at]
-       (if (map? x)
-         (->> (mapcat (fn [[k v]] (all-paths v [k])) x)
-              (map (fn [[p v]] [(concat at p) v])))
-         [[at x]])))
+            [clojure.walk :as walk]
+            [noon.utils.misc :as u]))
 
 (defn path->binding-description [p]
   (str/join "-" (map name p)))
 
 (defn compile-cider-map!
   [mode-map-sym tree]
-  (let [bindings (all-paths tree)]
+  (let [bindings (u/all-paths tree)]
     (with-out-str
       (clojure.pprint/pprint
        (template (map! (:map ~mode-map-sym
