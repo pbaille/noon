@@ -116,7 +116,10 @@
     (defn str->keyword [name]
       (-> (str/lower-case name)
           (str/replace #" " "-")
-          (keyword))))
+          (keyword)))
+
+    (defn pretty-str [x]
+      (with-out-str (clojure.pprint/pprint x))))
 
 (do :metadata
 
@@ -207,6 +210,10 @@
         (and (map? x) (map? y)) (merge-with deep-merge x y)
         (nil? y) x
         :else y))
+
+    (defn deep-find [data x]
+      (or (= data x)
+          (and (coll? data) (some #(deep-find % x) data))))
 
     (defn map-vals [f m]
       (apply merge (map (fn [[k v]] {k (f v)}) m)))
