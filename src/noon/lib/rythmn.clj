@@ -126,7 +126,6 @@
       (let [flags (map first (take-while (comp keyword? second) (partition 2 1 (concat x [:end]))))
             rst (drop (count flags) x)
             [kvs m] (if (even? (count rst)) [rst {}] [(butlast rst) (last rst)])]
-        (println flags kvs m)
         (merge (zipmap flags (repeat true))
                (apply hash-map kvs)
                m)))
@@ -141,7 +140,7 @@
          shifted: the possibility for the generated tup to not begin on beat."
 
       ([resolution]
-       (gen-tup resolution (rand-int 1 resolution) {}))
+       (gen-tup resolution (inc (rand-int resolution)) {}))
       ([resolution size]
        (gen-tup resolution size {}))
       ([resolution size & options]
@@ -153,6 +152,68 @@
          (if shifted
            (lin t (rand-shift resolution))
            t))))
+
+    (do :bintup
+
+        "experimental, may be integrated with gen-tup via an option"
+
+        (defn sum->bins [sum]
+          (mapcat (fn [n] (cons {:bintup 0} (next (repeat n {:bintup 1})))) sum))
+
+        (defn gen-bintup
+          "works like gen-tup except:
+             every notes length equal `resolution`
+             every note is marked with :gentup 0
+
+           in addition to this, every hole between notes is filled with notes of duration `resolution` and marked :bintup 1.
+
+           this will allow you to get some binary accentuated tups, for instance like this:
+           (play
+            (gen-bintup 18 10 :shifted)
+            (parts {:bintup 0} vel2
+                   {:bintup 1} vel6))
+
+           gen-tup doc:
+           generate a rythmic tup based on the given arguments:
+           resolution: the number of subdivisions that we will use.
+           size: the number of notes that the generated tup will contain.
+           options:
+             euclidean: generates an euclydean tup.
+             durations: the multiples of 'resolution that we are allowed to use (fractionals allowed).
+             shifted: the possibility for the generated tup to not begin on beat."
+
+          ([resolution]
+           (gen-bintup resolution (inc (rand-int resolution)) {}))
+          ([resolution size]
+           (gen-bintup resolution size {}))
+          ([resolution size & options]
+           (let [{:keys [shifted durations euclidean ]
+                  :or {durations (range 1 (inc resolution))}} (gen-tup-options options)
+                 sum (if euclidean
+                       (eucl/euclidean-sum size resolution)
+                       (rand-sum resolution size durations))
+                 bins (sum->bins sum)]
+             (tup* (if shifted
+                     (rand-nth (s/rotations bins))
+                     bins)))))
+
+        (comment
+          (play dur4
+                dorian
+                (chans [(patch :vibraphone) vel4 (par> d3 d3 d3)]
+                       [(patch :taiko-drum) (gen-tup 9 3 :durations [1 2 3]) ($ (one-of vel4 vel3) (maybe d3 d3-))]
+                       [(patch :acoustic-bass) o1- (gen-bintup 9 5)
+                        (parts {:bintup 0} _
+                               {:bintup 1} ($ (one-of vel0 d3-)))]
+                       [(patch :ocarina)
+                        (gen-bintup 27 11  :shifted :euclidean)
+                        ($ (one-of vel0 vel3 vel5 vel7))
+                        (parts {:bintup 0} ($ (one-of d2 d4 d6))
+                               {:bintup 1} ($ (one-of d3 d5 d7)))])
+                (append [rev lydian (transpose c4)] [lydian+2 (transpose c4-)] melodic-minor)
+                (append lydian)
+                (dup 2)
+                )))
 
 
     (comment :tries
