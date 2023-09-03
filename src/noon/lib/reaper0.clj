@@ -136,8 +136,10 @@
    :selection {:upd ["u" (upd-selection! *expr*)]}
    :focus {:d1 ["M-k" (upd-focus! noon.score/d1)]
            :d1- ["M-j" (upd-focus! noon.score/d1-)]
-           :s1 ["M-S-k" (upd-focus! noon.score/s1)]
-           :s1- ["M-S-j" (upd-focus! noon.score/s1-)]}})
+           :s1 ["M-s-k" (upd-focus! noon.score/s1)]
+           :s1- ["M-s-j" (upd-focus! noon.score/s1-)]
+           :c1 ["M-s-k" (upd-focus! noon.score/c1)]
+           :c1- ["M-s-j" (upd-focus! noon.score/c1-)]}})
 
 (comment (do :score
 
