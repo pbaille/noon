@@ -95,7 +95,7 @@
      "For simple cases like this don't forget that the 'play macro and the 'mk function variadic arities are doing the same thing."
      (play F#-1 dur4)
 
-     "But in a 'cat form for instance we need the vectors"
+     "But in a 'cat form for instance we need the vectors (square brackets)"
      (play (cat [C0 dur:2] [Eb0 dur:4] [G0 dur:4] C1))]
 
     [:velocities
@@ -192,7 +192,7 @@
 
        "By default, we are in the C major scale, but of course it can be changed. (see :harmony section)"
 
-       "As a quick example, pretty self explanatory (but explained in more detailed later)."
+       "As a quick example, pretty self explanatory (but explained in more details later)."
        (play dur:4
              (root :Eb) (scale :hungarian)
              (cat d0 d1 d2 d3 d4 d5 d6 d7))]
