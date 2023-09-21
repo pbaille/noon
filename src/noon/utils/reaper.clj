@@ -98,6 +98,7 @@
          (<< (ru.take.time-selection.set T 0 0))
          (<< (ru.take.time-selection.update T nil 2))
          (<< (ru.take.time-selection.update T :fw 1))
+         (<< (ru.take.focused-note T))
 
          (<< (ru.take.cursor.get T))
          (<< (ru.take.cursor.set T 2))
@@ -110,6 +111,10 @@
 
 (do :actions
 
+    (def REASCRIPT_PATH "/Users/pierrebaille/Code/Lua/reascripts")
+
+    (def *actions (atom {}))
+
     (def action-prelude
       '[(global u (require :utils))
         (global ru (require :ruteal))
@@ -119,49 +124,83 @@
       (str "pb_"(cond (keyword? x) (name x)
                       (sequential? x) (str/join "_" (map name x)))))
 
-    (defn reg-action! [name code]
-      (let [lua-file (str "/Users/pierrebaille/Code/Lua/reascripts/" (action-name name) ".lua")]
-        (spit lua-file (fennel/compile-string (clojure.string/join "\n" (concat action-prelude code))))
-        (<< (reaper.AddRemoveReaScript true 0 ~lua-file true))))
+    (defn init-actions! [actions-file]
+      (->> (slurp actions-file)
+           (read-string)
+           (u/all-paths)
+           (map (fn [[path [binding code]]]
+                  (let [action-name (action-name path)
+                        action-id (if (int? code) code)
+                        code (if-not action-id code)]
+                    [(keyword action-name) {:action-name action-name
+                                            :path path
+                                            :binding binding
+                                            :code code
+                                            :action-id action-id}])))
+           (into {})
+           (reset! *actions)))
 
-    (defn reg-actions!
-      [action-tree]
-      (->> (mapv (fn [[name _binding code]]
-                   [name (cond (seq? code) (reg-action! name [code])
-                               (int? code) code)])
-                 action-tree)
-           (into {})))
+    (defn compile-action! [{:keys [path binding code]}]
+      (let [action-name (action-name path)
+            lua-file (str REASCRIPT_PATH "/" action-name ".lua")
+            lua-source (fennel/compile-string (clojure.string/join "\n" (concat action-prelude [code])))]
+        (spit lua-file lua-source)
+        (swap! *actions assoc-in [(keyword action-name) :lua-file] lua-file)))
+
+    (defn compile-actions!
+      []
+      (doseq [action (vals @*actions)]
+        (if (:code action)
+          (compile-action! action))))
+
+    (defn compile-actions-loading-script []
+      (let [name->lua-file
+            (->> (vals @*actions)
+                 (keep (fn [{:keys [action-name lua-file]}] (when lua-file [action-name lua-file])))
+                 (into {}))
+            action-count (count name->lua-file)
+            action-reg-forms (map-indexed (fn [i [name file]]
+                                            (template  (tset actions ~name (reaper.AddRemoveReaScript true 0 ~file ~(= (inc i) action-count)))))
+                                          name->lua-file)]
+        (fennel/compile-string (str '(local actions {})
+                                    (cons 'do action-reg-forms)
+                                    'actions))))
+
+    (defn register-actions! [loading-script-path]
+      (doseq [[name id] (<< (dofile ~loading-script-path))]
+        (swap! *actions assoc-in [name :action-id] id)))
+
+    (defn compile-emacs-bindings []
+      (with-out-str
+        (clojure.pprint/pprint
+         (template (map! (:map reaper-mode-map
+                               :n "<escape>" (lambda () (interactive) (reaper-mode -1))
+                               ~@(mapcat (fn [{:keys [path binding action-id]}]
+                                           (if binding
+                                             [:desc (str/join "-" (map name path)) :n binding
+                                              (template (lambda ()
+                                                                (interactive)
+                                                                (osc-send-message reaper-osc-client "/action" ~action-id)))]))
+                                         (vals @*actions))))))))
+
+    (defn compile-hydra-bindings []
+      ())
 
     (defn install-actions!
-      [action-tree]
-      (let [name->action-id (reg-actions! action-tree)]
-        (spit "emacs/reaper-bindings.el"
-              (with-out-str
-                (clojure.pprint/pprint
-                 (template (map! (:map reaper-mode-map
-                                       :n "<escape>" (lambda () (interactive) (reaper-mode -1))
-                                       ~@(mapcat (fn [[nam binding id]]
-                                                   (if binding
-                                                     [:desc (str/join "-" (map name nam)) :n binding
-                                                      (template (lambda ()
-                                                                        (interactive)
-                                                                        (osc-send-message reaper-osc-client "/action" ~(get name->action-id nam))))]))
-                                                 action-tree)))))))))
+      [actions-file]
+      (let [loading-script-path (str REASCRIPT_PATH "/load-pb-actions.lua")]
+        (init-actions! actions-file)
+        (compile-actions!)
+        (spit loading-script-path (compile-actions-loading-script))
+        (register-actions! loading-script-path)
+        (spit "emacs/reaper-bindings.el" (compile-emacs-bindings))))
 
+    (comment (def actions-file "emacs/reaper-actions.edn")
+             (install-actions! "emacs/reaper-actions.edn")
+             (compile-actions!)
+             (init-actions! actions-file)
+             (spit (str REASCRIPT_PATH "/load-pb-actions.lua") (compile-actions-loading-script)))
     (comment
-      (reg-action! "cursor-fw-grid-step"
-                   '[(ru.take.cursor.update T 1)]))
-
-    (defn install-action-tree!
-      [t]
-      (->> (u/all-paths t)
-           (filter (comp seq second))
-           (mapv (fn [[p v]] (cons p v)))
-           (install-actions!)))
-
-    (defn install-edn-actions! []
-      (install-action-tree!
-       (read-string (slurp "emacs/reaper-actions.edn"))))
-
-    (comment
+      (vals @*actions)
+      (slurp (str REASCRIPT_PATH "/load-pb-actions.lua"))
       (all-paths (read-string (slurp "emacs/reaper-actions.edn")))))

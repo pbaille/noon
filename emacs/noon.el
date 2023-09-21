@@ -21,7 +21,10 @@
 
 (require 'pb-reaper)
 
-(defvar reaper-osc-client (osc-make-client (pb/get-local-ip) 8001))
+(defvar noon/reaper-osc-client (osc-make-client (pb/get-local-ip) 8001))
+(defvar noon/source-path "/Users/pierrebaille/Code/WIP/noon")
+(defvar noon/emacs-app-path "/usr/local/Cellar/emacs-mac/emacs-29.1-mac-10.0/Emacs.app")
+(defvar noon/socket-repl-action-id "_RSb0f401791ac0eba7140bad3965dc7833c18e650d")
 
 (progn :noon-mode
 
@@ -47,13 +50,15 @@
        (add-hook 'reaper-mode-hook 'noon/toggle-reaper-mode-cursor-color))
 
 (defun noon/install-reaper-actions! ()
+  "Register actions from reaper-actions.edn to reaper and compile reaper-bindings.el."
   (interactive)
-  (my-cider/eval! "(noon.utils.reaper/install-edn-actions!)"))
+  (my-cider/eval! (concat "(noon.utils.reaper/install-actions! \"" noon/source-path "/emacs/reaper-actions.edn\")")))
 
 (defun noon/reload-bindings! ()
+  "Reload noon and reaper bindings."
   (interactive)
-  (load "/Users/pierrebaille/Code/WIP/noon/emacs/reaper-bindings.el")
-  (load "/Users/pierrebaille/Code/WIP/noon/emacs/cider-bindings.el"))
+  (load (concat noon/source-path "/emacs/reaper-bindings.el"))
+  (load (concat noon/source-path "/emacs/cider-bindings.el")))
 
 (map! :leader
       (:map cider-mode-map
@@ -76,16 +81,35 @@
        :n "<escape>" (lambda () (interactive) (reaper-mode -1))))
 
 (defun noon/connect-reaper! ()
+  "Start the socket-repl script in reaper."
   (interactive)
   ;; launch socket-repl script
-  (osc-send-message reaper-osc-client "/action/_RSb0f401791ac0eba7140bad3965dc7833c18e650d"))
+  (osc-send-message noon/reaper-osc-client (concat "/action/" noon/socket-repl-action-id)))
 
 (defun noon/reset-reaper-connection! ()
+  "Reset the udp channel and relaunch the socket-repl script."
   (interactive)
   (my-cider/eval! "(noon.utils.reaper/reset-reaper-input-chan!)")
   (noon/connect-reaper!))
 
+(defun noon/launch-fluidsynth! ()
+  "Start a fluidsynth process."
+  (interactive)
+  (when (not (get-process "fluidsynth1"))
+      (start-process-shell-command "fluidsynth1" "*fluidsynth1*" (concat noon/source-path "/scripts/fluidsynth1"))
+      (sleep-for 2)))
+
+(defun noon/open-reaper! ()
+  "Open reaper with default noon template that use fluidsynth."
+  (interactive)
+  (noon/launch-fluidsynth!)
+  (when (not (get-process "reaper"))
+    (start-process-shell-command "reaper" "*reaper*" (concat noon/source-path "/scripts/launch_reaper"))
+    (shell-command (concat "open -a " noon/emacs-app-path))
+    (sleep-for 6)))
+
 (defun noon/init-actions-and-bindings! ()
+  "Recompile reaper-actions.edn then reload all bindings."
   (interactive)
   ;; register actions and install keybindings
   (noon/install-reaper-actions!)
@@ -93,10 +117,17 @@
   (noon/reload-bindings!))
 
 (defun noon/init-reaper-interop! ()
+  "Launch socket-repl script and reinit bindings."
   (interactive)
   (noon/connect-reaper!)
   (sleep-for 1)
   (noon/init-actions-and-bindings!))
 
-(provide 'noon-modes)
-;;; noon-modes.el ends here
+(defun noon/reaper! ()
+  "Launch fluidsynth, reaper, load actions and bindings."
+  (interactive)
+  (noon/open-reaper!)
+  (noon/init-actions-and-bindings!))
+
+(provide 'noon)
+;;; noon.el ends here

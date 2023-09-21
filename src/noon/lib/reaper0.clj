@@ -6,7 +6,8 @@
             [noon.utils.misc :as u]
             [noon.midi :as midi]
             [noon.score :as noon]
-            [noon.utils.cider-keybindings :as kbs]))
+            [noon.utils.cider-keybindings :as kbs]
+            [clojure.string :as str]))
 
 (def MIDI_RESOLUTION midi/MIDI_RESOLUTION)
 
@@ -117,15 +118,18 @@
         (doseq [notes (partition-all 32 notes)]
           (reaper/>> (ru.take.insert-notes T ~(vec notes)))))))
 
-(defn reset-score! [score]
-  (reset! score* score)
-  (noon/write-score score :filename REAPER_SYNC_MIDI_FILE)
-  (reaper/>> (let [t ru.take
-                   item (reaper.GetSelectedMediaItem 0 0)]
-               (if item
-                 (do (t.cursor.set (t.get-active) 0)
-                     (reaper.DeleteTrackMediaItem (reaper.GetMediaItemTrack item) item)))
-               (reaper.InsertMedia ~REAPER_SYNC_MIDI_FILE 0))))
+(defn reset-score! [x]
+  (let [score (cond (score? x) x
+                    (score-update? x) (mk x)
+                    :else score0)]
+    (reset! score* score)
+    (noon/write-score score :filename REAPER_SYNC_MIDI_FILE)
+    (reaper/>> (let [t ru.take
+                     item (reaper.GetSelectedMediaItem 0 0)]
+                 (if item
+                   (do (t.cursor.set (t.get-active) 0)
+                       (reaper.DeleteTrackMediaItem (reaper.GetMediaItemTrack item) item)))
+                 (reaper.InsertMedia ~REAPER_SYNC_MIDI_FILE 0)))))
 
 (kbs/emit-bindings
  "emacs/cider-bindings.el"
@@ -144,6 +148,7 @@
 (comment (do :score
 
              (<< (ru.take.note-selection.get (ru.take.get-active)))
+             ()
              (score->notes @score*)
              (<< (global ru (u.reload :ruteal)))
              (<< (let [take ru.take
@@ -164,26 +169,179 @@
 
              (upd-selection! ($ {:selected false}))
              (upd-selection! ($ (tup d1- d1 d3 d0)))
+             (upd-selection! s1)
              (upd-score! ($ (tup d1 d3)))
+             (upd-score! d1)
+             (sync-score!)
 
              (require '[noon.lib.melody :as m])
-             (upd-score!
-              (lin (chans
+             (reset-score!
+              (mk (chans
 
-                    [(patch :vibraphone)
-                     vel3
-                     (tupn 4 [(one-of IV II VI) tetrad (par [t2- vel5] s0 s1 s2 s3)])]
+                   [(patch :vibraphone)
+                    vel3
+                    (tupn 4 [(one-of IV II VI) tetrad (par [t2- vel5] s0 s1 s2 s3)])]
 
-                    [(patch :ocarina)
-                     vel5
-                     (shuftup d1 d2 d3 d4 d5)
-                     ($ (maybe (par d0 d3)))
-                     (rup 16
-                          (probs {(m/permutation :rand) 1
-                                  (m/rotation :rand) 3
-                                  (one-of* (map d-step (range -3 4))) 5}))])
+                   [(patch :ocarina)
+                    vel5
+                    (shuftup d1 d2 d3 d4 d5)
+                    ($ (maybe (par d0 d3)))
+                    (rup 16
+                         (probs {(m/permutation :rand) 1
+                                 (m/rotation :rand) 3
+                                 (one-of* (map d-step (range -3 4))) 5}))])
 
-                   (adjust 10)
-                   (append [d2- (transpose c3)]
-                           [d2 (transpose c3-)]
-                           same)))))
+                  (adjust 10)
+                  (append [d2- (transpose c3)]
+                          [d2 (transpose c3-)]
+                          same))))
+
+         (do :noon-hydra
+             (letfn [(symjoin [sep xs] (->> (map name xs) (str/join sep) symbol))
+                     (hsym [segments] (symjoin "/" (cons :noon-hydra segments)))
+                     (hbody-var [segments] (symbol (str "#'" (hsym segments) "/body")))
+                     (hform [name-segments children]
+                       (template (defhydra ~(hsym name-segments) (:color teal)
+                                   ("q" nil "quit" :exit true)
+                                   ~@(when-let [back-desc (some-> (butlast name-segments) last name)]
+                                       [(list "<escape>" (hbody-var (butlast name-segments)) back-desc)])
+                                   ~@children)))
+                     ($ [x f] (map f x))
+                     ($* [x f] (mapcat f x))
+                     (noon-action [context-update code] (list 'my-cider/eval! (str (list context-update code))))]
+
+               (let [contexts [[:focus "f" `upd-focus!]
+                               [:selection "s" `upd-selection!]
+                               [:score "S" `upd-score!]]
+                     levels [[:diatonic "d" `d-step]
+                             [:chromatic "c"  `c-step]
+                             [:structural "s" `s-step]]
+                     directions [[:up "k" 1]
+                                 [:down "j" -1]]]
+
+                 (cons (hform []
+                              ($ contexts
+                                 (fn [[context key]] (list key (hbody-var [context]) (name context)))))
+                       ($* contexts
+                           (fn [[context key update]]
+                             (cons (hform [context]
+                                          ($ levels
+                                             (fn [[level key]] (list key (hbody-var [context level]) (name level)))))
+                                   ($ levels
+                                      (fn [[level _ step-fn]]
+                                        (hform [context level]
+                                               ($ directions
+                                                  (fn [[dir key delta]]
+                                                    (list key (noon-action update (list step-fn delta)) :color 'red)))))))))))))
+
+         (do :just-hydra
+
+             (def sample-hydra-def
+               (template
+                [:root "H"
+                 {:description "this is the root"}
+                 [:one "a"
+                  [:a "a" (message "one a")]
+                  [:b "b" (message "one b")]]
+                 [:two "b" {:wrap-head ~(fn [x] (list 'progn x x))}
+                  [:a "a" (message "two a")]
+                  [:b "b" (message "two b")]
+                  [:three "c" {:foo bar}
+                   [:deep "d" (message "deep")]]]]))
+
+             (def default-hydra-options
+               {:color 'teal
+                :wrap-head identity})
+
+             (def hydra-option-keys [:color :pre :post :exit :foreign-keys :bind :hint :timeout])
+             (def hydra-head-option-keys [:color :exit :bind :column])
+
+             (do :help
+                 (defn symjoin [sep xs] (->> (map name xs) (str/join sep) symbol))
+                 (defn map->plist [m]
+                   (mapcat identity m))
+                 (defn hydra-sym [segments] (symjoin "/" (cons :noon-hydra segments)))
+                 (defn hydra-body-varsym [segments] (symbol (str "#'" (hydra-sym segments) "/body")))
+                 (defn hydra-description [h]
+                   (or (:description (:hydra/options h))
+                       (name (:hydra/name h))))
+                 (defn options->plist [options]
+                   (map->plist (select-keys options hydra-option-keys)))
+                 (defn options->head-plist [options]
+                   (map->plist (select-keys options hydra-head-option-keys)))
+                 (defn merge-hydra-options [options {:as more :keys [wrap-head]}]
+                   (-> (merge (dissoc options :description) (dissoc more :wrap-head))
+                       (update :wrap-head (fn [x] (if wrap-head
+                                                   (comp x wrap-head)
+                                                   x))))))
+
+             (comment :first-try
+                      (defn parse-hydra [options [hydra-name key x & xs]]
+                        (let [[opts body] (if (map? x) [x xs] [{} (cons x xs)])
+                              next-options (merge-hydra-options options opts)]
+                          (merge {:hydra/name hydra-name
+                                  :hydra/key key
+                                  :hydra/options next-options}
+                                 (if (vector? (first body))
+                                   {:hydra/body true
+                                    :hydra/children (mapv (partial parse-hydra next-options) body)}
+                                   {:hydra/head true
+                                    :hydra/impl (first body)}))))
+                      (defn compile-hydra-child
+                        [at {:as h :hydra/keys [head options key impl name]}]
+                        (if head
+                          (let [wrap-head (:wrap-head options)]
+                            (list* key (wrap-head impl) (hydra-description h) (options->head-plist options)))
+                          (list key (hydra-body-varsym (conj at name)) (hydra-description h))))
+
+                      (defn compile-hydra
+                        [at {:as hydra :hydra/keys [options body head children wrap-head]}]
+                        (let [at (conj at (:hydra/name hydra))]
+                          (cons (template (defhydra ~(hydra-sym at) ~(options->plist options)
+                                            ~(hydra-description hydra)
+                                            ~@(map (partial compile-hydra-child at) children)))
+                                (mapcat (partial compile-hydra at)
+                                        (filter :hydra/body children)))))
+
+                      (->> sample-hydra-def
+                           (parse-hydra default-hydra-options)
+                           (compile-hydra [])))
+
+             (defn parse-hydra [from options [hydra-name key x & xs]]
+               (let [[opts body] (if (map? x) [x xs] [{} (cons x xs)])
+                     next-options (merge-hydra-options options opts)
+                     from (conj from hydra-name)
+                     base {:hydra/name (hydra-sym from)
+                           :hydra/key key
+                           :hydra/path from}]
+                 (if (vector? (first body))
+                   (cons (assoc base
+                                :hydra/options (options->plist next-options)
+                                :hydra/docstring (:doc opts)
+                                :hydra/heads (map first body))
+                         (mapcat (partial parse-hydra from next-options) body))
+                   [(assoc base
+                           :hydra/hint (or (:hint opts) (name hydra-name))
+                           :hydra/options (options->head-plist opts)
+                           :hydra/expr ((:wrap-head options) (first body)))])))
+
+             (defn hydra-path-map [hydras]
+               (reduce (fn [ret h] (assoc ret (:hydra/path h) h))
+                       {} hydras))
+
+             (defn hydra-compile-one [path path-map]
+               (let [{:hydra/keys [heads name options]} (get path-map path)]
+                 (when heads
+                   (template (defhydra ~name ~options
+                               ~@(map (fn [h] (let [{:hydra/keys [key hint expr name options path]} (get path-map (conj path h))]
+                                               (if expr
+                                                 (list* key expr hint options)
+                                                 (list key (hydra-body-varsym path) hint))))
+                                      heads))))))
+
+             (defn hydra-compile [spec]
+               (let [hydras (parse-hydra [] default-hydra-options spec)
+                     path-map (hydra-path-map hydras)]
+                 (keep (fn [[path h]] (hydra-compile-one path path-map)) path-map)))
+
+             (hydra-compile sample-hydra-def)))
