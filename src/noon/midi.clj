@@ -252,9 +252,8 @@
 (do :play2
 
     (def SOUNDFONTS
-      {:yami "midi/yam.sf2"
-       :chorium "midi/choriumreva.sf2"
-       :squid "midi/squid.sf2"})
+      {:chorium "midi/soundfonts/choriumreva.sf2"
+       :squid "midi/soundfonts/squid.sf2"})
 
     (defn reset-filestream []
       (filepath->buffered-input-stream "midi/reset.mid"))
