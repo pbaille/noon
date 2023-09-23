@@ -194,7 +194,7 @@
         (compile-actions!)
         (spit loading-script-path (compile-actions-loading-script))
         (register-actions! loading-script-path)
-        (spit "emacs/reaper-bindings.el" (compile-emacs-bindings))))
+        (spit "emacs/compiled/reaper-bindings.el" (compile-emacs-bindings))))
 
     (comment (def actions-file "emacs/reaper-actions.edn")
              (install-actions! "emacs/reaper-actions.edn")
