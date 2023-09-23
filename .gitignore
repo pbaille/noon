@@ -2,4 +2,6 @@
 /.cpcache/
 /.nrepl-port
 /generated/
-/midi/ARIAConverted/
+/midi/soundfonts/
+/emacs/compiled/
+/emacs/xp/
