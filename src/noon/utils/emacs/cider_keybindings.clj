@@ -1,4 +1,4 @@
-(ns noon.utils.cider-keybindings
+(ns noon.utils.emacs.cider-keybindings
   (:require [backtick :refer [template]]
             [clojure.string :as str]
             [clojure.pprint :as pprint]

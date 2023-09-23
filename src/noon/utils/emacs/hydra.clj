@@ -1,4 +1,4 @@
-(ns noon.utils.hydra
+(ns noon.utils.emacs.hydra
   (:require [backtick :refer [template]]
             [clojure.string :as str]))
 

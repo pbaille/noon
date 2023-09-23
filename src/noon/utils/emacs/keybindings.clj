@@ -1,4 +1,4 @@
-(ns noon.utils.keybindings
+(ns noon.utils.emacs.keybindings
   "utility for defining keybinding in an edn way !"
   (:require [noon.utils.misc :as u]
             [backtick :refer [template]]
