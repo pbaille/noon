@@ -1,1 +1,0 @@
-*.{vep64,sf2} filter=lfs diff=lfs merge=lfs -text
