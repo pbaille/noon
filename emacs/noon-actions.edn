@@ -1,0 +1,58 @@
+[:root {:doc "The root of all noon actions, fn key."
+        :key "C-M-S-s-<return>"}
+
+ [:focus "f"
+  {:update noon.lib.reaper0/upd-focus!}
+  [:diatonic "d"
+   [:up "k" 'noon.score/d1]
+   [:down "j" 'noon.score/d1-]]
+  [:structural "s"
+   [:up "k" {:stay true} 'noon.score/s1]
+   [:down "j" {:stay true} 'noon.score/s1-]]
+  [:chromatic "c"
+   [:up "k" {:stay true} 'noon.score/c1]
+   [:down "j" {:stay true} 'noon.score/c1-]]]
+
+ [:selection "s"
+  {:update noon.lib.reaper0/upd-selection!}
+  [:diatonic "d"
+   [:up "k" {:stay true} 'noon.score/d1]
+   [:down "j" {:stay true} 'noon.score/d1-]]
+  [:structural "s"
+   [:up "k" {:stay true} 'noon.score/s1]
+   [:down "j" {:stay true} 'noon.score/s1-]]
+  [:chromatic "c"
+   [:up "k" {:stay true} 'noon.score/c1]
+   [:down "j" {:stay true} 'noon.score/c1-]]]
+
+[:score "S"
+  {:update noon.lib.reaper0/upd-score!}
+  [:diatonic "d"
+   [:up "k" {:stay true} 'noon.score/d1]
+   [:down "j" {:stay true} 'noon.score/d1-]]
+  [:structural "s"
+   [:up "k" {:stay true} 'noon.score/s1]
+   [:down "j" {:stay true} 'noon.score/s1-]]
+  [:chromatic "c"
+   [:up "k" {:stay true} 'noon.score/c1]
+   [:down "j" {:stay true} 'noon.score/c1-]]]
+
+ [:move {:doc "Various moves actions, using vim movement keys."
+         :keys ["h" "j" "k" "l"]}
+  [:cursor {}]
+  [:focus {}]
+  [:selection {}]
+  [:score {}]]
+
+ [:inspect {:doc "Inspection actions, using cider repl."}
+  [:cursor {}]
+  [:focus {}]
+  [:selection {}]
+  [:score {}]]
+
+ [:edition {}
+  [:undo]
+  [:redo]
+  [:repeat]]
+
+ ]
