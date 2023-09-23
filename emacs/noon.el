@@ -57,8 +57,8 @@
 (defun noon/reload-bindings! ()
   "Reload noon and reaper bindings."
   (interactive)
-  (load (concat noon/source-path "/emacs/reaper-bindings.el"))
-  (load (concat noon/source-path "/emacs/cider-bindings.el")))
+  (load (concat noon/source-path "/emacs/compiled/reaper-bindings.el"))
+  (load (concat noon/source-path "/emacs/compiled/cider-bindings.el")))
 
 (map! :leader
       (:map cider-mode-map
