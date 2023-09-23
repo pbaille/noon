@@ -6,7 +6,8 @@
             [clojure.string :as str]
             [clojure.core.async :as async]
             [clojure.data.json :as json]
-            [noon.utils.misc :as u]))
+            [noon.utils.misc :as u]
+            [noon.score :as noon]))
 
 (def REAPER_HOST "127.0.0.1")
 (def REAPER_PORT 9999)
@@ -180,7 +181,7 @@
                                              [:desc (str/join "-" (map name path)) :n binding
                                               (template (lambda ()
                                                                 (interactive)
-                                                                (osc-send-message reaper-osc-client "/action" ~action-id)))]))
+                                                                (osc-send-message noon/reaper-osc-client "/action" ~action-id)))]))
                                          (vals @*actions))))))))
 
     (defn compile-hydra-bindings []
