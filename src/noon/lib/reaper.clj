@@ -148,7 +148,6 @@
 (comment (do :score
 
              (<< (ru.take.note-selection.get (ru.take.get-active)))
-             ()
              (score->notes @score*)
              (<< (global ru (u.reload :ruteal)))
              (<< (let [take ru.take
@@ -174,27 +173,7 @@
              (upd-score! d1)
              (sync-score!)
 
-             (require '[noon.lib.melody :as m])
-             (reset-score!
-              (mk (chans
-
-                   [(patch :vibraphone)
-                    vel3
-                    (tupn 4 [(one-of IV II VI) tetrad (par [t2- vel5] s0 s1 s2 s3)])]
-
-                   [(patch :ocarina)
-                    vel5
-                    (shuftup d1 d2 d3 d4 d5)
-                    ($ (maybe (par d0 d3)))
-                    (rup 16
-                         (probs {(m/permutation :rand) 1
-                                 (m/rotation :rand) 3
-                                 (one-of* (map d-step (range -3 4))) 5}))])
-
-                  (adjust 10)
-                  (append [d2- (transpose c3)]
-                          [d2 (transpose c3-)]
-                          same))))
+             (require '[noon.lib.melody :as m]))
 
          (do :noon-hydra
              (letfn [(symjoin [sep xs] (->> (map name xs) (str/join sep) symbol))
