@@ -1,6 +1,5 @@
 (ns noon.utils.emacs.cider-keybindings
-  (:require [backtick :refer [template]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.pprint :as pprint]
             [clojure.walk :as walk]
             [noon.utils.misc :as u]))
@@ -13,11 +12,11 @@
   (let [bindings (u/all-paths tree)]
     (with-out-str
       (clojure.pprint/pprint
-       (template (map! (:map ~mode-map-sym
+       (u/template (map! (:map ~mode-map-sym
                              ~@(mapcat (fn [[path [binding code]]]
                                          (if binding
                                            [:desc (path->binding-description path) :n binding
-                                            (template (lambda ()
+                                            (u/template (lambda ()
                                                               (interactive)
                                                               (my-cider/eval! (format ~(str (walk/prewalk-replace '{*expr* %s} (list 'do code :ok)))
                                                                                       (pb/thing-at-point)))))]))

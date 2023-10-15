@@ -1,7 +1,6 @@
 (ns noon.utils.emacs.keybindings
   "utility for defining keybinding in an edn way !"
   (:require [noon.utils.misc :as u]
-            [backtick :refer [template]]
             [clojure.walk :as walk]))
 
 "We will first define the data model, using exclusively maps, precision and extensibility > concision."
@@ -35,7 +34,7 @@
 
 (do :basic-compiler
 
-    "Our compilation target will be the `map!` form that doom-emacs provides."
+    "our compilation target will be the `map!` form that doom-emacs provides."
 
     (defn compile-kbs
       [x]
@@ -63,33 +62,35 @@
     "Now we will expose some macros to build the keybinding spec"
 
     (defmacro elisp>
+      {:clj-kondo/ignore true}
       [& code]
-      (list 'quote (template
+      (list 'quote (u/template
                     (lambda ()
                             (interactive)
                             ~@(walk/prewalk-replace '{*expr* (pb/thing-at-point)} code)))))
-
     (defmacro clj>
+      {:clj-kondo/ignore [:unresolved-symbol]}
       [& code]
       (let [expr (if (> (count code) 1)
                    (cons 'do code)
                    (first code))
             code-str (if (u/deep-find code '*expr*)
-                       (template (format ~(str (seq (walk/prewalk-replace '{*expr* %s} expr)))
+                       (u/template (format ~(str (seq (walk/prewalk-replace '{*expr* %s} expr)))
                                          (pb/thing-at-point)))
                        (str expr))]
         (list 'quote
-              (template (lambda ()
-                           (interactive)
-                           (my-cider/eval! ~code-str))))))
+              (u/template (lambda ()
+                                (interactive)
+                                (my-cider/eval! ~code-str))))))
 
     (comment
       (clj> (+ 2 3))
       (clj> (print *expr*) (+ 2 3)))
 
     (defmacro reaper>
+      {:clj-kondo/ignore true}
       [& code]
-      (template (clj> (requiring-resolve 'noon.utils.reaper/<<)
+      (u/template (clj> (requiring-resolve 'noon.utils.reaper/<<)
                       (noon.utils.reaper/<< ~@code))))
 
     (declare spec-vec->map)
@@ -120,7 +121,7 @@
 
     (defn spit-keymaps
       [filename & keymap-spec-pairs]
-      (->> (map (fn [[keymap tree]] (spec-vec->map tree))
+      (->> (map (fn [[_keymap tree]] (spec-vec->map tree))
                 (partition 2 keymap-spec-pairs))
            (into {})
            (compile-doom-keymaps)

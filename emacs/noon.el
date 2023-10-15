@@ -52,7 +52,7 @@
 (defun noon/install-reaper-actions! ()
   "Register actions from reaper-actions.edn to reaper and compile reaper-bindings.el."
   (interactive)
-  (my-cider/eval! (concat "(noon.utils.reaper/install-actions! \"" noon/source-path "/emacs/reaper-actions.edn\")")))
+  (my-cider/eval! (concat "(noon.utils.reaper.actions/install-actions! \"" noon/source-path "/emacs/reaper-actions.edn\")")))
 
 (defun noon/reload-bindings! ()
   "Reload noon and reaper bindings."
@@ -89,7 +89,7 @@
 (defun noon/reset-reaper-connection! ()
   "Reset the udp channel and relaunch the socket-repl script."
   (interactive)
-  (my-cider/eval! "(noon.utils.reaper/reset-reaper-input-chan!)")
+  (my-cider/eval! "(noon.utils.reaper.interop/reset-reaper-input-chan!)")
   (noon/connect-reaper!))
 
 (defun noon/launch-fluidsynth! ()

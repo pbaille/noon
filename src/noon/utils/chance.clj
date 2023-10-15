@@ -131,9 +131,9 @@
 
     (defmacro defcoll
       "Helper to define collection generators.
-           The main point is to handle extra options,
-           resulting generators will be callable with or without options,
-           options being given as a map or as a flat sequence of key values."
+       The main point is to handle extra options,
+       resulting generators will be callable with or without options,
+       options being given as a map or as a flat sequence of key values."
       ([name empty]
        (let [sym (gensym)]
          `(defcoll ~name ~empty ~[sym] ~sym)))

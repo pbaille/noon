@@ -1,6 +1,5 @@
 (ns noon.utils.emacs.hydra
-  (:require [backtick :refer [template]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.pprint :as pp]))
 
 (def hydra-option-keys [:color :pre :post :exit :foreign-keys :bind :hint :timeout])
@@ -53,7 +52,7 @@
           {} hydras))
 
 (defn hydra-compile-head
-  [{:hydra/keys [key hint expr name options path body-varsym]}]
+  [{:hydra/keys [key hint expr options body-varsym]}]
   (if expr
     (list* key expr hint options)
     (list key body-varsym hint :column "Sub")))
@@ -69,20 +68,21 @@
 (defn hydra-compile [spec]
   (let [hydras (parse-hydra {:hydra/path [] :hydra/options default-hydra-options} spec)
         path-map (hydra-path-map hydras)]
-    (cons 'progn (keep (fn [[path h]] (hydra-compile-one path path-map)) path-map))))
+    (cons 'progn (keep (fn [[path _]] (hydra-compile-one path path-map)) path-map))))
 
-(def sample-hydra-def
-  (template
-   [:root nil
-    {:color teal
-     :doc "this is the root"}
-    [:one "a"
-     [:a "a" (message "one a")]
-     [:b "b" (message "one b")]]
-    [:two "b" [:a "a" (message "two a")]
-     [:b "b" (message "two b")]
-     [:three "c" {:foo bar}
-      [:deep "d" (message "deep")]]]]))
+(comment
+  (def sample-hydra-def
+    (template
+     [:root nil
+      {:color teal
+       :doc "this is the root"}
+      [:one "a"
+       [:a "a" (message "one a")]
+       [:b "b" (message "one b")]]
+      [:two "b" [:a "a" (message "two a")]
+       [:b "b" (message "two b")]
+       [:three "c" {:foo bar}
+        [:deep "d" (message "deep")]]]]))
 
-(parse-hydra {:hydra/path [] :hydra/options default-hydra-options} sample-hydra-def)
-(spit "emacs/compiled/test-hydra.el" (pretty-str (hydra-compile sample-hydra-def)))
+  (parse-hydra {:hydra/path [] :hydra/options default-hydra-options} sample-hydra-def)
+  (spit "emacs/compiled/test-hydra.el" (pretty-str (hydra-compile sample-hydra-def))))
