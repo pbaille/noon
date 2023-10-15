@@ -1,4 +1,5 @@
 (ns noon.utils.fennel
+  (:refer-clojure :exclude [compile])
   (:require [clojure.java.shell :refer [sh]]
             [backtick :refer [template]]
             [clojure.string :as str]))

@@ -5,3 +5,6 @@
 /midi/soundfonts/
 /emacs/compiled/
 /emacs/xp/
+/.clj-kondo/.cache
+/.clj-kondo/inline-configs/
+/.lsp

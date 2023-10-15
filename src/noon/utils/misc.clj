@@ -1,6 +1,7 @@
 (ns noon.utils.misc
   (:require [clojure.string :as str]
-            [me.raynes.fs :as fs]))
+            [me.raynes.fs :as fs]
+            [backtick :as bt]))
 
 (do :numbers
 
@@ -170,6 +171,11 @@
              :doc doc
              :attrs attrs
              :arities arities})))
+
+    (defmacro template
+      {:clj-kondo/ignore true}
+      [x]
+      `(bt/template ~x))
 
     (defmacro >_
       "shorthand for (as-> x _ ...)"

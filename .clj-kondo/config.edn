@@ -1,0 +1,12 @@
+{:linters {:missing-else-branch {:level :off}
+           :unused-value {:level :off}
+           :uninitialized-var {:level :off}
+           :clojure-lsp/unused-public-var {:level :off}}
+ :lint-as {backtick/template clojure.core/comment}
+ :config-in-call {clojure.core/do {:unused-value {:level :off}}}
+ :config-in-comment {:linters {:unresolved-symbol {:level :off}
+                               :unresolved-namespace {:level :off}
+                               :invalid-arity {:level :off}}}
+ :hooks {:analyze-call {noon.utils.chance/gen noon.utils.chance/gen
+                        noon.utils.chance/defcoll noon.utils.chance/defcoll}
+         :macroexpand {noon.utils.chance/defgen noon.utils.chance/defgen}}}

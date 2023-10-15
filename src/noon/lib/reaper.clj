@@ -6,7 +6,7 @@
             [noon.utils.misc :as u]
             [noon.midi :as midi]
             [noon.score :as noon]
-            [noon.utils.cider-keybindings :as kbs]
+            [noon.utils.emacs.cider-keybindings :as kbs]
             [clojure.string :as str]))
 
 (def MIDI_RESOLUTION midi/MIDI_RESOLUTION)
@@ -148,6 +148,7 @@
 (comment (do :score
 
              (<< (ru.take.note-selection.get (ru.take.get-active)))
+             ()
              (score->notes @score*)
              (<< (global ru (u.reload :ruteal)))
              (<< (let [take ru.take
