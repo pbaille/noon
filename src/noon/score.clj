@@ -543,7 +543,7 @@
               [x]
               (cond (score-update? x) x
                     (g/gen? x) (sf_ ((->upd (g/realise x)) _))
-                    (event-update? x) (sf_ (set (map x _)))
+                    (event-update? x) (sf_ (ms/$ _ x))
                     (map? x) (->upd (map->efn x))
                     (vector? x) (lin* x)
                     (set? x) (par* x)
