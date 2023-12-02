@@ -1002,9 +1002,7 @@
           (sf_ (loop [n 0]
                  (or (upd _ (lin u test))
                      (if (>= max n)
-                       (recur (inc n))))))))
-
-    )
+                       (recur (inc n)))))))))
 
 (do :midi
 
