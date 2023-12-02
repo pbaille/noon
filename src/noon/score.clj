@@ -1010,39 +1010,44 @@
       {:bpm 60})
 
     (def MIDI_DIRECTORIES
-      {:default "generated/"
-       :history "generated/history/"})
+      {:default "generated"
+       :history "generated/history"})
 
-    (defn gen-filename [& [prefix]]
-      (str prefix (System/currentTimeMillis)))
+    (def MUSESCORE_BIN
+      "/Applications/MuseScore 4.app/Contents/MacOS/mscore")
 
-    (defn gen-midi-filename [& [prefix]]
-      (str (gen-filename prefix) ".mid"))
+    (defn gen-filename [& [dir]]
+      (let [name (System/currentTimeMillis)]
+        (if dir
+          (str dir "/" name)
+          name)))
 
     (defn midifiable-score [score]
       (vec (-> score numerify-pitches dedupe-patches)))
 
     (defn write-score
       [score & {:as opts}]
-      (let [{:keys [filename bpm play source]} (merge MIDI_DEFAULT_OPTIONS opts)
+      (let [{:keys [filename bpm play source xml]} (merge MIDI_DEFAULT_OPTIONS opts)
             {:keys [directory file-barename]
              :or {directory (MIDI_DIRECTORIES :default)
                   file-barename (gen-filename)}} (u/parse-file-path filename)
-            midi-filename (str directory "/" file-barename ".mid")
-            midifiable-score (-> score numerify-pitches dedupe-patches)]
+            midi-filename (str directory "/" file-barename ".mid")]
         (u/ensure-directory directory)
         (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score))
-            (midi/add-events midifiable-score)
+            (midi/add-events (midifiable-score score))
             (midi/write-midi-file midi-filename))
         #_(u/copy-file midi-filename "generated/last.mid")
         (if play
           (midi/play-file2 midi-filename))
         (if source
           (spit (str directory "/" file-barename ".mut") source))
-        #_score))
+        (if xml
+          (clojure.java.shell/sh MUSESCORE_BIN "--export-to" (str directory "/" file-barename ".musicxml") midi-filename))
+        midi-filename))
 
     (defmacro write [& xs]
       `(write-score (mk ~@xs)
+                    :xml true
                     :source '~&form))
 
     (defmacro play [& xs]
