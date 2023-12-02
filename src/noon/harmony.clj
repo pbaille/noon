@@ -576,112 +576,6 @@
 
     ;; passing-tones
 
-    (defn s+
-      "melodic superior diatonic passing note"
-      [ctx]
-      (let [ctx+ (upd ctx s0 d1)
-            dist (chromatic-distance ctx ctx+)]
-        (if (< dist 3)
-          ctx+
-          (upd ctx+ (c-step (- 2 dist))))))
-
-    (defn s-
-      "melodic inferior diatonic passing note"
-      [ctx]
-      (let [ctx- (upd ctx s0 d1-)
-            dist (chromatic-distance ctx ctx-)]
-        (if (< dist 3)
-          ctx-
-          (upd ctx- (c-step (- dist 2))))))
-
-    (def passings
-      {:approach {:simple {:+ [s+ nil]
-                           :- [s- nil]}
-
-                  :double {:+ [s+ s- nil]
-                           :- [s- s+ nil]}
-
-                  :triple {:+ [s+ s- s+ nil]
-                           :- [s- s+ s- nil]}}
-
-       :broderie {:simple {:+ [nil s+ nil]
-                           :- [nil s- nil]}
-
-                  :double {:+ [nil s+ nil s- nil]
-                           :- [nil s- nil s+ nil]}}})
-
-    (def all-passings
-      (map (fn [[p v]] (apply u/flagged (conj p v)))
-           (u/hm-leaves passings)))
-
-    (defn lowest-layer [{p :position}]
-      (cond
-        (:c p) :c
-        (:d p) :d
-        (:s p) :s
-        (:t p) :t))
-
-    (defn resolution-layer [ctx]
-      (get {:s :t :d :s :c :d}
-           (lowest-layer ctx)
-           :t))
-
-    (defn tension-layer [ctx]
-      (get {:t :s :s :d :d :c}
-           (lowest-layer ctx)
-           :c))
-
-    (defn decorate-upward [ctx]
-      (upd ctx (layer-step (lowest-layer ctx) 1)))
-
-    (defn decorate-downward [ctx]
-      (upd ctx (layer-step (lowest-layer ctx) -1)))
-
-    (defn resolve-upward [ctx]
-      (upd ctx (layer-step (resolution-layer ctx) 1)))
-
-    (defn resolve-downward [ctx]
-      (upd ctx (layer-step (resolution-layer ctx) -1)))
-
-    (defn tense-upward [ctx]
-      (upd ctx (layer-step (tension-layer ctx) 1)))
-
-    (defn tense-downward [ctx]
-      (upd ctx (layer-step (tension-layer ctx) -1)))
-
-    (defn diatonic-equivalent?
-      "the current position is equivalent to a diatonic one. "
-      [ctx]
-      (zero? (chromatic-distance ctx (d-round ctx))))
-
-    (defn structural-equivalent?
-      "the current position is equivalent to a structural one. "
-      [ctx]
-      (zero? (chromatic-distance ctx (s-round ctx))))
-
-    (defn tonic-equivalent?
-      "the current position is equivalent to a tonic one. "
-      [ctx]
-      (zero? (chromatic-distance ctx (t-round ctx))))
-
-    (defn neibourhood
-      [ctx]
-      {:up {:c (let [ctx' (upd ctx c1)] (if-not (diatonic-equivalent? ctx') ctx'))
-            :d (let [ctx' (upd ctx d1)] (if-not (structural-equivalent? ctx') ctx'))
-            :s (let [ctx' (upd ctx s1)] (if-not (tonic-equivalent? ctx') ctx'))
-            :t (upd ctx t1)}
-       :down {:c (let [ctx' (upd ctx c1-)] (if-not (diatonic-equivalent? ctx') ctx'))
-              :d (let [ctx' (upd ctx d1-)] (if-not (structural-equivalent? ctx') ctx'))
-              :s (let [ctx' (upd ctx s1-)] (if-not (tonic-equivalent? ctx') ctx'))
-              :t (upd ctx t1-)}})
-
-    (defn diatonic-suroundings
-      "return the chromatic distances of the surroundings diatonic degrees
-       [c-dist-downward c-dist-upward]"
-      [ctx]
-      [(chromatic-distance (upd ctx d1-) ctx)
-       (chromatic-distance (upd ctx d1) ctx)])
-
     (defn mirror [pitch]
       (fn [ctx]
         (let [pivot (constants/get-pitch pitch)
@@ -690,49 +584,207 @@
               nxt-p (merge-with - pivot delta)]
           (upd ctx (repitch nxt-p)))))
 
-    #_(upd (hc) (mirror :F0))
-    #_(upd (hc) (di 1) (mirror :C0))
-
-    (defn connections
-      "For each layer, computes the ctxs between hc1 and hc2
-       returns a map of kind {layer intermediate-ctxs}
-       layer: :t | :s | :d | :c
-       intermediate-ctxs: sorted ctxs that are between hc1 and hc2 on the corresponding layer."
-      [hc1 hc2]
-      (let [v1 (hc->chromatic-value hc1)
-            v2 (hc->chromatic-value hc2)
-            ascending (< v1 v2)
-            in-bounds? (fn [x] (if ascending
-                                 (> v2 (hc->chromatic-value x))
-                                 (< v2 (hc->chromatic-value x))))
-            passings (fn [layer]
-                       (loop [current hc1 ret []]
-                         (if (in-bounds? current)
-                           (recur (upd current (layer-step layer (if ascending 1 -1)))
-                                  (conj ret current))
-                           (rest ret))))]
-        {:c (passings :c)
-         :d (passings :d)
-         :s (passings :s)
-         :t (passings :t)}))
-
     (comment
-      (connections (upd (hc) (position 2 1))
-                   (upd (hc) (position 2 3)))
-      (= (upd (hc)
-              (position 0 0 6)
-              normalise)
+      (upd (hc) (mirror :F0))
+      (upd (hc) (di 1) (mirror :C0)))
 
-         (upd (hc)
-              (position 0 2 2)
-              normalise)
+    (do :passings
+        (defn s+
+          "melodic superior diatonic passing note"
+          [ctx]
+          (let [ctx+ (upd ctx s0 d1)
+                dist (chromatic-distance ctx ctx+)]
+            (if (< dist 3)
+              ctx+
+              (upd ctx+ (c-step (- 2 dist))))))
 
-         (upd (hc)
-              (position 0 2 2)
-              normalise)
+        (defn s-
+          "melodic inferior diatonic passing note"
+          [ctx]
+          (let [ctx- (upd ctx s0 d1-)
+                dist (chromatic-distance ctx ctx-)]
+            (if (< dist 3)
+              ctx-
+              (upd ctx- (c-step (- dist 2))))))
 
-         (upd (hc)
-              (position 1 0 -1 0)))))
+        (def passings
+          {:approach {:simple {:+ [s+ nil]
+                               :- [s- nil]}
+
+                      :double {:+ [s+ s- nil]
+                               :- [s- s+ nil]}
+
+                      :triple {:+ [s+ s- s+ nil]
+                               :- [s- s+ s- nil]}}
+
+           :broderie {:simple {:+ [nil s+ nil]
+                               :- [nil s- nil]}
+
+                      :double {:+ [nil s+ nil s- nil]
+                               :- [nil s- nil s+ nil]}}})
+
+        (def all-passings
+          (map (fn [[p v]] (apply u/flagged (conj p v)))
+               (u/hm-leaves passings)))
+
+        (defn lowest-layer [{p :position}]
+          (cond
+            (:c p) :c
+            (:d p) :d
+            (:s p) :s
+            (:t p) :t))
+
+        (defn resolution-layer [ctx]
+          (get {:s :t :d :s :c :d}
+               (lowest-layer ctx)
+               :t))
+
+        (defn tension-layer [ctx]
+          (get {:t :s :s :d :d :c}
+               (lowest-layer ctx)
+               :c))
+
+        (defn decorate-upward [ctx]
+          (upd ctx (layer-step (lowest-layer ctx) 1)))
+
+        (defn decorate-downward [ctx]
+          (upd ctx (layer-step (lowest-layer ctx) -1)))
+
+        (defn resolve-upward [ctx]
+          (upd ctx (layer-step (resolution-layer ctx) 1)))
+
+        (defn resolve-downward [ctx]
+          (upd ctx (layer-step (resolution-layer ctx) -1)))
+
+        (defn tense-upward [ctx]
+          (upd ctx (layer-step (tension-layer ctx) 1)))
+
+        (defn tense-downward [ctx]
+          (upd ctx (layer-step (tension-layer ctx) -1)))
+
+        (defn diatonic-equivalent?
+          "the current position is equivalent to a diatonic one. "
+          [ctx]
+          (zero? (chromatic-distance ctx (d-round ctx))))
+
+        (defn structural-equivalent?
+          "the current position is equivalent to a structural one. "
+          [ctx]
+          (zero? (chromatic-distance ctx (s-round ctx))))
+
+        (defn tonic-equivalent?
+          "the current position is equivalent to a tonic one. "
+          [ctx]
+          (zero? (chromatic-distance ctx (t-round ctx))))
+
+        (defn neibourhood
+          [ctx]
+          {:up {:c (let [ctx' (upd ctx c1)] (if-not (diatonic-equivalent? ctx') ctx'))
+                :d (let [ctx' (upd ctx d1)] (if-not (structural-equivalent? ctx') ctx'))
+                :s (let [ctx' (upd ctx s1)] (if-not (tonic-equivalent? ctx') ctx'))
+                :t (upd ctx t1)}
+           :down {:c (let [ctx' (upd ctx c1-)] (if-not (diatonic-equivalent? ctx') ctx'))
+                  :d (let [ctx' (upd ctx d1-)] (if-not (structural-equivalent? ctx') ctx'))
+                  :s (let [ctx' (upd ctx s1-)] (if-not (tonic-equivalent? ctx') ctx'))
+                  :t (upd ctx t1-)}})
+
+        (defn diatonic-suroundings
+          "return the chromatic distances of the surroundings diatonic degrees
+       [c-dist-downward c-dist-upward]"
+          [ctx]
+          [(chromatic-distance (upd ctx d1-) ctx)
+           (chromatic-distance (upd ctx d1) ctx)]))
+
+    (do :connections
+        (defn connections
+          "For each layer, computes the ctxs between hc1 and hc2
+returns a map of kind {layer intermediate-ctxs}
+layer: :t | :s | :d | :c
+intermediate-ctxs: sorted ctxs that are between hc1 and hc2 on the corresponding layer."
+          [hc1 hc2]
+          (let [v1 (hc->chromatic-value hc1)
+                v2 (hc->chromatic-value hc2)
+                ascending (< v1 v2)
+                in-bounds? (fn [x] (if ascending
+                                     (> v2 (hc->chromatic-value x))
+                                     (< v2 (hc->chromatic-value x))))
+                passings (fn [layer]
+                           (loop [current hc1 ret []]
+                             (if (in-bounds? current)
+                               (recur (upd current (layer-step layer (if ascending 1 -1)))
+                                      (conj ret current))
+                               (rest ret))))]
+            {:c (passings :c)
+             :d (passings :d)
+             :s (passings :s)
+             :t (passings :t)}))
+
+        (defn chromatic-connection [hc1 hc2]
+          (let [v1 (hc->chromatic-value hc1)
+                v2 (hc->chromatic-value hc2)
+                ascending (< v1 v2)
+                in-bounds? (fn [x] (if ascending
+                                     (> v2 (hc->chromatic-value x))
+                                     (< v2 (hc->chromatic-value x))))]
+            (loop [current (normalise hc1) ret []]
+              (if (in-bounds? current)
+                (recur (upd current (c-step (if ascending 1 -1)) c->t)
+                       (conj ret current))
+                (conj ret (normalise hc2))))))
+
+        (defn simplest-connection
+          "return a sequence of harmonic contexts representing a melodic line between `hc1` and `hc2` with `size` intermediate contexts.
+intermediate contexts are selected on lowset layer in priority."
+          [size hc1 hc2]
+          (let [v1 (hc->chromatic-value hc1)
+                v2 (hc->chromatic-value hc2)
+                ascending (< v1 v2)
+                chrom-line (chromatic-connection hc1 hc2)
+                passing-notes (butlast (rest chrom-line))
+                max-size (count passing-notes)
+                split-by (fn [f xs] (reduce (fn [[a b] x] (if (f x) [(conj a x) b] [a (conj b x)]))
+                                            [[] []] xs))
+                [t-passings xs] (split-by tonic-equivalent? passing-notes)
+                [s-passings xs] (split-by structural-equivalent? xs)
+                [d-passings c-passings] (split-by diatonic-equivalent? xs)
+                prio-passings (concat (reverse t-passings)
+                                      (reverse s-passings)
+                                      (reverse d-passings)
+                                      (reverse c-passings))
+
+                return (fn [xs] (let [xs (sort-by hc->chromatic-value xs)]
+                                  (conj (vec (cons (first chrom-line) (if ascending xs (reverse xs))))
+                                        (last chrom-line))))]
+            (cond (= max-size size) chrom-line
+                  (> max-size size) (return (take size prio-passings))
+                  :else nil)))
+
+        (comment
+          (connections (upd (hc) (position 2 1))
+                       (upd (hc) (position 2 3)))
+          (chromatic-connection
+           (upd (hc) (position 2 1))
+           (upd (hc) (position 2 3)))
+
+          (simplest-connection
+           3
+           (upd (hc) (position 2 1))
+           (upd (hc) (position 3 2)))
+
+          (= (upd (hc)
+                  (position 0 0 6)
+                  normalise)
+
+             (upd (hc)
+                  (position 0 2 2)
+                  normalise)
+
+             (upd (hc)
+                  (position 0 2 2)
+                  normalise)
+
+             (upd (hc)
+                  (position 1 0 -1 0))))))
 
 (do :defs
 

@@ -445,16 +445,20 @@
 
          "The problem here is that the precedent note overlaps the targeting notes"
 
-         (defn connect-two
-           "connect two notes melodically."
-           [note target {:as options :keys [size layer]}]
-           (let [{:keys [t s d c]} (nh/connections (:pitch note) (:pitch target))]
-             ()))
+         (defn connect [size]
+           (sf_ (let [sorted (sort-by :position _)]
+                  (reduce (fn [s [n1 n2]]
+                            (let [duration (/ (:duration n1) (inc size))]
+                              (into s (map-indexed (fn [idx pitch] (assoc n1 :pitch pitch :position (+ (* idx duration) (:position n1)) :duration duration))
+                                                   (butlast (nh/simplest-connection size (:pitch n1) (:pitch n2)))))))
+                          #{(last sorted)} (partition 2 1 sorted)))))
 
-         (defn connect [& {:as options}]
-           (sf_ (let [sorted (partition 2 1 (sort-by :position _))]
-                  (reduce (fn [s [n1 n2]] (into s (connect-two n1 n2 options)))
-                          #{(last sorted)} (partition 2 1 sorted))))))
+         (play dur2
+               harmonic-minor
+               tetrad
+               (cat s0 s2 s2- s4 s4- s2 s2- s5-)
+               (chans [(connect 5)]
+                      [(patch :ocarina) o1])))
 
 (comment :infinite-climb-illusion
 
