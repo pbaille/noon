@@ -177,12 +177,41 @@
 
 (defclosure* grid-zipped
   "zip the current score (which should represent an harmonic grid)
-   to the resulting of applying 'xs updates to a (almost) fresh score."
+   to the resulting of applying 'xs updates to a fresh score."
   [xs]
   (sf_ (let [seed (dissoc (first _) :position :duration :pitch)
              zip-fn (fn [x y] (upd y {:pitch (h/hc+ (:pitch (first x)))}))]
          (upd _ (zip zip-fn (k seed (lin* xs)))))))
 
+(defn- connect-trimmed-chunks [xs]
+  (reduce (fn [score x]
+            ;; TODO do it
+            (let [{trimmed-fws true score-rest nil} (group-by :trimed-fw score)
+                  {trimmed-bws true x-rest nil} (group-by :trimed-bw x)]
+              (loop [ret (set (concat score-rest x-rest)) fws trimmed-fws bws (set trimmed-bws)]
+                (if-not (seq fws)
+                  (into ret bws)
+                  (let [[fw & fws] fws]
+                    (if-let [bw (some (fn [x] (and (= (pitch-value x) (pitch-value fw))
+                                                   (= (:position x) (+ (:position fw) (:duration fw)))
+                                                   x))
+                                      bws)]
+                      (recur (conj ret (-> bw
+                                           (update :position - (:duration fw))
+                                           (update :duration + (:duration fw))))
+                             fws (disj bws bw))
+                      (recur (conj ret fw) fws bws)))))))
+          #{} xs))
+
+(defclosure* grid
+  ""
+  [xs]
+  (sf_ (->> (map (fn [[position [{:keys [duration pitch]}]]]
+                   (upd _
+                        [(trim position (+ position duration))
+                         {:pitch (h/hc+ pitch)}]))
+                 (sort-by key (group-by :position (mk* xs))))
+            (connect-trimmed-chunks))))
 
 (comment :tries
 
