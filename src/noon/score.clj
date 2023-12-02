@@ -318,12 +318,13 @@
 
         (defn score-duration
           [score]
-          (->> (map (fn [e]
-                      (c/+ (:duration e)
-                           (:position e)))
-                    score)
-               sort
-               last))
+          (or (->> (map (fn [e]
+                          (c/+ (:duration e)
+                               (:position e)))
+                        score)
+                   sort
+                   last)
+              0))
 
         (defn score-track-count
           "How many tracks has this score ?"
