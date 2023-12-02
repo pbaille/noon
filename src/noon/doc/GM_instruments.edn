@@ -1,0 +1,160 @@
+{
+ :chromatic-percussion
+ [:celesta
+  :glockenspiel
+  :music-box
+  :vibraphone
+  :marimba
+  :xylophone
+  :tubular-bells
+  :dulcimer]
+
+ :piano
+ [:acoustic-grand-piano
+  :bright-acoustic-piano
+  :electric-grand-piano
+  :honky-tonk-piano
+  :electric-piano-1
+  :electric-piano-2
+  :harpsichord
+  :clavinet]
+
+ :pipe
+ [:piccolo
+  :flute
+  :recorder
+  :pan-flute
+  :blown-bottle
+  :shakuhachi
+  :whistle
+  :ocarina]
+
+ :bass
+ [:acoustic-bass
+  :electric-bass-finger
+  :electric-bass-pick
+  :fretless-bass
+  :slap-bass-1
+  :slap-bass-2
+  :synth-bass-1
+  :synth-bass-2]
+
+ :ensemble
+ [:string-ensemble-1
+  :string-ensemble-2
+  :synth-strings-1
+  :synth-strings-2
+  :choir-aahs
+  :voice-oohs
+  :synth-choir
+  :orchestra-hit]
+
+ :strings
+ [:violin
+  :viola
+  :cello
+  :contrabass
+  :tremolo-strings
+  :pizzicato-strings
+  :orchestral-harp
+  :timpani]
+
+ :synth-pad
+ [:pad-1-new-age
+  :pad-2-warm
+  :pad-3-polysynth
+  :pad-4-choir
+  :pad-5-bowed
+  :pad-6-metallic
+  :pad-7-halo
+  :pad-8-sweep]
+
+ :ethnic
+ [:sitar
+  :banjo
+  :shamisen
+  :koto
+  :kalimba
+  :bagpipe
+  :fiddle
+  :shanai]
+
+ :percussive
+ [:tinkle-bell
+  :agogo
+  :steel-drums
+  :woodblock
+  :taiko-drum
+  :melodic-tom
+  :synth-drum
+  :reverse-cymbal],
+
+ :organ
+ [:drawbar-organ
+  :percussive-organ
+  :rock-organ
+  :church-organ
+  :reed-organ
+  :accordion
+  :harmonica
+  :tango-accordion],
+
+ :brass
+ [:trumpet
+  :trombone
+  :tuba
+  :muted-trumpet
+  :french-horn
+  :brass-section
+  :synth-brass-1
+  :synth-brass-2]
+
+ :reed
+ [:soprano-sax
+  :alto-sax
+  :tenor-sax
+  :baritone-sax
+  :oboe
+  :english-horn
+  :bassoon
+  :clarinet]
+
+ :guitar
+ [:acoustic-guitar-nylon
+  :acoustic-guitar-steel
+  :electric-guitar-jazz
+  :electric-guitar-clean
+  :electric-guitar-muted
+  :overdriven-guitar
+  :distortion-guitar
+  :guitar-harmonics]
+
+ :synth-lead
+ [:lead-1-square
+  :lead-2-sawtooth
+  :lead-3-calliope
+  :lead-4-chiff
+  :lead-5-charang
+  :lead-6-voice
+  :lead-7-fifths
+  :lead-8-bass-+-lead]
+
+ :synth-effects
+ [:fx-1-rain
+  :fx-2-soundtrack
+  :fx-3-crystal
+  :fx-4-atmosphere
+  :fx-5-brightness
+  :fx-6-goblins
+  :fx-7-echoes
+  :fx-8-sci-fi]
+
+ :sound-effects
+ [:guitar-fret-noise
+  :breath-noise
+  :seashore
+  :bird-tweet
+  :telephone-ring
+  :helicopter
+  :applause
+  :gunshot]}
