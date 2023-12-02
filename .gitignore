@@ -1,4 +1,4 @@
-/.DS_Store
+**/.DS_Store
 /.cpcache/
 /.nrepl-port
 /generated/
@@ -8,3 +8,4 @@
 /.clj-kondo/.cache
 /.clj-kondo/inline-configs/
 /.lsp
+/notation/samples/
