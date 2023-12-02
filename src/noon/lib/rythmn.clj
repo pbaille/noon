@@ -23,8 +23,6 @@
       [score increment]
       (let [duration (score-duration score)
             last-event (last (sort-by :position score))]
-        (println `score-fw-shifts
-                 duration increment last-event)
         (map (fn [shift]
                (upd (shift-score score shift)
                     (trim 0 duration)))
@@ -52,8 +50,7 @@
                    (trim 0.5 2.5))
 
              (map qshow (tup-shifts 1/3
-                                    (mk (dup 3))
-                                    ))))
+                                    (mk (dup 3))))))
 
 (do :basic
 
