@@ -122,7 +122,7 @@
                      (rup 16
                           (probs {(permutation :rand) 1
                                   (rotation :rand) 3
-                                  (one-of* (map di (range -3 4))) 5}))])
+                                  (one-of* (map d-step (range -3 4))) 5}))])
 
                    (adjust 10)
                    (append [d2- (transpose c3)]
@@ -160,7 +160,6 @@
 
                  deltas (mapv - new-contour contour)
                  position-key (layer-kw->position-key layer)]
-
              (concat-scores
               (map-indexed (fn [i {:keys [position score layer-idx]}]
                              (->> score
