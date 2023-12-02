@@ -81,10 +81,10 @@
 
     (defn pitches_getter [table]
       (fn [x] (cond
-               (number? x) (chromatic-value->pitch x)
-               (map? x) (or ((set (vals table)) x) (recur (:c x)))
-               (symbol? x) (get table x)
-               (or (string? x) (keyword? x)) (get table (symbol (name x))))))
+                (number? x) (chromatic-value->pitch x)
+                (map? x) (or ((set (vals table)) x) (recur (:c x)))
+                (symbol? x) (get table x)
+                (or (string? x) (keyword? x)) (get table (symbol (name x))))))
 
     (def get-pitch (pitches_getter pitches))
     (def get-pitch-class (pitches_getter pitch-classes))
