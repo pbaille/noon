@@ -136,7 +136,7 @@
                    [(patch :vibraphone) dur2 vel3
                     (cat #{C0 Eb0 G0} #{A-1 D0 F0})]
 
-                   [(patch :bass)
+                   [(patch :acoustic-bass)
                     (cat [dur3 C-2] G-2)])
 
             (dup 4))]]
@@ -231,7 +231,7 @@
       (play (tup c1 c2 c3 c4 c5 c6 c7 c8))
       "the resulting notes are fitted into the duration of the base note."
 
-      "Like 'cat it can of course be chained with other transformations, as an example, here is a jazz melodic pattern from the fifties."
+      "Like 'cat it can of course be chained with other transformations, as an example, here is a classic jazz melodic pattern."
       (play (tup c0 c2 c4 c7)
             (tup c0 c3)
             (rep 3 c4-))]
