@@ -810,14 +810,15 @@
                   (let [end-pos (+ position duration)]
                     (cond (or (>= position end)
                               (<= end-pos beg)) nil
-                          (>= position beg)
-                          (if (<= end-pos end)
-                            evt
-                            (update evt :duration - (- end-pos end)))
-                          (> end-pos beg)
-                          (-> evt
-                              (update :position + (- beg position))
-                              (update :duration - (- beg position)))))))))
+                          (and (>= position beg) (<= end-pos end)) evt
+                          :else (cond-> evt
+                                  (> end-pos end)
+                                  (-> (update :duration - (- end-pos end))
+                                      (assoc :trimed-fw true))
+                                  (< position beg)
+                                  (-> (update :position + (- beg position))
+                                      (update :duration - (- beg position))
+                                      (assoc :trimed-bw true)))))))))
 
     (do :checks
 
