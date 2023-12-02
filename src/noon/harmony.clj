@@ -162,7 +162,7 @@
                 ctx
                 (let [struct-size (count (:struct ctx))
                       tonic-delta (quot s struct-size)]
-                  (update ctx :position merge {:t (+ t tonic-delta) :s (rem s struct-size)}))))
+                  (update ctx :position merge {:t (+ (or t 0) tonic-delta) :s (rem s struct-size)}))))
 
             (defn d->t
               "feed as much as possible of the d value into the upward layers"
@@ -249,7 +249,6 @@
                      (layer-idx :s (upd (hc) (position 3 2 1 0)))
                      (layer-idx :d (upd (hc) (position 3 2 1 0)))
                      (layer-idx :d (upd (hc) (position 0 0 1 0)))
-
 
                      (t->s (upd (hc) (position 3 2 1 0)))
                      (s->d (upd (hc) (position 0 2 1 0)))
@@ -357,10 +356,9 @@
             (def c-shift (layer-shift :c))
 
             #_(upd (hc)
-                 (t-step 2)
-                 (d-step 2)
-                 (s-step 1))
-            )
+                   (t-step 2)
+                   (d-step 2)
+                   (s-step 1)))
 
         (do :roundings
 
@@ -419,6 +417,10 @@
         (comment :normalise-tries
 
                  (upd (hc)
+                      (d-position 10)
+                      normalise)
+
+                 (upd (hc)
                       (position 1 4 3 -2)
                       normalise)
 
@@ -452,9 +454,7 @@
               (eval (list 'def (symbol (str "t" i "-")) `(t-step ~(- i)))))
             (doseq [i (range 1 9)]
               (eval (list 'def (symbol (str "o" i)) `(t-shift ~i :forced)))
-              (eval (list 'def (symbol (str "o" i "-")) `(t-shift ~(- i) :forced)))))
-
-        )
+              (eval (list 'def (symbol (str "o" i "-")) `(t-shift ~(- i) :forced))))))
 
     (do :update-constructors
 
@@ -649,8 +649,6 @@
     (defn tense-downward [ctx]
       (upd ctx (layer-step (tension-layer ctx) -1)))
 
-
-
     (defn diatonic-equivalent?
       "the current position is equivalent to a diatonic one. "
       [ctx]
@@ -665,8 +663,6 @@
       "the current position is equivalent to a tonic one. "
       [ctx]
       (zero? (chromatic-distance ctx (t-round ctx))))
-
-
 
     (defn neibourhood
       [ctx]
@@ -697,7 +693,46 @@
     #_(upd (hc) (mirror :F0))
     #_(upd (hc) (di 1) (mirror :C0))
 
-    )
+    (defn connections
+      "For each layer, computes the ctxs between hc1 and hc2
+       returns a map of kind {layer intermediate-ctxs}
+       layer: :t | :s | :d | :c
+       intermediate-ctxs: sorted ctxs that are between hc1 and hc2 on the corresponding layer."
+      [hc1 hc2]
+      (let [v1 (hc->chromatic-value hc1)
+            v2 (hc->chromatic-value hc2)
+            ascending (< v1 v2)
+            in-bounds? (fn [x] (if ascending
+                                 (> v2 (hc->chromatic-value x))
+                                 (< v2 (hc->chromatic-value x))))
+            passings (fn [layer]
+                       (loop [current hc1 ret []]
+                         (if (in-bounds? current)
+                           (recur (upd current (layer-step layer (if ascending 1 -1)))
+                                  (conj ret current))
+                           (rest ret))))]
+        {:c (passings :c)
+         :d (passings :d)
+         :s (passings :s)
+         :t (passings :t)}))
+
+    (comment
+      (connections (upd (hc) (position 2 1))
+                   (upd (hc) (position 2 3)))
+      (= (upd (hc)
+              (position 0 0 6)
+              normalise)
+
+         (upd (hc)
+              (position 0 2 2)
+              normalise)
+
+         (upd (hc)
+              (position 0 2 2)
+              normalise)
+
+         (upd (hc)
+              (position 1 0 -1 0)))))
 
 (do :defs
 
