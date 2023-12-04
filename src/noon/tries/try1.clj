@@ -445,20 +445,46 @@
 
          "The problem here is that the precedent note overlaps the targeting notes"
 
-         (defn connect [size]
+         (defn connect [& sizes]
            (sf_ (let [sorted (sort-by :position _)]
                   (reduce (fn [s [n1 n2]]
-                            (let [duration (/ (:duration n1) (inc size))]
-                              (into s (map-indexed (fn [idx pitch] (assoc n1 :pitch pitch :position (+ (* idx duration) (:position n1)) :duration duration))
-                                                   (butlast (nh/simplest-connection size (:pitch n1) (:pitch n2)))))))
+                            (let [hcs (loop [sizes sizes]
+                                        (if-let [[s & sizes] (seq sizes)]
+                                          (or (nh/simplest-connection s (:pitch n1) (:pitch n2))
+                                              (recur sizes))))
+                                  duration (/ (:duration n1) (dec (count hcs)))]
+
+                              (into s (map-indexed (fn [idx pitch]
+                                                     (assoc n1
+                                                            :pitch pitch
+                                                            :position (+ (* idx duration) (:position n1))
+                                                            :duration duration))
+                                                   (butlast hcs)))))
                           #{(last sorted)} (partition 2 1 sorted)))))
 
-         (play dur2
-               harmonic-minor
-               tetrad
-               (cat s0 s2 s2- s4 s4- s2 s2- s5-)
-               (chans [(connect 5)]
-                      [(patch :ocarina) o1])))
+         (play
+          harmonic-minor
+          (cat I [VI lydianb7] V IV [II phrygian3] [V eolian] [IIb lydian])
+          (h/align-contexts :s)
+          ($cat [(cat s0 s2 s2- s4) (maybe [rev s2])])
+          (cat _ s1 s1- _)
+          (chans [(patch :tango) (connect 5 3 2 1 0)]
+                 [(patch :ocarina) vel6 s2 (connect 2 1 0)]
+                 [(patch :acoustic-bass) o1- s2- (connect 1 0)]))
+
+         (stop)
+
+         "The `connect` function is now available in `noon.lib.melody`"
+
+         (play
+          harmonic-minor
+          (cat I [VI lydianb7] V IV [II phrygian3] [V eolian] [IIb lydian])
+          (h/align-contexts :s)
+          ($cat [(cat s0 s2 s2- s4) (maybe [rev s2])])
+          (cat _ s1 s1- _)
+          (chans [(patch :tango) (m/connect 5 3 2 1 0)]
+                 [(patch :ocarina) vel6 s2 (m/connect 2 1 0)]
+                 [(patch :acoustic-bass) o1- s2- (m/connect 1 0)])))
 
 (comment :infinite-climb-illusion
 
@@ -473,3 +499,63 @@
                     (m/rotation 1/3)
                     (m/rotation 2/3))
                (dup 4)))
+
+(comment :garzone-triads
+
+         "George Garzone has this interesting way of building lines"
+         "https://youtu.be/dTIwWFa2Rnw?si=lhQUZKaa3SaL6O9R&t=2594"
+         "The idea is to mix all triads that shares at least one note with the chord you are playing on"
+         "Let's start with an hardcoded example on Cmajor"
+         (let [maj [ionian triad]
+               min [eolian triad]
+               triads [[(root :C) maj]
+                       [(root :E) maj]
+                       [(root :C) min]
+                       [(root :G) maj]
+                       [(root :B) maj]
+                       [(root :F) maj]
+                       [(root :D) maj]
+                       [(root :Eb) maj]
+
+                       [(root :E) min]
+                       [(root :G) min]
+                       [(root :F) min]
+                       [(root :B) min]
+                       [(root :D) min]
+                       [(root :Ab) maj]
+                       [(root :A) min]
+                       [(root :C#) min]]]
+           (play
+            (chans [(patch :aahs) (par s0 s1 s2)]
+                   [(tupn> (* (count triads) 3)
+                           (any-that (within-pitch-bounds? :C-1 :C1)
+                                     s1 s1-))
+                    (h/grid [(tup* (shuffle triads))
+                             (h/align-contexts :s)])])
+            (adjust 8)))
+
+         "We got a taste of it but it is not really satisfying for"
+         "Garzone is more precise regarding to how subsequent triads could be connected."
+         "the last note of the triad you play can go either 1 semiton up or down"
+         "from this note pick another triad but changing the inversion used"
+
+         (let [main-triad [(root :C) ionian triad]
+               main-pitch-classes (set (map pitch-class-value (mk main-triad (par s0 s1 s2))))
+               all-triads (for [root' [:C :Db :D :Eb :E :F :Gb :G :Ab :A :Bb :B]
+                                kind [ionian eolian]]
+                            [(root root') kind])
+
+               available-triads (filter (fn [u]
+                                          (some main-pitch-classes
+                                                (map pitch-class-value (mk u (par s0 s1 s2)))))
+                                        all-triads)
+
+               transitions (reduce (fn [ret triad]
+                                     (assoc ret triad (filter (fn [t]) available-triads)))
+                                   {} available-triads)
+               triad-line (loop [ret [] current main-triad triads available-triads]
+                            (if (seq triads)
+                              (let [])))]
+           (play (cat* (shuffle available-triads))
+                 (h/align-contexts :s)
+                 ($ (tup s0 s1 s2)))))
