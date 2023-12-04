@@ -275,6 +275,35 @@
                                         d1 d1-)]))
                    (adjust 3))))
 
+(do :connect
+
+    (defn $connect [f]
+      (sf_ (let [sorted (sort-by :position _)]
+             (reduce (fn [s [n1 n2]]
+                       (into s (f n1 n2)))
+                     #{(last sorted)} (partition 2 1 sorted)))))
+
+    (defn simple-connection [sizes]
+      (fn [start end]
+        (let [hcs (loop [sizes sizes]
+                    (if-let [[s & sizes] (seq sizes)]
+                      (or (h/simplest-connection s (:pitch start) (:pitch end))
+                          (recur sizes))))
+              duration (/ (:duration start) (dec (count hcs)))]
+
+          (map-indexed (fn [idx pitch]
+                         (assoc start
+                                :pitch pitch
+                                :position (+ (* idx duration) (:position start))
+                                :duration duration))
+                       (butlast hcs)))))
+
+    (defn connect
+      "Tries to connect subsequent notes using one of the given step-sizes.
+       Intermediate step notes are selected on lowset layer in priority."
+      [& step-sizes]
+      ($connect (simple-connection step-sizes))))
+
 (defn stup
   "build a tup of steps on the specified layer
    form: (stup layer steps)
