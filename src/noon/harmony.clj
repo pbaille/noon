@@ -734,30 +734,32 @@ intermediate-ctxs: sorted ctxs that are between hc1 and hc2 on the corresponding
 
         (defn simplest-connection
           "return a sequence of harmonic contexts representing a melodic line between `hc1` and `hc2` with `size` intermediate contexts.
-intermediate contexts are selected on lowset layer in priority."
+           intermediate contexts are selected on lowset layer in priority."
           [size hc1 hc2]
-          (let [v1 (hc->chromatic-value hc1)
-                v2 (hc->chromatic-value hc2)
-                ascending (< v1 v2)
-                chrom-line (chromatic-connection hc1 hc2)
-                passing-notes (butlast (rest chrom-line))
-                max-size (count passing-notes)
-                split-by (fn [f xs] (reduce (fn [[a b] x] (if (f x) [(conj a x) b] [a (conj b x)]))
-                                            [[] []] xs))
-                [t-passings xs] (split-by tonic-equivalent? passing-notes)
-                [s-passings xs] (split-by structural-equivalent? xs)
-                [d-passings c-passings] (split-by diatonic-equivalent? xs)
-                prio-passings (concat (reverse t-passings)
-                                      (reverse s-passings)
-                                      (reverse d-passings)
-                                      (reverse c-passings))
+          (if (zero? size)
+            [hc1 hc2]
+            (let [v1 (hc->chromatic-value hc1)
+                  v2 (hc->chromatic-value hc2)
+                  ascending (< v1 v2)
+                  chrom-line (chromatic-connection hc1 hc2)
+                  passing-notes (butlast (rest chrom-line))
+                  max-size (count passing-notes)
+                  split-by (fn [f xs] (reduce (fn [[a b] x] (if (f x) [(conj a x) b] [a (conj b x)]))
+                                             [[] []] xs))
+                  [t-passings xs] (split-by tonic-equivalent? passing-notes)
+                  [s-passings xs] (split-by structural-equivalent? xs)
+                  [d-passings c-passings] (split-by diatonic-equivalent? xs)
+                  prio-passings (concat (reverse t-passings)
+                                        (reverse s-passings)
+                                        (reverse d-passings)
+                                        (reverse c-passings))
 
-                return (fn [xs] (let [xs (sort-by hc->chromatic-value xs)]
-                                  (conj (vec (cons (first chrom-line) (if ascending xs (reverse xs))))
-                                        (last chrom-line))))]
-            (cond (= max-size size) chrom-line
-                  (> max-size size) (return (take size prio-passings))
-                  :else nil)))
+                  return (fn [xs] (let [xs (sort-by hc->chromatic-value xs)]
+                                   (conj (vec (cons (first chrom-line) (if ascending xs (reverse xs))))
+                                         (last chrom-line))))]
+              (cond (= max-size size) chrom-line
+                    (> max-size size) (return (take size prio-passings))
+                    :else nil))))
 
         (comment
           (connections (upd (hc) (position 2 1))
