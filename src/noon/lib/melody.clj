@@ -149,7 +149,7 @@
 
       (sfn s
            (assert (apply = (map (fn [e] (dissoc (:pitch e) :position)) s))
-                   "for now only mono harmony scores are supported here")
+                   "For now, only mono harmony scores are supported here")
 
            (let [layer (or layer (score-lowest-layer s))
                  layer-converter (partial h/down-to-layer layer)
