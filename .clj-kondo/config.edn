@@ -1,12 +1,25 @@
 {:linters {:missing-else-branch {:level :off}
            :unused-value {:level :off}
            :uninitialized-var {:level :off}
-           :clojure-lsp/unused-public-var {:level :off}}
- :lint-as {backtick/template clojure.core/comment}
+           :clojure-lsp/unused-public-var {:level :off}
+           :redundant-do {:level :off}}
+ :lint-as {backtick/template clojure.core/comment
+           noon.utils.misc/defclosure clojure.core/defn}
  :config-in-call {clojure.core/do {:unused-value {:level :off}}}
  :config-in-comment {:linters {:unresolved-symbol {:level :off}
                                :unresolved-namespace {:level :off}
                                :invalid-arity {:level :off}}}
  :hooks {:analyze-call {noon.utils.chance/gen noon.utils.chance/gen
                         noon.utils.chance/defcoll noon.utils.chance/defcoll}
-         :macroexpand {noon.utils.chance/defgen noon.utils.chance/defgen}}}
+         :macroexpand {noon.utils.chance/defgen noon.utils.chance/defgen
+                       noon.score/efn noon.score/efn
+                       noon.score/ef_ noon.score/ef_
+                       noon.score/sfn noon.score/sfn
+                       noon.score/sf_ noon.score/sf_
+                       noon.score/defclosure* noon.score/defclosure*
+                       noon.utils.misc/f_ noon.utils.misc/f_
+                       noon.utils.misc/>_ noon.utils.misc/>_
+                       noon.score/import-wrap-harmony-update-constructors noon.score/import-wrap-harmony-update-constructors
+                       noon.score/import-wrap-harmony-updates  noon.score/import-wrap-harmony-updates
+                       noon.harmony/defsteps noon.harmony/defsteps
+                       noon.utils.misc/defreduction noon.utils.misc/defreduction}}}
