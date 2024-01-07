@@ -45,14 +45,13 @@
             (map octave-split
                  (comb/permutations (range size))))))))
 
-
     (def closed
       (n/sf_ (let [[[v1 bass] & others]
-                 (sort (map (juxt n/pitch-value identity) _))]
-             (->> others
-                  (map (fn [[v note]]
-                         ((n/t-shift (quot (c/- v1 v) 12)) note)))
-                  (into #{bass})))))
+                   (sort (map (juxt n/pitch-value identity) _))]
+               (->> others
+                    (map (fn [[v note]]
+                           ((n/t-shift (quot (c/- v1 v) 12)) note)))
+                    (into #{bass})))))
 
     (def drops
       (do memoize ; TODO uncomment memo
@@ -149,10 +148,10 @@
                             candidates))))]
 
         (n/sf_ (let [[x1 & xs :as groups] (map (comp set val) (sort-by key (group-by :position _)))]
-               (loop [ret [x1] todo xs]
-                 (if-let [[x & xs] (seq todo)]
-                   (recur (conj ret (voice-lead2 (peek ret) x)) xs)
-                   (reduce into #{} ret))))))))
+                 (loop [ret [x1] todo xs]
+                   (if-let [[x & xs] (seq todo)]
+                     (recur (conj ret (voice-lead2 (peek ret) x)) xs)
+                     (reduce into #{} ret))))))))
 
 (u/defclosure align-contexts
 
@@ -167,21 +166,21 @@
   ([layer] (align-contexts layer :incremental))
   ([layer mode]
    (n/sf_ (let [[x1 & xs] (sort-by :position _)]
-          (loop [ret [x1] todo xs]
-            (if-let [[x & xs] (seq todo)]
-              (let [aligned (h/align layer
-                                     (:pitch (case mode :incremental (peek ret) :static x1))
-                                     (:pitch x))]
-                (recur (conj ret (assoc x :pitch aligned)) xs))
-              (set ret)))))))
+            (loop [ret [x1] todo xs]
+              (if-let [[x & xs] (seq todo)]
+                (let [aligned (h/align layer
+                                       (:pitch (case mode :incremental (peek ret) :static x1))
+                                       (:pitch x))]
+                  (recur (conj ret (assoc x :pitch aligned)) xs))
+                (set ret)))))))
 
 (n/defclosure* grid-zipped
   "zip the current score (which should represent an harmonic grid)
    to the resulting of applying 'xs updates to a fresh score."
   [xs]
   (n/sf_ (let [seed (dissoc (first _) :position :duration :pitch)
-             zip-fn (fn [x y] (n/upd y {:pitch (h/hc+ (:pitch (first x)))}))]
-         (n/upd _ (n/zip zip-fn (n/k seed (n/lin* xs)))))))
+               zip-fn (fn [x y] (n/upd y {:pitch (h/hc+ (:pitch (first x)))}))]
+           (n/upd _ (n/zip zip-fn (n/k seed (n/lin* xs)))))))
 
 (defn- connect-trimmed-chunks [xs]
   (reduce (fn [score x]
@@ -207,11 +206,11 @@
   ""
   [xs]
   (n/sf_ (->> (map (fn [[position [{:keys [duration pitch]}]]]
-                   (n/upd _
-                        [(n/trim position (+ position duration))
-                         {:pitch (h/hc+ pitch)}]))
-                 (sort-by key (group-by :position (n/mk* xs))))
-            (connect-trimmed-chunks))))
+                     (n/upd _
+                            [(n/trim position (+ position duration))
+                             {:pitch (h/hc+ pitch)}]))
+                   (sort-by key (group-by :position (n/mk* xs))))
+              (connect-trimmed-chunks))))
 
 (comment :tries
 
