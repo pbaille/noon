@@ -1,11 +1,10 @@
 (ns noon.lib.reaper
-  (:use noon.score)
-  (:require [noon.harmony :as harmony]
-            [noon.utils.reaper :as reaper :refer [<<]]
-            [backtick :refer [template]]
-            [noon.utils.misc :as u]
+  (:require [noon.score :as n]
+            [noon.harmony :as harmony]
+            [noon.utils.reaper.interop :as reaper :refer [<<]]
+            #_[backtick :refer [template]]
+            #_[noon.utils.misc :as u]
             [noon.midi :as midi]
-            [noon.score :as noon]
             [noon.utils.emacs.cider-keybindings :as kbs]
             [clojure.string :as str]))
 
@@ -17,11 +16,11 @@
 (def REAPER_SYNC_MIDI_FILE
   "/Users/pierrebaille/Code/WIP/noon/generated/reaper-sync.mid")
 
-(def score* (atom score0))
+(def score* (atom n/score0))
 
 (defn upd-score! [& xs]
   (swap! score*
-         (lin* xs)))
+         (n/lin* xs)))
 
 (do :convertions
 
@@ -48,7 +47,7 @@
                    :end-position (+ end NOON_MIDI_NOTE_OFF_SHIFT)))))
 
     (defn score->notes [score]
-      (mapv noon-note->reaper-note (numerify-pitches score))))
+      (mapv noon-note->reaper-note (n/numerify-pitches score))))
 
 (do :get-reaper-selection
 
@@ -78,17 +77,17 @@
 
     (defn time-framed-upd [time-selection upd]
       (let [start (ppq->qpos (:start time-selection))]
-        (lin {:position #(- % start)}
-             upd
-             {:position #(+ % start)})))
+        (n/lin {:position #(- % start)}
+               upd
+               {:position #(+ % start)})))
 
     (defn upd-selection! [& xs]
       (let [[time-selection reaper-notes] (<< [(ru.take.time-selection.get (ru.take.get-active))
                                                (ru.take.note-selection.get (ru.take.get-active))])
             [selected remaining] (split-selection @score* reaper-notes)
-            updated (upd selected (if time-selection
-                                    (time-framed-upd time-selection (lin* xs))
-                                    (lin* xs)))]
+            updated (n/upd selected (if time-selection
+                                      (time-framed-upd time-selection (n/lin* xs))
+                                      (n/lin* xs)))]
         (reset! score*
                 (into updated remaining))
         (<< (global T (ru.take.get-active))
@@ -101,15 +100,15 @@
             focused-note (<< (ru.take.focused-note (ru.take.get-active)))]
         (if focused-note
           (let [noon-note (retrieve-reaper-note focused-note score)
-                updated-subscore (upd #{noon-note} u)
+                updated-subscore (n/upd #{noon-note} u)
                 reaper-new-notes (score->notes updated-subscore)]
-           (reset! score* (-> (disj score noon-note)
-                              (into updated-subscore)))
-           (<< (let [t ru.take
-                     T (t.get-active)]
-                 (t.delete-note T (. (t.focused-note T) :idx))
-                 (t.insert-notes T ~reaper-new-notes)
-                 (t.focus.closest-note T)))))))
+            (reset! score* (-> (disj score noon-note)
+                               (into updated-subscore)))
+            (<< (let [t ru.take
+                      T (t.get-active)]
+                  (t.delete-note T (. (t.focused-note T) :idx))
+                  (t.insert-notes T ~reaper-new-notes)
+                  (t.focus.closest-note T)))))))
 
     (defn sync-score! []
       (let [notes (score->notes @score*)]
@@ -119,11 +118,11 @@
           (reaper/>> (ru.take.insert-notes T ~(vec notes)))))))
 
 (defn reset-score! [x]
-  (let [score (cond (score? x) x
-                    (score-update? x) (mk x)
-                    :else score0)]
+  (let [score (cond (n/score? x) x
+                    (n/score-update? x) (n/mk x)
+                    :else n/score0)]
     (reset! score* score)
-    (noon/write-score score :filename REAPER_SYNC_MIDI_FILE)
+    (n/write-score score :filename REAPER_SYNC_MIDI_FILE)
     (reaper/>> (let [t ru.take
                      item (reaper.GetSelectedMediaItem 0 0)]
                  (if item
@@ -174,7 +173,7 @@
              (upd-score! d1)
              (sync-score!)
 
-             (require '[noon.lib.melody :as m]))
+             '(require '[noon.lib.melody :as m]))
 
          (do :noon-hydra
              (letfn [(symjoin [sep xs] (->> (map name xs) (str/join sep) symbol))
@@ -182,7 +181,7 @@
                      (hbody-var [segments] (symbol (str "#'" (hsym segments) "/body")))
                      (hform [name-segments children]
                        (template (defhydra ~(hsym name-segments) (:color teal)
-                                   ("q" nil "quit" :exit true)
+                                   ~(list "q" nil "quit" :exit true)
                                    ~@(when-let [back-desc (some-> (butlast name-segments) last name)]
                                        [(list "<escape>" (hbody-var (butlast name-segments)) back-desc)])
                                    ~@children)))
@@ -203,7 +202,7 @@
                               ($ contexts
                                  (fn [[context key]] (list key (hbody-var [context]) (name context)))))
                        ($* contexts
-                           (fn [[context key update]]
+                           (fn [[context _key update]]
                              (cons (hform [context]
                                           ($ levels
                                              (fn [[level key]] (list key (hbody-var [context level]) (name level)))))
@@ -211,5 +210,5 @@
                                       (fn [[level _ step-fn]]
                                         (hform [context level]
                                                ($ directions
-                                                  (fn [[dir key delta]]
+                                                  (fn [[_dir key delta]]
                                                     (list key (noon-action update (list step-fn delta)) :color 'red))))))))))))))
