@@ -1,8 +1,8 @@
 (ns noon.lib.melody
   "providing facilities to deal with melodic development"
-  (:use noon.score)
   (:refer-clojure :exclude [cat struct while])
-  (:require [noon.utils.chance :as g]
+  (:require [noon.score :as n]
+            [noon.utils.chance :as g]
             [noon.utils.contour :as c]
             [noon.utils.sequences :as s]
             [noon.utils.misc :as u :refer [f_ defclosure]]
@@ -28,7 +28,7 @@
                        (group-by :position s))]
 
         (reduce (fn [[r1 & rs :as ret]
-                    {:as current :keys [layer-idx position score]}]
+                     {:as current :keys [layer-idx position score]}]
                   (if (= (:layer-idx r1) layer-idx)
                     (cons (update r1 :score into score) rs)
                     (cons current ret)))
@@ -38,17 +38,18 @@
       (->> (layer-split layer s)
            (sort-by :position)
            (map (fn [{:keys [score position]}]
-                  (shift-score score (- position))))))
+                  (n/shift-score score (- position))))))
 
     (defn sorted-position-splits [s]
       (->> (group-by :position s)
            (sort-by key)
            (map (fn [[position events]]
-                  (shift-score (set events) (- position))))))
+                  (n/shift-score (set events) (- position))))))
 
-    (layer-split :s
-                 (mk (tup s0 s1 s2)
-                     ($ (tup d0 d1 d2)))))
+    (comment
+     (layer-split :s
+                  (mk (tup s0 s1 s2)
+                      ($ (tup d0 d1 d2))))))
 
 (do :permutations-rotations
 
@@ -61,7 +62,7 @@
          (rotation x {})))
       ([pick {:as options :keys [layer layers]}]
        (let [layers (or layers (if layer (list layer)))]
-         (sf_ (concat-scores
+         (n/sf_ (n/concat-scores
                (if-let [nxt-layers (next layers)]
                  (map (rotation pick (assoc options :layers nxt-layers))
                       (sorted-layer-splits (first layers) _))
@@ -79,7 +80,7 @@
          (permutation x {})))
       ([pick {:as options :keys [layer layers]}]
        (let [layers (or layers (if layer (list layer)))]
-         (sf_ (concat-scores
+         (n/sf_ (n/concat-scores
                (if-let [nxt-layers (next layers)]
                  (map (permutation pick (assoc options :layers nxt-layers))
                       (sorted-layer-splits (first layers) _))
@@ -147,7 +148,7 @@
 
     (defn contour-change [layer f]
 
-      (sfn s
+      (n/sfn s
            (assert (apply = (map (fn [e] (dissoc (:pitch e) :position)) s))
                    "For now, only mono harmony scores are supported here")
 
@@ -155,12 +156,12 @@
                  layer-converter (partial h/down-to-layer layer)
                  splits (sort-by :position (layer-split layer s))
                  idxs (map :layer-idx splits)
-                 contour (mapv (sub (apply min idxs)) idxs)
+                 contour (mapv (n/sub (apply min idxs)) idxs)
                  new-contour (f contour)
 
                  deltas (mapv - new-contour contour)
                  position-key (layer-kw->position-key layer)]
-             (concat-scores
+             (n/concat-scores
               (map-indexed (fn [i {:keys [position score layer-idx]}]
                              (->> score
                                   (map (fn [e]
@@ -229,24 +230,24 @@
        3. if 'done? called with this new score is true, feed it to 'finish and return.
        4. else go to step 1."
       [connect step done? finish]
-      (sf_ (let [nxt (concat-score _ (upd (connect _) step))]
-             (cond (empty? nxt) nil
-                   (done? nxt) (upd nxt finish)
-                   :else (recur nxt)))))
+      (n/sf_ (let [nxt (n/concat-score _ (n/upd (connect _) step))]
+               (cond (empty? nxt) nil
+                     (done? nxt) (n/upd nxt finish)
+                     :else (recur nxt)))))
 
     (u/defclosure simple-line
       "a simple way to create a line of given 'length using the given 'step"
       [length step]
-      (sf_ (let [last-event (fn [s] (-> (sort-by :position s) last))
-                 {:as connection dur :duration} (last-event _)
-                 normalise (fn [e] (assoc e :position 0 :duration dur))
-                 connect (fn [s] (-> (last-event s) normalise hash-set))
-                 total-duration (* dur length)
-                 done? (fn [s] (> (score-duration s) total-duration))]
-             (upd _ (line connect step done? (trim 0 total-duration))))))
+      (n/sf_ (let [last-event (fn [s] (-> (sort-by :position s) last))
+                   {:as connection dur :duration} (last-event _)
+                   normalise (fn [e] (assoc e :position 0 :duration dur))
+                   connect (fn [s] (-> (last-event s) normalise hash-set))
+                   total-duration (* dur length)
+                   done? (fn [s] (> (n/score-duration s) total-duration))]
+               (n/upd _ (line connect step done? (n/trim 0 total-duration))))))
 
     (defn simple-tupline [len step]
-      (fit (simple-line len step)))
+      (n/fit (simple-line len step)))
 
     (comment :line-tries
 
@@ -278,7 +279,7 @@
 (do :connect
 
     (defn $connect [f]
-      (sf_ (let [sorted (sort-by :position _)]
+      (n/sf_ (let [sorted (sort-by :position _)]
              (reduce (fn [s [n1 n2]]
                        (into s (f n1 n2)))
                      #{(last sorted)} (partition 2 1 sorted)))))
@@ -310,7 +311,7 @@
      layer: :c | :d | :s | :t
      steps: a sequence of ints."
   [layer steps]
-  (tup* (map (partial layer-step layer) steps)))
+  (n/tup* (map (partial n/layer-step layer) steps)))
 
 (defn stup>
   "build a tup of successive steps on the specified layer
@@ -318,12 +319,12 @@
      layer: :c | :d | :s | :t
      steps: a sequence of ints."
   [layer steps]
-  (tup>* (map (partial layer-step layer) steps)))
+  (n/tup>* (map (partial n/layer-step layer) steps)))
 
-(defclosure* append>
+(n/defclosure* append>
   "accumulative append"
   [xs]
-  (lin* (map append xs)))
+  (n/lin* (map n/append xs)))
 
 (comment :gen-tup
 
