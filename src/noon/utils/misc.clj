@@ -1,7 +1,9 @@
 (ns noon.utils.misc
+  (:refer-clojure :exclude [abs])
   (:require [clojure.string :as str]
             [me.raynes.fs :as fs]
-            [backtick :as bt]))
+            [backtick :as bt]
+            [clojure.pprint :as pprint]))
 
 (do :numbers
 
@@ -120,7 +122,7 @@
           (keyword)))
 
     (defn pretty-str [x]
-      (with-out-str (clojure.pprint/pprint x))))
+      (with-out-str (pprint/pprint x))))
 
 (do :metadata
 

@@ -3,13 +3,9 @@
   (:require [noon.score :as n]
             [noon.harmony :as h]
             [noon.utils.misc :as u]
-            [noon.constants :as constants]
             [noon.utils.sequences :as s]
-            [noon.utils.chance :as g]
             [clojure.core :as c]
-            [clojure.math.combinatorics :as comb]
-            [noon.utils.mapsets :as ms]
-            [noon.midi :as midi]))
+            [clojure.math.combinatorics :as comb]))
 
 (do :help
 
@@ -111,7 +107,7 @@
              :else (nth (:downward (shiftings _)) (- n)))))
 
     (defn voicings
-      [s {:as opts :keys [bounds]}]
+      [s {:as _opts :keys [bounds]}]
       (let [check (partial in-bounds bounds)]
         (mapcat (fn [{:keys [self upward downward]}]
                   (let [self-bounds (n/pitch-value-bounds self)]
@@ -147,7 +143,7 @@
                    (sort-by (partial voice-leading-score a)
                             candidates))))]
 
-        (n/sf_ (let [[x1 & xs :as groups] (map (comp set val) (sort-by key (group-by :position _)))]
+        (n/sf_ (let [[x1 & xs :as _groups] (map (comp set val) (sort-by key (group-by :position _)))]
                  (loop [ret [x1] todo xs]
                    (if-let [[x & xs] (seq todo)]
                      (recur (conj ret (voice-lead2 (peek ret) x)) xs)
@@ -203,7 +199,7 @@
           #{} xs))
 
 (n/defclosure* grid
-  ""
+  "grid"
   [xs]
   (n/sf_ (->> (map (fn [[position [{:keys [duration pitch]}]]]
                      (n/upd _

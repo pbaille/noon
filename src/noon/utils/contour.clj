@@ -91,7 +91,7 @@
           vec))))
 
 (defn gen-line
-  ""
+  "generate a line"
   [{:keys [contour grow pick]}]
   (-> (gen-contour contour)
       (lines grow)

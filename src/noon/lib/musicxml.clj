@@ -46,7 +46,7 @@
         (recur (conj bars (n/upd remaining (n/trim 0 len)))
                (n/upd remaining (n/lin (n/trim len duration) (n/start-from len))))))))
 
-(defn note-type [duration [num den :as time]]
+(defn note-type [_duration [_num den :as _time]]
   (assert (= 4 den)
           "only n/4 time sig are supported for now"))
 
@@ -84,7 +84,7 @@
                     (conj rests {:rest true :position end-pos :duration remaining-rest-duration})
                     rests)))))
 
-(defn note [{:as n :keys [chord rest trimed-fw trimed-bw]} & {:as options :keys [beat-divisions]}]
+(defn note [{:as n :keys [chord _rest trimed-fw trimed-bw]} & {:as _options :keys [beat-divisions]}]
   (u/template
    [:note
     ~(if (:rest n)
@@ -116,12 +116,12 @@
                   [:clef [:sign "G"] [:line 2]]]))]
         (into (map (fn [n] (note n options)) notes)))))
 
-(defn part [score & {:as options :keys [time name]}]
+(defn part [score & {:as options :keys [_time name]}]
   (into [:part {:id name}]
         (map-indexed (fn [i b] (measure b :number (inc i) options))
                      (split-bars score options))))
 
-(defn emit [score & {:as options :keys [time file]}]
+(defn emit [score & {:as options :keys [_time file]}]
   (let [beat-divisions (score->beat-divisions score)
 
         parts (->> (group-by :channel score)
@@ -135,7 +135,7 @@
 
 (comment
 
-  (use 'noon.score)
+  '(use 'noon.score)
   (def sample-score (mk o1- dur8 dur2))
   (split-bars sample-score {:time [4 4]})
   (emit sample-score

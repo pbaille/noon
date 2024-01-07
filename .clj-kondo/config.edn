@@ -2,7 +2,8 @@
            :unused-value {:level :off}
            :uninitialized-var {:level :off}
            :clojure-lsp/unused-public-var {:level :off}
-           :redundant-do {:level :off}}
+           :redundant-do {:level :off}
+           :use {:level :off}}
  :lint-as {backtick/template clojure.core/comment
            noon.utils.misc/defclosure clojure.core/defn}
  :config-in-call {clojure.core/do {:unused-value {:level :off}}}

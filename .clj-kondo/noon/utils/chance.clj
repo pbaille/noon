@@ -2,7 +2,7 @@
   (:require [clj-kondo.hooks-api :as api]))
 
 (defn gen [{:keys [node]}]
-  (prn (api/sexpr node))
+  #_(prn (api/sexpr node))
   (let [body (rest (:children node))]
     {:node (api/list-node (list* (api/token-node `fn) (api/vector-node []) body))}))
 
@@ -26,5 +26,5 @@
                                   (api/list-node (list argv-node gen-expr-node))
                                   (api/list-node (list (api/vector-node (conj (vec (repeat (count (:children argv-node)) (api/token-node '_))) (api/token-node '&) (api/token-node '_)))
                                                        (api/token-node nil)))))]
-    (prn (api/sexpr node))
+    #_(prn (api/sexpr node))
     {:node node}))

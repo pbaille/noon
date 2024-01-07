@@ -2,10 +2,10 @@
   "providing facilities to deal with melodic development"
   (:refer-clojure :exclude [cat struct while])
   (:require [noon.score :as n]
-            [noon.utils.chance :as g]
+            #_[noon.utils.chance :as g]
             [noon.utils.contour :as c]
             [noon.utils.sequences :as s]
-            [noon.utils.misc :as u :refer [f_ defclosure]]
+            [noon.utils.misc :as u]
             [noon.harmony :as h]
             [clojure.math.combinatorics :as comb]))
 
@@ -28,7 +28,7 @@
                        (group-by :position s))]
 
         (reduce (fn [[r1 & rs :as ret]
-                     {:as current :keys [layer-idx position score]}]
+                     {:as current :keys [layer-idx score]}]
                   (if (= (:layer-idx r1) layer-idx)
                     (cons (update r1 :score into score) rs)
                     (cons current ret)))
@@ -47,9 +47,9 @@
                   (n/shift-score (set events) (- position))))))
 
     (comment
-     (layer-split :s
-                  (mk (tup s0 s1 s2)
-                      ($ (tup d0 d1 d2))))))
+      (layer-split :s
+                   (mk (tup s0 s1 s2)
+                       ($ (tup d0 d1 d2))))))
 
 (do :permutations-rotations
 
@@ -162,7 +162,7 @@
                  deltas (mapv - new-contour contour)
                  position-key (layer-kw->position-key layer)]
              (n/concat-scores
-              (map-indexed (fn [i {:keys [position score layer-idx]}]
+              (map-indexed (fn [i {:keys [position score]}]
                              (->> score
                                   (map (fn [e]
                                          (-> (update e :pitch layer-converter)
@@ -196,7 +196,7 @@
       ([cmd]
        (contour cmd {}))
       ([cmd
-        {:as opts :keys [pick nth layer extent delta]}]
+        {:as _opts :keys [pick nth layer extent delta]}]
        (let [pick (or pick nth :random)]
          (contour-change
           layer
@@ -239,7 +239,7 @@
       "a simple way to create a line of given 'length using the given 'step"
       [length step]
       (n/sf_ (let [last-event (fn [s] (-> (sort-by :position s) last))
-                   {:as connection dur :duration} (last-event _)
+                   {:as _connection dur :duration} (last-event _)
                    normalise (fn [e] (assoc e :position 0 :duration dur))
                    connect (fn [s] (-> (last-event s) normalise hash-set))
                    total-duration (* dur length)
@@ -328,53 +328,49 @@
 
 (comment :gen-tup
 
-    (defn gen-line [{:as opts :keys [contour grow layer pick]}]
-      (tup* (map (partial layer-step layer) (c/gen-line opts))))
+         (defn gen-line [{:as opts :keys [_contour _grow layer _pick]}]
+           (tup* (map (partial layer-step layer) (c/gen-line opts))))
 
-    (play dur:2
-          (patch :whistle)
-          (gen-line {:contour [6 4] :grow 6 :layer :c})
-          (append c3)
-          (append c4)
-          (append c2)
-          (append rev)
-          (append ($ (maybe o1 o1-)))
-          )
+         (play dur:2
+               (patch :whistle)
+               (gen-line {:contour [6 4] :grow 6 :layer :c})
+               (append c3)
+               (append c4)
+               (append c2)
+               (append rev)
+               (append ($ (maybe o1 o1-))))
 
-    (play dur:2
-          (patch :whistle)
-          (gen-line {:contour [6 4] :grow 6 :layer :c})
-          (append> c3 c4 c2 rev)
-          (dup 2)
-          )
+         (play dur:2
+               (patch :whistle)
+               (gen-line {:contour [6 4] :grow 6 :layer :c})
+               (append> c3 c4 c2 rev)
+               (dup 2))
 
-    (defn gen-steps [{:keys [min max ]}])
+         #_(defn gen-steps [{:keys [min max]}])
 
-    (defn gen-tup
-      ""
-      ([{:as options
-         :keys [layer size steps pick delta]
-         :or {layer :d steps (range -7 8) pick :rand delta 0}}]
-       (let [step (partial layer-step layer)]
-         (tup>* (map step (shuffle (s/member (u/sums delta size steps)
-                                             pick)))))))
+         (defn gen-tup
+           ([{:as _options
+              :keys [layer size steps pick delta]
+              :or {layer :d steps (range -7 8) pick :rand delta 0}}]
+            (let [step (partial n/layer-step layer)]
+              (n/tup>* (map step (shuffle (s/member (u/sums delta size steps)
+                                                    pick)))))))
 
-    (def DEFAULT_LAYERS_DELTAS
-      {:c 12 :d 7 :s 3 :t 1})
+         (def DEFAULT_LAYERS_DELTAS
+           {:c 12 :d 7 :s 3 :t 1})
 
-    (defn gen-tup2
-      ""
-      ([{:as options
-         :keys [layer length size steps bounds]
-         :or {layer :d size 0}}]
-       (let [delta (DEFAULT_LAYERS_DELTAS layer)
-             steps (or steps (let [abs-rng (range 1 (inc delta))]
-                               (concat (map - abs-rng) abs-rng)))
-             bounds (or bounds [(- delta) delta])]
-         (tup>* (map (partial layer-step layer)
-                     (shuffle (rand-nth (u/sums size length steps)))))))
-      ([layer length size & {:as options}]
-       (gen-tup2 (assoc options :layer layer :length length :size size)))))
+         (defn gen-tup2
+           ([{:as _options
+              :keys [layer length size steps bounds]
+              :or {layer :d size 0}}]
+            (let [delta (DEFAULT_LAYERS_DELTAS layer)
+                  steps (or steps (let [abs-rng (range 1 (inc delta))]
+                                    (concat (map - abs-rng) abs-rng)))
+                  _bounds (or bounds [(- delta) delta])]
+              (n/tup>* (map (partial n/layer-step layer)
+                            (shuffle (rand-nth (u/sums size length steps)))))))
+           ([layer length size & {:as options}]
+            (gen-tup2 (assoc options :layer layer :length length :size size)))))
 
 (comment :sum-scratch-useless
 

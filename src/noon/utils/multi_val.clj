@@ -382,7 +382,7 @@
 
     (declare compile)
 
-    (defn compile-application [env [verb & args :as expr]]
+    (defn compile-application [env [verb & args :as _expr]]
       (let [argv (vec (repeatedly (count args) gensym))]
         `(bind (tup ~@(mapv (partial compile env) args))
                (fn [~argv] ~(cons (compile env verb) argv)))))
@@ -415,7 +415,9 @@
                             (set? x) (compile env `(hash-set ~@x)))
             :else x))
 
-    (defmacro meval [code]
+    (defmacro meval
+      {:clj-kondo/ignore true}
+      [code]
       (compile {} (walk/macroexpand-all code)))
 
     (meval (let [a 1

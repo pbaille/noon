@@ -38,7 +38,7 @@
   (spit "data/gm-summary.edn" (with-out-str (clojure.pprint/pprint summary)))
 
   (comment :soundfont-tests
-           (use 'noon.score)
+           '(use 'noon.score)
            (play dur2
                  [o1- (rup 7 d1)
                   (cat same (k (par s0 s2 s4)))]

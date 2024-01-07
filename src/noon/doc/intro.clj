@@ -2,7 +2,6 @@
   (:use noon.score)
   (:refer-clojure :exclude [cat struct while])
   (:require [noon.lib.harmony :as h]
-            [noon.vst.index :as vst]
             [noon.lib.melody :as m]
             [noon.lib.rythmn :as r]
             [noon.utils.sequences :as seqs]))
