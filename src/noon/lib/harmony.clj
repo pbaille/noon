@@ -1,7 +1,7 @@
 (ns noon.lib.harmony
-  (:use noon.score)
   (:refer-clojure :exclude [cat struct while drop])
-  (:require [noon.harmony :as h]
+  (:require [noon.score :as n]
+            [noon.harmony :as h]
             [noon.utils.misc :as u]
             [noon.constants :as constants]
             [noon.utils.sequences :as s]
@@ -17,7 +17,7 @@
       (and (<= a c) (>= b d)))
 
     (defn in-bounds [bounds s]
-      (bounds-gte bounds (pitch-value-bounds s))))
+      (bounds-gte bounds (n/pitch-value-bounds s))))
 
 (do :voicings
 
@@ -47,11 +47,11 @@
 
 
     (def closed
-      (sf_ (let [[[v1 bass] & others]
-                 (sort (map (juxt pitch-value identity) _))]
+      (n/sf_ (let [[[v1 bass] & others]
+                 (sort (map (juxt n/pitch-value identity) _))]
              (->> others
                   (map (fn [[v note]]
-                         ((t-shift (quot (c/- v1 v) 12)) note)))
+                         ((n/t-shift (quot (c/- v1 v) 12)) note)))
                   (into #{bass})))))
 
     (def drops
@@ -59,15 +59,15 @@
           (fn [s]
             (let [size (count s)
                   _ (assert (c/< size 8) "cannot drop more than 7 notes")
-                  notes (vec (sort-by pitch-value (closed s)))]
+                  notes (vec (sort-by n/pitch-value (closed s)))]
               (map (fn [d] (set (cons (notes 0)
-                                      (mapcat (fn [o idxs] (map (fn [idx] ((t-shift o) (notes (inc idx)))) idxs))
+                                      (mapcat (fn [o idxs] (map (fn [idx] ((n/t-shift o) (notes (inc idx)))) idxs))
                                               (range) d))))
                    (abstract-drops (dec size)))))))
 
     (u/defclosure drop
       [x]
-      (sf_ (s/member (drops _) x)))
+      (n/sf_ (s/member (drops _) x)))
 
     (def shiftings
       "try to speed up shiftings"
@@ -76,7 +76,7 @@
          (shiftings s [0 127]))
         ([s bounds]
          (let [size (count s)
-               pitch-values (sort (map pitch-value (closed s)))
+               pitch-values (sort (map n/pitch-value (closed s)))
 
                neighbourhoods (->> (-> (cons (- (last pitch-values) 12) pitch-values)
                                        (u/snoc (+ 12 (first pitch-values))))
@@ -88,7 +88,7 @@
                                    (into {}))
 
                get-neighbourhood (fn [n]
-                                   (get neighbourhoods (pitch-class-value n)))
+                                   (get neighbourhoods (n/pitch-class-value n)))
                shift (fn [dir x]
                        (set (map (fn [n]
                                    (update n :pitch
@@ -106,7 +106,7 @@
 
     (u/defclosure inversion
       [n]
-      (sf_
+      (n/sf_
        (cond (zero? n) _
              (pos? n) (nth (:upward (shiftings _)) n)
              :else (nth (:downward (shiftings _)) (- n)))))
@@ -115,7 +115,7 @@
       [s {:as opts :keys [bounds]}]
       (let [check (partial in-bounds bounds)]
         (mapcat (fn [{:keys [self upward downward]}]
-                  (let [self-bounds (pitch-value-bounds self)]
+                  (let [self-bounds (n/pitch-value-bounds self)]
                     (concat (if (bounds-gte bounds self-bounds) [self])
                             (if (>= (bounds 1) (self-bounds 1))
                               (->> upward (drop-while (complement check)) (take-while check)))
@@ -125,14 +125,14 @@
                      (drops (closed s))))))
 
     (defn pitch-values [chord]
-      (vec (sort (map pitch-value chord))))
+      (vec (sort (map n/pitch-value chord))))
 
     (def voice-led
 
       (letfn [(voice-leading-score
                 [a b]
-                (let [vas (map pitch-value a)
-                      vbs (map pitch-value b)
+                (let [vas (map n/pitch-value a)
+                      vbs (map n/pitch-value b)
                       best-moves (concat (map (fn [va] (first (sort (map (partial u/dist va) vbs)))) vas)
                                          (map (fn [vb] (first (sort (map (partial u/dist vb) vas)))) vbs))]
                   [(/ (reduce + best-moves)
@@ -141,14 +141,14 @@
 
               (voice-lead2
                 [a b]
-                (let [[mina maxa] (pitch-value-bounds a)
+                (let [[mina maxa] (n/pitch-value-bounds a)
                       candidates (voicings b {:bounds [(- mina VOICE_LEADING_MAX_SHIFT)
                                                        (+ maxa VOICE_LEADING_MAX_SHIFT)]})]
                   (first
                    (sort-by (partial voice-leading-score a)
                             candidates))))]
 
-        (sf_ (let [[x1 & xs :as groups] (map (comp set val) (sort-by key (group-by :position _)))]
+        (n/sf_ (let [[x1 & xs :as groups] (map (comp set val) (sort-by key (group-by :position _)))]
                (loop [ret [x1] todo xs]
                  (if-let [[x & xs] (seq todo)]
                    (recur (conj ret (voice-lead2 (peek ret) x)) xs)
@@ -166,7 +166,7 @@
   ([] (align-contexts :structural :incremental))
   ([layer] (align-contexts layer :incremental))
   ([layer mode]
-   (sf_ (let [[x1 & xs] (sort-by :position _)]
+   (n/sf_ (let [[x1 & xs] (sort-by :position _)]
           (loop [ret [x1] todo xs]
             (if-let [[x & xs] (seq todo)]
               (let [aligned (h/align layer
@@ -175,13 +175,13 @@
                 (recur (conj ret (assoc x :pitch aligned)) xs))
               (set ret)))))))
 
-(defclosure* grid-zipped
+(n/defclosure* grid-zipped
   "zip the current score (which should represent an harmonic grid)
    to the resulting of applying 'xs updates to a fresh score."
   [xs]
-  (sf_ (let [seed (dissoc (first _) :position :duration :pitch)
-             zip-fn (fn [x y] (upd y {:pitch (h/hc+ (:pitch (first x)))}))]
-         (upd _ (zip zip-fn (k seed (lin* xs)))))))
+  (n/sf_ (let [seed (dissoc (first _) :position :duration :pitch)
+             zip-fn (fn [x y] (n/upd y {:pitch (h/hc+ (:pitch (first x)))}))]
+         (n/upd _ (n/zip zip-fn (n/k seed (n/lin* xs)))))))
 
 (defn- connect-trimmed-chunks [xs]
   (reduce (fn [score x]
@@ -192,7 +192,7 @@
                 (if-not (seq fws)
                   (into ret bws)
                   (let [[fw & fws] fws]
-                    (if-let [bw (some (fn [x] (and (= (pitch-value x) (pitch-value fw))
+                    (if-let [bw (some (fn [x] (and (= (n/pitch-value x) (n/pitch-value fw))
                                                    (= (:position x) (+ (:position fw) (:duration fw)))
                                                    x))
                                       bws)]
@@ -203,14 +203,14 @@
                       (recur (conj ret fw) fws bws)))))))
           #{} xs))
 
-(defclosure* grid
+(n/defclosure* grid
   ""
   [xs]
-  (sf_ (->> (map (fn [[position [{:keys [duration pitch]}]]]
-                   (upd _
-                        [(trim position (+ position duration))
+  (n/sf_ (->> (map (fn [[position [{:keys [duration pitch]}]]]
+                   (n/upd _
+                        [(n/trim position (+ position duration))
                          {:pitch (h/hc+ pitch)}]))
-                 (sort-by key (group-by :position (mk* xs))))
+                 (sort-by key (group-by :position (n/mk* xs))))
             (connect-trimmed-chunks))))
 
 (comment :tries
