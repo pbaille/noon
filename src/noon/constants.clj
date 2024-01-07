@@ -1,6 +1,5 @@
 (ns noon.constants
-  (:require [noon.utils.misc :as u]
-            [clojure.string :as str]))
+  (:require [noon.utils.misc :as u]))
 
 (def alt-sym->alt-val
   {"bb" -2
@@ -193,10 +192,21 @@
               :sus6 [0 4 5]
               :sus7 [0 4 6]
               :tetrad [0 2 4 6]
+              :seventh [0 2 4 6]
+              :add2 [0 1 2 4]
+              :add4 [0 2 3 4]
               :sixth [0 2 4 5]
               :sus27 [0 1 4 6]
               :sus47 [0 3 4 6]
               :sus67 [0 4 5 6]})
+
+(defn struct-inversions [scale struct]
+  (mapv
+   (fn [idx]
+     (let [head (get struct idx)
+           based (map #(- % head) struct)]
+       (vec (sort (map #(if (> 0 %) (+ (count scale) %) %) based)))))
+   (range (count struct))))
 
 (defn get-struct
   ([x]
