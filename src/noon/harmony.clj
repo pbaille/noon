@@ -1,7 +1,6 @@
 (ns noon.harmony
   (:refer-clojure :exclude [struct])
   (:require [noon.utils.misc :as u :refer [t t? defclosure]]
-            [noon.utils.maps :as maps]
             [noon.constants :as constants]))
 
 (do :impl
@@ -48,7 +47,7 @@
 
     (defn bds-idx
       "return the index of the given value and the reminder in a vector: [idx rem]"
-      [{:keys [fw bw] :as bds} v]
+      [{:keys [fw bw] :as _bds} v]
 
       (let [fw? (> v (first fw))
 
@@ -308,7 +307,7 @@
 
         (do :intervals
 
-            (defn t-trim [{:as ctx p :position}]
+            (defn t-trim [{:as ctx}]
               (update (c->t ctx) :position dissoc :s :d :c))
 
             (defn t-step [n]
@@ -316,7 +315,7 @@
                 (-> (t-trim ctx)
                     (update-in [:position :t] safe-add n))))
 
-            (defn s-trim [{:as ctx p :position}]
+            (defn s-trim [{:as ctx}]
               (update (c->s ctx) :position dissoc :d :c))
 
             (defn s-step [n]
@@ -324,7 +323,7 @@
                 (-> (s-trim ctx)
                     (update-in [:position :s] safe-add n))))
 
-            (defn d-trim [{:as ctx p :position}]
+            (defn d-trim [{:as ctx}]
               (update (c->d ctx) :position dissoc :c))
 
             (defn d-step [n]
@@ -440,21 +439,19 @@
             (def d0 d-trim)
             (def c0 (c-step 0))
 
-            (doseq [i (range 1 37)]
-              (eval (list 'def (symbol (str "c" i)) `(c-step ~i)))
-              (eval (list 'def (symbol (str "c" i "-")) `(c-step ~(- i)))))
-            (doseq [i (range 1 22)]
-              (eval (list 'def (symbol (str "d" i)) `(d-step ~i)))
-              (eval (list 'def (symbol (str "d" i "-")) `(d-step ~(- i)))))
-            (doseq [i (range 1 13)]
-              (eval (list 'def (symbol (str "s" i)) `(s-step ~i)))
-              (eval (list 'def (symbol (str "s" i "-")) `(s-step ~(- i)))))
-            (doseq [i (range 1 13)]
-              (eval (list 'def (symbol (str "t" i)) `(t-step ~i)))
-              (eval (list 'def (symbol (str "t" i "-")) `(t-step ~(- i)))))
-            (doseq [i (range 1 9)]
-              (eval (list 'def (symbol (str "o" i)) `(t-shift ~i :forced)))
-              (eval (list 'def (symbol (str "o" i "-")) `(t-shift ~(- i) :forced))))))
+            (defmacro defsteps [prefix max f]
+              (cons 'do
+                    (mapcat
+                     (fn [_]
+                       [(list 'def (symbol (str prefix _)) (list f _))
+                        (list 'def (symbol (str prefix _ "-")) (list f (list `- _)))])
+                     (range 1 max))))
+
+            (defsteps "c" 37 c-step)
+            (defsteps "d" 22 d-step)
+            (defsteps "s" 13 s-step)
+            (defsteps "t" 13 t-step)
+            (defsteps "o" 9 (fn [i] (t-shift i :forced)))))
 
     (do :update-constructors
 
