@@ -539,6 +539,25 @@
                          (mod n (count sc))))
              (origin (hc->pitch (upd ctx (d-position n)))))))
 
+    (defclosure inversion
+      "go to inversion n (potentially negative) of the given hc
+       preserving current position"
+      [n]
+      (fn [{:as ctx sc :scale st :struct}]
+        (let [new-origin (upd ctx (s-position n))
+              new-scale (get (constants/scale-modes sc)
+                             (mod (-> (s->d new-origin) :position :d) (count sc)))
+              new-struct (get (constants/struct-inversions sc st)
+                              (mod n (count st)))]
+          (upd ctx
+               (scale new-scale)
+               (struct new-struct)
+               (origin (hc->pitch new-origin))))))
+
+    (comment
+      (constants/struct-inversions [0 2 4 5 7 9 11] [0 1 2 4])
+      (upd hc0 (inversion 2)))
+
     (def reroot (comp rebase root))
     (def redegree (comp rebase degree))
 
@@ -745,7 +764,7 @@ intermediate-ctxs: sorted ctxs that are between hc1 and hc2 on the corresponding
                   passing-notes (butlast (rest chrom-line))
                   max-size (count passing-notes)
                   split-by (fn [f xs] (reduce (fn [[a b] x] (if (f x) [(conj a x) b] [a (conj b x)]))
-                                             [[] []] xs))
+                                              [[] []] xs))
                   [t-passings xs] (split-by tonic-equivalent? passing-notes)
                   [s-passings xs] (split-by structural-equivalent? xs)
                   [d-passings c-passings] (split-by diatonic-equivalent? xs)
@@ -755,8 +774,8 @@ intermediate-ctxs: sorted ctxs that are between hc1 and hc2 on the corresponding
                                         (reverse c-passings))
 
                   return (fn [xs] (let [xs (sort-by hc->chromatic-value xs)]
-                                   (conj (vec (cons (first chrom-line) (if ascending xs (reverse xs))))
-                                         (last chrom-line))))]
+                                    (conj (vec (cons (first chrom-line) (if ascending xs (reverse xs))))
+                                          (last chrom-line))))]
               (cond (= max-size size) chrom-line
                     (> max-size size) (return (take size prio-passings))
                     :else nil))))
