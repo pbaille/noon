@@ -293,7 +293,7 @@
                                                                 (sf_ (let [xs (-> (group-by :position _) seq sort vals)]
                                                                        (reduce into #{} (map upd xs (shuffle [d0 d1 d1-])))))])]
                                          bass)))
-               (start-from 96)))
+               #_(start-from 96)))
 
 (comment :grid
          (stop)
@@ -542,8 +542,18 @@
          (let [main-triad [(root :C) ionian triad]
                main-pitch-classes (set (map pitch-class-value (mk main-triad (par s0 s1 s2))))
                all-triads (for [root' [:C :Db :D :Eb :E :F :Gb :G :Ab :A :Bb :B]
-                                kind [ionian eolian]]
+                                kind [ionian eolian lydian+ superlocrian]]
                             [(root root') kind])
+
+               triad->pitch-class-values (reduce (fn [ret t]
+                                                   (assoc ret t (mapv pitch-class-value (mk t (par s0 s1 s2)))))
+                                                 {} all-triads)
+
+               all-transitions (reduce (fn [ret [t vs]]
+                                         (assoc ret t (reduce (fn [ret [t' vs']]
+                                                                (update ret (- 6 (count (into #{} (concat vs vs'))) conj t')))
+                                                              {} triad->pitch-class-values)))
+                                       {} triad->pitch-class-values)
 
                available-triads (filter (fn [u]
                                           (some main-pitch-classes
@@ -558,4 +568,118 @@
                               (let [])))]
            (play (cat* (shuffle available-triads))
                  (h/align-contexts :s)
-                 ($ (tup s0 s1 s2)))))
+                 ($ (tup s0 s1 s2))))
+
+         "We will no longer contrained available triads to ones that contains one note of the main triad."
+         "We will only pick a random note of the current triad, move it 1 semitone up or down and pick another that contain this note."
+
+         (let [all-triads (for [root' [:C :Db :D :Eb :E :F :Gb :G :Ab :A :Bb :B]
+                                kind [ionian eolian lydian+ superlocrian]]
+                            [(root root') kind])
+
+               triad->pitch-class-values (reduce (fn [ret t]
+                                                   (assoc ret t (mapv pitch-class-value (mk t (par s0 s1 s2)))))
+                                                 {} all-triads)
+
+               all-transitions (reduce (fn [ret [t vs]]
+                                         (assoc ret t (reduce (fn [ret [t' vs']]
+                                                                (update ret (- 6 (count (set (concat vs vs')))) conj t'))
+                                                              {1 [] 2 [] 3 []} triad->pitch-class-values)))
+                                       {} triad->pitch-class-values)
+
+               pitch-class-value->triads (reduce (fn [ret [t vs]] (reduce #(update %1 %2 conj t) ret vs))
+                                                 {} triad->pitch-class-values)
+               triads (loop [current 0 ret []]
+                        (if (> (count ret) 16)
+                          ret
+                          (let [picked (rand-nth (pitch-class-value->triads current))
+                                pitch-class-values (mapv pitch-class-value (mk picked (par s0 s1 s2)))
+                                inv (rand-nth [0 1 2])]
+                            (recur (-> (get pitch-class-values inv)
+                                       ((rand-nth [inc dec]))
+                                       (mod 12))
+                                   (conj ret [picked inv])))))]
+           (play
+            (cat* (map (fn [[triad inv]] (mk dur:2
+                                             triad
+                                             (chans [(patch :acoustic-bass) o1- t-round]
+                                                    [(patch :electric-piano-1)
+                                                     ({0 (tup s1 s2 s0)
+                                                       1 (tup s0 s2 s1)
+                                                       2 (tup s0 s1 s2)} inv)
+                                                     (par _
+                                                          [o1 rev])])))
+                       triads))
+            (cat _ s1 s1- _))))
+
+(comment "bach prelude Cm pattern"
+
+         (play harmonic-minor
+               ($cat (cat I IV I V))
+               (h/align-contexts :s)
+               (cat _ s1)
+               ($ (chans (tup s2 [s1 (cat _ d1- _)] s0 [s1 (cat _ d1- _)])
+                         (tup s3- [s2- (cat _ d1 _)] s1- [s2- (cat _ d1 _)])))
+               (cat _ [(transpose c3) rev])
+               (dup 2))
+
+         (play harmonic-minor
+               ($cat (cat I IV I V))
+               (h/align-contexts :s)
+               (cat _ s1)
+               (let [pat1 (tup s2 [s1 (cat _ d1- _)] s0 [s1 (cat _ d1- _)])
+                     pat2 [pat1 (m/contour :mirror {:layer :s})]]
+                 ($ (chans [o1 pat1]
+                           [s1- pat2]))))
+
+         (play harmonic-minor
+               dur2
+               (cat _ (transpose c3) _)
+               ($cat (cat I IV I V))
+               (h/align-contexts :s)
+               (let [br (cat _ (one-of d1 d1-) _)
+                     pat1 (one-of (tup s2 [s1 br] s0 [s1 br])
+                                  (tup [s1 br] s2 [s1 br] s0)
+                                  (tup s0 [s1 br] s2 [s1 br])
+                                  (tup [s1 br] s0 [s1 br] s2))
+                     pat2 (one-of (tup s3- [s2- br] s1- [s2- br])
+                                  (tup s1- [s2- br] s3- [s2- br]))]
+                 ($ (chans [o1 (patch :ocarina) vel8 pat1]
+                           [(patch :vibraphone) pat2])))
+               (dup 2)))
+
+(comment "elliot Smith chords"
+
+         (def closed-chord
+           (ef_ (let [struct-size (-> _ :pitch :struct count)]
+                  (upd #{_} (par* (mapv s-step (range struct-size)))))))
+
+         (play dur2
+               (cat [VI seventh]
+                    [IV add2]
+                    [I]
+                    [III seventh (inversion 2)]
+                    [VI seventh]
+                    [IV add2]
+                    (tup I [III seventh phrygian3])
+                    [IV])
+               (h/align-contexts :d)
+               ($ (chans [(patch :acoustic-bass) o1- t-round]
+                         closed-chord)))
+
+         (play dur2
+               (shuftup s0 s1 s2 s3 s4 s5)
+               (dupt 8)
+               (h/grid
+                (tup [VI seventh]
+                     [IV add2]
+                     [I]
+                     [III seventh (inversion 2)]
+                     [VI seventh]
+                     [IV add2]
+                     (tup I [III seventh phrygian3])
+                     [IV])
+                (h/align-contexts :d))
+               (adjust 8)
+               (dup 2)
+               ))
