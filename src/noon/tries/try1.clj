@@ -667,19 +667,18 @@
                ($ (chans [(patch :acoustic-bass) o1- t-round]
                          closed-chord)))
 
-         (play dur2
-               (shuftup s0 s1 s2 s3 s4 s5)
+         (play (chans [(patch :electric-piano-1) (tup (shuftup s0 s1 s2 s3) (shuftup s2 s3 s4 s5))]
+                      [(patch :acoustic-bass) o1- t-round])
                (dupt 8)
                (h/grid
-                (tup [VI seventh]
-                     [IV add2]
-                     [I]
-                     [III seventh (inversion 2)]
-                     [VI seventh]
-                     [IV add2]
-                     (tup I [III seventh phrygian3])
-                     [IV])
-                (h/align-contexts :d))
+                [(tup [VI seventh]
+                      [IV add2]
+                      [I]
+                      [III seventh (inversion 2)]
+                      [VI seventh]
+                      [IV add2]
+                      (tup I [III seventh phrygian3])
+                      [IV])
+                 (h/align-contexts :d)])
                (adjust 8)
-               (dup 2)
-               ))
+               (dup 2)))
