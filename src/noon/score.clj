@@ -66,8 +66,7 @@
     (def DEFAULT_EVENT
       (assoc midi/DEFAULT_NOTE
              :pitch h/DEFAULT_HARMONIC_CONTEXT
-             :voice 0
-             ))
+             :voice 0))
 
     (defn normalise-event
       "Put time related dimensions of a note into their identity values.
@@ -121,8 +120,6 @@
           (doseq [d (range 2 12)]
             (eval (list 'def (symbol (str "dur" n ":" d))
                         `(dur (mul (/ ~n ~d)))))))
-
-
 
         (defn vel [x]
           {:velocity x})
@@ -215,7 +212,7 @@
              layer-step layer-shift
 
              ;; context tweaks
-             origin scale struct degree root degree
+             origin scale struct degree root degree inversion
              repitch rescale restruct reorigin reroot redegree)
 
             (import-wrap-harmony-updates
@@ -238,10 +235,6 @@
                (reduce #(%2 %1) _
                        (conj (vec fs)
                              (repitch (h/hc->pitch (:pitch _)))))))
-
-            #_(mk tonic-round)
-            #_(mk (rebase (degree 4)))
-            #_(mk (ef_ (reduce upd _ (vector (degree 4)))))
 
             (do :defs
 
@@ -290,9 +283,7 @@
                         (for [[degree-sym degree-val] (map vector '[I II III IV V VI VII] (range))
                               [alteration-sym alteration-val] [["#" c1] ["b" c1-]]]
                           [degree-sym degree-val alteration-sym alteration-val])]
-                  (eval (list 'def (symbol (str dn an)) [(transpose av) (degree dv)])))
-
-                ))))
+                  (eval (list 'def (symbol (str dn an)) [(transpose av) (degree dv)])))))))
 
 (do :score
 
