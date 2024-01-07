@@ -1,20 +1,22 @@
 (ns noon.score
   "build, transform, play and write midi scores"
   (:refer-clojure :exclude [cat while struct])
-  (:require [noon.midi :as midi]
+  (:require [clojure.core :as c]
+            [clojure.pprint :refer [pprint]]
+            [clojure.java.shell :as shell]
+            [noon.midi :as midi]
             [noon.harmony :as h]
             [noon.vst.index :as vst]
             [noon.constants :as constants]
-            [clojure.core :as c]
             [noon.utils.misc :as u :refer [t t? f_ defclosure]]
             [noon.utils.mapsets :as ms]
             [noon.utils.maps :as m]
-            [noon.utils.chance :as g :refer [gen]]))
+            [noon.utils.chance :as g]))
 
 (do :help
 
     (defn pp [& xs]
-      (mapv clojure.pprint/pprint xs)
+      (mapv pprint xs)
       (last xs))
 
     (defmacro dbg [& xs]
@@ -212,7 +214,7 @@
              layer-step layer-shift
 
              ;; context tweaks
-             origin scale struct degree root degree inversion
+             origin scale struct degree root inversion
              repitch rescale restruct reorigin reroot redegree)
 
             (import-wrap-harmony-updates
@@ -260,21 +262,11 @@
                     (def s0 (s-step 0))
                     (def t0 (t-step 0))
 
-                    (doseq [i (range 1 37)]
-                      (eval (list 'def (symbol (str "c" i)) `(c-step ~i)))
-                      (eval (list 'def (symbol (str "c" i "-")) `(c-step ~(- i)))))
-                    (doseq [i (range 1 22)]
-                      (eval (list 'def (symbol (str "d" i)) `(d-step ~i)))
-                      (eval (list 'def (symbol (str "d" i "-")) `(d-step ~(- i)))))
-                    (doseq [i (range 1 13)]
-                      (eval (list 'def (symbol (str "s" i)) `(s-step ~i)))
-                      (eval (list 'def (symbol (str "s" i "-")) `(s-step ~(- i)))))
-                    (doseq [i (range 1 13)]
-                      (eval (list 'def (symbol (str "t" i)) `(t-step ~i)))
-                      (eval (list 'def (symbol (str "t" i "-")) `(t-step ~(- i)))))
-                    (doseq [i (range 1 13)]
-                      (eval (list 'def (symbol (str "o" i)) `(t-shift ~i :forced)))
-                      (eval (list 'def (symbol (str "o" i "-")) `(t-shift ~(- i) :forced)))))
+                    (h/defsteps "c" 37 c-step)
+                    (h/defsteps "d" 22 d-step)
+                    (h/defsteps "s" 13 s-step)
+                    (h/defsteps "t" 13 t-step)
+                    (h/defsteps "o" 9 (fn [i] (t-shift i :forced))))
 
                 (doseq [[n v] (map vector '[I II III IV V VI VII] (range))]
                   (eval (list 'def n (degree v))))
@@ -1033,7 +1025,7 @@
         (if source
           (spit (str directory "/" file-barename ".mut") source))
         (if xml
-          (clojure.java.shell/sh MUSESCORE_BIN "--export-to" (str directory "/" file-barename ".musicxml") midi-filename))
+          (shell/sh MUSESCORE_BIN "--export-to" (str directory "/" file-barename ".musicxml") midi-filename))
         midi-filename))
 
     (defmacro write [& xs]
