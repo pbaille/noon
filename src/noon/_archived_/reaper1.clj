@@ -1,10 +1,9 @@
-(ns noon.lib.reaper
+(ns noon.-archived-.reaper1
   (:require [noon.score :as noon]
             [noon.harmony :as harmony]
-            [noon.utils.reaper :as reaper :refer [<<]]
-            [backtick :refer [template]]
-            [noon.utils.misc :as u]
-            [noon.lib.melody :as m]
+            [noon.utils.reaper.interop :as reaper]
+            #_[noon.utils.misc :as u]
+            #_[noon.lib.melody :as m]
             [noon.utils.cider-keybindings :as kbs]))
 
 (def REAPER_MIDI_RESOLUTION 2048)
@@ -51,7 +50,7 @@
                              (t.set-note T (tbl.put matching-note :idx n.idx))))))))
 
     (add-watch state* :state-sync
-               (fn [_ _ old {:as new :keys [score cursor time-selection grid]}]
+               (fn [_ _ old {:as _new :keys [score cursor time-selection grid]}]
                  (let [score-changed? (not (= score (:score old)))]
                    (if score-changed?
                      (noon/write-score score :filename REAPER_SYNC_MIDI_FILE))
@@ -154,7 +153,7 @@
                         (nth after delta nil))))))
 
     (defn focus-upd! [efn]
-      (let [{:as state :keys [score focus]} @state*
+      (let [{:as _state :keys [score focus]} @state*
             new-focus (efn focus)]
         (upd-state! assoc
                     :focus new-focus

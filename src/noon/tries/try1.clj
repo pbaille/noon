@@ -434,7 +434,7 @@
 
          "Next step will be to have control over the number of notes between targets"
 
-         (defn target [layer size direction duration]
+         (defn target [layer size _direction duration]
            (ef_ (into #{_} (map (fn [i]
                                   (-> (update _ :pitch (nh/layer-step layer (inc i)))
                                       (update :position - (* (inc i) duration))
@@ -539,36 +539,36 @@
          "the last note of the triad you play can go either 1 semiton up or down"
          "from this note pick another triad but changing the inversion used"
 
-         (let [main-triad [(root :C) ionian triad]
-               main-pitch-classes (set (map pitch-class-value (mk main-triad (par s0 s1 s2))))
-               all-triads (for [root' [:C :Db :D :Eb :E :F :Gb :G :Ab :A :Bb :B]
-                                kind [ionian eolian lydian+ superlocrian]]
-                            [(root root') kind])
+         [:aborted '(let [main-triad [(root :C) ionian triad]
+                          main-pitch-classes (set (map pitch-class-value (mk main-triad (par s0 s1 s2))))
+                          all-triads (for [root' [:C :Db :D :Eb :E :F :Gb :G :Ab :A :Bb :B]
+                                           kind [ionian eolian lydian+ superlocrian]]
+                                       [(root root') kind])
 
-               triad->pitch-class-values (reduce (fn [ret t]
-                                                   (assoc ret t (mapv pitch-class-value (mk t (par s0 s1 s2)))))
-                                                 {} all-triads)
+                          triad->pitch-class-values (reduce (fn [ret t]
+                                                              (assoc ret t (mapv pitch-class-value (mk t (par s0 s1 s2)))))
+                                                            {} all-triads)
 
-               all-transitions (reduce (fn [ret [t vs]]
-                                         (assoc ret t (reduce (fn [ret [t' vs']]
-                                                                (update ret (- 6 (count (into #{} (concat vs vs'))) conj t')))
-                                                              {} triad->pitch-class-values)))
-                                       {} triad->pitch-class-values)
+                          all-transitions (reduce (fn [ret [t vs]]
+                                                    (assoc ret t (reduce (fn [ret [t' vs']]
+                                                                           (update ret (- 6 (count (into #{} (concat vs vs'))) conj t')))
+                                                                         {} triad->pitch-class-values)))
+                                                  {} triad->pitch-class-values)
 
-               available-triads (filter (fn [u]
-                                          (some main-pitch-classes
-                                                (map pitch-class-value (mk u (par s0 s1 s2)))))
-                                        all-triads)
+                          available-triads (filter (fn [u]
+                                                     (some main-pitch-classes
+                                                           (map pitch-class-value (mk u (par s0 s1 s2)))))
+                                                   all-triads)
 
-               transitions (reduce (fn [ret triad]
-                                     (assoc ret triad (filter (fn [t]) available-triads)))
-                                   {} available-triads)
-               triad-line (loop [ret [] current main-triad triads available-triads]
-                            (if (seq triads)
-                              (let [])))]
-           (play (cat* (shuffle available-triads))
-                 (h/align-contexts :s)
-                 ($ (tup s0 s1 s2))))
+                          transitions (reduce (fn [ret triad]
+                                                (assoc ret triad (filter (fn [t]) available-triads)))
+                                              {} available-triads)
+                          triad-line (loop [ret [] current main-triad triads available-triads]
+                                       (if (seq triads)
+                                         (let [])))]
+                      (play (cat* (shuffle available-triads))
+                            (h/align-contexts :s)
+                            ($ (tup s0 s1 s2))))]
 
          "We will no longer contrained available triads to ones that contains one note of the main triad."
          "We will only pick a random note of the current triad, move it 1 semitone up or down and pick another that contain this note."
@@ -581,7 +581,7 @@
                                                    (assoc ret t (mapv pitch-class-value (mk t (par s0 s1 s2)))))
                                                  {} all-triads)
 
-               all-transitions (reduce (fn [ret [t vs]]
+               _all-transitions (reduce (fn [ret [t vs]]
                                          (assoc ret t (reduce (fn [ret [t' vs']]
                                                                 (update ret (- 6 (count (set (concat vs vs')))) conj t'))
                                                               {1 [] 2 [] 3 []} triad->pitch-class-values)))

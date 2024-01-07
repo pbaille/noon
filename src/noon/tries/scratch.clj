@@ -1,4 +1,4 @@
-(ns noon.lib.scratch
+(ns noon.tries.scratch
   (:use noon.score)
   (:require [noon.lib.harmony :as h]
             [noon.lib.melody :as m]
@@ -519,11 +519,11 @@
 
                ;; alternate leads
 
-               lead1 (tupn> (* n-bars 12)
+               _lead1 (tupn> (* n-bars 12)
                             (any-that (within-pitch-bounds? :C0 :C3)
                                       d1 d1- d3 d3- d4 d4-))
 
-               lead2 [(while (within-time-bounds? 0 (* n-bars 10))
+               _lead2 [(while (within-time-bounds? 0 (* n-bars 10))
                         (append [start-from-last
                                  (any-that (within-pitch-bounds? :C-1 :C2)
                                            (rep 3 d3 :skip-first)

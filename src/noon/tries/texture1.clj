@@ -1,7 +1,7 @@
 (ns noon.tries.texture1
   (:use noon.score)
-  (:require [noon.lib.rythmn :as r]
-            [noon.utils.misc :as u]))
+  (:require #_[noon.lib.rythmn :as r]
+            #_[noon.utils.misc :as u]))
 
 (comment
   (play dur2
@@ -32,7 +32,3 @@
         (dupt 128)
         ($ (par> d4 d4 d4)
            (one-of vel0 vel1 vel2 vel3 vel4 vel5))))
-
-(u/defclosure comp-tups [resolution size a b]
-  (sf_ (let [unit (/ (score-duration _) resolution)
-             t (upd _ (r/gen-tup resolution size) ($ {:duration unit}))])))
