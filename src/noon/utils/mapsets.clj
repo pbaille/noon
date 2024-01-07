@@ -57,26 +57,26 @@
   [s x]
   (set (filter (f_ (m/match _ x)) s)))
 
-(do :tries2
+(comment :tries2
 
-    (require '[noon.utils.chance :as c])
+         (require '[noon.utils.chance :as c])
 
-    (def sampler
-      (c/setof (c/mapof (c/bag [:a :b :c :d :e :f])
-                        (c/nat -10 10)
-                        :size 3)
-               :size 20))
+         (def sampler
+           (c/setof (c/mapof (c/bag [:a :b :c :d :e :f])
+                             (c/nat -10 10)
+                             :size 3)
+                    :size 20))
 
-    (-> (sampler)
-        ($ (f_ (assoc _ :sum (reduce + (vals _)))))
-        (split {:sum pos?}))
+         (-> (sampler)
+             ($ (f_ (assoc _ :sum (reduce + (vals _)))))
+             (split {:sum pos?}))
 
-    (split (sampler)
-           {:a number?})
+         (split (sampler)
+                {:a number?})
 
-    (split (sampler)
-           {:a 0})
+         (split (sampler)
+                {:a 0})
 
-    (-> (sampler)
-        (split-upd (f_ (contains? _ :a))
-                   ($_ (assoc _ :double-a (* (:a _) 2))))))
+         (-> (sampler)
+             (split-upd (f_ (contains? _ :a))
+                        ($_ (assoc _ :double-a (* (:a _) 2))))))
