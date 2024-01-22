@@ -682,3 +682,55 @@
                  (h/align-contexts :d)])
                (adjust 8)
                (dup 2)))
+
+(comment "bartok harmony axis"
+         (let [L- (transpose c5)
+               L+ (transpose c5-)
+               R- (transpose c3)
+               R+ (transpose c3-)
+               M (transpose c6)]
+           (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)])
+                 (h/align-contexts :d)
+                 (chans [(patch :aahs) ($ (par s0 s1 s2))]
+                        [(patch :ocarina) o1 ($ (shuftup s2- s1- s0 s1 s2 s3))]
+                        [(patch :acoustic-bass) o1-
+                         t-round
+                         (maybe s1 s1-)])
+                 (cat _ s1 s1- _)))
+
+         (let [L- (transpose c5)
+               L+ (transpose c5-)
+               R- (transpose c3)
+               R+ (transpose c3-)
+               M (transpose c6)
+               tup1 (tup* (shuffle [s2- s1- s0 s1 s2 s3]))
+               tup2 (tup* (shuffle [s2- s1- s0 s1 s2 s3]))]
+           (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)])
+                 (h/align-contexts :d)
+                 (chans [(patch :aahs)
+                         ($ [add2 (par s0 s1 s2 s3)])
+                         connect-repetitions
+                         ]
+                        [(patch :ocarina) o1 add2 ($ [(one-of tup1 tup2) (maybe rev)])]
+                        [(patch :acoustic-bass) o1-
+                         t-round
+                         (maybe s1 s1-)])
+                 (cat _ s1 s1- _)))
+
+         (stop)
+         (let [L- (transpose c5)
+               L+ (transpose c5-)
+               R- (transpose c3)
+               R+ (transpose c3-)
+               M (transpose c6)
+
+               rand-color [(maybe R- R+ M) (one-of ionian eolian)]]
+           (play (cat (rep 8 [L+ rand-color])
+                      (rep 8 [L- rand-color]))
+                 (h/align-contexts :d)
+                 (chans [(patch :aahs) ($ (par s0 s1 s2))]
+                        [(patch :ocarina) o1 ($ (shuftup s2- s1- s0 s1 s2 s3))]
+                        [(patch :acoustic-bass) o1-
+                         t-round
+                         (maybe s1 s1-)])
+                 (cat _ s1 s1- _))))
