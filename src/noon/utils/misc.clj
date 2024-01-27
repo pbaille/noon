@@ -3,7 +3,10 @@
   (:require [clojure.string :as str]
             [me.raynes.fs :as fs]
             [backtick :as bt]
-            [clojure.pprint :as pprint]))
+            [clojure.pprint :as pprint]
+            [byte-streams :as bs]
+            [clojure.data.codec.base64 :as b64])
+  (:import (java.io ByteArrayOutputStream ObjectOutputStream ObjectInputStream)))
 
 (do :numbers
 
@@ -389,3 +392,18 @@
         `(def ~name
            ~@(if doc [doc])
            (reduction (fn ~argv ~@body))))))
+
+(do :serialisation
+
+    (defn serialize-to-base64 [obj]
+      (let [baos (ByteArrayOutputStream.)
+            oos (ObjectOutputStream. baos)]
+        (.writeObject oos obj)
+        (.close oos)
+        (let [bytes (.toByteArray baos)]
+          (String. (b64/encode bytes)))))
+
+    (defn unserialize-from-base64 [s]
+      (let [bytes (b64/decode (.getBytes s))
+            ois (ObjectInputStream. (bs/to-input-stream bytes))]
+        (.readObject ois))))
