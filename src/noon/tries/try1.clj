@@ -5,7 +5,8 @@
             [noon.lib.rythmn :as r]
             [noon.harmony :as nh]
             [noon.utils.multi-val :as mv]
-            [noon.utils.misc :as u]))
+            [noon.utils.misc :as u]
+         [noon.utils.pseudo-random :as pr]))
 
 (comment :barry-harris
 
@@ -748,3 +749,8 @@
                          t-round
                          (maybe s1 s1-)])
                  (cat _ s1 s1- _))))
+
+(comment "try pseudo random"
+         (require '[noon.utils.pseudo-random :as pr])
+         (pr/with-rand 12
+           (play (shuftup d0 d1 d2 d3 d4))))

@@ -1,7 +1,8 @@
 (ns noon.utils.chance
   (:refer-clojure :exclude [keep])
   (:require [clojure.walk :as walk]
-            [noon.utils.misc :as u]))
+            [noon.utils.misc :as u]
+            [noon.utils.pseudo-random :as pr]))
 
 (do :base
 
@@ -74,7 +75,7 @@
         (if (test v) v (recur))))
 
     (defgen one-of* [gens]
-      (realise (rand-nth gens)))
+      (realise (pr/rand-nth gens)))
 
     (defgen one-of
       [& gens]
@@ -91,7 +92,7 @@
             parts (map vector steps (keys m))
             total (last steps)]
         (gen
-         (let [t (partial <= (rand total))]
+         (let [t (partial <= (pr/rand total))]
            (->> parts
                 (filter (comp t first))
                 first peek realise))))))
@@ -99,23 +100,23 @@
 (do :simple
 
     (defgen coin
-      (rand-nth [true false]))
+      (pr/rand-nth [true false]))
 
     (defgen cube
-      (rand-nth [1 2 3 4 5 6]))
+      (pr/rand-nth [1 2 3 4 5 6]))
 
     (defgen nat
       [min max]
-      (rand-nth (range min (inc max))))
+      (pr/rand-nth (range min (inc max))))
 
     (defgen decimal [min max]
-      (+ min (* (rand) (- max min))))
+      (+ min (* (pr/rand) (- max min))))
 
     (defn dice
       [n] (nat 1 n))
 
     (defgen bag
-      [xs] (rand-nth xs)))
+      [xs] (pr/rand-nth xs)))
 
 (do :collections
 

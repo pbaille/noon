@@ -1,7 +1,8 @@
 (ns noon.utils.sequences
   "sequences transformation with the consideration of increasing complexity"
   (:require [clojure.math.combinatorics :as c]
-            [noon.utils.misc :as u]))
+            [noon.utils.misc :as u]
+            [noon.utils.pseudo-random :as pr]))
 
 ;; impl ----
 
@@ -29,7 +30,7 @@
                       (safe-nth xs (inc i))))
              xs
              (nth->first xs i)))
-         xs (take cnt (repeatedly #(rand-int cnt))))))))
+         xs (take cnt (repeatedly #(pr/rand-int cnt))))))))
 
 ;; member ---------
 
@@ -57,8 +58,8 @@
 (defn seq-idx [s x]
   (cond (int? x) (if (neg? x) (mirror-idx s (u/abs (inc x))) x)
         (number? x) (decimal->idx s x)
-        (u/random-kw? x) (rand-int (count s))
-        (vector? x) (u/rand-int-between (x 0) (x 1))
+        (u/random-kw? x) (pr/rand-int (count s))
+        (vector? x) (pr/rand-int-between (x 0) (inc (x 1)))
         :else (u/throw* `seq-idx "expects a number: " x)))
 
 (defn seq-section [s [from to]]
@@ -77,9 +78,9 @@
    (member s <:rand|:random>) picks a random member"
   [s x]
   (cond (number? x) (nth s (seq-idx s x))
-        (or (u/random-kw? x) (nil? x)) (nth s (rand-int (count s)))
+        (or (u/random-kw? x) (nil? x)) (nth s (pr/rand-int (count s)))
         (vector? x) (if (= 2 (count x))
-                      (rand-nth (seq-section s x))
+                      (pr/rand-nth (seq-section s x))
                       (u/throw* `member "expected a vector of two elements and got: " x))
         (fn? x) (x s)
         :else (u/throw* `member "unexpected argument: " x)))
@@ -191,7 +192,7 @@
 
 (defn permutation
   ([s]
-   (shuffle s))
+   (pr/shuffle s))
   ([s idx]
    (if (u/random-kw? idx)
      (shuffle s)
