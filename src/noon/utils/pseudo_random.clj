@@ -12,15 +12,20 @@
 
 (defmacro with-rand [s & exprs]
   `(let [r# ~s]
-     (binding [~'*rnd* (cond (number? r#) (java.util.Random. r#)
+     (binding [~`*rnd* (cond (number? r#) (java.util.Random. r#)
                              (string? r#) (u/unserialize-from-base64 r#)
                              (instance? java.util.Random r#) r#)]
        ~@exprs)))
 
 (defn rand
   "Generate a float between 0 and 1 based on *rnd*"
-  ^double []
-  (.nextFloat *rnd*))
+  (^double []
+   (.nextFloat *rnd*))
+  (^double [max]
+   (* max (rand))))
+
+(defn rand-int [max]
+  (Math/floor (rand max)))
 
 (defn rand-int-between
   "Uniform distribution from lo (inclusive) to hi (exclusive).
