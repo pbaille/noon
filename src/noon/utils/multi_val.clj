@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [compile cat])
   (:require [clojure.core :as c]
             [clojure.string :as str]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            [noon.utils.pseudo-random :as pr]))
 
 (deftype Pair [car cdr])
 
@@ -220,7 +221,7 @@
     (defn- safe-shuffle
       "like clojure.core/shuffle but returns nil if given an empty seq or nil"
       [xs]
-      (and (seq xs) (shuffle xs)))
+      (and (seq xs) (pr/shuffle xs)))
 
     (defn- first-that [f xs]
       (if-let [[x & xs] (seq xs)]
@@ -256,7 +257,7 @@
         (multi-val
          (let [steps (next (reductions + 0 (vals m)))
                parts (map vector steps (keys m))
-               t (partial <= (rand (last steps)))
+               t (partial <= (pr/rand (last steps)))
                g (some-> (first-that (comp t first) parts) peek)]
            (if-let [[v k] (step g)]
              [v (probs (-> (dissoc m g) (assoc k (get m g))))]
