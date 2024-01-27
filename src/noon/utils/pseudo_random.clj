@@ -1,14 +1,13 @@
 (ns noon.utils.pseudo-random
-  (:refer-clojure :exclude [rand rand-nth shuffle])
-  (:require [noon.utils.misc :as u]))
+  (:refer-clojure :exclude [rand rand-nth rand-int shuffle])
+  (:require [noon.utils.misc :as u]
+            [clojure.core :as core]))
 
 ;; from clojure.data.generators
 
 (def ^:dynamic ^java.util.Random
   *rnd*
-  "Random instance for use in generators. By consistently using this
-       instance you can get a repeatable basis for tests."
-  (java.util.Random. 42))
+  (java.util.Random. (Math/floor (* (core/rand) Long/MAX_VALUE))))
 
 (defmacro with-rand [s & exprs]
   `(let [r# ~s]
