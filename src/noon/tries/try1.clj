@@ -698,6 +698,20 @@
                          (maybe s1 s1-)])
                  (cat _ s1 s1- _)))
 
+         (def connect-repetitions
+           (sf_ (let [[e1 & todo] (sort-by :position _)]
+                  (loop [[last-note & prev-notes :as ret] (list e1)
+                         todo todo]
+                    (if-let [[e & todo] (seq todo)]
+                      (if (and (= (pitch-value e) (pitch-value last-note))
+                               (= (dissoc e :position :duration :pitch)
+                                  (dissoc last-note :position :duration :pitch)))
+                        (recur (cons (update last-note :duration + (:duration e))
+                                     prev-notes)
+                               todo)
+                        (recur (cons e ret) todo))
+                      (set ret))))))
+
          (let [L- (transpose c5)
                L+ (transpose c5-)
                R- (transpose c3)
@@ -705,12 +719,12 @@
                M (transpose c6)
                tup1 (tup* (shuffle [s2- s1- s0 s1 s2 s3]))
                tup2 (tup* (shuffle [s2- s1- s0 s1 s2 s3]))]
-           (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)])
+           (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)
+                         (maybe dur2 dur:2)])
                  (h/align-contexts :d)
                  (chans [(patch :aahs)
                          ($ [add2 (par s0 s1 s2 s3)])
-                         connect-repetitions
-                         ]
+                         connect-repetitions]
                         [(patch :ocarina) o1 add2 ($ [(one-of tup1 tup2) (maybe rev)])]
                         [(patch :acoustic-bass) o1-
                          t-round
