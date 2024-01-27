@@ -9,3 +9,4 @@
 /.clj-kondo/inline-configs/
 /.lsp
 /notation/samples/
+/data/chromaphone-banks.edn
