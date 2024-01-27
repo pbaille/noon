@@ -4,7 +4,8 @@
             [noon.utils.euclidean-sums :as eucl]
             [noon.utils.sequences :as s]
             [noon.utils.misc :as u]
-            [clojure.core :as c]))
+            [clojure.core :as c]
+            [noon.utils.pseudo-random :as pr]))
 
 (do :impl
 
@@ -14,7 +15,7 @@
     (def memo-sums (memoize u/sums))
 
     (defn rand-sum [total size members]
-      (shuffle (rand-nth (memo-sums total size members))))
+      (pr/shuffle (pr/rand-nth (memo-sums total size members))))
 
     (defn score-fw-shifts
       "returns a sequence of forward time shifts by 'increment preserving the original score duration.
@@ -29,7 +30,7 @@
 
     (u/defclosure rand-shift [resolution]
       (n/sf_ (let [increment (/ (n/score-duration _) resolution)]
-             (rand-nth (score-fw-shifts _ increment)))))
+             (pr/rand-nth (score-fw-shifts _ increment)))))
 
     (defn slice-score
       "slice a score into n parts of equal duration."
@@ -136,14 +137,14 @@
          shifted: the possibility for the generated tup to not begin on beat."
 
       ([resolution]
-       (gen-tup resolution (inc (rand-int resolution)) {}))
+       (gen-tup resolution (inc (pr/rand-int resolution)) {}))
       ([resolution size]
        (gen-tup resolution size {}))
       ([resolution size & options]
        (let [{:keys [shifted durations euclidean]
               :or {durations (range 1 (inc resolution))}} (gen-tup-options options)
              t (if euclidean
-                 (rand-nth (euclidean-tups resolution size))
+                 (pr/rand-nth (euclidean-tups resolution size))
                  (sum->tup (rand-sum resolution size durations)))]
          (if shifted
            (n/lin t (rand-shift resolution))
@@ -179,7 +180,7 @@
              shifted: the possibility for the generated tup to not begin on beat."
 
           ([resolution]
-           (gen-bintup resolution (inc (rand-int resolution)) {}))
+           (gen-bintup resolution (inc (pr/rand-int resolution)) {}))
           ([resolution size]
            (gen-bintup resolution size {}))
           ([resolution size & options]
@@ -190,7 +191,7 @@
                        (rand-sum resolution size durations))
                  bins (sum->bins sum)]
              (n/tup* (if shifted
-                     (rand-nth (s/rotations bins))
+                     (pr/rand-nth (s/rotations bins))
                      bins)))))
 
         (comment

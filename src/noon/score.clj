@@ -11,7 +11,8 @@
             [noon.utils.misc :as u :refer [t t? f_ defclosure]]
             [noon.utils.mapsets :as ms]
             [noon.utils.maps :as m]
-            [noon.utils.chance :as g]))
+            [noon.utils.chance :as g]
+            [noon.utils.pseudo-random :as pr]))
 
 (do :help
 
@@ -841,7 +842,7 @@
         (defclosure* one-of
           "return an update that choose randomly one of the given updates before applying it."
           [xs]
-          (! (rand-nth xs)))
+          (! (pr/rand-nth xs)))
 
         (defclosure* maybe
           "like one-of, return an update that choose randomly one of the given updates, but can also do nothing."
@@ -858,24 +859,24 @@
         (defclosure* any-that
           "tries given transformations in random order until one passes the given test."
           [test fs]
-          (! (fst-that* test (shuffle fs))))
+          (! (fst-that* test (pr/shuffle fs))))
 
         (defclosure* shuftup
           "a tup that shuffles its elements"
           [xs]
-          (! (tup* (shuffle xs))))
+          (! (tup* (pr/shuffle xs))))
 
         (defclosure* shufcat
           "a cat that shuffles its elements"
           [xs]
-          (! (cat* (shuffle xs))))
+          (! (cat* (pr/shuffle xs))))
 
         (defclosure* shuf
           "shuffle the values of the given dimensions."
           [dims]
           (sf_ (let [size (count _)
                      idxs (range size)
-                     mappings (zipmap idxs (shuffle idxs))
+                     mappings (zipmap idxs (pr/shuffle idxs))
                      events (vec _)]
                  (reduce (fn [s i] (conj s (merge (events i) (select-keys (events (mappings i)) dims))))
                          #{}
@@ -907,8 +908,8 @@
           "if the given score is a line, shuffle the notes."
           (sf_ (if (line? _)
                  (concat-scores
-                  (shuffle (map (fn [e] #{(assoc e :position 0)})
-                                _))))))
+                  (pr/shuffle (map (fn [e] #{(assoc e :position 0)})
+                                   _))))))
 
         (defclosure permute-line
           [idxs]
@@ -1016,6 +1017,9 @@
                   file-barename (gen-filename)}} (u/parse-file-path filename)
             midi-filename (str directory "/" file-barename ".mid")]
         (u/ensure-directory directory)
+        ;; write random seed
+        (spit (str directory "/" file-barename ".seed")
+              (u/serialize-to-base64 pr/*rnd*))
         (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score))
             (midi/add-events (midifiable-score score))
             (midi/write-midi-file midi-filename))

@@ -7,7 +7,8 @@
             [noon.utils.sequences :as s]
             [noon.utils.misc :as u]
             [noon.harmony :as h]
-            [clojure.math.combinatorics :as comb]))
+            [clojure.math.combinatorics :as comb]
+            [noon.utils.pseudo-random :as pr]))
 
 (do :help
 
@@ -353,8 +354,8 @@
               :keys [layer size steps pick delta]
               :or {layer :d steps (range -7 8) pick :rand delta 0}}]
             (let [step (partial n/layer-step layer)]
-              (n/tup>* (map step (shuffle (s/member (u/sums delta size steps)
-                                                    pick)))))))
+              (n/tup>* (map step (pr/shuffle (s/member (u/sums delta size steps)
+                                                       pick)))))))
 
          (def DEFAULT_LAYERS_DELTAS
            {:c 12 :d 7 :s 3 :t 1})
@@ -368,7 +369,7 @@
                                     (concat (map - abs-rng) abs-rng)))
                   _bounds (or bounds [(- delta) delta])]
               (n/tup>* (map (partial n/layer-step layer)
-                            (shuffle (rand-nth (u/sums size length steps)))))))
+                            (pr/shuffle (pr/rand-nth (u/sums size length steps)))))))
            ([layer length size & {:as options}]
             (gen-tup2 (assoc options :layer layer :length length :size size)))))
 
@@ -401,7 +402,7 @@
          (step-line-infos (rand-nth SAMPLE_STEP_LINES))
 
          (play (patch :electric-piano-1)
-               (tup* (take 32 (map (partial stup> :d) (shuffle SAMPLE_STEP_LINES))))
+               (tup* (take 32 (map (partial stup> :d) (pr/shuffle SAMPLE_STEP_LINES))))
                (append>
                 (superpose [(chan 1) o1 d3 (patch :flute) vel7]
                            [(k (tup IV VI)) (dupt 2) (chan 2) (patch :acoustic-bass) t2- vel10])
