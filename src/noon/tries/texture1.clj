@@ -1,7 +1,7 @@
 (ns noon.tries.texture1
   (:use noon.score)
-  (:require #_[noon.lib.rythmn :as r]
-            #_[noon.utils.misc :as u]))
+  #_(:require [noon.lib.rythmn :as r]
+              [noon.utils.misc :as u]))
 
 (comment
   (play dur2
