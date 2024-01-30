@@ -732,23 +732,77 @@
                          (maybe s1 s1-)])
                  (cat _ s1 s1- _)))
 
-         (stop)
          (let [L- (transpose c5)
                L+ (transpose c5-)
                R- (transpose c3)
                R+ (transpose c3-)
                M (transpose c6)
 
-               rand-color [(maybe R- R+ M) (one-of ionian eolian)]]
-           (play (cat (rep 8 [L+ rand-color])
-                      (rep 8 [L- rand-color]))
+               base [(pr/rand-nth [R- R+ M]) (pr/rand-nth [ionian eolian])]
+               rand-color [(maybe R- R+ M) (one-of ionian eolian)]
+               tup1 (tup* (pr/shuffle [s2- s1- s0 s1 s2 s3]))
+               tup2 (tup* (pr/shuffle [s2- s1- s0 s1 s2 s3]))]
+           (play base
+                 (cat _ [L- rand-color] rand-color [L- rand-color] _)
+                 (cat _ M rev)
                  (h/align-contexts :d)
-                 (chans [(patch :aahs) ($ (par s0 s1 s2))]
-                        [(patch :ocarina) o1 ($ (shuftup s2- s1- s0 s1 s2 s3))]
+                 (chans [(patch :aahs)
+                         ($ [add2 (par s0 s1 s2 s3)])
+                         connect-repetitions]
+                        [(patch :ocarina) o1 add2 ($ [(one-of tup1 tup2) (maybe rev)])]
                         [(patch :acoustic-bass) o1-
                          t-round
                          (maybe s1 s1-)])
-                 (cat _ s1 s1- _))))
+                 (cat _ s1 [rev s1-] _)))
+
+         (stop)
+         (let [initial [{:harmonic-coords [0 0]} melodic-minor sixth]
+               up [{:harmonic-coords (fn [[x y]] [x (mod (inc y) 3)])} (transpose c5)]
+               down [{:harmonic-coords (fn [[x y]] [x (mod (dec y) 3)])} (transpose c5-)]
+               left [{:harmonic-coords (fn [[x y]] [(mod (dec x) 4) y])} (transpose c3)]
+               right [{:harmonic-coords (fn [[x y]] [(mod (inc x) 4) y])} (transpose c3-)]]
+           (play initial
+                 (cat> _ up left down)
+                 (cat _ up)
+                 (cat _ [rev left])
+                 (cat _ [right right])
+                 (h/align-contexts :d)
+                 (chans [(patch :aahs) (struct [1 2 5 6]) ($ (par s0 s1 s2 s3))]
+                        (let [tup1 (mixtup s2- s1- s0 s1 s2 s3)
+                              tup2 (mixtup s2- s1- s0 s1 s2 s3)]
+                          [(patch :ocarina) o1 add2 ($ [(one-of tup1 tup2) (maybe rev)])])
+                        [(patch :acoustic-bass) o1-
+                         t-round
+                         (maybe s1 s1- s2-)])
+                 (cat _ s1 [up s1-] up)))
+
+         (let [initial [lydian seventh]
+               up (transpose c5)
+               down (transpose c5-)
+               left (transpose c3)
+               right (transpose c3-)]
+           (play dur3:2
+                 ;; grid
+                 [initial
+                  (cat> _ up left down)
+                  ($ (maybe (degree 2) (degree -2)))
+                  (cat _ up)
+                  (cat _ [rev left])
+                  (cat _ [right right])
+                  (h/align-contexts :d)]
+                 ;; voices
+                 (chans [(patch :aahs) ($ (par s0 s1 s2 s3))]
+                        (let [tup1 [(struct [2 3 4 6]) (mixtup s3- s2- s1- s0 s1 s2 s3 s4)]
+                              tup2 (mixtup d3- d2- d1- d0 d1 d2 d3 d4)]
+                          [(patch :ocarina) o1 ($ [(one-of tup1 tup2) (maybe rev)])])
+                        [(patch :acoustic-bass) o1-
+                         t-round
+                         ($ (probs {_ 3
+                                    (one-of s1- s2) 3
+                                    (tup _ (one-of s1- s2)) 1
+                                    (tup (one-of s1- s2) _) 1}))])
+                 ;; why not ?
+                 (cat _ s1 [up s1-] up))))
 
 (comment "try pseudo random"
          (require '[noon.utils.pseudo-random :as pr])
