@@ -861,15 +861,25 @@
           [test fs]
           (! (fst-that* test (pr/shuffle fs))))
 
-        (defclosure* shuftup
-          "a tup that shuffles its elements"
+        (defclosure* mixtup
+          "a tup that mix its elements"
           [xs]
-          (! (tup* (pr/shuffle xs))))
+          (tup* (pr/shuffle xs)))
+
+        (defclosure* shuftup
+          "a tup that shuffles its elements everytime it is used"
+          [xs]
+          (! (mixtup* xs)))
+
+        (defclosure* mixcat
+          "a cat that mix its elements"
+          [xs]
+          (cat* (pr/shuffle xs)))
 
         (defclosure* shufcat
-          "a cat that shuffles its elements"
+          "a cat that shuffles its elements everytime it is used"
           [xs]
-          (! (cat* (pr/shuffle xs))))
+          (! (mixcat* xs)))
 
         (defclosure* shuf
           "shuffle the values of the given dimensions."
@@ -1020,6 +1030,7 @@
         ;; write random seed
         (spit (str directory "/" file-barename ".seed")
               (u/serialize-to-base64 pr/*rnd*))
+
         (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score))
             (midi/add-events (midifiable-score score))
             (midi/write-midi-file midi-filename))
@@ -1044,7 +1055,7 @@
                     :play true))
 
     (defmacro stop []
-      `(play vel0))
+      `(midi/stop2))
 
     (comment
       (play (tupn> 7 d2))
