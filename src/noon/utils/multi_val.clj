@@ -391,10 +391,10 @@
     (defn compile-let* [env [_ bindings & body]]
       (let [[env bindings]
             (reduce (fn [[env bindings] [s e]]
-                         [(assoc env s :local)
-                          (conj bindings s (compile env e))])
-                       [env []]
-                       (partition 2 bindings))]
+                      [(assoc env s :local)
+                       (conj bindings s (compile env e))])
+                    [env []]
+                    (partition 2 bindings))]
         (concat (list 'let* bindings)
                 (mapv (partial compile env) body))))
 
@@ -427,7 +427,11 @@
                  f (fn [x y] (+ b x y))]
              (f a (join 4 8))))
 
-    )
+    (get-all (meval (let [a {:a coin :b 3}
+                          v (mix :ok :ko [2 coin])
+                          k (mix :a :b)]
+                      (join (assoc a k v)
+                            (dissoc a k))))))
 
 (comment :tries
 
@@ -450,13 +454,13 @@
              (get-all  (bind (int-between 3 7)
                              (fn [n] (int-between 0 n))))
 
-             (hmap :a coin :b coin {:c (int-between 4 9)})
+             (get-all (hmap :a coin :b coin {:c (int-between 4 9)}))
              (get-all (tup coin 1 2 (int-between 4 6)
                            (hmap :a coin :b (mix 6 9))))
              (get-all ((lift (fn [a b] (if (= a b) [a b]))) (int-between 0 10) (int-between 0 10)))
 
              (do (get-all (lst (int-range 0 2) (int-range 0 2) (int-range 0 2)))
-                 (get-all (tuple (int-between 0 2) (int-between 0 2)))
+                 (get-all (tup (int-between 0 2) (int-between 0 2)))
                  (get-all (hmap :a (int-between 3 8) {:b (from-seq (range 0 4))}))))
 
          (do :macros
@@ -469,8 +473,6 @@
 
              (sum 1 (mix 2 4) 3)
              (sum* [1 (mix 2 4) 3])
-
-             (println "ui")
 
              (get-all  (plus (mix 1 2) (mix 4 5)))
 
@@ -502,8 +504,7 @@
                            :ok))
 
              (get-all (bif [a (mix 1 2)
-                            b (mix 1 2)
-                            n none]
+                            b (mix 1 2 3)]
                            (if (= 5 (+ a b)) :OK)
                            coin))
 
