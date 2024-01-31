@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [cat struct while drop])
   (:require [noon.score :as n]
             [noon.harmony :as h]
+            [noon.constants :as nc]
             [noon.utils.misc :as u]
             [noon.utils.sequences :as s]
             [clojure.core :as c]
@@ -207,6 +208,11 @@
                              {:pitch (h/hc+ pitch)}]))
                    (sort-by key (group-by :position (n/mk* xs))))
               (connect-trimmed-chunks))))
+
+(defn modal-struct [size]
+  (n/ef_ (if-let [s (some-> _ :pitch :struct nc/struct->mode-keyword)]
+           (n/upd _ (n/struct (vec (sort (take size s)))))
+           _)))
 
 (comment :tries
 
