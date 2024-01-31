@@ -97,6 +97,11 @@
                  (Arrays/copyOfRange 1 4))]
     (MetaMessage. MIDI-SET-TEMPO data 3)))
 
+(def MIDI-SET-KEY-SIGNATURE 0x59)
+(defn set-key-signature-message [sharps majmin]
+  (MetaMessage. MIDI-SET-KEY-SIGNATURE (byte-array [sharps majmin]) 2))
+
+
 (defn new-state
   [& {:keys [bpm n-tracks connected]
       :or {bpm 60 n-tracks 1}}]
@@ -110,7 +115,8 @@
     (dotimes [_ n-tracks]
       (let [track (.createTrack sq)]
 
-        (.add track (MidiEvent. (set-tempo-message bpm) 0))))
+        (.add track (MidiEvent. (set-tempo-message bpm) 0))
+        (.add track (MidiEvent. (set-key-signature-message 0 0) 0))))
 
     {:tempo bpm
      :sequencer sequencer}))
