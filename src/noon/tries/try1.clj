@@ -6,7 +6,8 @@
             [noon.harmony :as nh]
             [noon.utils.multi-val :as mv]
             [noon.utils.misc :as u]
-         [noon.utils.pseudo-random :as pr]))
+         [noon.utils.pseudo-random :as pr]
+         [noon.constants :as nc]))
 
 (comment :barry-harris
 
@@ -810,3 +811,20 @@
          (require '[noon.utils.pseudo-random :as pr])
          (pr/with-rand 12
            (play (shuftup d0 d1 d2 d3 d4))))
+
+(comment "chords"
+
+         (stop)
+         (let [rand-color (fn [] (let [k (rand-nth [:lydian+ :lydian :ionian :dorian :melodic-minor :mixolydian :phrygian6])]
+                                   [(scale k)
+                                    (modal-struct 4)]))]
+           (play dur2
+                 (cat* (map (comp transpose c-step) (shuffle (range 12))))
+                 ($ (! (rand-color)))
+                 (h/align-contexts :d :static)
+                 (chans [(patch :aahs) ($ (par s0 s2 s3 s5)) #_h/voice-led]
+                        [(patch :vibraphone) o1 ($ (par s0 s2 s3) (shuftup s0 s3) (tup s0 s1 s1-))
+                         ($by :position (probs {vel0 2
+                                                (one-of vel3 vel5 vel7) 8
+                                                [vel3 (tupn> 4 [s1 (vel+ 15)])] 1}))]
+                        [(patch :acoustic-bass) o1- t-round]))))
