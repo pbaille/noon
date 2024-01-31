@@ -776,33 +776,35 @@
                          (maybe s1 s1- s2-)])
                  (cat _ s1 [up s1-] up)))
 
+         (stop)
          (let [initial [lydian seventh]
                up (transpose c5)
                down (transpose c5-)
                left (transpose c3)
                right (transpose c3-)]
-           (play dur3:2
-                 ;; grid
-                 [initial
-                  (cat> _ up left down)
-                  ($ (maybe (degree 2) (degree -2)))
-                  (cat _ up)
-                  (cat _ [rev left])
-                  (cat _ [right right])
-                  (h/align-contexts :d)]
+           (play ;; grid
+            [initial
+             (cat> _ up left down)
+             ($ (maybe (degree 2) (degree -2)))
+             (cat _ up)
+             (cat _ [rev left])
+             (cat _ [right right])
+             (h/align-contexts :d)]
                  ;; voices
-                 (chans [(patch :aahs) ($ (par s0 s1 s2 s3))]
-                        (let [tup1 [(struct [2 3 4 6]) (mixtup s3- s2- s1- s0 s1 s2 s3 s4)]
-                              tup2 (mixtup d3- d2- d1- d0 d1 d2 d3 d4)]
-                          [(patch :ocarina) o1 ($ [(one-of tup1 tup2) (maybe rev)])])
-                        [(patch :acoustic-bass) o1-
-                         t-round
-                         ($ (probs {_ 3
-                                    (one-of s1- s2) 3
-                                    (tup _ (one-of s1- s2)) 1
-                                    (tup (one-of s1- s2) _) 1}))])
+            (chans [(patch :aahs) ($ (par s0 s1 s2 s3))]
+                   #_[(patch :aahs) t-round ($ (par d0 d3 d6 d9)) #_h/voice-led]
+                   (let [tup1 [(struct [2 3 4 6]) (mixtup s3- s2- s1- s0 s1 s2 s3 s4)]
+                           tup2 (mixtup d3- d2- d1- d0 d1 d2 d3 d4)]
+                       [(patch :ocarina) o1 ($ [(one-of tup1 tup2) (maybe rev)])])
+                   [(patch :acoustic-bass) o2-
+                      t-round
+                      ($ (probs {_ 3
+                                 (one-of s1- s2) 3
+                                 (tup _ (one-of s1- s2)) 1
+                                 (tup (one-of s1- s2) _) 1}))])
                  ;; why not ?
-                 (cat _ s1 [up s1-] up))))
+            (cat _ s1 [up s1-] up)
+            (options :bpm 40 :xml true))))
 
 (comment "try pseudo random"
          (require '[noon.utils.pseudo-random :as pr])
