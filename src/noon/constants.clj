@@ -138,13 +138,61 @@
 
     (def double-harmonic-modes
       (zipmap [:double-harmonic :lydian+2+6 :ultraphrygian :hungarian :oriental :ionian++2 :ultralocrian]
-              (scale-modes harmonic-major-scale-vals)))
+              (scale-modes double-harmonic-scale-vals)))
 
     (def modes (merge major-modes
                       melodic-minor-modes
                       harmonic-minor-modes
                       harmonic-major-modes
                       double-harmonic-modes))
+
+    (defn struct->mode-keyword [s]
+      (some->> (seq modes)
+               (filter (fn [[k s']] (= s s')))
+               first
+               key))
+
+    (def degree-priority
+      {:ionian [6 3 2 5 1 4]
+       :dorian [5 2 6 1 4 3]
+       :phrygian [1 4 3 6 2 5]
+       :lydian [3 6 2 5 1 4]
+       :mixolydian [6 3 2 5 1 4]
+       :eolian  [5 1 4 2 6 3]
+       :locrian [4 1 6 5 2 3]
+
+       :melodic-minor [6 2 5 1 4 3]
+       :phrygian6 [5 1 3 6 2 4]
+       :lydian+ [4 6 2 3 5 1]
+       :lydianb7 [3 6 2 5 1 4]
+       :mixolydianb6 [5 6 2 1 4 3]
+       :locrian2 [4 2 6 5 1 3]
+       :superlocrian [3 6 5 2 4 1]
+
+       :harmonic-minor [5 6 1 2 4 3]
+       :locrian6 [4 5 1 6 2 3]
+       :ionian+ [3 4 6 2 1 5]
+       :dorian+4 [5 3 2 1 6 4]
+       :phrygian3 [1 2 4 6 5 3]
+       :lydian+2 [3 1 6 2 5 4]
+       :superlocriano7 [3 6 1 4 5 2]
+
+       :harmonic-major [5 6 3 2 4 1]
+       :dorianb5 [4 5 2 3 1 6]
+       :phrygianb4 [3 1 4 2 5 6]
+       :lydianb3 [2 3 6 1 4 5]
+       :mixolydianb2 [1 6 2 3 5 4]
+       :lydian++2 [1 4 6 2 3 5]
+       :locriano7 [6 4 1 2 3 5]
+
+       ;; approximative ...
+       :double-harmonic [1 5 6 2 3 4]
+       :lydian+2+6 [3 1 5 6 2 4]
+       :ultraphrygian [3 6 1 4 5 2]
+       :hungarian [2 3 5 6 4 1]
+       :oriental [1 2 5 4 6 3]
+       :ionian++2 [1 3 4 6 2 5]
+       :ultralocrian [3 6 2 1 4 5]})
 
     (def mode-aliases
       {:ion :ionian
