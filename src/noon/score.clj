@@ -1019,9 +1019,12 @@
     (defn midifiable-score [score]
       (vec (-> score numerify-pitches dedupe-patches)))
 
+    (defn options [& {:as options}]
+      (sf_ (vary-meta _ assoc ::options options)))
+
     (defn write-score
       [score & {:as opts}]
-      (let [{:keys [filename bpm play source xml]} (merge MIDI_DEFAULT_OPTIONS opts)
+      (let [{:keys [filename bpm play source xml]} (merge MIDI_DEFAULT_OPTIONS opts (-> score meta ::options))
             {:keys [directory file-barename]
              :or {directory (MIDI_DIRECTORIES :default)
                   file-barename (gen-filename)}} (u/parse-file-path filename)
@@ -1062,4 +1065,5 @@
       (show
        (mk (patch :vibraphone)
            (tup d0 d1 d2)
-           (tup same (patch :flute))))))
+           (tup same (patch :flute))))
+      (write (tup d0 d1))))
