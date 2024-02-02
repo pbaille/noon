@@ -7,6 +7,8 @@
 /emacs/xp/
 /.clj-kondo/.cache
 /.clj-kondo/inline-configs/
+/.clj-kondo/org.clj-commons/
+/.clj-kondo/potemkin/
 /.lsp
 /notation/samples/
 /data/chromaphone-banks.edn
