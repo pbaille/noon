@@ -1,5 +1,6 @@
 (ns noon.constants
-  (:require [noon.utils.misc :as u]))
+  (:require [noon.utils.misc :as u]
+            [clojure.math.combinatorics :as comb]))
 
 (def alt-sym->alt-val
   {"bb" -2
@@ -146,11 +147,29 @@
                       harmonic-major-modes
                       double-harmonic-modes))
 
-    (defn struct->mode-keyword [s]
-      (some->> (seq modes)
-               (filter (fn [[k s']] (= s s')))
-               first
-               key))
+    (def mode-aliases
+      {:ion :ionian
+       :dor :dorian
+       :phry :phrygian
+       :lyd :lydian
+       :mix :mixolydian
+       :eol :eolian
+       :loc :locrian
+       :melm :melodic-minor
+       :phry6 :phrygian6
+       :lyd+ :lydian+
+       :lydb7 :lydianb7
+       :mix+4 :lydianb7
+       :mixb6 :mixolydianb6
+       :loc2 :locrian2
+       :alt :superlocrian
+       :harmm :harmonic-minor
+       :loc6 :locrian6
+       :ion+ :ionian+
+       :dor+4 :dorian+4
+       :phryM :phrgian3
+       :lyd+2 :lydian+2
+       :altdim :superlocriano7})
 
     (def degree-priority
       {:ionian [6 3 2 5 1 4]
@@ -194,30 +213,6 @@
        :ionian++2 [1 3 4 6 2 5]
        :ultralocrian [3 6 2 1 4 5]})
 
-    (def mode-aliases
-      {:ion :ionian
-       :dor :dorian
-       :phry :phrygian
-       :lyd :lydian
-       :mix :mixolydian
-       :eol :eolian
-       :loc :locrian
-       :melm :melodic-minor
-       :phry6 :phrygian6
-       :lyd+ :lydian+
-       :lydb7 :lydianb7
-       :mix+4 :lydianb7
-       :mixb6 :mixolydianb6
-       :loc2 :locrian2
-       :alt :superlocrian
-       :harmm :harmonic-minor
-       :loc6 :locrian6
-       :ion+ :ionian+
-       :dor+4 :dorian+4
-       :phryM :phrgian3
-       :lyd+2 :lydian+2
-       :altdim :superlocriano7})
-
     (defn mode? [x]
       (and (vector? x)
            (every? int? x)
@@ -232,7 +227,13 @@
         (or (symbol? x) (string? x))
         (get-mode (keyword (name x)))
 
-        (mode? x) x)))
+        (mode? x) x))
+
+    (defn struct->mode-keyword [s]
+      (some->> (seq modes)
+               (filter (fn [[k s']] (= s s')))
+               first
+               key)))
 
 (def structs {:triad [0 2 4]
               :sus2 [0 1 4]
@@ -277,3 +278,75 @@
   (let [drem (second (u/divmod 7 d))
         amap (deg-alt-type drem)]
     (amap (- c (d->c d)))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(comment :modes-categorisation-xp
+
+         (require '[clojure.math.combinatorics :as comb])
+
+         (letfn [(struct-map [modes]
+                   (->> modes
+                        (reduce (fn [ret [k s]]
+                                  (reduce (fn [ret struct] (update ret struct (fnil conj []) k))
+                                          ret (mapcat (partial comb/combinations s) (range 1 7))))
+                                {})))]
+           (def lvl->struct->modes
+             [(struct-map major-modes)
+              (struct-map (merge major-modes melodic-minor-modes))
+              (struct-map (merge major-modes melodic-minor-modes harmonic-minor-modes))]))
+
+         #_(lvl->struct->modes 0)
+
+         (defn shortest-non-ambiguous-structs [mode lvl]
+           (->> (get lvl->struct->modes lvl)
+                (filter (fn [[s ms]] (= ms [mode])))
+                (map key)
+                (group-by count)
+                (seq)
+                (sort-by key)
+                first
+                val))
+
+         #_(shortest-non-ambiguous-structs :lydian 1)
+
+         (defn sort-struct-by-degree-priority [s lvl]
+           (if (= 1 (count s))
+             (vec s)
+             (let [substructs (->> (sort-by (fn [d] (count ((lvl->struct->modes lvl) (list d)))) s)
+                                   (map (fn [d] (sort (seq (disj (set s) d)))))
+                                   (reverse))
+                   less-ambiguous-substructs (->> (map (partial find (lvl->struct->modes lvl)) substructs)
+                                                  (group-by (fn [[_ ms]] (count ms)))
+                                                  (seq)
+                                                  (sort-by key)
+                                                  (first)
+                                                  (val))]
+               (let [substruct (key (first less-ambiguous-substructs))]
+                 (conj (sort-struct-by-degree-priority substruct lvl)
+                       (first (remove (set substruct) s)))))))
+
+         #_(sort-struct-by-degree-priority (modes :lydian) 0)
+
+         (def lvl2-modes (merge major-modes melodic-minor-modes harmonic-minor-modes))
+
+         (def lvl2-degree-priority
+           (map (fn [[m struct]] [m (sort-struct-by-degree-priority struct 2)])
+                lvl2-modes))
+
+         (def from-darkest
+           (sort-by (fn [[m s]] (reduce + s))
+                    lvl2-modes)))
