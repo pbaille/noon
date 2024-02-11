@@ -1024,7 +1024,7 @@
 
     (defn write-score
       [score & {:as opts}]
-      (let [{:keys [filename bpm play source xml]} (merge MIDI_DEFAULT_OPTIONS opts (-> score meta ::options))
+      (let [{:keys [filename bpm play source xml pdf preview]} (merge MIDI_DEFAULT_OPTIONS opts (-> score meta ::options))
             {:keys [directory file-barename]
              :or {directory (MIDI_DIRECTORIES :default)
                   file-barename (gen-filename)}} (u/parse-file-path filename)
@@ -1042,8 +1042,12 @@
           (midi/play-file2 midi-filename))
         (if source
           (spit (str directory "/" file-barename ".mut") source))
-        (if xml
-          (shell/sh MUSESCORE_BIN "--export-to" (str directory "/" file-barename ".musicxml") midi-filename))
+        (when-let [xml-filename (and (or preview pdf xml) (str directory "/" file-barename ".musicxml"))]
+          (shell/sh MUSESCORE_BIN "--export-to" xml-filename midi-filename)
+          (when-let [pdf-filename (and (or preview pdf) (str directory "/" file-barename ".pdf"))]
+            (shell/sh MUSESCORE_BIN xml-filename "-o" pdf-filename)
+            (if preview
+              (shell/sh "qlmanage" "-p" pdf-filename))))
         midi-filename))
 
     (defmacro write [& xs]
@@ -1061,6 +1065,8 @@
       `(midi/stop2))
 
     (comment
+      (write-score (mk (mixtup s0 s2 s4) (mixtup d0 d1 d2 d3))
+                   {:xml true :pdf true :preview true})
       (play (tupn> 7 d2))
       (show
        (mk (patch :vibraphone)
