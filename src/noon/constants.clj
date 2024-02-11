@@ -233,7 +233,11 @@
       (some->> (seq modes)
                (filter (fn [[k s']] (= s s')))
                first
-               key)))
+               key))
+
+    (defn partial-scale->struct [mode-kw partial-scale]
+      (vec (sort (map (fn [sd] (u/index-of (modes mode-kw) sd))
+                      partial-scale)))))
 
 (def structs {:triad [0 2 4]
               :sus2 [0 1 4]
@@ -261,7 +265,7 @@
   ([x]
    (cond (keyword? x) (get structs x)
          (or (symbol? x) (string? x)) (get-struct (keyword (name x)))
-         (mode? x) x))
+         (sequential? x) (let [x (vec x)] (if (mode? x) x))))
   ([x scale]
    (if-let [s (get-struct x)]
      (if (< (last s) (count scale))
@@ -294,59 +298,69 @@
 
 
 
-(comment :modes-categorisation-xp
+(do :modes-categorisation-xp
 
-         (require '[clojure.math.combinatorics :as comb])
+    (require '[clojure.math.combinatorics :as comb])
 
-         (letfn [(struct-map [modes]
-                   (->> modes
-                        (reduce (fn [ret [k s]]
-                                  (reduce (fn [ret struct] (update ret struct (fnil conj []) k))
-                                          ret (mapcat (partial comb/combinations s) (range 1 7))))
-                                {})))]
-           (def lvl->struct->modes
-             [(struct-map major-modes)
-              (struct-map (merge major-modes melodic-minor-modes))
-              (struct-map (merge major-modes melodic-minor-modes harmonic-minor-modes))]))
+    (def lvl->mode->scale [major-modes
+                           (merge major-modes melodic-minor-modes)
+                           (merge major-modes melodic-minor-modes harmonic-minor-modes)])
 
-         #_(lvl->struct->modes 0)
+    (letfn [(struct-map [modes]
+              (->> modes
+                   (reduce (fn [ret [k s]]
+                             (reduce (fn [ret struct] (update ret struct (fnil conj []) k))
+                                     ret (mapcat (partial comb/combinations s) (range 1 7))))
+                           {})))]
+      (def lvl->partial-scale->modes
+        (mapv struct-map lvl->mode->scale)))
 
-         (defn shortest-non-ambiguous-structs [mode lvl]
-           (->> (get lvl->struct->modes lvl)
-                (filter (fn [[s ms]] (= ms [mode])))
-                (map key)
-                (group-by count)
-                (seq)
-                (sort-by key)
-                first
-                val))
+    #_(lvl->struct->modes 0)
 
-         #_(shortest-non-ambiguous-structs :lydian 1)
+    (defn shortest-non-ambiguous-structs
+      [mode lvl]
+      (->> (get lvl->partial-scale->modes lvl)
+           (filter (fn [[s ms]] (= ms [mode])))
+           (map key)
+           (group-by count)
+           (seq)
+           (sort-by key)
+           first
+           val))
 
-         (defn sort-struct-by-degree-priority [s lvl]
-           (if (= 1 (count s))
-             (vec s)
-             (let [substructs (->> (sort-by (fn [d] (count ((lvl->struct->modes lvl) (list d)))) s)
-                                   (map (fn [d] (sort (seq (disj (set s) d)))))
-                                   (reverse))
-                   less-ambiguous-substructs (->> (map (partial find (lvl->struct->modes lvl)) substructs)
-                                                  (group-by (fn [[_ ms]] (count ms)))
-                                                  (seq)
-                                                  (sort-by key)
-                                                  (first)
-                                                  (val))]
-               (let [substruct (key (first less-ambiguous-substructs))]
-                 (conj (sort-struct-by-degree-priority substruct lvl)
-                       (first (remove (set substruct) s)))))))
+    #_(shortest-non-ambiguous-structs :lydian 1)
 
-         #_(sort-struct-by-degree-priority (modes :lydian) 0)
+    (defn sort-partial-scale-by-degree-priority
+      [s lvl]
+      (if (= 1 (count s))
+        (vec s)
+        (let [substructs
+              (->> (sort-by (fn [d] (count ((lvl->partial-scale->modes lvl) (list d)))) s)
+                   (map (fn [d] (sort (seq (disj (set s) d)))))
+                   (reverse))
 
-         (def lvl2-modes (merge major-modes melodic-minor-modes harmonic-minor-modes))
+              less-ambiguous-substructs
+              (->> (map (partial find (lvl->partial-scale->modes lvl)) substructs)
+                   (group-by (fn [[_ ms]] (count ms)))
+                   (seq)
+                   (sort-by key)
+                   (first)
+                   (val))
 
-         (def lvl2-degree-priority
-           (map (fn [[m struct]] [m (sort-struct-by-degree-priority struct 2)])
-                lvl2-modes))
+              substruct
+              (key (first less-ambiguous-substructs))]
 
-         (def from-darkest
-           (sort-by (fn [[m s]] (reduce + s))
-                    lvl2-modes)))
+          (conj (sort-partial-scale-by-degree-priority substruct lvl)
+                (first (remove (set substruct) s))))))
+
+    #_(sort-partial-scale-by-degree-priority (modes :lydian) 0)
+
+    (def lvl->mode->degree-priority
+      (vec (map-indexed (fn [lvl modes]
+                          (map (fn [[m struct]] [m (sort-partial-scale-by-degree-priority struct lvl)])
+                               modes))
+                        lvl->mode->scale)))
+
+    (def lvl->brightness-sorted-modes
+      (mapv (partial sort-by (fn [[m s]] (reduce + s)))
+            lvl->mode->scale)))
