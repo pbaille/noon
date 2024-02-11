@@ -254,7 +254,14 @@
     (defn hm-leaves [m]
       (->> (hm-nodes m)
            (remove (fn [[_ v]] (map? v)))
-           (into {}))))
+           (into {})))
+
+    (defn index-of [s x]
+      (loop [s s at 0]
+        (if (seq s)
+          (if (= x (first s))
+            at
+            (recur (next s) (inc at)))))))
 
 (do :form
 
