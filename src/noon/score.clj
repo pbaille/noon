@@ -1023,7 +1023,7 @@
       (sf_ (vary-meta _ assoc ::options options)))
 
     (defn write-score
-      [score & {:as opts}]
+      [opts score]
       (let [{:keys [filename bpm play source xml pdf preview]} (merge MIDI_DEFAULT_OPTIONS opts (-> score meta ::options))
             {:keys [directory file-barename]
              :or {directory (MIDI_DIRECTORIES :default)
@@ -1051,22 +1051,22 @@
         midi-filename))
 
     (defmacro write [& xs]
-      `(write-score (mk ~@xs)
-                    :xml true
-                    :source '~&form))
+      `(write-score {:xml true
+                     :source '~&form}
+                    (mk ~@xs)))
 
     (defmacro play [& xs]
-      `(write-score (mk ~@xs)
-                    :filename ~(gen-filename (MIDI_DIRECTORIES :history))
-                    :source '~&form
-                    :play true))
+      `(write-score {:filename ~(gen-filename (MIDI_DIRECTORIES :history))
+                     :source '~&form
+                     :play true}
+                    (mk ~@xs)))
 
     (defmacro stop []
       `(midi/stop2))
 
     (comment
-      (write-score (mk (mixtup s0 s2 s4) (mixtup d0 d1 d2 d3))
-                   {:xml true :pdf true :preview true})
+      (write-score {:xml true :pdf true :preview true}
+                   (mk (mixtup s0 s2 s4) (mixtup d0 d1 d2 d3)))
       (play (tupn> 7 d2))
       (show
        (mk (patch :vibraphone)
