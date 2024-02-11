@@ -150,27 +150,27 @@
     (defn contour-change [layer f]
 
       (n/sfn s
-           (assert (apply = (map (fn [e] (dissoc (:pitch e) :position)) s))
-                   "For now, only mono harmony scores are supported here")
+             (assert (apply = (map (fn [e] (dissoc (:pitch e) :position)) s))
+                     "For now, only mono harmony scores are supported here")
 
-           (let [layer (or layer (score-lowest-layer s))
-                 layer-converter (partial h/down-to-layer layer)
-                 splits (sort-by :position (layer-split layer s))
-                 idxs (map :layer-idx splits)
-                 contour (mapv (n/sub (apply min idxs)) idxs)
-                 new-contour (f contour)
+             (let [layer (or layer (score-lowest-layer s))
+                   layer-converter (partial h/down-to-layer layer)
+                   splits (sort-by :position (layer-split layer s))
+                   idxs (map :layer-idx splits)
+                   contour (mapv (n/sub (apply min idxs)) idxs)
+                   new-contour (f contour)
 
-                 deltas (mapv - new-contour contour)
-                 position-key (layer-kw->position-key layer)]
-             (n/concat-scores
-              (map-indexed (fn [i {:keys [position score]}]
-                             (->> score
-                                  (map (fn [e]
-                                         (-> (update e :pitch layer-converter)
-                                             (update :position - position)
-                                             (update-in [:pitch :position position-key] + (deltas i)))))
-                                  (into #{})))
-                           splits)))))
+                   deltas (mapv - new-contour contour)
+                   position-key (layer-kw->position-key layer)]
+               (n/concat-scores
+                (map-indexed (fn [i {:keys [position score]}]
+                               (->> score
+                                    (map (fn [e]
+                                           (-> (update e :pitch layer-converter)
+                                               (update :position - position)
+                                               (update-in [:pitch :position position-key] + (deltas i)))))
+                                    (into #{})))
+                             splits)))))
 
     (defn contour
       "changing the melodic contour of a score.
