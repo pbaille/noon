@@ -827,4 +827,41 @@
                          ($by :position (probs {vel0 2
                                                 (one-of vel3 vel5 vel7) 8
                                                 [vel3 (tupn> 4 [s1 (vel+ 15)])] 1}))]
-                        [(patch :acoustic-bass) o1- t-round]))))
+                        [(patch :acoustic-bass) o1- t-round])))
+
+         (play (patch :aahs)
+               (shufcat c0 c1 c2 c3)
+               (m/contour :similar {:delta 4 :layer :c})
+               (par o1 [c6- (m/contour :mirror {:layer :c})])
+               ($by :position (sfn score (let [modal-lvl 1
+                                               chord-size 4
+                                               [min-pitch-val max-pitch-val] (h/pitch-values score)
+                                               interval (mod (- max-pitch-val min-pitch-val) 12)
+                                               [mode-kw prio] (rand-nth (possible-modes interval modal-lvl (dec chord-size)))
+                                               partial-scale (cons 0 (take (dec chord-size) prio))
+                                               struct' (nc/partial-scale->struct mode-kw partial-scale)
+                                               closed (mk (dissoc (first score) :pitch) (origin min-pitch-val) (scale mode-kw) (struct struct') (par* (map s-step (range chord-size))))
+                                               drops (filter (fn [drop] (= max-pitch-val (last (h/pitch-values drop)))) (h/drops closed))]
+                                           (rand-nth drops))))
+               ($by :position (chans _
+                                     [(sf_ #{(last (sort-by pitch-value _))})
+                                      (patch :ocarina)
+                                      (mixtup s0 s1- s2- s3- s4- s5-)
+                                      (tup _ s2- s1)
+                                      #_($ (probs {_ 4 (tup _ [vel4 (maybe s2- s3-)]) 1 }))]))
+               (cat _ [rev c3])
+               (cat _ [rev c3-])
+               (options :bpm 30 :xml true))
+
+         (require '[noon.constants :as nc])
+         (defn possible-modes
+           "given a chromatic degree (int between 0 an 11)
+            return possible modes"
+           [cd modal-lvl least-priority]
+           (let [modes (nc/lvl->mode->degree-priority modal-lvl)
+                 candidates (filter (fn [[m s]] (-> (take least-priority s)
+                                                    (set) (contains? cd)))
+                                    modes)]
+             candidates))
+
+         (possible-modes 3 2 3))
