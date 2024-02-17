@@ -21,9 +21,9 @@
 
 (defn diat-sufix [n]
   (or (get
-        {0 "st"
-         1 "nd"
-         2 "rd"} n)
+       {0 "st"
+        1 "nd"
+        2 "rd"} n)
       "th"))
 
 (def alt-syms1
@@ -231,7 +231,7 @@
 
     (defn struct->mode-keyword [s]
       (some->> (seq modes)
-               (filter (fn [[k s']] (= s s')))
+               (filter (fn [[_ s']] (= s s')))
                first
                key))
 
@@ -300,8 +300,6 @@
 
 (do :modes-categorisation-xp
 
-    (require '[clojure.math.combinatorics :as comb])
-
     (def lvl->mode->scale [major-modes
                            (merge major-modes melodic-minor-modes)
                            (merge major-modes melodic-minor-modes harmonic-minor-modes)])
@@ -320,7 +318,7 @@
     (defn shortest-non-ambiguous-structs
       [mode lvl]
       (->> (get lvl->partial-scale->modes lvl)
-           (filter (fn [[s ms]] (= ms [mode])))
+           (filter (fn [[_ ms]] (= ms [mode])))
            (map key)
            (group-by count)
            (seq)
@@ -362,5 +360,5 @@
                         lvl->mode->scale)))
 
     (def lvl->brightness-sorted-modes
-      (mapv (partial sort-by (fn [[m s]] (reduce + s)))
+      (mapv (partial sort-by (fn [[_ s]] (reduce + s)))
             lvl->mode->scale)))
