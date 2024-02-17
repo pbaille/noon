@@ -12,3 +12,4 @@
 /.lsp
 /notation/samples/
 /data/chromaphone-banks.edn
+.calva/output-window/output.calva-repl

@@ -4,7 +4,7 @@
             [me.raynes.fs :as fs]
             [backtick :as bt]
             [clojure.pprint :as pprint]
-            [byte-streams :as bs]
+            [clj-commons.byte-streams :as bs]
             [clojure.data.codec.base64 :as b64])
   (:import (java.io ByteArrayOutputStream ObjectOutputStream ObjectInputStream)))
 
@@ -130,8 +130,8 @@
 (do :metadata
 
     (defn t
-      "artity 2: assign type sym to e
-   arity 1: get the type tag of e"
+      "artity 2: assign type sym to e 
+       arity 1: get the type tag of e"
       ([e] (:type (meta e)))
       ([sym e] (vary-meta e assoc :type sym)))
 

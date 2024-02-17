@@ -6,8 +6,8 @@
             [noon.harmony :as nh]
             [noon.utils.multi-val :as mv]
             [noon.utils.misc :as u]
-         [noon.utils.pseudo-random :as pr]
-         [noon.constants :as nc]))
+            [noon.utils.pseudo-random :as pr]
+            [noon.constants :as nc]))
 
 (comment :barry-harris
 
@@ -21,12 +21,12 @@
 
          (let [chord-tones [d0 d2 d4 d7]]
            (play barry-harris
-                  (cat d0 d3)
-                  (rep 8 (one-of d1- d1))
-                  ($ [(chans [(patch :pad-1-new-age) o1- vel3 (par* chord-tones)]
-                             [(patch :ocarina) vel4 (shuftup* chord-tones) ($ (maybe (tup (one-of d1 d1-) d0)))]
-                             [(patch :vibraphone) vel5 o1 (tupn 6 [(one-of* chord-tones) (maybe o1) (maybe (tup d1- d0))])])
-                      (maybe rev)])))
+                 (cat d0 d3)
+                 (rep 8 (one-of d1- d1))
+                 ($ [(chans [(patch :pad-1-new-age) o1- vel3 (par* chord-tones)]
+                            [(patch :ocarina) vel4 (shuftup* chord-tones) ($ (maybe (tup (one-of d1 d1-) d0)))]
+                            [(patch :vibraphone) vel5 o1 (tupn 6 [(one-of* chord-tones) (maybe o1) (maybe (tup d1- d0))])])
+                     (maybe rev)])))
 
          (def barry-harris2 [barry-harris (struct [0 2 4 7])])
 
@@ -494,8 +494,8 @@
                (patch :ocarina)
                (rup 36 c1)
                (sf_ (set (map-indexed (fn [i n] (let [vel (* 60 2 (/ (inc i) (count _)))
-                                                     vel (if (> vel 60) (- 60 (- vel 60)) vel)]
-                                                 (assoc n :velocity vel)))
+                                                      vel (if (> vel 60) (- 60 (- vel 60)) vel)]
+                                                  (assoc n :velocity vel)))
                                       (sort-by :position _))))
                (par _
                     (m/rotation 1/3)
@@ -584,10 +584,10 @@
                                                  {} all-triads)
 
                _all-transitions (reduce (fn [ret [t vs]]
-                                         (assoc ret t (reduce (fn [ret [t' vs']]
-                                                                (update ret (- 6 (count (set (concat vs vs')))) conj t'))
-                                                              {1 [] 2 [] 3 []} triad->pitch-class-values)))
-                                       {} triad->pitch-class-values)
+                                          (assoc ret t (reduce (fn [ret [t' vs']]
+                                                                 (update ret (- 6 (count (set (concat vs vs')))) conj t'))
+                                                               {1 [] 2 [] 3 []} triad->pitch-class-values)))
+                                        {} triad->pitch-class-values)
 
                pitch-class-value->triads (reduce (fn [ret [t vs]] (reduce #(update %1 %2 conj t) ret vs))
                                                  {} triad->pitch-class-values)
@@ -734,7 +734,7 @@
                  (cat _ s1 s1- _)))
 
          (let [L- (transpose c5)
-               L+ (transpose c5-)
+               _L+ (transpose c5-)
                R- (transpose c3)
                R+ (transpose c3-)
                M (transpose c6)
@@ -795,20 +795,19 @@
             (chans [(patch :aahs) ($ (par s0 s1 s2 s3))]
                    #_[(patch :aahs) t-round ($ (par d0 d3 d6 d9)) #_h/voice-led]
                    (let [tup1 [(struct [2 3 4 6]) (mixtup s3- s2- s1- s0 s1 s2 s3 s4)]
-                           tup2 (mixtup d3- d2- d1- d0 d1 d2 d3 d4)]
-                       [(patch :ocarina) o1 ($ [(one-of tup1 tup2) (maybe rev)])])
+                         tup2 (mixtup d3- d2- d1- d0 d1 d2 d3 d4)]
+                     [(patch :ocarina) o1 ($ [(one-of tup1 tup2) (maybe rev)])])
                    [(patch :acoustic-bass) o2-
-                      t-round
-                      ($ (probs {_ 3
-                                 (one-of s1- s2) 3
-                                 (tup _ (one-of s1- s2)) 1
-                                 (tup (one-of s1- s2) _) 1}))])
+                    t-round
+                    ($ (probs {_ 3
+                               (one-of s1- s2) 3
+                               (tup _ (one-of s1- s2)) 1
+                               (tup (one-of s1- s2) _) 1}))])
                  ;; why not ?
             (cat _ s1 [up s1-] up)
             (options :bpm 40 :xml true))))
 
 (comment "try pseudo random"
-         (require '[noon.utils.pseudo-random :as pr])
          (pr/with-rand 12
            (play (shuftup d0 d1 d2 d3 d4))))
 
@@ -829,7 +828,20 @@
                                                 [vel3 (tupn> 4 [s1 (vel+ 15)])] 1}))]
                         [(patch :acoustic-bass) o1- t-round])))
 
+         (defn possible-modes
+           "given a chromatic degree (int between 0 an 11)
+            return possible modes"
+           [cd modal-lvl least-priority]
+           (let [modes (nc/lvl->mode->degree-priority modal-lvl)
+                 candidates (filter (fn [[_ s]] (-> (take least-priority s)
+                                                    (set) (contains? cd)))
+                                    modes)]
+             candidates))
+
+         (possible-modes 3 2 3)
+
          (play (patch :aahs)
+               dur4
                (shufcat c0 c1 c2 c3)
                (m/contour :similar {:delta 4 :layer :c})
                (par o1 [c6- (m/contour :mirror {:layer :c})])
@@ -844,24 +856,12 @@
                                                drops (filter (fn [drop] (= max-pitch-val (last (h/pitch-values drop)))) (h/drops closed))]
                                            (rand-nth drops))))
                ($by :position (chans _
-                                     [(sf_ #{(last (sort-by pitch-value _))})
+                                     [(patch :contrabass) vel3 min-pitch o1-]
+                                     [max-pitch
                                       (patch :ocarina)
                                       (mixtup s0 s1- s2- s3- s4- s5-)
                                       (tup _ s2- s1)
-                                      #_($ (probs {_ 4 (tup _ [vel4 (maybe s2- s3-)]) 1 }))]))
+                                      #_($ (probs {_ 4 (tup _ [vel4 (maybe s2- s3-)]) 1}))]))
                (cat _ [rev c3])
                (cat _ [rev c3-])
-               (options :bpm 30 :xml true))
-
-         (require '[noon.constants :as nc])
-         (defn possible-modes
-           "given a chromatic degree (int between 0 an 11)
-            return possible modes"
-           [cd modal-lvl least-priority]
-           (let [modes (nc/lvl->mode->degree-priority modal-lvl)
-                 candidates (filter (fn [[m s]] (-> (take least-priority s)
-                                                    (set) (contains? cd)))
-                                    modes)]
-             candidates))
-
-         (possible-modes 3 2 3))
+               (options :bpm 30 :xml true :preview true)))
