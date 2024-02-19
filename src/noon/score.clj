@@ -1031,36 +1031,48 @@
     (defn midifiable-score [score]
       (vec (-> score numerify-pitches dedupe-patches)))
 
+    (def options* (atom MIDI_DEFAULT_OPTIONS))
+
     (defn options [& {:as options}]
       (sf_ (vary-meta _ assoc ::options options)))
 
     (defn write-score
       [opts score]
-      (let [{:keys [filename bpm play source xml pdf preview]} (merge MIDI_DEFAULT_OPTIONS opts (-> score meta ::options))
+      (let [{:keys [filename bpm play source xml pdf]} (merge @options* opts (-> score meta ::options))
             {:keys [directory file-barename]
              :or {directory (MIDI_DIRECTORIES :default)
                   file-barename (gen-filename)}} (u/parse-file-path filename)
-            midi-filename (str directory "/" file-barename ".mid")]
+            midi-filename (str directory "/" file-barename ".mid")
+            source-filename (str directory "/" file-barename ".mut")
+            seed-filename (str directory "/" file-barename ".seed")
+            xml-filename (if (or pdf xml) (str directory "/" file-barename ".xml"))
+            pdf-filename (if pdf (str directory "/" file-barename ".pdf"))]
+
         (u/ensure-directory directory)
-        ;; write random seed
-        (spit (str directory "/" file-barename ".seed")
-              (u/serialize-to-base64 pr/*rnd*))
 
         (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score))
             (midi/add-events (midifiable-score score))
             (midi/write-midi-file midi-filename))
-        #_(u/copy-file midi-filename "generated/last.mid")
+
         (if play
           (midi/play-file2 midi-filename))
-        (if source
-          (spit (str directory "/" file-barename ".mut") source))
-        (when-let [xml-filename (and (or preview pdf xml) (str directory "/" file-barename ".musicxml"))]
-          (shell/sh MUSESCORE_BIN "--export-to" xml-filename midi-filename)
-          (when-let [pdf-filename (and (or preview pdf) (str directory "/" file-barename ".pdf"))]
-            (shell/sh MUSESCORE_BIN xml-filename "-o" pdf-filename)
-            (if preview
-              (shell/sh "qlmanage" "-p" pdf-filename))))
-        midi-filename))
+
+        (if xml-filename
+          (shell/sh MUSESCORE_BIN "--export-to" xml-filename midi-filename))
+
+        (when pdf-filename
+          (shell/sh MUSESCORE_BIN xml-filename "-o" pdf-filename)
+          (u/copy-file pdf-filename "last.pdf"))
+
+        (when source
+          (spit source-filename source)
+          (spit seed-filename (u/serialize-to-base64 pr/*rnd*)))
+
+        {:midi midi-filename
+         :source source-filename
+         :seed seed-filename
+         :xml xml-filename
+         :pdf pdf-filename}))
 
     (defmacro write [& xs]
       `(write-score {:xml true
@@ -1081,7 +1093,7 @@
       `(midi/stop2))
 
     (comment
-      (write-score {:xml true :pdf true :preview true}
+      (write-score {:xml true :pdf true}
                    (mk (mixtup s0 s2 s4) (mixtup d0 d1 d2 d3)))
       (play (tupn> 7 d2))
       (show
