@@ -53,7 +53,7 @@
                (fn [_ _ old {:as _new :keys [score cursor time-selection grid]}]
                  (let [score-changed? (not (= score (:score old)))]
                    (if score-changed?
-                     (noon/write-score score :filename REAPER_SYNC_MIDI_FILE))
+                     (noon/write-score {:filename REAPER_SYNC_MIDI_FILE} score))
                    (reaper/>> (let [t ru.take
                                     T (t.get-active)]
                                 (if ~score-changed?
@@ -200,7 +200,7 @@
              (upd-score! (noon/parts {:selected true} (noon/par [{:channel 4} noon/s1]
                                                                 [{:channel 1 :selected false} (noon/par noon/s1- noon/s0)])))
              (upd-score! (noon/parts {:channel 1} {:selected false}))
-             (upd-score! )
+             (upd-score!)
              (noon/par noon/d3 noon/d5-)
              (upd-state! assoc :cursor [0 60] :grid 1/2 :time-selection [0 0])
              (upd-state! assoc :time-selection [4 8])
