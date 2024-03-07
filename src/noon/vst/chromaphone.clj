@@ -26,8 +26,8 @@
       (sort-by :idx)
       (mapv (fn [x] (update x :idx dec)))))
 
-(spit "data/chromaphone-banks.edn"
-      (with-out-str (pp/pprint banks)))
+(comment (spit "data/chromaphone-banks.edn"
+               (with-out-str (pp/pprint banks))))
 
 (def patches
   (mapcat (fn [{:keys [elements idx]}]

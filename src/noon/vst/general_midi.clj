@@ -2,13 +2,14 @@
   (:require [clojure.edn :as edn]
             [noon.utils.misc :as u]
             [clojure.string :as str]
-            [clj-fuzzy.metrics :as fm]))
+            [clj-fuzzy.metrics :as fm]
+            [clojure.java.io :as io]))
 
 (defn name->key [name]
   (u/str->keyword (str/replace name #"\((.*)\)" "$1")))
 
 (def instruments
-  (->> (edn/read-string (slurp "data/GM.edn"))
+  (->> (edn/read-string (slurp (io/resource "data/GM.edn")))
        (mapv (fn [i] (-> (update i :group u/str->keyword)
                         (assoc :key (name->key (:name i))))) )))
 

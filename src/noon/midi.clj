@@ -1,6 +1,7 @@
 (ns noon.midi
   (:require [noon.utils.misc :as u]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [clojure.java.io :as io])
   (:import (java.io File)
            (java.nio ByteBuffer)
            (java.util Arrays)
@@ -100,6 +101,17 @@
 (def MIDI-SET-KEY-SIGNATURE 0x59)
 (defn set-key-signature-message [sharps majmin]
   (MetaMessage. MIDI-SET-KEY-SIGNATURE (byte-array [sharps majmin]) 2))
+
+(def MIDI-SET-TIME-SIGNATURE 0x58)
+(defn set-time-signature-message
+  [n-remaining-beats numerator denominator-pow2 & [metronome-beat-midi-clock-length n-32th-by-beat]]
+  (MetaMessage. MIDI-SET-TIME-SIGNATURE
+                (byte-array [n-remaining-beats
+                             numerator
+                             denominator-pow2
+                             (or metronome-beat-midi-clock-length 24)
+                             (or n-32th-by-beat 32)])
+                5))
 
 
 (defn new-state
@@ -233,15 +245,37 @@
 (defn add-notes [state notes]
   (reduce add-note state notes))
 
+
 (defn write-midi-file
   [{:as _state :keys [sequencer]}
    filename]
   (u/ensure-file filename)
-  (MidiSystem/write (.getSequence sequencer)
-                    1 (File. filename)))
+  (let [file (File. filename)]
+    (MidiSystem/write (.getSequence sequencer)
+                      1 file)
+    file))
+
+(defn get-midi-bytes
+  [{:as _state :keys [sequencer]}]
+  (let [baos (java.io.ByteArrayOutputStream.)
+        sequence (.getSequence sequencer)]
+    (MidiSystem/write sequence 1 baos)
+    (.toByteArray baos)))
+
+(defn write-midi-file2
+  [state filename]
+  (u/ensure-file filename)
+  (with-open [fos (java.io.FileOutputStream. filename)]
+    (.write fos (get-midi-bytes state))))
 
 (defn- filepath->buffered-input-stream [p]
-      (java.io.BufferedInputStream. (java.io.FileInputStream. (File. p))))
+  (java.io.BufferedInputStream. (java.io.FileInputStream. (File. p))))
+
+(defn- resource->buffered-input-stream [url]
+  (-> url
+      .openStream
+      java.io.BufferedInputStream.))
+
 
 (do :play1
 
@@ -262,10 +296,10 @@
        :squid "midi/soundfonts/squid.sf2"})
 
     (defn reset-filestream []
-      (filepath->buffered-input-stream "midi/reset.mid"))
+      (resource->buffered-input-stream (io/resource "midi/reset.mid")))
 
     (defn init-sequencer2 [sf2-path]
-      (let [bank (MidiSystem/getSoundbank (filepath->buffered-input-stream sf2-path))
+      (let [bank (MidiSystem/getSoundbank (resource->buffered-input-stream (io/resource sf2-path)))
             sq (MidiSystem/getSequencer false)
             sy (MidiSystem/getSynthesizer)]
         (.open sq) (.open sy)
@@ -309,12 +343,74 @@
      filename)))
 
 
+(do :external-devices
 
+    (defn get-output-device [name]
+      (first (keep (fn [info]
+                       (let [device (MidiSystem/getMidiDevice info)]
+                         (if (and (= (.getName info) name)
+                                  (not (zero? (.getMaxReceivers device))))
+                              device)))
+                     (MidiSystem/getMidiDeviceInfo))))
+
+    (def iac-bus-1-output-device
+      (get-output-device "Bus 1"))
+
+    (defn init-device-sequencer [device]
+      (let [sq (MidiSystem/getSequencer false)]
+        (.open sq) (.open device)
+        (.setReceiver
+         (.getTransmitter sq)
+         (.getReceiver device))
+        sq))
+
+    (def bus-1-sequencer
+      (init-device-sequencer iac-bus-1-output-device))
+
+    (defn stop-bus-1 [] (.stop bus-1-sequencer))
+    (defn reset-bus-1 [] (stop-bus-1) (.setSequence bus-1-sequencer (reset-filestream)) (.start bus-1-sequencer) (Thread/sleep 100))
+
+    (defn play-file-on-sequencer [sq filename]
+      (reset-bus-1)
+      (let [stream (filepath->buffered-input-stream filename)]
+        (.setSequence bus-1-sequencer stream)
+        (.start bus-1-sequencer)))
+
+    (comment
+      (play-file-on-sequencer bus-1-sequencer "generated/history/1709837113419.mid")))
 
 
 (comment :first-xp
 
          (ShortMessage/CONTROL_CHANGE)
+
+
+
+         (def device-infos (MidiSystem/getMidiDeviceInfo))
+
+         (def device1 (map (fn [deviceInfo]
+                             (let [device (MidiSystem/getMidiDevice deviceInfo)]
+                               [(str (.getDeviceInfo device))
+                                (when-not (zero? (.getMaxReceivers device))
+                                  (let [receiver (.getReceiver device)]
+                                    (try (do (.open device)
+                                             (.send receiver (short-message ShortMessage/NOTE_ON 0 60 60) -1))
+                                         (catch Exception e (println e)))))])) device-infos))
+
+         (defonce iac-bus-1
+           (let [device (MidiSystem/getMidiDevice (first (filter #(= (.getName %) "Bus 1")
+                                                                device-infos)))]
+            (.open device)
+            device))
+
+         (defn test-iac-bus-1 []
+           (.send (.getReceiver iac-bus-1)
+                  (short-message ShortMessage/NOTE_ON 0 60 60)
+                  -1))
+
+         (test-iac-bus-1)
+
+
 
          (defn export-midi-file!
            [sq filename]
@@ -355,7 +451,6 @@
       (add-note {:position 7.5 :pitch 66 :duration 3/2})
       (add-note {:position 7.5 :pitch 68 :duration 3/2})
       (write-midi-file "hello.mid")
-      )
 
   (-> (new-state)
       (add-note {:channel 0 :position 0 :pitch 60 :duration 4 :velocity 80})
@@ -385,7 +480,7 @@
       (add-note {:pitch 68 :duration 8 :track 1})
       (add-control-change-over-time {:cc :expression :duration 1 :start-value 50 :end-value 70})
       (write-midi-file "hello-multi-track.mid")
-      ))
+      )))
 
 (comment
   ((short-message ShortMessage/PROGRAM_CHANGE 1 2))
