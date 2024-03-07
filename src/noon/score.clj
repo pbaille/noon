@@ -1036,6 +1036,11 @@
     (defn options [& {:as options}]
       (sf_ (vary-meta _ assoc ::options options)))
 
+    (defn score->midi-bytes [bpm score]
+      (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score))
+          (midi/add-events (midifiable-score score))
+          (midi/get-midi-bytes)))
+
     (defn write-score
       [opts score]
       (let [{:keys [filename bpm play source xml pdf]} (merge @options* opts (-> score meta ::options))
