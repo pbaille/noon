@@ -347,14 +347,11 @@
 
     (defn get-output-device [name]
       (first (keep (fn [info]
-                       (let [device (MidiSystem/getMidiDevice info)]
-                         (if (and (= (.getName info) name)
-                                  (not (zero? (.getMaxReceivers device))))
-                              device)))
-                     (MidiSystem/getMidiDeviceInfo))))
-
-    (def iac-bus-1-output-device
-      (get-output-device "Bus 1"))
+                     (let [device (MidiSystem/getMidiDevice info)]
+                       (if (and (= (.getName info) name)
+                                (not (zero? (.getMaxReceivers device))))
+                         device)))
+                   (MidiSystem/getMidiDeviceInfo))))
 
     (defn init-device-sequencer [device]
       (let [sq (MidiSystem/getSequencer false)]
@@ -364,53 +361,39 @@
          (.getReceiver device))
         sq))
 
+    (defn start-sequencer [sq] (.start sq) sq)
+
+    (defn stop-sequencer [sq] (.stop sq) sq)
+
+    (defn reset-sequencer [sq]
+      (stop-sequencer sq)
+      (.setSequence sq (reset-filestream))
+      (start-sequencer sq)
+      (Thread/sleep 100)
+      sq)
+
+    (defn load-sequencer [sq filename]
+      (reset-sequencer sq)
+      (.setSequence sq (filepath->buffered-input-stream filename))
+      sq)
+
+    (defn play-file-with [sq filename]
+      (load-sequencer sq filename)
+      (start-sequencer sq))
+
+    (def iac-bus-1-output-device
+      (get-output-device "Bus 1"))
+
     (def bus-1-sequencer
       (init-device-sequencer iac-bus-1-output-device))
 
-    (defn stop-bus-1 [] (.stop bus-1-sequencer))
-    (defn reset-bus-1 [] (stop-bus-1) (.setSequence bus-1-sequencer (reset-filestream)) (.start bus-1-sequencer) (Thread/sleep 100))
-
-    (defn play-file-on-sequencer [sq filename]
-      (reset-bus-1)
-      (let [stream (filepath->buffered-input-stream filename)]
-        (.setSequence bus-1-sequencer stream)
-        (.start bus-1-sequencer)))
-
     (comment
-      (play-file-on-sequencer bus-1-sequencer "generated/history/1709837113419.mid")))
+      (play-file-with bus-1-sequencer "generated/history/1709837113419.mid")))
 
 
 (comment :first-xp
 
          (ShortMessage/CONTROL_CHANGE)
-
-
-
-         (def device-infos (MidiSystem/getMidiDeviceInfo))
-
-         (def device1 (map (fn [deviceInfo]
-                             (let [device (MidiSystem/getMidiDevice deviceInfo)]
-                               [(str (.getDeviceInfo device))
-                                (when-not (zero? (.getMaxReceivers device))
-                                  (let [receiver (.getReceiver device)]
-                                    (try (do (.open device)
-                                             (.send receiver (short-message ShortMessage/NOTE_ON 0 60 60) -1))
-                                         (catch Exception e (println e)))))])) device-infos))
-
-         (defonce iac-bus-1
-           (let [device (MidiSystem/getMidiDevice (first (filter #(= (.getName %) "Bus 1")
-                                                                device-infos)))]
-            (.open device)
-            device))
-
-         (defn test-iac-bus-1 []
-           (.send (.getReceiver iac-bus-1)
-                  (short-message ShortMessage/NOTE_ON 0 60 60)
-                  -1))
-
-         (test-iac-bus-1)
-
-
 
          (defn export-midi-file!
            [sq filename]
