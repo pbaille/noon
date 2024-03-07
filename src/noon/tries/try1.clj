@@ -865,3 +865,53 @@
                (cat _ [rev c3])
                (cat _ [rev c3-])
                (options :bpm 30 :xml true :preview true)))
+
+(comment "canon"
+
+         "First thing would be to come up with a simple melodic motiv."
+         "It will be based on a triad, with some decorating tones."
+
+         "The skeleton could be something like"
+         (play (shuftup s0 s1 s2))
+
+         "We can start in 3/4"
+         "The next step will be to decorate it."
+         "Previously we've discussed the connect function that can do something like this"
+
+         (play (shuftup s0 s1 s2)
+               (m/connect 1))
+
+         "But it is not really what we want"
+         (def decorate
+           (sf_ (let [sorted (sort-by :position _)]
+                  (reduce (fn [s [n1 n2]]
+                            (into s (upd #{n1 n2} (maybe (m/connect 1)))))
+                          #{(last sorted)} (partition 2 1 sorted)))))
+
+         (write-score {:play true :pdf true}
+                      (mk dur2
+                          (cat (shuftup s0 s1 s2 s3)
+                               [(one-of s1 s1-) (shuftup s0 s1 s2 s3)])
+                          decorate
+                          (cat _ (s-shift 1) (s-shift -1) _)
+                          (cat _ (s-shift 2))
+                          (chans [(patch :ocarina) o1 (s-shift -1)]
+                                 [(sf_ (shift-score _ 2))]
+                                 [(patch :acoustic-bass) o2- (s-shift 1) (sf_ (shift-score _ 5))])
+                          (h/grid dur2
+                                  harmonic-minor
+                                  (cat I IV VII I [IV melodic-minor VII] IV [V harmonic-minor VII] VII)
+                                  (dup 4)
+                                  (h/align-contexts :s))))
+
+         (stop)
+         (play harmonic-minor (tup s1 s2) (m/connect 1))
+         (play harmonic-minor o1 (tup s0 s1- s2 s1) (sf_ (let [sorted (sort-by :position _)]
+                                                           (reduce (fn [s [n1 n2]]
+                                                                     (into s (upd #{n1 n2} (m/connect 1))))
+                                                                   #{(last sorted)} (partition 2 1 sorted)))))
+
+         (play (shuftup s0 s1 s2 s3) decorate (cat _ vel0 (m/contour :similar {:delta 1 :layer :s}))))
+
+(comment "delete me"
+         )
