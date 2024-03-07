@@ -204,7 +204,7 @@
           (case cmd
             :mirror c/contour-mirror
             :rotation #(s/member (c/contour-inversions %) pick)
-            :similar #(s/member (c/similars % (or extent delta)) pick))))))
+            :similar #(s/member (c/similars % (or extent delta 0)) pick))))))
 
     (comment :contour-tries
 
