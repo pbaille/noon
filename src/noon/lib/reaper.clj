@@ -122,7 +122,7 @@
                     (n/score-update? x) (n/mk x)
                     :else n/score0)]
     (reset! score* score)
-    (n/write-score {:filename REAPER_SYNC_MIDI_FILE} score)
+    (n/noon {:filename REAPER_SYNC_MIDI_FILE} score)
     (reaper/>> (let [t ru.take
                      item (reaper.GetSelectedMediaItem 0 0)]
                  (if item

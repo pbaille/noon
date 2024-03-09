@@ -1032,6 +1032,7 @@
       (vec (-> score numerify-pitches dedupe-patches)))
 
     (def options* (atom MIDI_DEFAULT_OPTIONS))
+    (def sequencer* (atom nil))
 
     (defn options [& {:as options}]
       (sf_ (vary-meta _ assoc ::options options)))
@@ -1041,26 +1042,31 @@
           (midi/add-events (midifiable-score score))
           (midi/get-midi-bytes)))
 
-    (defn write-score
+    (defn noon
       [opts score]
-      (let [{:keys [filename bpm play source xml pdf]} (merge @options* opts (-> score meta ::options))
+      (let [{:keys [sequencer filename midi bpm play source xml pdf]} (merge @options* opts (-> score meta ::options))
             {:keys [directory file-barename]
              :or {directory (MIDI_DIRECTORIES :default)
                   file-barename (gen-filename)}} (u/parse-file-path filename)
-            midi-filename (str directory "/" file-barename ".mid")
+            midi-filename (if (or midi pdf xml) (str directory "/" file-barename ".mid"))
             source-filename (str directory "/" file-barename ".mut")
             seed-filename (str directory "/" file-barename ".seed")
             xml-filename (if (or pdf xml) (str directory "/" file-barename ".xml"))
-            pdf-filename (if pdf (str directory "/" file-barename ".pdf"))]
+            pdf-filename (if pdf (str directory "/" file-barename ".pdf"))
+            state (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score) :sequencer sequencer)
+                      (midi/add-events (midifiable-score score)))]
+
+        (reset! sequencer* (:sequencer state))
 
         (u/ensure-directory directory)
 
-        (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score))
-            (midi/add-events (midifiable-score score))
-            (midi/write-midi-file midi-filename))
+        (if midi-filename
+          (midi/write-midi-file state midi-filename))
 
         (if play
-          (midi/play-file2 midi-filename))
+          (if midi-filename
+            (midi/play-file-with @sequencer* midi-filename)
+            (midi/restart-sequencer @sequencer*)))
 
         (if xml-filename
           (shell/sh MUSESCORE_BIN "--export-to" xml-filename midi-filename))
@@ -1080,26 +1086,37 @@
          :pdf pdf-filename}))
 
     (defmacro write [& xs]
-      `(write-score {:xml true
-                     :source '~&form}
-                    (mk ~@xs)))
+      `(noon {:xml true
+              :source '~&form}
+             (mk ~@xs)))
 
     (defmacro play [& xs]
-      `(write-score {:filename ~(gen-filename (MIDI_DIRECTORIES :history))
-                     :source '~&form
-                     :play true}
-                    (mk ~@xs)))
-
-    (defn preview [& xs]
-      (write-score {:preview true}
-                   (mk* xs)))
+      `(noon {:filename ~(gen-filename (MIDI_DIRECTORIES :history))
+              :source '~&form
+              :play true}
+             (mk ~@xs)))
 
     (defmacro stop []
-      `(midi/stop2))
+      `(if-let [sq# @sequencer]
+         (midi/stop-sequencer sq#)))
 
     (comment
-      (write-score {:xml true :pdf true}
-                   (mk (mixtup s0 s2 s4) (mixtup d0 d1 d2 d3)))
+      (let [s (-> (midi/new-state :bpm 60 :n-tracks 1 :sequencer (midi/init-device-sequencer midi/iac-bus-1-output-device))
+                  (midi/add-events (midifiable-score (mk (tup s0 s1 s2))))
+                  :sequencer)]
+        (midi/show-sequencer s)
+        (midi/show-sequence s))
+      (noon {:midi true
+             :play true
+             :sequencer (midi/init-device-sequencer midi/iac-bus-1-output-device)}
+            (mk (mixtup s0 s2 s4) (mixtup d0 d1 d2 d3)))
+      (noon {:sequencer (midi/init-soundfont-sequencer (midi/SOUNDFONTS :chorium))}
+            (mk (mixtup s0 s2 s4) (mixtup d0 d1 d2 d3)))
+      (.open @sequencer*)
+      (midi/restart-sequencer @sequencer*)
+      (midi/show-sequencer @sequencer*)
+      (midi/display-sequence-details @sequencer*)
+      (.start @sequencer*)
       (play (tupn> 7 d2))
       (show
        (mk (patch :vibraphone)
