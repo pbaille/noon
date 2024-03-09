@@ -80,196 +80,173 @@
              (cc-code "resonance")
              (cc-code "Resonance")))
 
-#_(defn note [x]
-  (if (map? x)
-    (merge DEFAULT_NOTE x)))
-
-(defn new-midi-sequencer
-  [& [connected]]
-  (MidiSystem/getSequencer (boolean connected)))
-
 (do :meta-messages
 
-    (def MIDI-SET-TEMPO 0x51)
-    (defn set-tempo-message
-      [bpm]
-      (assert (>= bpm 4))
-      (let [uspq (quot 60000000 bpm)
-            data (-> (ByteBuffer/allocate 4)
-                     (.putInt uspq)
-                     .array
-                     (Arrays/copyOfRange 1 4))]
-        (MetaMessage. MIDI-SET-TEMPO data 3)))
+      (def MIDI-SET-TEMPO 0x51)
+      (defn set-tempo-message
+        [bpm]
+        (assert (>= bpm 4))
+        (let [uspq (quot 60000000 bpm)
+              data (-> (ByteBuffer/allocate 4)
+                       (.putInt uspq)
+                       .array
+                       (Arrays/copyOfRange 1 4))]
+          (MetaMessage. MIDI-SET-TEMPO data 3)))
 
-    (def MIDI-SET-KEY-SIGNATURE 0x59)
-    (defn set-key-signature-message [sharps majmin]
-      (MetaMessage. MIDI-SET-KEY-SIGNATURE (byte-array [sharps majmin]) 2))
+      (def MIDI-SET-KEY-SIGNATURE 0x59)
+      (defn set-key-signature-message [sharps majmin]
+        (MetaMessage. MIDI-SET-KEY-SIGNATURE (byte-array [sharps majmin]) 2))
 
-    (def MIDI-SET-TIME-SIGNATURE 0x58)
-    (defn set-time-signature-message
-      [n-remaining-beats numerator denominator-pow2 & [metronome-beat-midi-clock-length n-32th-by-beat]]
-      (MetaMessage. MIDI-SET-TIME-SIGNATURE
-                    (byte-array [n-remaining-beats
-                                 numerator
-                                 denominator-pow2
-                                 (or metronome-beat-midi-clock-length 24)
-                                 (or n-32th-by-beat 32)])
-                    5)))
+      (def MIDI-SET-TIME-SIGNATURE 0x58)
+      (defn set-time-signature-message
+        [n-remaining-beats numerator denominator-pow2 & [metronome-beat-midi-clock-length n-32th-by-beat]]
+        (MetaMessage. MIDI-SET-TIME-SIGNATURE
+                      (byte-array [n-remaining-beats
+                                   numerator
+                                   denominator-pow2
+                                   (or metronome-beat-midi-clock-length 24)
+                                   (or n-32th-by-beat 32)])
+                      5)))
 
-(defn new-state
-  [& {:keys [sequencer bpm n-tracks connected]
-      :or {bpm 60 n-tracks 1}}]
-  (let [sequencer (or sequencer (new-midi-sequencer connected))
-        sq (Sequence. Sequence/PPQ MIDI_RESOLUTION)]
+(do :events-and-notes
 
-    (doto sequencer
-      (.setSequence sq)
-      (.setTickPosition 0))
+    (defn short-message
+      [type channel data1 & [data2]]
+      (doto (ShortMessage.)
+        (.setMessage type channel data1 (or data2 127))))
 
-    (dotimes [_ n-tracks]
-      (let [track (.createTrack sq)]
+    (defn position->tick
+      [{:as _state :keys [sequencer]}
+       position]
+      (* (.getResolution (.getSequence sequencer))
+         position))
 
-        (.add track (MidiEvent. (set-tempo-message bpm) 0))
-        (.add track (MidiEvent. (set-key-signature-message 0 0) 0))))
-
-    {:tempo bpm
-     :sequencer sequencer}))
-
-(defn short-message
-  [type channel data1 & [data2]]
-  (doto (ShortMessage.)
-    (.setMessage type channel data1 (or data2 127))))
-
-(defn position->tick
-  [{:as _state :keys [sequencer]}
-   position]
-  (* (.getResolution (.getSequence sequencer))
-     position))
-
-(defn add-event
-  [{:as state :keys [sequencer]}
-   message
-   position
-   track
-   & [type]]
-  (let [sequence (.getSequence sequencer)
-        track (aget (.getTracks sequence) track)
-        tick-position (position->tick state position)
-        tick-delta (case type :control-change 0 (:note-off :patch-change) 1 2)]
-    (.add track (MidiEvent. message (+ tick-position tick-delta)))
-    state))
-
-(defn add-note
-  [state note]
-  (let [{:keys [position channel duration velocity pitch track]}
-        (merge DEFAULT_NOTE note)]
-    (add-event state
-               (short-message ShortMessage/NOTE_ON channel pitch velocity)
-               position
-               track)
-    (add-event state
-               (short-message ShortMessage/NOTE_OFF channel pitch)
-               (+ position duration)
-               track
-               :note-off)
-    state))
-
-(do :control|patch-changes
-
-    (defn add-control-change-over-time
-      [state event key [start-val end-val & more? :as values]]
-      (let [{:as event :keys [channel track position duration]}
-            (merge DEFAULT_EVENT event)]
-
-        (if more?
-
-          (let [pairs (partition 2 1 values)
-                duration-step (/ duration (count pairs))
-                event (assoc event :duration duration-step)]
-            (mapv (fn [idx pair]
-                    (add-control-change-over-time
-                     state
-                     (update event :position + (* idx duration-step))
-                     key pair))
-                  (range)
-                  pairs)
-            state)
-
-          (doseq [[delta val]
-                  (map vector
-                       (u/linear-interpolation 0 duration (u/dist start-val end-val))
-                       (if (> end-val start-val)
-                         (range start-val (inc end-val))
-                         (reverse (range end-val (inc start-val)))))]
-            (add-event state
-                       (short-message ShortMessage/CONTROL_CHANGE channel (cc-code key) val)
-                       (+ position delta)
-                       track
-                       :control-change)))
+    (defn add-event
+      [{:as state :keys [sequencer]}
+       message
+       position
+       track
+       & [type]]
+      (let [sequence (.getSequence sequencer)
+            track (aget (.getTracks sequence) track)
+            tick-position (position->tick state position)
+            tick-delta (case type :control-change 0 (:note-off :patch-change) 1 2)]
+        (.add track (MidiEvent. message (+ tick-position tick-delta)))
         state))
 
-    (defn add-control-change
-      [state event key val]
-      (let [{:keys [channel track position]}
-            (merge DEFAULT_EVENT event)]
-        (cond
-          (number? val)
-          (add-event state
-                     (short-message ShortMessage/CONTROL_CHANGE channel (cc-code key) val)
-                     position
-                     track
-                     :control-change)
-
-          (vector? val)
-          (add-control-change-over-time state event key val))
+    (defn add-note
+      [state note]
+      (let [{:keys [position channel duration velocity pitch track]}
+            (merge DEFAULT_NOTE note)]
+        (add-event state
+                   (short-message ShortMessage/NOTE_ON channel pitch velocity)
+                   position
+                   track)
+        (add-event state
+                   (short-message ShortMessage/NOTE_OFF channel pitch)
+                   (+ position duration)
+                   track
+                   :note-off)
         state))
 
-    (defn add-patch-change
-      [state event]
-      (let [{:keys [channel patch track position]}
-            (merge DEFAULT_EVENT event)]
-        (let [[bank prog] (if (number? patch) [nil patch] patch)]
-          (if bank
-            (add-control-change state event :bank-select-2 bank))
-          (add-event state
-                     (short-message ShortMessage/PROGRAM_CHANGE channel prog)
-                     position
-                     track
-                     :patch-change))
-        state)))
+    (do :control|patch-changes
 
-(defn add-events
-  [state events]
-  (doseq [{:as e :keys [pitch cc patch]} events]
-    (if pitch (add-note state e))
-    (if patch (add-patch-change state e))
-    (doseq [[k v] cc] (add-control-change state e k v)))
-  state)
+        (defn add-control-change-over-time
+          [state event key [start-val end-val & more? :as values]]
+          (let [{:as event :keys [channel track position duration]}
+                (merge DEFAULT_EVENT event)]
 
-(defn add-notes [state notes]
-  (reduce add-note state notes))
+            (if more?
 
-(defn write-midi-file
-  [{:as _state :keys [sequencer]}
-   filename]
-  (u/ensure-file filename)
-  (let [file (File. filename)]
-    (MidiSystem/write (.getSequence sequencer)
-                      1 file)
-    file))
+              (let [pairs (partition 2 1 values)
+                    duration-step (/ duration (count pairs))
+                    event (assoc event :duration duration-step)]
+                (mapv (fn [idx pair]
+                        (add-control-change-over-time
+                         state
+                         (update event :position + (* idx duration-step))
+                         key pair))
+                      (range)
+                      pairs)
+                state)
 
-(defn get-midi-bytes
-  [{:as _state :keys [sequencer]}]
-  (let [baos (java.io.ByteArrayOutputStream.)
-        sequence (.getSequence sequencer)]
-    (MidiSystem/write sequence 1 baos)
-    (.toByteArray baos)))
+              (doseq [[delta val]
+                      (map vector
+                           (u/linear-interpolation 0 duration (u/dist start-val end-val))
+                           (if (> end-val start-val)
+                             (range start-val (inc end-val))
+                             (reverse (range end-val (inc start-val)))))]
+                (add-event state
+                           (short-message ShortMessage/CONTROL_CHANGE channel (cc-code key) val)
+                           (+ position delta)
+                           track
+                           :control-change)))
+            state))
 
-(defn write-midi-file2
-  [state filename]
-  (u/ensure-file filename)
-  (with-open [fos (java.io.FileOutputStream. filename)]
-    (.write fos (get-midi-bytes state))))
+        (defn add-control-change
+          [state event key val]
+          (let [{:keys [channel track position]}
+                (merge DEFAULT_EVENT event)]
+            (cond
+              (number? val)
+              (add-event state
+                         (short-message ShortMessage/CONTROL_CHANGE channel (cc-code key) val)
+                         position
+                         track
+                         :control-change)
+
+              (vector? val)
+              (add-control-change-over-time state event key val))
+            state))
+
+        (defn add-patch-change
+          [state event]
+          (let [{:keys [channel patch track position]}
+                (merge DEFAULT_EVENT event)]
+            (let [[bank prog] (if (number? patch) [nil patch] patch)]
+              (if bank
+                (add-control-change state event :bank-select-2 bank))
+              (add-event state
+                         (short-message ShortMessage/PROGRAM_CHANGE channel prog)
+                         position
+                         track
+                         :patch-change))
+            state)))
+
+    (defn add-events
+      [state events]
+      (doseq [{:as e :keys [pitch cc patch]} events]
+        (if pitch (add-note state e))
+        (if patch (add-patch-change state e))
+        (doseq [[k v] cc] (add-control-change state e k v)))
+      state)
+
+    (defn add-notes [state notes]
+      (reduce add-note state notes)))
+
+(do :write-files
+
+    (defn write-midi-file
+      [{:as _state :keys [sequencer]}
+       filename]
+      (u/ensure-file filename)
+      (let [file (File. filename)]
+        (MidiSystem/write (.getSequence sequencer)
+                          1 file)
+        file))
+
+    (defn get-midi-bytes
+      [{:as _state :keys [sequencer]}]
+      (let [baos (java.io.ByteArrayOutputStream.)
+            sequence (.getSequence sequencer)]
+        (MidiSystem/write sequence 1 baos)
+        (.toByteArray baos)))
+
+    (defn write-midi-file2
+      [state filename]
+      (u/ensure-file filename)
+      (with-open [fos (java.io.FileOutputStream. filename)]
+        (.write fos (get-midi-bytes state)))))
 
 (do :buffered-input-streams
 
@@ -284,143 +261,184 @@
     (defn reset-filestream []
       (resource->buffered-input-stream (io/resource "midi/reset.mid"))))
 
-(do :sequencer-operations
+(do :sequencers
 
-    (defn start-sequencer [sq] (.open sq) (.start sq) sq)
+    (do :operations
 
-    (defn stop-sequencer [sq] (.stop sq) sq)
+        (defn start-sequencer [sq] (if-not (.isOpen sq) (.open sq)) (.start sq) sq)
 
-    (defn restart-sequencer [sq]
-      (.stop sq)
-      (.setTickPosition sq 0)
-      (.start sq)
-      sq)
+        (defn stop-sequencer [sq] (if (.isOpen sq) (.stop sq)) sq)
 
-    (defn set-sequence [sq s]
-      (.setSequence sq s))
+        (defn close-sequencer [sq] (if (.isOpen sq) (.close sq)) sq)
 
-    (defn reset-sequencer [sq]
-      (.stop sq)
-      (if (.isOpen sq) (.close sq))
-      (set-sequence sq (reset-filestream))
-      (.start sq)
-      (Thread/sleep 100)
-      (.stop sq)
-      sq)
+        (defn restart-sequencer [sq]
+           (stop-sequencer sq)
+           (.setTickPosition sq 0)
+           (start-sequencer sq)
+           sq)
 
-    (defn load-sequencer [sq filename]
-      (reset-sequencer sq)
-      (set-sequence sq (filepath->buffered-input-stream filename))
-      sq)
+        (defn set-sequence [sq s]
+           (.setSequence sq s))
 
-    (defn play-file-with [sq filename]
-      #_(load-sequencer sq filename)
-      (start-sequencer sq))
+        (defn reset-sequencer
+           "Stop and close the given sequencer,
+       Run the midi reset file in order to clean residual state."
+           [sq]
+           (stop-sequencer sq)
+           #_(close-sequencer sq)
+           (set-sequence sq (reset-filestream))
+           (start-sequencer sq)
+           (Thread/sleep 100)
+           #_(close-sequencer sq)
+           sq)
 
-    (do :printing
+        (defn load-sequencer [sq filename]
+           (reset-sequencer sq)
+           (set-sequence sq (filepath->buffered-input-stream filename))
+           sq)
 
-        (defn track->events [track]
-          (for [i (range (.size track))]
-            (.get track i)))
+        (defn play-file-with [sq filename]
+           (load-sequencer sq filename)
+           (start-sequencer sq))
 
-        (defn event->string [event tick]
-          (let [msg (.getMessage event)]
-            (cond
-              (instance? ShortMessage msg)
-              (let [command (.getCommand ^ShortMessage msg)
-                    channel (.getChannel ^ShortMessage msg)
-                    data1 (.getData1 ^ShortMessage msg)
-                    data2 (.getData2 ^ShortMessage msg)]
-                (format "t %-6d ShortMessage: command=%-4d channel=%-2d data1=%-4d data2=%-4d" tick command channel data1 data2))
+        (do :printing
 
-              (instance? SysexMessage msg)
-              (let [data (.getData ^SysexMessage msg)]
-                (format "t %-6d SysexMessage: data=%s" tick (java.util.Arrays/toString data)))
+            (defn track->events [track]
+              (for [i (range (.size track))]
+                 (.get track i)))
 
-              (instance? MetaMessage msg)
-              (let [type (.getType ^MetaMessage msg)
-                    data (.getData ^MetaMessage msg)]
-                (format "t %-6d MetaMessage: type=%-3d data=%s" tick type (java.util.Arrays/toString data)))
+            (defn event->string [event tick]
+              (let [msg (.getMessage event)]
+                 (cond
+                   (instance? ShortMessage msg)
+                   (let [command (.getCommand ^ShortMessage msg)
+                         channel (.getChannel ^ShortMessage msg)
+                         data1 (.getData1 ^ShortMessage msg)
+                         data2 (.getData2 ^ShortMessage msg)]
+                     (format "t %-6d ShortMessage: command=%-4d channel=%-2d data1=%-4d data2=%-4d" tick command channel data1 data2))
 
-              :else
-              (str "Message is of unknown type"))))
+                   (instance? SysexMessage msg)
+                   (let [data (.getData ^SysexMessage msg)]
+                     (format "t %-6d SysexMessage: data=%s" tick (java.util.Arrays/toString data)))
 
-        (defn show-sequence [sequencer]
-          (let [sequence (.getSequence sequencer)] ; Get the sequence
-            (println "Sequence details:")
-            (println "------------------")
-            (doseq [track (.getTracks sequence)
-                    :let [events (track->events track)]]
-              (println "Track contains" (.size track) "events:")
-              (doseq [ev events]
-                (println (event->string ev (.getTick ev)))))))
+                   (instance? MetaMessage msg)
+                   (let [type (.getType ^MetaMessage msg)
+                         data (.getData ^MetaMessage msg)]
+                     (format "t %-6d MetaMessage: type=%-3d data=%s" tick type (java.util.Arrays/toString data)))
 
-        (defn show-sequencer [sequencer]
-          (do (println)
-              (println "Sequencer information:")
-              (println "----------------------")
-              (println "Sequencer class: " (.getClass sequencer))
-              (println "Is sequencer open?: " (.isOpen sequencer))
-              (println "Microsecond position: " (.getMicrosecondPosition sequencer))
-              (println "Tempo In beats per minute: " (.getTempoInBPM sequencer))
-              (println "Tempo In microseconds per quarter note: " (.getTempoInMPQ sequencer))
-              (println "Tracks: ")
-              (show-sequence sequencer)
-              (println "----------------------")
-              (println)))))
+                   :else
+                   (str "Message is of unknown type"))))
 
+            (defn show-sequence [sequencer]
+              (let [sequence (.getSequence sequencer)]                               ; Get the sequence
+                 (println "Sequence details:")
+                 (println "------------------")
+                 (doseq [track (.getTracks sequence)
+                         :let [events (track->events track)]]
+                   (println "Track contains" (.size track) "events:")
+                   (doseq [ev events]
+                     (println (event->string ev (.getTick ev)))))))
 
-(do :default-sequencer
+            (defn show-sequencer [sequencer]
+              (do (println)
+                  (println "Sequencer information:")
+                  (println "----------------------")
+                  (println "Sequencer class: " (.getClass sequencer))
+                  (println "Is sequencer open?: " (.isOpen sequencer))
+                  (println "Microsecond position: " (.getMicrosecondPosition sequencer))
+                  (println "Tempo In beats per minute: " (.getTempoInBPM sequencer))
+                  (println "Tempo In microseconds per quarter note: " (.getTempoInMPQ sequencer))
+                  (println "Tracks: ")
+                  (show-sequence sequencer)
+                  (println "----------------------")
+                  (println)))))
 
-    (def default-sequencer (new-midi-sequencer :connected)))
+    (do :default
 
-(do :soundfont-sequencer
+        (defn new-midi-sequencer
+           [& [connected]]
+           (MidiSystem/getSequencer (boolean connected))))
 
-    (def SOUNDFONTS
-      {:chorium "midi/soundfonts/choriumreva.sf2"
-       :squid "midi/soundfonts/squid.sf2"})
+    (do :soundfont
 
-    (defn init-soundfont-sequencer [sf2-path]
-      (let [bank (MidiSystem/getSoundbank (resource->buffered-input-stream (io/resource sf2-path)))
-            sq (MidiSystem/getSequencer false)
-            sy (MidiSystem/getSynthesizer)]
-        (.open sy)
-        (.loadAllInstruments sy bank)
-        (.setReceiver
-         (.getTransmitter sq)
-         (.getReceiver sy))
-        sq))
+        (def SOUNDFONTS
+           {:chorium "midi/soundfonts/choriumreva.sf2"
+            :squid "midi/soundfonts/squid.sf2"})
 
-    (def chorium-sequencer
-      (init-soundfont-sequencer (SOUNDFONTS :chorium))))
+        (defn init-synth [sf2-path]
+           (let [bank (MidiSystem/getSoundbank (resource->buffered-input-stream (io/resource sf2-path)))
+                 sy (MidiSystem/getSynthesizer)]
+             (.open sy)
+             (.loadAllInstruments sy bank)
+             sy))
 
-(do :external-device-sequencer
+        (def chorium-synth (init-synth (SOUNDFONTS :chorium)))
 
-    (defn get-output-device [name]
-      (first (keep (fn [info]
-                     (let [device (MidiSystem/getMidiDevice info)]
-                       (if (and (= (.getName info) name)
+        (defn init-soundfont-sequencer [synth]
+           (let [sq (MidiSystem/getSequencer false)]
+             (.setReceiver
+             (.getTransmitter sq)
+             (.getReceiver synth))
+             sq))
+
+        (defn new-chorium-sequencer []
+            (init-soundfont-sequencer chorium-synth)))
+
+    (do :external-device
+
+        (defn get-output-device [name]
+       (first (keep (fn [info]
+                      (let [device (MidiSystem/getMidiDevice info)]
+                        (if (and (= (.getName info) name)
                                 (not (zero? (.getMaxReceivers device))))
-                         device)))
+                          device)))
                    (MidiSystem/getMidiDeviceInfo))))
 
-    (defn init-device-sequencer [device]
-      (let [sq (MidiSystem/getSequencer false)]
-        (.open device)
-        (.setReceiver
+        (defn init-device-sequencer [device]
+       (let [sq (MidiSystem/getSequencer false)]
+         (.open device)
+         (.setReceiver
          (.getTransmitter sq)
          (.getReceiver device))
-        sq))
+         sq))
 
-    (def iac-bus-1-output-device
-      (get-output-device "Bus 1"))
+        (def iac-bus-1-output-device
+       (get-output-device "Bus 1"))
 
-    (def bus-1-sequencer
-      (init-device-sequencer iac-bus-1-output-device))
+        (defn new-bus-1-sequencer []
+       (init-device-sequencer iac-bus-1-output-device))
 
-    (comment
-      (show-sequencer bus-1-sequencer)
-      (play-file-with bus-1-sequencer "generated/history/1709837113419.mid")))
+        (comment
+       (show-sequencer bus-1-sequencer)
+       (play-file-with bus-1-sequencer "generated/history/1709837113419.mid"))))
+
+(defn new-sequencer [x]
+  (case x
+    :default (new-midi-sequencer true)
+    :chorium (new-chorium-sequencer)
+    :bus1 (new-bus-1-sequencer)
+    (if (instance? javax.sound.midi.Sequencer x)
+      x
+      (new-midi-sequencer true))))
+
+(defn new-state
+  [& {:keys [sequencer bpm n-tracks connected]
+      :or {bpm 60 n-tracks 1}}]
+  (let [sequencer (new-sequencer sequencer)
+        sq (Sequence. Sequence/PPQ MIDI_RESOLUTION)]
+
+    (doto sequencer
+      (.setTickPosition 0)
+      (.setSequence sq))
+
+    (dotimes [_ n-tracks]
+      (let [track (.createTrack sq)]
+
+        (.add track (MidiEvent. (set-tempo-message bpm) 0))
+        (.add track (MidiEvent. (set-key-signature-message 0 0) 0))))
+
+    {:tempo bpm
+     :sequencer sequencer}))
 
 
 (comment :scratch
