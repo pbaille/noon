@@ -130,7 +130,7 @@
       (let [sequence (.getSequence sequencer)
             track (aget (.getTracks sequence) track)
             tick-position (position->tick state position)
-            tick-delta (case type :control-change 0 (:note-off :patch-change) 1 2)]
+            tick-delta (case type :control-change 0 (:note-off :program-change :patch-change) 1 2)]
         (.add track (MidiEvent. message (+ tick-position tick-delta)))
         state))
 
@@ -211,13 +211,26 @@
                          position
                          track
                          :patch-change))
+            state))
+
+        (defn add-program-changes
+          [state event]
+          (let [{:keys [channel pc track position]}
+                (merge DEFAULT_EVENT event)]
+            (doseq [prog pc]
+              (add-event state
+                         (short-message ShortMessage/PROGRAM_CHANGE channel prog)
+                         position
+                         track
+                         :program-change))
             state)))
 
     (defn add-events
       [state events]
-      (doseq [{:as e :keys [pitch cc patch]} events]
+      (doseq [{:as e :keys [pitch cc patch pc]} events]
         (if pitch (add-note state e))
         (if patch (add-patch-change state e))
+        (if pc (add-program-changes state e))
         (doseq [[k v] cc] (add-control-change state e k v)))
       state)
 

@@ -171,6 +171,9 @@
         (defn cc [key val]
           {:cc {key val}})
 
+        (defn pc [& xs]
+          {:pc (vec xs)})
+
         (defn patch
           ([x]
            (cond (keyword? x) (patch (vst/pick x))
@@ -392,20 +395,36 @@
         (defn numerify-pitches [score]
           (ms/$ score (fn [e] (update e :pitch h/hc->chromatic-value))))
 
-        (defn dedupe-patches [score]
+        (defn dedupe-patches-and-program-changes [score]
           (->> (group-by (juxt :track :channel) score)
                (map (fn [[_ xs]]
                       (loop [ret #{}
                              current-patch nil
+                             current-program-changes nil
                              todo (sort-by :position xs)]
                         (if-let [[x & todo] (seq todo)]
-                          (if (= current-patch (:patch x))
-                            (recur (conj ret (dissoc x :patch))
-                                   current-patch
-                                   todo)
-                            (recur (conj ret x)
-                                   (:patch x)
-                                   todo))
+                          (let [same-patch (= current-patch (:patch x))
+                                same-program-changes (= current-program-changes (:pc x))]
+                            (cond (and same-patch same-program-changes)
+                                  (recur (conj ret (dissoc x :pc :patch))
+                                         current-patch
+                                         current-program-changes
+                                         todo)
+                                  same-patch
+                                  (recur (conj ret (dissoc x :patch))
+                                         current-patch
+                                         (:pc x)
+                                         todo)
+                                  same-program-changes
+                                  (recur (conj ret (dissoc x :pc))
+                                         current-patch
+                                         (:patch x)
+                                         todo)
+                                  :else
+                                  (recur (conj ret x)
+                                         (:patch x)
+                                         (:pc x)
+                                         todo)))
                           ret))))
                (reduce into #{})))
 
@@ -1033,7 +1052,7 @@
           name)))
 
     (defn midifiable-score [score]
-      (vec (-> score numerify-pitches dedupe-patches)))
+      (vec (-> score numerify-pitches dedupe-patches-and-program-changes)))
 
     (defn options [& {:as options}]
       (sf_ (vary-meta _ assoc ::options options)))
