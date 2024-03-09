@@ -1066,6 +1066,11 @@
             state (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score) :sequencer sequencer)
                       (midi/add-events (midifiable-score score)))]
 
+        (if @sequencer*
+          (doto @sequencer*
+            (.stop)
+            (.close)))
+
         (reset! sequencer* (:sequencer state))
 
         (if play
