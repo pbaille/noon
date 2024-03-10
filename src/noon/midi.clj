@@ -406,6 +406,15 @@
         (defn new-bus-1-sequencer []
           (init-device-sequencer (get-iac-bus-1-output-device)))
 
+        (def virtual-output-devices
+          {:bus1 (get-output-device "Bus 1")
+           :bus2 (get-output-device "Bus 2")
+           :bus3 (get-output-device "Bus 3")
+           :bus4 (get-output-device "Bus 4")})
+
+        (defn new-virtual-output-sequencer [kw]
+          (init-device-sequencer (virtual-output-devices kw)))
+
         (comment
           (show-sequencer bus-1-sequencer)
           (play-file-with bus-1-sequencer "generated/history/1709837113419.mid"))))
@@ -414,13 +423,13 @@
   (case x
     :default (new-midi-sequencer true)
     :chorium (new-chorium-sequencer)
-    :bus1 (new-bus-1-sequencer)
+    (:bus1 :bus2 :bus3 :bus4) (new-virtual-output-sequencer x)
     (if (instance? Sequencer x)
       x
       (new-midi-sequencer true))))
 
 (defn new-state
-  [& {:keys [sequencer bpm n-tracks connected]
+  [& {:keys [sequencer bpm n-tracks]
       :or {bpm 60 n-tracks 1}}]
   (let [sequencer (new-sequencer sequencer)
         sq (Sequence. Sequence/PPQ MIDI_RESOLUTION)]
@@ -437,6 +446,19 @@
 
     {:tempo bpm
      :sequencer sequencer}))
+
+(defn multi-sequencer [& {:keys [tracks bpm data]}]
+  (let [track->data (group-by :track data)
+        sequencers (map (fn [[track-idx data]]
+                          (-> (new-state :sequencer (get tracks track-idx) :bpm bpm)
+                              (add-events (map #(assoc % :track 0) data))
+                              :sequencer))
+                        track->data)]
+    {:start (fn [] (doseq [s sequencers] (start-sequencer s)))
+     :stop (fn [] (doseq [s sequencers] (stop-sequencer s)))
+     :restart (fn [] (doseq [s sequencers] (restart-sequencer s)))
+     :close (fn [] (doseq [s sequencers] (close-sequencer s)))}))
+
 
 
 (comment :scratch
