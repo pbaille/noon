@@ -7,7 +7,9 @@
             [noon.utils.multi-val :as mv]
             [noon.utils.misc :as u]
             [noon.utils.pseudo-random :as pr]
-            [noon.constants :as nc]))
+            [noon.constants :as nc]
+            [noon.midi :as midi]
+            [noon.vst.vsl :as vsl]))
 
 (comment :barry-harris
 
@@ -888,7 +890,7 @@
                             (into s (upd #{n1 n2} (maybe (m/connect 1)))))
                           #{(last sorted)} (partition 2 1 sorted)))))
 
-         (write-score {:play true :pdf true}
+         (noon {:play true :pdf true}
                       (mk dur2
                           (cat (shuftup s0 s1 s2 s3)
                                [(one-of s1 s1-) (shuftup s0 s1 s2 s3)])
@@ -913,5 +915,43 @@
 
          (play (shuftup s0 s1 s2 s3) decorate (cat _ vel0 (m/contour :similar {:delta 1 :layer :s}))))
 
-(comment "delete me"
-         )
+(comment "vsl iac bus 1"
+
+         (noon {:sequencer :bus1
+                :play true}
+               (mk (rup 128 (any-that (within-pitch-bounds? :C1 :C3)
+                                      s1 s2 s3 s1- s2- s3-))
+                   (chans ($ (probs {_ 2
+                                     vel0 1
+                                     (shuftup s1- s0 s1 s2) 1}))
+                          ($ s1- (probs {_ 2
+                                         vel0 1
+                                         (shuftup s1- s0 s1) 1}))
+                          ($ [s2- o1- (probs {_ 2
+                                              (shuftup s0 s2) 1})]))
+                   (h/grid harmonic-minor
+                           (tup I IV VII I [IV melodic-minor VII] IV [V harmonic-minor VII] VII)
+                           (dupt 4)
+                           (h/align-contexts :s))
+                   (adjust {:duration 64})))
+
+         (stop)
+
+         (require '[noon.vst.vsl :as vsl :refer [vsl]])
+         (noon2 {:tracks {0 :bus1 1 :bus2}
+                 :play true}
+                (mk (par [(vsl :violin1 :detache) (cat s0 [(vsl/patch :legato) (tup s1 s2 s3)] [(vsl/patch :pizzicato) (par [(vsl/patch :snap-pizzicato) _]
+                                                                                                                            [(vsl :double-bass :pizzicato) o2- (tup s2 s1)])])]
+                         [(vsl :flute1 :portato) o1 s- (cat s0 [(vsl/patch :legato) (tup s1 s2 s3)])])
+                    (cat s0 s2 s1-)
+                    (dup 4)))
+
+         (noon2 {:tracks {0 :bus1 1 :bus2}
+                 :play true}
+                (mk vel10
+                    (vsl/instrument :cello)
+                    (vsl/patch :pizzicato)
+                    o1-
+                    (shuftup d0 d3 d6)
+                    (shuftup d0 d3 d6)
+                    (dup 8))))
