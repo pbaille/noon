@@ -5,7 +5,7 @@
   (:import (java.io File)
            (java.nio ByteBuffer)
            (java.util Arrays)
-           (javax.sound.midi MetaMessage SysexMessage MidiEvent MidiSystem ShortMessage Sequence)))
+           (javax.sound.midi MetaMessage SysexMessage MidiEvent MidiSystem ShortMessage Sequence Sequencer)))
 
 ;; https://github.com/alda-lang/alda-sound-engine-clj/blob/master/src/alda/sound/midi.clj
 
@@ -82,31 +82,32 @@
 
 (do :meta-messages
 
-      (def MIDI-SET-TEMPO 0x51)
-      (defn set-tempo-message
-        [bpm]
-        (assert (>= bpm 4))
-        (let [uspq (quot 60000000 bpm)
-              data (-> (ByteBuffer/allocate 4)
-                       (.putInt uspq)
-                       .array
-                       (Arrays/copyOfRange 1 4))]
-          (MetaMessage. MIDI-SET-TEMPO data 3)))
+    (def MIDI-SET-TEMPO 0x51)
+    (def MIDI-SET-KEY-SIGNATURE 0x59)
+    (def MIDI-SET-TIME-SIGNATURE 0x58)
 
-      (def MIDI-SET-KEY-SIGNATURE 0x59)
-      (defn set-key-signature-message [sharps majmin]
-        (MetaMessage. MIDI-SET-KEY-SIGNATURE (byte-array [sharps majmin]) 2))
+    (defn set-tempo-message
+      [bpm]
+      (assert (>= bpm 4))
+      (let [uspq (quot 60000000 bpm)
+            data (-> (ByteBuffer/allocate 4)
+                     (.putInt uspq)
+                     .array
+                     (Arrays/copyOfRange 1 4))]
+        (MetaMessage. MIDI-SET-TEMPO data 3)))
 
-      (def MIDI-SET-TIME-SIGNATURE 0x58)
-      (defn set-time-signature-message
-        [n-remaining-beats numerator denominator-pow2 & [metronome-beat-midi-clock-length n-32th-by-beat]]
-        (MetaMessage. MIDI-SET-TIME-SIGNATURE
-                      (byte-array [n-remaining-beats
-                                   numerator
-                                   denominator-pow2
-                                   (or metronome-beat-midi-clock-length 24)
-                                   (or n-32th-by-beat 32)])
-                      5)))
+    (defn set-key-signature-message [sharps majmin]
+      (MetaMessage. MIDI-SET-KEY-SIGNATURE (byte-array [sharps majmin]) 2))
+
+    (defn set-time-signature-message
+      [n-remaining-beats numerator denominator-pow2 & [metronome-beat-midi-clock-length n-32th-by-beat]]
+      (MetaMessage. MIDI-SET-TIME-SIGNATURE
+                    (byte-array [n-remaining-beats
+                                 numerator
+                                 denominator-pow2
+                                 (or metronome-beat-midi-clock-length 24)
+                                 (or n-32th-by-beat 32)])
+                    5)))
 
 (do :events-and-notes
 
@@ -149,7 +150,7 @@
                    :note-off)
         state))
 
-    (do :control|patch-changes
+    (do :control|program-changes
 
         (defn add-control-change-over-time
           [state event key [start-val end-val & more? :as values]]
@@ -282,75 +283,58 @@
 
         (defn stop-sequencer [sq] (if (.isOpen sq) (.stop sq)) sq)
 
-        (defn close-sequencer [sq] (if (.isOpen sq) (.close sq)) sq)
+        (defn close-sequencer [sq] (when (.isOpen sq) (.stop sq) (.close sq)) sq)
 
         (defn restart-sequencer [sq]
-           (stop-sequencer sq)
-           (.setTickPosition sq 0)
-           (start-sequencer sq)
-           sq)
+          (stop-sequencer sq)
+          (.setTickPosition sq 0)
+          (start-sequencer sq)
+          sq)
 
         (defn set-sequence [sq s]
-           (.setSequence sq s))
-
-        (defn reset-sequencer
-           "Stop and close the given sequencer,
-       Run the midi reset file in order to clean residual state."
-           [sq]
-           (stop-sequencer sq)
-           #_(close-sequencer sq)
-           (set-sequence sq (reset-filestream))
-           (start-sequencer sq)
-           (Thread/sleep 100)
-           #_(close-sequencer sq)
-           sq)
-
-        (defn load-sequencer [sq filename]
-           (reset-sequencer sq)
-           (set-sequence sq (filepath->buffered-input-stream filename))
-           sq)
+          (.setSequence sq s))
 
         (defn play-file-with [sq filename]
-           (load-sequencer sq filename)
-           (start-sequencer sq))
+          (set-sequence sq (filepath->buffered-input-stream filename))
+          (start-sequencer sq))
 
         (do :printing
 
             (defn track->events [track]
               (for [i (range (.size track))]
-                 (.get track i)))
+                (.get track i)))
 
             (defn event->string [event tick]
               (let [msg (.getMessage event)]
-                 (cond
-                   (instance? ShortMessage msg)
-                   (let [command (.getCommand ^ShortMessage msg)
-                         channel (.getChannel ^ShortMessage msg)
-                         data1 (.getData1 ^ShortMessage msg)
-                         data2 (.getData2 ^ShortMessage msg)]
-                     (format "t %-6d ShortMessage: command=%-4d channel=%-2d data1=%-4d data2=%-4d" tick command channel data1 data2))
+                (cond
+                  (instance? ShortMessage msg)
+                  (let [command (.getCommand ^ShortMessage msg)
+                        channel (.getChannel ^ShortMessage msg)
+                        data1 (.getData1 ^ShortMessage msg)
+                        data2 (.getData2 ^ShortMessage msg)]
+                    (format "t %-6d ShortMessage: command=%-4d channel=%-2d data1=%-4d data2=%-4d" tick command channel data1 data2))
 
-                   (instance? SysexMessage msg)
-                   (let [data (.getData ^SysexMessage msg)]
-                     (format "t %-6d SysexMessage: data=%s" tick (java.util.Arrays/toString data)))
+                  (instance? SysexMessage msg)
+                  (let [data (.getData ^SysexMessage msg)]
+                    (format "t %-6d SysexMessage: data=%s" tick (java.util.Arrays/toString data)))
 
-                   (instance? MetaMessage msg)
-                   (let [type (.getType ^MetaMessage msg)
-                         data (.getData ^MetaMessage msg)]
-                     (format "t %-6d MetaMessage: type=%-3d data=%s" tick type (java.util.Arrays/toString data)))
+                  (instance? MetaMessage msg)
+                  (let [type (.getType ^MetaMessage msg)
+                        data (.getData ^MetaMessage msg)]
+                    (format "t %-6d MetaMessage: type=%-3d data=%s" tick type (java.util.Arrays/toString data)))
 
-                   :else
-                   (str "Message is of unknown type"))))
+                  :else
+                  (str "Message is of unknown type"))))
 
             (defn show-sequence [sequencer]
               (let [sequence (.getSequence sequencer)]                               ; Get the sequence
-                 (println "Sequence details:")
-                 (println "------------------")
-                 (doseq [track (.getTracks sequence)
-                         :let [events (track->events track)]]
-                   (println "Track contains" (.size track) "events:")
-                   (doseq [ev events]
-                     (println (event->string ev (.getTick ev)))))))
+                (println "Sequence details:")
+                (println "------------------")
+                (doseq [track (.getTracks sequence)
+                        :let [events (track->events track)]]
+                  (println "Track contains" (.size track) "events:")
+                  (doseq [ev events]
+                    (println (event->string ev (.getTick ev)))))))
 
             (defn show-sequencer [sequencer]
               (do (println)
@@ -369,68 +353,69 @@
     (do :default
 
         (defn new-midi-sequencer
-           [& [connected]]
-           (MidiSystem/getSequencer (boolean connected))))
+          [& [connected]]
+          (MidiSystem/getSequencer (boolean connected))))
 
     (do :soundfont
 
         (def SOUNDFONTS
-           {:chorium "midi/soundfonts/choriumreva.sf2"
-            :squid "midi/soundfonts/squid.sf2"})
+          {:chorium "midi/soundfonts/choriumreva.sf2"
+           :squid "midi/soundfonts/squid.sf2"})
 
         (defn init-synth [sf2-path]
-           (let [bank (MidiSystem/getSoundbank (resource->buffered-input-stream (io/resource sf2-path)))
-                 sy (MidiSystem/getSynthesizer)]
-             (.open sy)
-             (.loadAllInstruments sy bank)
-             sy))
+          (let [bank (MidiSystem/getSoundbank (resource->buffered-input-stream (io/resource sf2-path)))
+                sy (MidiSystem/getSynthesizer)]
+            (.open sy)
+            (.loadAllInstruments sy bank)
+            sy))
 
-        (def chorium-synth (init-synth (SOUNDFONTS :chorium)))
+        (def get-chorium-synth
+          (memoize (fn [] (init-synth (SOUNDFONTS :chorium)))))
 
         (defn init-soundfont-sequencer [synth]
-           (let [sq (MidiSystem/getSequencer false)]
-             (.setReceiver
+          (let [sq (MidiSystem/getSequencer false)]
+            (.setReceiver
              (.getTransmitter sq)
              (.getReceiver synth))
-             sq))
+            sq))
 
         (defn new-chorium-sequencer []
-            (init-soundfont-sequencer chorium-synth)))
+          (init-soundfont-sequencer (get-chorium-synth))))
 
     (do :external-device
 
         (defn get-output-device [name]
-       (first (keep (fn [info]
-                      (let [device (MidiSystem/getMidiDevice info)]
-                        (if (and (= (.getName info) name)
-                                (not (zero? (.getMaxReceivers device))))
-                          device)))
-                   (MidiSystem/getMidiDeviceInfo))))
+          (first (keep (fn [info]
+                         (let [device (MidiSystem/getMidiDevice info)]
+                           (if (and (= (.getName info) name)
+                                    (not (zero? (.getMaxReceivers device))))
+                             device)))
+                       (MidiSystem/getMidiDeviceInfo))))
 
         (defn init-device-sequencer [device]
-       (let [sq (MidiSystem/getSequencer false)]
-         (.open device)
-         (.setReceiver
-         (.getTransmitter sq)
-         (.getReceiver device))
-         sq))
+          (let [sq (MidiSystem/getSequencer false)]
+            (.open device)
+            (.setReceiver
+             (.getTransmitter sq)
+             (.getReceiver device))
+            sq))
 
-        (def iac-bus-1-output-device
-       (get-output-device "Bus 1"))
+        (def get-iac-bus-1-output-device
+          (memoize (fn [] (get-output-device "Bus 1"))))
 
         (defn new-bus-1-sequencer []
-       (init-device-sequencer iac-bus-1-output-device))
+          (init-device-sequencer (get-iac-bus-1-output-device)))
 
         (comment
-       (show-sequencer bus-1-sequencer)
-       (play-file-with bus-1-sequencer "generated/history/1709837113419.mid"))))
+          (show-sequencer bus-1-sequencer)
+          (play-file-with bus-1-sequencer "generated/history/1709837113419.mid"))))
 
 (defn new-sequencer [x]
   (case x
     :default (new-midi-sequencer true)
     :chorium (new-chorium-sequencer)
     :bus1 (new-bus-1-sequencer)
-    (if (instance? javax.sound.midi.Sequencer x)
+    (if (instance? Sequencer x)
       x
       (new-midi-sequencer true))))
 
