@@ -117,43 +117,40 @@
         (.setMessage type channel data1 (or data2 127))))
 
     (defn position->tick
-      [{:as _state :keys [sequencer]}
-       position]
-      (* (.getResolution (.getSequence sequencer))
+      [sequence position]
+      (* (.getResolution sequence)
          position))
 
     (defn add-event
-      [{:as state :keys [sequencer]}
+      [sequence
        message
        position
        track
        & [type]]
-      (let [sequence (.getSequence sequencer)
-            track (aget (.getTracks sequence) track)
-            tick-position (position->tick state position)
+      (let [track (aget (.getTracks sequence) track)
+            tick-position (position->tick sequence position)
             tick-delta (case type :control-change 0 (:note-off :program-change :patch-change) 1 2)]
-        (.add track (MidiEvent. message (+ tick-position tick-delta)))
-        state))
+        (.add track (MidiEvent. message (+ tick-position tick-delta)))))
 
     (defn add-note
-      [state note]
+      [sequence note]
       (let [{:keys [position channel duration velocity pitch track]}
             (merge DEFAULT_NOTE note)]
-        (add-event state
+        (add-event sequence
                    (short-message ShortMessage/NOTE_ON channel pitch velocity)
                    position
                    track)
-        (add-event state
+        (add-event sequence
                    (short-message ShortMessage/NOTE_OFF channel pitch)
                    (+ position duration)
                    track
                    :note-off)
-        state))
+        sequence))
 
     (do :control|program-changes
 
         (defn add-control-change-over-time
-          [state event key [start-val end-val & more? :as values]]
+          [sequence event key [start-val end-val & more? :as values]]
           (let [{:as event :keys [channel track position duration]}
                 (merge DEFAULT_EVENT event)]
 
@@ -164,12 +161,12 @@
                     event (assoc event :duration duration-step)]
                 (mapv (fn [idx pair]
                         (add-control-change-over-time
-                         state
+                         sequence
                          (update event :position + (* idx duration-step))
                          key pair))
                       (range)
                       pairs)
-                state)
+                sequence)
 
               (doseq [[delta val]
                       (map vector
@@ -177,90 +174,84 @@
                            (if (> end-val start-val)
                              (range start-val (inc end-val))
                              (reverse (range end-val (inc start-val)))))]
-                (add-event state
+                (add-event sequence
                            (short-message ShortMessage/CONTROL_CHANGE channel (cc-code key) val)
                            (+ position delta)
                            track
                            :control-change)))
-            state))
+            sequence))
 
         (defn add-control-change
-          [state event key val]
+          [sequence event key val]
           (let [{:keys [channel track position]}
                 (merge DEFAULT_EVENT event)]
             (cond
               (number? val)
-              (add-event state
+              (add-event sequence
                          (short-message ShortMessage/CONTROL_CHANGE channel (cc-code key) val)
                          position
                          track
                          :control-change)
 
               (vector? val)
-              (add-control-change-over-time state event key val))
-            state))
+              (add-control-change-over-time sequence event key val))
+            sequence))
 
         (defn add-patch-change
-          [state event]
+          [sequence event]
           (let [{:keys [channel patch track position]}
                 (merge DEFAULT_EVENT event)]
             (let [[bank prog] (if (number? patch) [nil patch] patch)]
               (if bank
-                (add-control-change state event :bank-select-2 bank))
-              (add-event state
+                (add-control-change sequence event :bank-select-2 bank))
+              (add-event sequence
                          (short-message ShortMessage/PROGRAM_CHANGE channel prog)
                          position
                          track
                          :patch-change))
-            state))
+            sequence))
 
         (defn add-program-changes
-          [state event]
+          [sequence event]
           (let [{:keys [channel pc track position]}
                 (merge DEFAULT_EVENT event)]
             (doseq [prog pc]
-              (add-event state
+              (add-event sequence
                          (short-message ShortMessage/PROGRAM_CHANGE channel prog)
                          position
                          track
                          :program-change))
-            state)))
+            sequence)))
 
     (defn add-events
-      [state events]
+      [sequence events]
       (doseq [{:as e :keys [pitch cc patch pc]} events]
-        (if pitch (add-note state e))
-        (if patch (add-patch-change state e))
-        (if pc (add-program-changes state e))
-        (doseq [[k v] cc] (add-control-change state e k v)))
-      state)
-
-    (defn add-notes [state notes]
-      (reduce add-note state notes)))
+        (if pitch (add-note sequence e))
+        (if patch (add-patch-change sequence e))
+        (if pc (add-program-changes sequence e))
+        (doseq [[k v] cc] (add-control-change sequence e k v)))
+      sequence))
 
 (do :write-files
 
     (defn write-midi-file
-      [{:as _state :keys [sequencer]}
-       filename]
+      [sequence filename]
       (u/ensure-file filename)
       (let [file (File. filename)]
-        (MidiSystem/write (.getSequence sequencer)
-                          1 file)
+        (MidiSystem/write sequence 1 file)
         file))
 
     (defn get-midi-bytes
-      [{:as _state :keys [sequencer]}]
-      (let [baos (java.io.ByteArrayOutputStream.)
-            sequence (.getSequence sequencer)]
+      [sequence]
+      (let [baos (java.io.ByteArrayOutputStream.)]
         (MidiSystem/write sequence 1 baos)
         (.toByteArray baos)))
 
     (defn write-midi-file2
-      [state filename]
+      [sequence filename]
       (u/ensure-file filename)
       (with-open [fos (java.io.FileOutputStream. filename)]
-        (.write fos (get-midi-bytes state)))))
+        (.write fos (get-midi-bytes sequence)))))
 
 (do :buffered-input-streams
 
@@ -428,35 +419,38 @@
       x
       (new-midi-sequencer true))))
 
-(defn new-state
-  [& {:keys [sequencer bpm n-tracks]
-      :or {bpm 60 n-tracks 1}}]
-  (let [sequencer (new-sequencer sequencer)
-        sq (Sequence. Sequence/PPQ MIDI_RESOLUTION)]
-
-    (doto sequencer
-      (.setTickPosition 0)
-      (.setSequence sq))
+(defn new-sequence
+  [n-tracks bpm]
+  (let [sequence (Sequence. Sequence/PPQ MIDI_RESOLUTION)]
 
     (dotimes [_ n-tracks]
-      (let [track (.createTrack sq)]
+      (let [track (.createTrack sequence)]
 
         (.add track (MidiEvent. (set-tempo-message bpm) 0))
         (.add track (MidiEvent. (set-key-signature-message 0 0) 0))))
 
-    {:tempo bpm
-     :sequencer sequencer}))
+    sequence))
 
-(defn multi-sequencer [& {:keys [tracks bpm data]}]
+(defn copy-track [sequence track]
+  (let [target-track (.createTrack sequence)]
+    (doseq [i (range (.size track))]
+      (.add target-track (.get track i)))
+    sequence))
+
+(defn midi [& {:keys [track-idx->sequencer bpm data]}]
   (let [track->data (group-by :track data)
-        sequencers (map (fn [[track-idx data]]
-                          (-> (new-state :sequencer (get tracks track-idx) :bpm bpm)
-                              (add-events (map #(assoc % :track 0) data))
-                              :sequencer))
-                        track->data)]
-    {:start (fn [] (doseq [s sequencers] (start-sequencer s)))
+        n-tracks (inc (apply max (keys track->data)))
+        sequence (add-events (new-sequence n-tracks bpm)
+                             data)
+        sequencers (map (fn [track-idx]
+                          (let [sequencer (new-sequencer (track-idx->sequencer track-idx))]
+                            (.setSequence sequencer (copy-track (new-sequence 1 bpm)
+                                                                (aget (.getTracks sequence) track-idx)))
+                            sequencer))
+                        (range n-tracks))]
+    {:play (fn [] (doseq [s sequencers] (restart-sequencer s)))
+     :write (fn [filename] (write-midi-file sequence filename))
      :stop (fn [] (doseq [s sequencers] (stop-sequencer s)))
-     :restart (fn [] (doseq [s sequencers] (restart-sequencer s)))
      :close (fn [] (doseq [s sequencers] (close-sequencer s)))}))
 
 

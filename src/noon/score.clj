@@ -1058,7 +1058,7 @@
       (sf_ (vary-meta _ assoc ::options options)))
 
     (defn score->midi-bytes [bpm score]
-      (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score))
+      (-> (midi/new-sequence (score-track-count score) bpm)
           (midi/add-events (midifiable-score score))
           (midi/get-midi-bytes)))
 
@@ -1077,26 +1077,24 @@
     (defn noon
       [opts score]
       (let [{:as options
-             :keys [sequencer bpm play source]} (merge @options* opts (-> score meta ::options))
+             :keys [tracks bpm play source]} (merge @options* opts (-> score meta ::options))
 
             {:as files
              :keys [midi-file source-file seed-file xml-file pdf-file]} (output-files options)
 
-            state (-> (midi/new-state :bpm bpm :n-tracks (score-track-count score) :sequencer sequencer)
-                      (midi/add-events (midifiable-score score)))]
+            multi-sequencer (midi/midi :bpm bpm :track-idx->sequencer tracks :data (midifiable-score score))]
 
-        (if @sequencer*
-          (doto @sequencer*
-            (.stop)
-            (.close)))
+        (when @sequencer*
+          ((:stop @sequencer*))
+          ((:close @sequencer*)))
 
-        (reset! sequencer* (:sequencer state))
+        (reset! sequencer* multi-sequencer)
 
         (if play
-          (midi/restart-sequencer @sequencer*))
+          ((:play @sequencer*)))
 
         (if midi-file
-          (midi/write-midi-file state midi-file))
+          ((:write @sequencer*) midi-file))
 
         (when (zero? (:exit (shell/sh "which" MUSESCORE_BIN)))
           (if xml-file
@@ -1126,7 +1124,7 @@
 
     (defmacro stop []
       `(if-let [sq# @sequencer*]
-         (midi/stop-sequencer sq#)))
+         ((:close sq#))))
 
     (comment
       (let [s (-> (midi/new-state :bpm 60 :n-tracks 1 :sequencer (midi/init-device-sequencer midi/iac-bus-1-output-device))
