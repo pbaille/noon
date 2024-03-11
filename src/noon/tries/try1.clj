@@ -9,7 +9,7 @@
             [noon.utils.pseudo-random :as pr]
             [noon.constants :as nc]
             [noon.midi :as midi]
-            [noon.vst.vsl :as vsl]))
+            [noon.vst.vsl :as vsl :refer [vsl]]))
 
 (comment :barry-harris
 
@@ -937,14 +937,14 @@
 
          (stop)
 
-         (require '[noon.vst.vsl :as vsl :refer [vsl]])
-         (noon2 {:tracks {0 :bus1 1 :bus2}
-                 :play true}
-                (mk (par [(vsl :violin1 :detache) (cat s0 [(vsl/patch :legato) (tup s1 s2 s3)] [(vsl/patch :pizzicato) (par [(vsl/patch :snap-pizzicato) _]
-                                                                                                                            [(vsl :double-bass :pizzicato) o2- (tup s2 s1)])])]
-                         [(vsl :flute1 :portato) o1 s- (cat s0 [(vsl/patch :legato) (tup s1 s2 s3)])])
-                    (cat s0 s2 s1-)
-                    (dup 4)))
+         (vsl/noon {:play true
+                    :write true
+                    :pdf true}
+                   (mk (par [(vsl :violin1 :detache) (cat s0 [(vsl/patch :legato) (tup s1 s2 s3)] [(vsl/patch :pizzicato) (par [(vsl/patch :snap-pizzicato) _]
+                                                                                                                               [(vsl :double-bass :pizzicato) o2- (tup s2 s1)])])]
+                            [(vsl :flute1 :portato) o1 s- (cat s0 [(vsl/patch :legato) (tup s1 s2 s3)])])
+                       (cat s0 s2 s1-)
+                       (dup 4)))
 
          (noon2 {:tracks {0 :bus1 1 :bus2}
                  :play true}

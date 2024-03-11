@@ -2,6 +2,12 @@
   (:require [noon.score :as n]
             [noon.utils.misc :as u]))
 
+(def TRACKS
+  {0 :bus1
+   1 :bus2
+   2 :bus3
+   3 :bus4})
+
 (def CONFIG
   {:strings
    {:track 0
@@ -27,7 +33,7 @@
                      [:dyn [:sforzato :forte-piano]]
                      [:fx [:half-tone-trill :whole-tone-trill :fast-rep-150 :fast-rep-170 :fast-rep-190]]]}}})
 
-(defn vsl-instrument [instrument-name]
+(defn instrument [instrument-name]
   (or (first (keep (fn [[_ {:keys [category instruments track]}]]
                      (if-let [chan (u/index-of instruments instrument-name)]
                        (n/ef_ (merge _ {:track track :channel chan :vsl {:category category :instrument instrument-name}}))))
@@ -36,7 +42,7 @@
         (n/ef_ _)
         (u/throw* "vsl-instrument: unknown instrument: " instrument-name))))
 
-(defn vsl-patch [patch-name]
+(defn patch [patch-name]
   (n/efn e (if-let [{:keys [instrument category]} (get e :vsl)]
              (let [{:keys [programs tree]} (get-in CONFIG [category :patches])]
                (or (first (keep-indexed (fn [idx [_ patches]]
@@ -51,9 +57,14 @@
 (defn vsl
   ([x]
    (cond (sequential? x) (vsl (first x) (second x))
-         (keyword? x) (vsl-instrument x)
+         (keyword? x) (instrument x)
          :else (u/throw* "vsl: bad argument " x)))
   ([instrument-name patch-name]
-   (let  [patch-upd (vsl-patch patch-name)
-          instrument-upd (vsl-instrument instrument-name)]
+   (let  [patch-upd (patch patch-name)
+          instrument-upd (instrument instrument-name)]
      (n/ef_ (-> _ instrument-upd patch-upd)))))
+
+(defn noon [options score]
+  (n/noon (merge {:tracks TRACKS}
+                 options)
+          score))
