@@ -31,7 +31,8 @@
                 [docstring])
               [(list "q" nil "quit" :exit true :column "Nav")]
               (if-let [parent (get path-map (vec (butlast (:hydra/path hydra))))]
-                [(list "ESC" (:hydra/body-varsym parent) (str ".." (clojure.core/name (last (:hydra/path parent)))) :column "Nav")])))
+                [(list "ESC" (:hydra/body-varsym parent)
+                       (str ".." (clojure.core/name (last (:hydra/path parent)))) :column "Nav")])))
 
     (defn without-qualified-keys [m]
       (->> (remove (comp qualified-keyword? key) m)
@@ -40,12 +41,13 @@
 (defn parse-hydra [{:as parent :hydra/keys [path]} [hydra-name key x & xs]]
   (let [[opts body] (if (map? x) [x xs] [{} (cons x xs)])
         path (conj path hydra-name)
-        wrap-self (comp (:hydra/wrap-child parent identity)
-                        (:hydra/wrap-content parent identity))
+        wrappers (:hydra/wrappers parent [])
+        wrap-self (reduce comp identity (reverse wrappers))
         base {:hydra/name (hydra-sym path)
               :hydra/key key
               :hydra/path path
-              :hydra/hint (or (:hint opts) (name hydra-name))}]
+              :hydra/hint (or (:hint opts) (name hydra-name))
+              :hydra/wrappers (:hydra/wrappers opts [])}]
     (if (vector? (first body))
       (let [options (merge (select-keys (:hydra/options parent) inherited-options)
                            (without-qualified-keys opts))
@@ -54,19 +56,21 @@
                                    :hydra/options options
                                    :hydra/docstring (:doc opts)
                                    :hydra/heads (map first body)))]
-        (cons self (mapcat (partial parse-hydra
-                                    (assoc self
-                                           :hydra/wrap-content (comp (:hydra/wrap-content opts identity)
-                                                                     (:hydra/wrap-content parent identity))
-                                           :hydra/wrap-child (:hydra/wrap-child opts identity)
-                                           :hydra/wrap-head (comp (:hydra/wrap-head opts identity)
-                                                                  (:hydra/wrap-head parent identity))))
+        (cons self (mapcat (partial parse-hydra self)
                            body)))
-      [((comp (:hydra/wrap-head parent identity)
-              wrap-self)
+      [(wrap-self
         (assoc base
                :hydra/options (options->head-plist opts)
                :hydra/expr (first body)))])))
+
+(defn recursive-wrapper [f]
+  (fn [c]
+    (update (f c)
+            :hydra/wrappers
+            (fn [xs] (vec (cons (recursive-wrapper f) xs))))))
+
+(defn head-wrapper [f]
+  (recursive-wrapper (fn [x] (if (:hydra/heads x) x (f x)))))
 
 (do :compile
 
@@ -94,26 +98,25 @@
         (cons 'progn (keep (fn [[path _]] (hydra-compile-one path path-map)) path-map)))))
 
 (do
-  (require '[noon.utils.misc :refer [template]])
-  (map inc [1 2 3])
   (def sample-hydra-def
-    (template [:root nil
-               {:color teal
-                :doc "this is the root"
-                :hydra/wrap-head ~(fn [c] (update c :hydra/expr (fn [e] (list 'wrapped e))))}
-               [:one "a"
-                [:a "a" (message "one a")]
-                [:b "b" (message "one b")]]
-               [:two "b"
-                {:hydra/wrap-content ~(fn [c] (assoc c :hydra/pouet :naze))
-                 :hydra/wrap-child ~(fn [c] (assoc c :hydra/q 42))}
-                [:a "a" (message "two a")]
-                [:b "b" (message "two b")]
-                [:three "c"
-                 {:hint "this will be deep"
-                  :foo bar
-                  :hydra/wrap-child ~(fn [c] (update c :hydra/pouet name))}
-                 [:deep "d" (message "deep")]]]]))
+    [:root nil
+     {:color 'teal
+      :doc "this is the root"
+      :hydra/wrappers [(head-wrapper (fn [c] (update c :hydra/expr (fn [e] (list 'wrapped e)))))]}
+     [:one "a"
+      [:a "a" '(message "one a")]
+      [:b "b" '(message "one b")]]
+     [:two "b"
+      {:hydra/wrappers [(fn [c] (assoc c :hydra/q 42))
+                        (recursive-wrapper (fn [c] (assoc c :hydra/pouet :naze)))]}
+      [:a "a" '(message "two a")]
+      [:b "b" '(message "two b")]
+      [:three "c"
+       {:hint "this will be deep"
+        :foo 'bar
+        :hydra/wrappers [(fn [c] (update c :hydra/pouet name))]}
+       [:deep "d" '(message "deep")]]]])
 
   '(spit "emacs/compiled/test-hydra.el" (pretty-str (hydra-compile sample-hydra-def)))
-  (parse-hydra {:hydra/path [] :hydra/options default-hydra-options} sample-hydra-def))
+  (parse-hydra {:hydra/path [] :hydra/options default-hydra-options}
+               sample-hydra-def))
