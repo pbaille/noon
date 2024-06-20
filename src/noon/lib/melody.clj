@@ -281,9 +281,9 @@
 
     (defn $connect [f]
       (n/sf_ (let [sorted (sort-by :position _)]
-             (reduce (fn [s [n1 n2]]
-                       (into s (f n1 n2)))
-                     #{(last sorted)} (partition 2 1 sorted)))))
+               (reduce (fn [s [n1 n2]]
+                         (into s (f n1 n2)))
+                       #{(last sorted)} (partition 2 1 sorted)))))
 
     (defn simple-connection [sizes]
       (fn [start end]
@@ -293,12 +293,14 @@
                           (recur sizes))))
               duration (/ (:duration start) (dec (count hcs)))]
 
-          (map-indexed (fn [idx pitch]
-                         (assoc start
-                                :pitch pitch
-                                :position (+ (* idx duration) (:position start))
-                                :duration duration))
-                       (butlast hcs)))))
+          (if hcs
+            (map-indexed (fn [idx pitch]
+                           (assoc start
+                                  :pitch pitch
+                                  :position (+ (* idx duration) (:position start))
+                                  :duration duration))
+                         (butlast hcs))
+            [start]))))
 
     (defn connect
       "Tries to connect subsequent notes using one of the given step-sizes.
