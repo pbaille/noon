@@ -1,5 +1,6 @@
 (ns noon.tries.try1
   (:use noon.score)
+  (:refer-clojure :exclude [cat])
   (:require [noon.lib.melody :as m]
             [noon.lib.harmony :as h]
             [noon.lib.rythmn :as r]
@@ -8,7 +9,7 @@
             [noon.utils.misc :as u]
             [noon.utils.pseudo-random :as pr]
             [noon.constants :as nc]
-            [noon.midi :as midi]
+            #_[noon.midi :as midi]
             [noon.vst.vsl :as vsl :refer [vsl]]
             [clojure.math.combinatorics :as comb]))
 
@@ -1082,11 +1083,11 @@
 
          (let [id identity
                rev (fn [x] (mapv {0 1 1 0} x))
-               dup (fn [x] (vec (concat x x)))
+               _dup (fn [x] (vec (concat x x)))
                cat (fn [& xs] (fn [x] (vec (mapcat (fn [f] (f x)) xs))))
                acc (fn [n f] (apply comp (repeat n f)))
                $ (fn [f] (fn [x] (vec (mapcat (comp f vector) x))))
-               scan (fn [size step f] (fn [x] (vec (mapcat f (partition size step x)))))
+               _scan (fn [size step f] (fn [x] (vec (mapcat f (partition size step x)))))
                >> (fn [& xs] (fn [x] (reduce #(%2 %1) x xs)))
                upd (fn [x f] (f x))]
            (upd [1]
@@ -1206,20 +1207,22 @@
                                            (assoc acc p (filter (fn [p'] (every? (fn [[a b]] (not= (mod a 3) (mod b 3)))
                                                                                  (map vector p p')))
                                                                 perms)))
-                                         {} perms)]
-           (let [[base complements] (rand-nth (seq complementary-map))
-                 voice1 (rand-nth complements)
-                 voice2 (map (fn [a b] (first (filter (complement (set (map #(mod % 3) [a b]))) [0 1 2]))) base voice1)]
-             (p (patch :electric-piano-1)
-                (chans (cat* (map s-step base))
-                       [o1- (cat* (map s-step voice1))]
-                       [o1 (cat* (map s-step voice2))])
-                [eolian
-                 (cat _ (degree -1))
-                 (cat _ s1)
-                 (cat _ [(degree 3) s1-])
-                 (cat _ (transpose c3-))]
-                ($by :channel (connect-with (probs {void 5 d1 1 d1- 1}))))))
+                                         {} perms)
+
+               [base complements] (rand-nth (seq complementary-map))
+               voice1 (rand-nth complements)
+               voice2 (map (fn [a b] (first (filter (complement (set (map #(mod % 3) [a b]))) [0 1 2]))) base voice1)]
+
+           (p (patch :electric-piano-1)
+              (chans (cat* (map s-step base))
+                     [o1- (cat* (map s-step voice1))]
+                     [o1 (cat* (map s-step voice2))])
+              [eolian
+               (cat _ (degree -1))
+               (cat _ s1)
+               (cat _ [(degree 3) s1-])
+               (cat _ (transpose c3-))]
+              ($by :channel (connect-with (probs {void 5 d1 1 d1- 1})))))
 
          "this complementary util is interesting, but the way I get the third voice is not pretty."
          "How about introducing another level ?"
