@@ -17,6 +17,12 @@
   (and (fn? x)
        (::multi-val (meta x))))
 
+(defprotocol IMultiVal
+  (to-multi-val [x]))
+
+(defn i-multi-val? [x]
+  (satisfies? IMultiVal x))
+
 (def none
   (multi-val nil))
 
@@ -28,6 +34,7 @@
   [x]
   (cond
     (multi-val? x) x
+    (i-multi-val? x) (to-multi-val x)
     (nil? x) none
     :else (once x)))
 
@@ -368,71 +375,6 @@
        (compile-bif-step [pattern (list `with bs (mapv main-binding pattern))]
                          then else)))))
 
-(do :eval-xp
-
-    (defn prob [& xs]
-      (mapv println xs)
-      (last xs))
-
-    (defn value-kind [env s]
-      (let [{::keys [combinator stared]} (when (symbol? s) (-> (resolve s) meta))]
-        (cond stared :stared-combinator
-              combinator :combinator
-              (get env s) :local
-              :else :value)))
-
-    (declare compile)
-
-    (defn compile-application [env [verb & args :as _expr]]
-      (let [argv (vec (repeatedly (count args) gensym))]
-        `(bind (tup ~@(mapv (partial compile env) args))
-               (fn [~argv] ~(cons (compile env verb) argv)))))
-
-    (defn compile-let* [env [_ bindings & body]]
-      (let [[env bindings]
-            (reduce (fn [[env bindings] [s e]]
-                      [(assoc env s :local)
-                       (conj bindings s (compile env e))])
-                    [env []]
-                    (partition 2 bindings))]
-        (concat (list 'let* bindings)
-                (mapv (partial compile env) body))))
-
-    (defn compile-fn* [env [_ & arities]]
-      (cons 'fn* (mapv (fn [[argv & body]] (cons argv (mapv (partial compile env) body)))
-                       arities)))
-
-    (defn compile [env x]
-      (cond (seq? x) (let [[verb & args] x]
-                       (case (value-kind env verb)
-                         (:local :combinator) (cons verb (mapv (partial compile env) args))
-                         :stared-combinator (throw (Exception. (str "not supported " x)))
-                         (condp = verb
-                           'fn* (compile-fn* env x)
-                           'let* (compile-let* env x)
-                           (compile-application env x))))
-            (coll? x) (cond (vector? x) (compile env `(vector ~@x))
-                            (map? x) (compile env `(hash-map ~@(mapcat identity x)))
-                            (set? x) (compile env `(hash-set ~@x)))
-            :else x))
-
-    (defmacro meval
-      {:clj-kondo/ignore true}
-      [code]
-      (compile {} (walk/macroexpand-all code)))
-
-    (meval (let [a 1
-                 b (join 2 3 4)
-                 c (+ b 1)
-                 f (fn [x y] (+ b x y))]
-             (f a (join 4 8))))
-
-    (get-all (meval (let [a {:a coin :b 3}
-                          v (mix :ok :ko [2 coin])
-                          k (mix :a :b)]
-                      (join (assoc a k v)
-                            (dissoc a k))))))
-
 (comment :tries
 
          (do :expressions
@@ -529,6 +471,10 @@
                            (if (= 2 (+ a b)) [a b])
                            coin))
 
+             (get-all (bif [a (mix 1 2 4)
+                            b none]
+                           (if (= 2 (+ a b)) [a b])))
+
              (bind coin (fn [a] (int? a)))
 
              (get-all (branch none coin))
@@ -537,6 +483,75 @@
              (get-all (branch coin (int-between 0 10)))
 
              ()))
+
+(do :eval-xp
+
+    (defn prob [& xs]
+      (mapv println xs)
+      (last xs))
+
+    (defn value-kind [env s]
+      (let [{::keys [combinator stared]} (when (symbol? s) (-> (resolve s) meta))]
+        (cond stared :stared-combinator
+              combinator :combinator
+              (get env s) :local
+              :else :value)))
+
+    (declare compile)
+
+    (defn compile-application [env [verb & args :as _expr]]
+      (let [argv (vec (repeatedly (count args) gensym))]
+        `(bind (tup ~@(mapv (partial compile env) args))
+               (fn [~argv] ~(cons (compile env verb) argv)))))
+
+    (defn compile-let* [env [_ bindings & body]]
+      (let [[env bindings]
+            (reduce (fn [[env bindings] [s e]]
+                      [(assoc env s :local)
+                       (conj bindings s (compile env e))])
+                    [env []]
+                    (partition 2 bindings))]
+        (concat (list 'let* bindings)
+                (mapv (partial compile env) body))))
+
+    (defn compile-fn* [env [_ & arities]]
+      (cons 'fn* (mapv (fn [[argv & body]] (cons argv (mapv (partial compile env) body)))
+                       arities)))
+
+    (defn compile [env x]
+      (cond (seq? x) (let [[verb & args] x]
+                       (case (value-kind env verb)
+                         (:local :combinator) (cons verb (mapv (partial compile env) args))
+                         :stared-combinator (throw (Exception. (str "not supported " x)))
+                         (condp = verb
+                           'fn* (compile-fn* env x)
+                           'let* (compile-let* env x)
+                           (compile-application env x))))
+            (coll? x) (cond (vector? x) (compile env `(vector ~@x))
+                            (map? x) (compile env `(hash-map ~@(mapcat identity x)))
+                            (set? x) (compile env `(hash-set ~@x)))
+            :else x))
+
+    (defmacro meval
+      {:clj-kondo/ignore true}
+      [code]
+      (compile {} (walk/macroexpand-all code)))
+
+    (meval (let [a 1
+                 b (join 2 3 4)
+                 c (+ b 1)
+                 f (fn [x y] (+ b x y))]
+             (f a (join 4 8))))
+
+    (get-all (meval (let [a {:a coin :b 3}
+                          v (mix :ok :ko [2 coin])
+                          k (mix :a :b)]
+                      (join (assoc a k v)
+                            (dissoc a k))))))
+
+(do :interval-xp
+
+    "")
 
 (comment :deprecated
          (defn tuple* [xs]
