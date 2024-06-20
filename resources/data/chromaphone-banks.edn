@@ -269,7 +269,7 @@
    {:idx 73, :name "Brushed Snare 1", :key :brushed-snare-1}
    {:idx 74,
     :name "Brushed Snare 1 (Hold)",
-    :key :brushed-snare-1-(hold)}
+    :key :brushed-snare-1-hold}
    {:idx 75, :name "Brushed Snare 2", :key :brushed-snare-2}
    {:idx 76, :name "Brushed Snare 3", :key :brushed-snare-3}
    {:idx 77, :name "Brush and Clap", :key :brush-and-clap}
@@ -327,7 +327,7 @@
    {:idx 10, :name "Big Kit Open Hi-Hat", :key :big-kit-open-hi-hat}
    {:idx 11,
     :name "Big Kit Open Hi-Hat (Gated)",
-    :key :big-kit-open-hi-hat-(gated)}
+    :key :big-kit-open-hi-hat-gated}
    {:idx 12, :name "Big Kit Pedal Hi-Hat", :key :big-kit-pedal-hi-hat}
    {:idx 13,
     :name "Big Kit Splashable Hi-Hat",
@@ -343,8 +343,8 @@
    {:idx 22, :name "Chick'n'sizzle Hats", :key :chick'n'sizzle-hats}
    {:idx 23,
     :name "Middle Hi-Hat (Gated)",
-    :key :middle-hi-hat-(gated)}
-   {:idx 24, :name "1940 Hi-Hat (Gated)", :key :1940-hi-hat-(gated)}]}
+    :key :middle-hi-hat-gated}
+   {:idx 24, :name "1940 Hi-Hat (Gated)", :key :1940-hi-hat-gated}]}
  {:idx 6,
   :name "Cymbals",
   :key :cymbals,
@@ -356,7 +356,7 @@
    {:idx 4, :name "Big Kit Ride", :key :big-kit-ride}
    {:idx 5,
     :name "Big Kit Ride (Velo Bell)",
-    :key :big-kit-ride-(velo-bell)}
+    :key :big-kit-ride-velo-bell}
    {:idx 6, :name "Short Ride", :key :short-ride}
    {:idx 7, :name "Rigid Ride", :key :rigid-ride}
    {:idx 8, :name "Dirty Ride", :key :dirty-ride}
@@ -402,7 +402,7 @@
    {:idx 13, :name "Street Corner Kit", :key :street-corner-kit}
    {:idx 14,
     :name "Street Corner Kit (Gated)",
-    :key :street-corner-kit-(gated)}
+    :key :street-corner-kit-gated}
    {:idx 15, :name "Electrotubular Kit", :key :electrotubular-kit}
    {:idx 16, :name "Ceramic Pan Kit", :key :ceramic-pan-kit}
    {:idx 17, :name "Manual Percu Kit", :key :manual-percu-kit}
@@ -449,7 +449,7 @@
    {:idx 25, :name "Ballerina Twirl", :key :ballerina-twirl}
    {:idx 26,
     :name "Auto Chimes (Glissando)",
-    :key :auto-chimes-(glissando)}
+    :key :auto-chimes-glissando}
    {:idx 27, :name "Wind Chimes", :key :wind-chimes}
    {:idx 28, :name "Large Bell", :key :large-bell}]}
  {:idx 9,
@@ -529,7 +529,7 @@
    {:idx 28, :name "UFO  Bass", :key :ufo--bass}
    {:idx 29, :name "Chifty Tuby Bass", :key :chifty-tuby-bass}
    {:idx 30, :name "Welcome to the House", :key :welcome-to-the-house}
-   {:idx 31, :name "Trance @ NAMM", :key :trance-@-namm}
+   {:idx 31, :name "Trance @ NAMM", :key :trance-at-namm}
    {:idx 32, :name "Vacationer Pluck", :key :vacationer-pluck}]}
  {:idx 11,
   :name "Keys",
