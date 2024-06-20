@@ -602,6 +602,9 @@
       [xs]
       (sf_ (mk* xs)))
 
+    (def void
+      (sf_ #{}))
+
     (defclosure* lin
       "Compose several updates together linearly."
       [xs]
@@ -1050,6 +1053,8 @@
 
     (def sequencer* (atom nil))
 
+    (def history* (atom ()))
+
     (defn gen-filename [& [dir]]
       (let [name (System/currentTimeMillis)]
         (if dir
@@ -1080,40 +1085,44 @@
          :pdf-file (if pdf (str base ".pdf"))}))
 
     (defn noon
-      [opts score]
-      (let [{:as options
-             :keys [tracks bpm play source]} (merge @options* opts (-> score meta ::options))
+      ([score]
+       (noon {} score))
+      ([opts score]
+       (let [{:as options
+              :keys [tracks bpm play source]} (merge @options* opts (-> score meta ::options))
 
-            {:as files
-             :keys [midi-file source-file seed-file xml-file pdf-file]} (output-files options)
+             {:as files
+              :keys [midi-file source-file seed-file xml-file pdf-file]} (output-files options)
 
-            multi-sequencer (midi/midi :bpm bpm :track-idx->sequencer tracks :data (midifiable-score score))]
+             multi-sequencer (midi/midi :bpm bpm :track-idx->sequencer tracks :data (midifiable-score score))]
 
-        (when @sequencer*
-          ((:stop @sequencer*))
-          ((:close @sequencer*)))
+         (when @sequencer*
+           ((:stop @sequencer*))
+           ((:close @sequencer*)))
 
-        (reset! sequencer* multi-sequencer)
+         (reset! sequencer* multi-sequencer)
 
-        (if play
-          ((:play @sequencer*)))
+         (if play
+           ((:play @sequencer*)))
 
-        (if midi-file
-          ((:write @sequencer*) midi-file))
+         (if midi-file
+           ((:write @sequencer*) midi-file))
 
-        (when (zero? (:exit (shell/sh "which" MUSESCORE_BIN)))
-          (if xml-file
-            (shell/sh MUSESCORE_BIN "--export-to" xml-file midi-file))
+         (when (zero? (:exit (shell/sh "which" MUSESCORE_BIN)))
+           (if xml-file
+             (shell/sh MUSESCORE_BIN "--export-to" xml-file midi-file))
 
-          (when pdf-file
-            (shell/sh MUSESCORE_BIN xml-file "-o" pdf-file)
-            (u/copy-file pdf-file "last.pdf")))
+           (when pdf-file
+             (shell/sh MUSESCORE_BIN xml-file "-o" pdf-file)
+             (u/copy-file pdf-file "last.pdf")))
 
-        (when source
-          (spit source-file source)
-          (spit seed-file (u/serialize-to-base64 pr/*rnd*)))
+         (when source
+           (spit source-file source)
+           (spit seed-file (u/serialize-to-base64 pr/*rnd*)))
 
-        files))
+         (swap! history* conj files)
+
+         files)))
 
     (defmacro write [& xs]
       `(noon {:xml true
