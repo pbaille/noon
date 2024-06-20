@@ -14,3 +14,4 @@
 /data/chromaphone-banks.edn
 .calva/output-window/output.calva-repl
 vsl/*
+.git.bfg-report
