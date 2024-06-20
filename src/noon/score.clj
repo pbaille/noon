@@ -357,10 +357,15 @@
         (defn fit-score
           "Fit a score into a note scaling and shifting it
            to match the position and length of the given note."
-          [score e]
-          (-> score
-              (scale-score (c// (:duration e 1) (score-duration score)))
-              (shift-score (:position e 0))))
+          [score {:keys [duration position]}]
+          (let [current-duration (score-duration score)
+                scaled (if duration
+                         (scale-score score
+                                      (c// duration current-duration))
+                         score)]
+            (if position
+              (shift-score scaled position)
+              scaled)))
 
         (defn normalise-score
           [score]
