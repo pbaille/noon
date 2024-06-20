@@ -1133,7 +1133,8 @@
       `(noon {:filename ~(gen-filename (MIDI_DIRECTORIES :history))
               :source '~&form
               :midi true
-              :play true}
+              :play true
+              :tracks {0 :chorium}}
              (mk ~@xs)))
 
     (defmacro stop []
