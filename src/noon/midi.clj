@@ -516,36 +516,35 @@
                (add-patch-change {:channel 1 :patch [7 9]})
                (add-note {:position 7.5 :pitch 66 :duration 3/2})
                (add-note {:position 7.5 :pitch 68 :duration 3/2})
-               (write-midi-file "hello.mid")
+               (write-midi-file "hello.mid"))
+           (-> (new-state)
+               (add-note {:channel 0 :position 0 :pitch 60 :duration 4 :velocity 80})
+               (add-note {:position 4 :pitch 62 :duration 2})
+               (add-note {:position 6 :pitch 64 :duration 3/2})
+               (add-note {:position 7.5 :pitch 66 :duration 3/2})
+               (add-note {:position 7.5 :pitch 68 :duration 3/2})
+               (write-and-play "generated/test-play.mid"))
 
-               (-> (new-state)
-                   (add-note {:channel 0 :position 0 :pitch 60 :duration 4 :velocity 80})
-                   (add-note {:position 4 :pitch 62 :duration 2})
-                   (add-note {:position 6 :pitch 64 :duration 3/2})
-                   (add-note {:position 7.5 :pitch 66 :duration 3/2})
-                   (add-note {:position 7.5 :pitch 68 :duration 3/2})
-                   (write-and-play "generated/test-play.mid"))
+           (stop)
+           (play)
 
-               (stop)
-               (play)
+           (let [s (new-midi-sequencer :connected)]
+             (future (.setSequence s (java.io.BufferedInputStream. (java.io.FileInputStream. (File. "data/bach1.mid"))))
+                     (.start s)
+                     (Thread/sleep 5000)
+                     (.stop s)))
 
-               (let [s (new-midi-sequencer :connected)]
-                 (future (.setSequence s (java.io.BufferedInputStream. (java.io.FileInputStream. (File. "data/bach1.mid"))))
-                         (.start s)
-                         (Thread/sleep 5000)
-                         (.stop s)))
+           (let [s (new-midi-sequencer :connected)]
+             (future (.setSequence s (java.io.BufferedInputStream. (java.io.FileInputStream. (File. "generated/I.mid"))))
+                     (.start s)
+                     #_(Thread/sleep 5000)
+                     #_(.stop s)))
 
-               (let [s (new-midi-sequencer :connected)]
-                 (future (.setSequence s (java.io.BufferedInputStream. (java.io.FileInputStream. (File. "generated/I.mid"))))
-                         (.start s)
-                         #_(Thread/sleep 5000)
-                         #_(.stop s)))
-
-               (-> (new-state 60 2)
-                   (add-note {:channel 0 :position 0 :pitch 60 :duration 4 :velocity 80})
-                   (add-note {:pitch 68 :duration 8 :track 1})
-                   (add-control-change-over-time {:cc :expression :duration 1 :start-value 50 :end-value 70})
-                   (write-midi-file "hello-multi-track.mid"))))
+           (-> (new-state 60 2)
+               (add-note {:channel 0 :position 0 :pitch 60 :duration 4 :velocity 80})
+               (add-note {:pitch 68 :duration 8 :track 1})
+               (add-control-change-over-time {:cc :expression :duration 1 :start-value 50 :end-value 70})
+               (write-midi-file "hello-multi-track.mid")))
 
          (comment
            ((short-message ShortMessage/PROGRAM_CHANGE 1 2))
