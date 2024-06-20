@@ -1,5 +1,0 @@
-#!/bin/bash
-
-export LUA_PATH=~/Code/Lua/?.lua\;/usr/local/lib/lua/5.3/?.lua
-
-~/Desktop/REAPER.app/Contents/MacOS/REAPER -template /Users/pierrebaille/Library/Application\ Support/REAPER/ProjectTemplates/noon.RPP

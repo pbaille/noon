@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# Set the FluidSynth port and font
-PORT="fluidsynth1"
-FONT="airfont_340.sf2"
-
-# Launch FluidSynth with the specified port and font
-fluidsynth -p "$PORT" "$FONT"
