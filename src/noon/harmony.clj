@@ -778,6 +778,8 @@ intermediate-ctxs: sorted ctxs that are between hc1 and hc2 on the corresponding
                     :else nil))))
 
         (comment
+          (neibourhood (upd (hc)
+                            (position 0 0 0 1)))
           (connections (upd (hc) (position 2 1))
                        (upd (hc) (position 2 3)))
           (chromatic-connection
