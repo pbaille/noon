@@ -363,6 +363,9 @@
         (def get-chorium-synth
           (memoize (fn [] (init-synth (SOUNDFONTS :chorium)))))
 
+        (def get-squid-synth
+          (memoize (fn [] (init-synth (SOUNDFONTS :squid)))))
+
         (defn init-soundfont-sequencer [synth]
           (let [sq (MidiSystem/getSequencer false)]
             (.setReceiver
@@ -371,7 +374,10 @@
             sq))
 
         (defn new-chorium-sequencer []
-          (init-soundfont-sequencer (get-chorium-synth))))
+          (init-soundfont-sequencer (get-chorium-synth)))
+
+        (defn new-squid-sequencer []
+          (init-soundfont-sequencer (get-squid-synth))))
 
     (do :external-device
 
@@ -414,6 +420,7 @@
   (case x
     :default (new-midi-sequencer true)
     :chorium (new-chorium-sequencer)
+    :squid (new-squid-sequencer)
     (:bus1 :bus2 :bus3 :bus4) (new-virtual-output-sequencer x)
     (if (instance? Sequencer x)
       x
