@@ -1,6 +1,6 @@
 (ns noon.tries.try1
   (:use noon.score)
-  (:refer-clojure :exclude [cat])
+  (:refer-clojure :exclude [cat struct])
   (:require [noon.lib.melody :as m]
             [noon.lib.harmony :as h]
             [noon.lib.rythmn :as r]
@@ -21,7 +21,6 @@
                (tup d0 d3 d4 d7)
                (tup d0 d2)
                (rep 4 d1))
-
 
          (let [chord-tones [d0 d2 d4 d7]]
            (play barry-harris
