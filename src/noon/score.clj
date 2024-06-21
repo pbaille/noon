@@ -69,7 +69,8 @@
     (def DEFAULT_EVENT
       (assoc midi/DEFAULT_NOTE
              :pitch h/DEFAULT_HARMONIC_CONTEXT
-             :voice 0))
+             :voice 0
+             :patch [0 4]))
 
     (defn normalise-event
       "Puts time related dimensions of a note into their identity values.
