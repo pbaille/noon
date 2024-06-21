@@ -95,7 +95,10 @@
                            [(shuftup s0 s1 s2 s3)
                             ($ (one-of rand-passing rand-line))
                             (chans [(patch :vibraphone) ($ (rand-vel 40 70)) ($ (maybe vel0))]
-                                   [(patch :flute) ($ (rand-vel 60 80)) o1 ($ (maybe vel0 [(patch :glockenspiel) vel2 d3]))])])))))
+                                   [(patch :flute)
+                                    ($ (rand-vel 60 80))
+                                    o1
+                                    ($ (maybe vel0 [(chan inc) (patch :glockenspiel) vel4]))])])))))
 
 (comment :symetric-modes
          (def symetric-modes {:half-whole (scale [0 1 3 4 6 7 9 10])
@@ -113,6 +116,7 @@
                (:two {:one (rup 8 (one-of d1 d1- d2 d2- d3 d3-))
                       :two (shuftup d1 d2 d3 d4 d5 d6 d7)})
 
+               (patch :electric-piano-1)
                (rep 32 (one-of ($ d3)
                                ($ d3-)
                                (m/rotation 1/2)
@@ -138,12 +142,11 @@
                       degrees (first (mv/consume size (mv/mix* (range degree-count))))]
                   (upd #{_} (tup* (mapv d-step degrees))))))
 
-         (play dur:2
-               (symetric-modes :whole)
+         (play (symetric-modes :half-whole)
                (rand-struct 3)
                (rep 3 rand-degree)
                ($ (chans [vel4 closed-chord]
-                         [(patch :music-box) o1 (rand-tup 5) ($ (one-of vel0 vel3 vel5 vel6))]))
+                         [(patch :music-box) o1 (rand-tup 7) ($ (one-of vel0 vel4 vel6 vel7))]))
                (append [rev s2])
                (append (transpose c5))
                (append (between 0 1/3))))
@@ -1448,16 +1451,15 @@
          (noon (mk (catn> 8 d1)
                    (scan2 4 3 (tup _ d1 d1-)))))
 
-(noon {:pdf true
-       :play true
-       :tracks {0 :chorium}}
-      (mk (catn 2 (one-of d2 d4 d3- d1-))
-          (rep 4 d1-)
-          (chans [(patch :ocarina) o1 _]
-                 [(patch :acoustic-bass) _
-                  o1- {:position (add 2)}
-                  ]
-                 [(patch :electric-piano-1) d4 {:position (add 1)}])))
+(comment (noon {:pdf true
+                :play true
+                :tracks {0 :chorium}}
+               (mk (catn 2 (one-of d2 d4 d3- d1-))
+                   (rep 4 d1-)
+                   (chans [(patch :ocarina) o1 _]
+                          [(patch :acoustic-bass) _
+                           o1- {:position (add 2)}]
+                          [(patch :electric-piano-1) d4 {:position (add 1)}]))))
 
 (do :utils
 
