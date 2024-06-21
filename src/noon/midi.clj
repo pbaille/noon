@@ -289,6 +289,21 @@
           (set-sequence sq (filepath->buffered-input-stream filename))
           (start-sequencer sq))
 
+        (defn do-midi-reset-file [sq]
+          (stop-sequencer sq)
+          (.setTickPosition sq 0)
+          (set-sequence sq (reset-filestream))
+          (start-sequencer sq)
+          (Thread/sleep 30)
+          (stop-sequencer sq)
+          (.setTickPosition sq 0))
+
+        (defn reset-sequencer [sq]
+          (let [sequence (.getSequence sq)]
+            (do-midi-reset-file sq)
+            (set-sequence sq sequence))
+          sq)
+
         (do :printing
 
             (defn track->events [track]
@@ -455,7 +470,9 @@
                                                                 (aget (.getTracks sequence) track-idx)))
                             sequencer))
                         (range n-tracks))]
-    {:play (fn [] (doseq [s sequencers] (restart-sequencer s)))
+    {:play (fn []
+             (doseq [s sequencers] (reset-sequencer s))
+             (doseq [s sequencers] (restart-sequencer s)))
      :write (fn [filename] (write-midi-file sequence filename))
      :stop (fn [] (doseq [s sequencers] (stop-sequencer s)))
      :close (fn [] (doseq [s sequencers] (close-sequencer s)))}))
