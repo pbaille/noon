@@ -459,7 +459,8 @@
       (.add target-track (.get track i)))
     sequence))
 
-(defn midi [& {:keys [track-idx->sequencer bpm data]}]
+(defn midi [& {:keys [track-idx->sequencer bpm data]
+               :or {track-idx->sequencer (constantly :default)}}]
   (let [track->data (group-by :track data)
         n-tracks (inc (apply max (keys track->data)))
         sequence (add-events (new-sequence n-tracks bpm)

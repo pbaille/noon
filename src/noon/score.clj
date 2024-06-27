@@ -1095,7 +1095,8 @@
              {:as files
               :keys [midi-file source-file seed-file xml-file pdf-file]} (output-files options)
 
-             multi-sequencer (midi/midi :bpm bpm :track-idx->sequencer tracks :data (midifiable-score score))]
+             multi-sequencer (midi/midi :bpm bpm
+                                        :track-idx->sequencer (or tracks (constantly :default)) :data (midifiable-score score))]
 
          (when @sequencer*
            ((:stop @sequencer*))
@@ -1125,17 +1126,17 @@
 
          files)))
 
-    (defmacro write [& xs]
-      `(noon {:xml true
-              :source '~&form}
+    (defmacro write [opts & xs]
+      `(noon (merge {:midi true
+                     :source '~&form}
+                    ~opts)
              (mk ~@xs)))
 
     (defmacro play [& xs]
       `(noon {:filename ~(gen-filename (MIDI_DIRECTORIES :history))
               :source '~&form
               :midi true
-              :play true
-              :tracks {0 :chorium}}
+              :play true}
              (mk ~@xs)))
 
     (defmacro stop []
@@ -1164,4 +1165,4 @@
        (mk (patch :vibraphone)
            (tup d0 d1 d2)
            (tup same (patch :flute))))
-      (write (tup d0 d1))))
+      (write {} (tup d0 d1))))
