@@ -14,12 +14,7 @@
     "This library provides a way to compose, play and export music as MIDI."
 
     (ns noon.doc.intro
-      (:use noon.score)
-      (:refer-clojure :exclude [cat struct while])
-      (:require [noon.lib.harmony :as h]
-                [noon.lib.melody :as m]
-                [noon.lib.rythmn :as r]
-                [noon.utils.sequences :as seqs]))
+      (:use noon.score))
 
     [:building-blocks
 
@@ -31,9 +26,9 @@
      [:score
       "A score is a collection of events, represented using a clojure set."]]
 
-    [:part-1
+    [:elements
 
-     "We can create a score with the 'mk function"
+     "We can create a score with the =mk= function"
      "With no arguments it simply returns the default score containing only a middle C."
      (= (mk)
         #{{:position 0,
@@ -43,12 +38,12 @@
            :pitch <C0>
            :velocity 80}})
 
-     "The 'mk function can take any number of arguments, each one being a score transformation."
+     "The =mk= function can take any number of arguments, each one being a score transformation."
      "Those transformations are applied in order to the default score."
 
      '(mk transformation1 transformation2 ...)
 
-     "the 'play macro acts exactly like 'mk except it plays the resulting score with general MIDI."
+     "the =play= macro acts exactly like =mk= except it plays the resulting score with general MIDI."
 
      '(play transformation1 transformation2 ...)
 
@@ -60,7 +55,7 @@
        "We can set the current pitch by using pitch vars."
 
        "Pitch vars names consist of a pitch-class name followed by an octave offset.
-      (pitch classes are simply musical notes names like C, Db, F#, E, Bbb, Fx (x mean double sharp))"
+(pitch classes are simply musical notes names like C, Db, F#, E, Bbb, Fx (x mean double sharp))"
 
        "The middle C is named C0, the C above is C1, the C below is C-1"
 
@@ -73,11 +68,11 @@
       But it may be a little overwhelming to start with, so for now we will use them to introduce the basics building blocks of the system."]
 
       [:first-melody
-       "Using the 'cat function we can create our first melody."
+       "Using the =cat= function we can create our first melody."
        (play (cat C0 E0 G0 B0))]
 
       [:first-chord
-       "Using the 'par function we can stack things up."
+       "Using the =par= function we can stack things up."
        (play (par C0 Eb0 G0)) "a C minor chord."
        "It can also be notated using clojure set litteral:"
        (play #{C0 Eb0 G0})]
@@ -92,7 +87,7 @@
        (dur 1/4) "sets the duration to 1/4"
        (dur #(* % 2)) "multiply by 2 the current duration."
 
-       "Those 3 forms return a transformation that can be used in 'mk or 'play"
+       "Those 3 forms return a transformation that can be used in =mk= or =play="
        (play (dur 1/4))]
 
       [:composing-transformations
@@ -101,10 +96,10 @@
        (play [F#-1 dur4]) "the F# above the middle C with quadruple duration."
        (play [dur4 F#-1]) "the order do not matter here."
 
-       "For simple cases like this don't forget that the 'play macro and the 'mk function variadic arities are doing the same thing."
+       "For simple cases like this don't forget that the =play= macro and the =mk= function variadic arities are doing the same thing."
        (play F#-1 dur4)
 
-       "But in a 'cat form for instance we need the vectors (square brackets)"
+       "But in a =cat= form for instance we need the vectors (square brackets)"
        (play (cat [C0 dur:2] [Eb0 dur:4] [G0 dur:4] C1))]
 
       [:velocities
@@ -174,7 +169,7 @@
          c2- "is equivalent to" (c-step -2)
          "all chromatic steps from c36 to c36- are available."
 
-         "If we apply the 'c3 step to the default score, it transpose the default middle C (C0) 3 semitones up to Eb0 (or D#0)."
+         "If we apply the =c3= step to the default score, it transpose the default middle C (C0) 3 semitones up to Eb0 (or D#0)."
          (play c3)
 
          (play (c-step -3)) "going down 3 semitones to A-1"
@@ -214,17 +209,17 @@
        The octave relationship is a natural phenomenon that has been referred to as 'the basic miracle of music'.
        The interval between the first and second harmonics of the harmonic series is an octave."
 
-        "In noon, octaves are a different kind of interval, they are belonging to the 'shift family."
+        "In noon, octaves are a different kind of interval, they are belonging to the =shift= family."
         "The nuance will appear more clearly later... Until then, let see how to use them:"
         (play (t-shift 1)) "one octave up."
         (play (t-shift -1)) "one octave down."
         (play o2-) "2 octaves down in var notation"]]
 
       [:cat
-       "As we have seen, 'cat let you create a succession of events:"
+       "As we have seen, =cat= let you create a succession of events:"
        (play (cat C0 E0 G0 B0))
 
-       "Let's try to go further with it by composing it with another 'cat:"
+       "Let's try to go further with it by composing it with another =cat=:"
        (play dur:8
              (cat c0 c3 c6)
              (cat c0 c2 c3 c5))
@@ -233,20 +228,20 @@
        "3 transformations are chained:"
        [1 "We are dividing the duration of our base note by 8."
         2 "We are creating a series of 3 notes using chromatic intervals (diminished triad C,Eb,Gb)."
-        3 "Then this 3 notes score is passed to each member of the second 'cat expression, each one transposing it from the indicated chromatic interval."]]
+        3 "Then this 3 notes score is passed to each member of the second =cat= expression, each one transposing it from the indicated chromatic interval."]]
 
       [:tup
-       "'tup stands for tuplet and is analogous to 'cat but keep the duration of the given score unchanged."
+       "=tup= stands for tuplet and is analogous to =cat= but keep the duration of the given score unchanged."
        (play (tup c1 c2 c3 c4 c5 c6 c7 c8))
        "the resulting notes are fitted into the duration of the base note."
 
-       "Like 'cat it can of course be chained with other transformations, as an example, here is a classic jazz melodic pattern."
+       "Like =cat= it can of course be chained with other transformations, as an example, here is a classic jazz melodic pattern."
        (play (tup c0 c2 c4 c7)
              (tup c0 c3)
              (rep 3 c4-))]
 
       [:dup
-       "'dup stands for duplicate and let you repeat a score n times."
+       "=dup= stands for duplicate and let you repeat a score n times."
        (play (tup c0 c3 c6 c9)
              (dup 3))]
 
@@ -262,21 +257,21 @@
 
       [:fit
        "fit is used to make a transformation fit the current duration of the score."
-       "The 2 previous transformations introduced: 'dup and 'rep, are actually changing the score length."
-       "Sometimes we want to transform our score in place, stretching or compressing it, in the same way 'tup is acting."
+       "The 2 previous transformations introduced: =dup= and =rep=, are actually changing the score length."
+       "Sometimes we want to transform our score in place, stretching or compressing it, in the same way =tup= is acting."
 
        (play (tup c0 c4)
              (fit (rep 4 c2)))
 
-       "In fact 'tup is just a composition of fit and cat"
+       "In fact =tup= is just a composition of fit and cat"
 
        (= (mk (tup c0 c3 c8))
           (mk (fit (cat c0 c3 c8))))
 
-       "The composition of 'fit and 'rep is also defined as 'rup for lack of a better name:"
+       "The composition of =fit= and =rep= is also defined as =rup= for lack of a better name:"
        (play (rup 15 d1))
 
-       "A fitted version of 'dup also exists under the name 'dupt"
+       "A fitted version of =dup= also exists under the name =dupt="
        (play (tup d0 d3 d6 d7) (dupt 3))]
 
       [:catn
@@ -286,7 +281,7 @@
        (play (tup d0 d1 d2 d3) (dup 4))]
 
       [:tupn
-       "the fitted version of 'catn"
+       "the fitted version of =catn="
        (play (tupn 4 (tup d0 d1 d2 d3)))]
 
       [:cat>
@@ -299,7 +294,7 @@
 
      [:polyphony
 
-      "As we have seen, we can parallelize things with the 'par function."
+      "As we have seen, we can parallelize things with the =par= function."
 
       (play (par c0 c3 c7 c9 c14)) "a Cm69 chord."
 
@@ -321,23 +316,23 @@
       (play (par (rep 12 c1)
                  (rep 12 c1-)))
 
-      "Like 'cat and 'tup, 'par has its accumulative counterpart:"
+      "Like =cat= and =tup=, =par= has its accumulative counterpart:"
       (play (par> d0 d2 d2 d2 d2)) "piling diatonic thirds."
       (play (patch :string-ensemble-1) o2-
             (par> c0 c7 c7 c7 c7 c7)) "piling perfect fifths."
 
       [:channels
-       "the 'chans function is doing the same thing as 'par except that it put each element on a separate MIDI channel."
+       "the =chans= function is doing the same thing as =par= except that it put each element on a separate MIDI channel."
        (play (chans c0 c3 c7))
        "To be more precise it put each of its argument on subsequent midi channels starting at the current one."
        "By default, we are on channel 0, so here the C will stay on channel 0, the Eb will go on channel 1 and the G on channel 2."
 
-       "When we want more fine control we can use the 'chan function, that works like 'vel and 'dur"
+       "When we want more fine control we can use the =chan= function, that works like =vel= and =dur="
        (chan 1) "set midi channel to 1"
        (chan 3) "set midi channel to 3"
        (chan inc) "increment the current midi channel."
 
-       "We can achieve the same thing as the first expression of the section using 'par and 'chan like this:"
+       "We can achieve the same thing as the first expression of the section using =par= and =chan= like this:"
        (play (par [(chan 0) c0]
                   [(chan 1) c3]
                   [(chan 2) c7]))]
@@ -345,7 +340,7 @@
       [:tracks
        "Tracks are a way of not be limited to only 16 channels, you can create virtually as many as you want."
        "Most of the time, 16 channels are enough but who knows..."
-       "The 'tracks function works exactly like the 'chans function, except that it operates on the :track entry of events."
+       "The =tracks= function works exactly like the =chans= function, except that it operates on the :track entry of events."
        (play (patch :flute)
              (tracks (tup> c0 c5 c5 c5- c2- c7-)
                      (tup> c0 c2- c5 c5))
@@ -353,7 +348,7 @@
 
        "By default we are on track 0. So the second argument of tracks goes on track 1."
 
-       "Like with channels we can be more precise by using the 'track function"
+       "Like with channels we can be more precise by using the =track= function"
        (track 1)
        (track 12)
        (track #(+ % 3))]]
@@ -361,12 +356,12 @@
      [:mapping
 
       "All the transformation we've seen so far are acting on a score to produce another score."
-      "But sometimes what we need is to apply a transformation on each event of a score, for this we are using the '$ function."
+      "But sometimes what we need is to apply a transformation on each event of a score, for this we are using the =$= function."
 
       "As an illustration, here those two fragments:"
 
       (play (cat c0 c1 c2 c3)
-            (tup c0 o1)) "each member of this 'tup form receives and operate on the whole score"
+            (tup c0 o1)) "each member of this =tup= form receives and operate on the whole score"
 
       (play (cat c0 c1 c2 c3)
             ($ (tup c0 o1))) "each event of the score is transformed using this tup transformation."
@@ -376,7 +371,7 @@
       (play (cat c0 o1)
             ($ [dur:4 (rep 8 c1-)]))
 
-      "Some others functions exists to transform only subparts of the score, if interested you can look at '$by and/or 'parts."]
+      "Some others functions exists to transform only subparts of the score, if interested you can look at =$by= and/or =parts=."]
 
      [:dynamism
 
@@ -385,7 +380,8 @@
 
       "There is a bunch of things to know in order to ease things."
 
-      ["variadic functions have a 'star' counterpart that accepts a sequence instead of variadic args."
+      [:star-functions
+       "variadic functions have a 'star' counterpart that accepts a sequence instead of variadic args."
        (tup c1 c2 c3)
        "is similar to"
        (tup* [c1 c2 c3])
@@ -394,7 +390,8 @@
 
        "It ease things a bit when using clojure to generate arguments of those functions. Avoiding to write apply everywhere."]
 
-      ["maps can be used to compose event transformations"
+      [:map-functions
+       "maps can be used to compose event transformations"
        (play {:velocity #(/ % 2)
               :duration #(* % 2)})]
 
@@ -417,7 +414,7 @@
        ;; repeating it 4 times transposing it by some third interval
        (rep 4 (rand-nth [c3 c4 c3- c4-])))
 
-      "We can use some great available tools like 'test.check.generators to handle non determinism."
+      "We can use some great available tools like =test.check.generators= to handle non determinism."
       "That being said, some commonly used non-deterministic functions are available directly."
 
       [:one-of
@@ -428,26 +425,26 @@
       [:maybe
        "maybe is very similar to one-of except it has a chance to do nothing (identity transformation)."
        (play (maybe o1 o2)) "may do nothing, or one octave up, or two octave up"
-       (play (one-of same o1 o2)) "the equivalent 'one-of form"
+       (play (one-of same o1 o2)) "the equivalent =one=-of form"
        (play dur:8 (rep 50 (maybe c1 c1-))) "you can notice melodic repetitions unlike with the corresponding one-of example."]
 
       [:probs
-       "'probs gives you more control over the probability of occurence of the given transformations"
+       "=probs= gives you more control over the probability of occurence of the given transformations"
        (play (probs {o1 4 o1- 1})) "4/5 to go up one octave, 1/5 chance to go down one octave"
 
        (play dur:4
              (rep 24 (probs {c1 6 c6- 1 (par c0 o1-) 1})))]
 
       [:any-that
-       "'any-that is similar to one-of except it takes an extra first argument that check if the picked transformation is valid."
+       "=any=-that is similar to one-of except it takes an extra first argument that check if the picked transformation is valid."
        (play dur:8
              (rep 60 (any-that (within-pitch-bounds? :C-1 :C1)
                               ;; 6 chromatic intervals to choose from
                                c2 c5 c7 c2- c5- c7-)))
        "a melody of 60 notes using the 6 given intervals but remaining in the given pitch bounds. "
 
-       "The 'within-pitch-bounds? is just a score transformation that return the score unchanged if it is within the given bounds, else it returns nil."
-       "Any function of this kind can be used has first argument to 'any-that."]
+       "The =within=-pitch-bounds? is just a score transformation that return the score unchanged if it is within the given bounds, else it returns nil."
+       "Any function of this kind can be used has first argument to =any-that=."]
 
       [:!
        "the ! macro can be useful to deal with raw non deterministic expressions. here the docstring:"
@@ -555,29 +552,29 @@
 
        [:scale
         "By default the major scale is used, but it can be changed."
-        "Most of the known scales and modes are available via the 'scale function or directly by name."
-        "see: #'noon.constants/modes for full list"
+        "Most of the known scales and modes are available via the =scale= function or directly by name."
+        "see: =noon.constants/modes= for full list"
         {:dorian-scale (play (scale :dorian) dur:4 (rep 8 d1))
          :set-scale-to-harmonic-minor (mk harmonic-minor)}]
 
        [:struct
         "By default we use the triad structure (tonic, third, fifth), but it can be changed"
         "Some common structures are predefined and available by name."
-        "see: #'noon.constants/structs for full list"
+        "see: =noon.constants/structs= for full list"
         {:set-structure-to-tetrad (mk (struct :tetrad))
          :set-structure-to-sus47 (mk sus47)}]
 
        [:origin
         "The last thing we need to setup an harmonic context is an origin pitch."
         "By default the origin is setup to middle C."
-        "We can use the 'origin function to change this"
+        "We can use the =origin= function to change this"
         (mk (origin :Eb0))
         [:examples
          (play (cat (origin :C0) (origin :E0) (origin :G#0))
                ($ (rup 6 s1)))]]
 
        [:root
-        "The root update works a bit like 'origin but it takes a pitch-class instead of a pitch"
+        "The root update works a bit like =origin= but it takes a pitch-class instead of a pitch"
         "It moves the :origin of the harmonic context to the closest pitch matching the given pitch class."
         "For instance if the origin is on C0, (root :B) will put the origin on B-1 because B-1 is closer to C0 than B0."
         (mk (root :D))
@@ -595,7 +592,7 @@
               (rep 4 (transpose c3-)))]
 
        [:rebase
-        "Sometimes when changing the harmonic context, we want to stay on the same pitch, the 'rebase function let you do that."
+        "Sometimes when changing the harmonic context, we want to stay on the same pitch, the =rebase= function let you do that."
         (mk (rebase (root :E)))
         "Here we are modulating to E major, but we are staying on the pitch we were on (C0)."
         (= (get-in (mk (rebase (root :E)))
@@ -603,7 +600,7 @@
            {:t 0, :s -1, :d 0, :c 1})
         "This position points to C0 but in the context of E major."
 
-        "The 'rebase function can take several harmonic context transformations."
+        "The =rebase= function can take several harmonic context transformations."
         (mk (rebase (root :E) (scale :mixolydianb6)))]
 
        [:degree
@@ -621,6 +618,11 @@
      "When composing music, 4 major aspects are considered: melody, rythmn, harmony and tone."
      "In this section some tools to deal with those aspects will be introduced."
 
+     (require '[noon.lib.harmony :as h]
+              '[noon.lib.melody :as m]
+              '[noon.lib.rythmn :as r]
+              '[noon.utils.sequences :as seqs])
+
      [:melody
       "Let see some ways to deal with melodies."
       [:bounding
@@ -633,12 +635,12 @@
         (= (mk Eb0 (within-pitch-bounds? :C0 :C1))
            (mk Eb0))
 
-        "This function is handy in conjuction with the 'any-that or 'fst-that forms"
+        "This function is handy in conjuction with the =any-that= or =fst-that= forms"
         (play (patch :electric-piano-1) dur:8
               (rep 60 (any-that (within-pitch-bounds? :C0 :C1)
                                 c1 c1- c5 c5-)))
 
-        "the 'fst-that form takes a test and any number of update that will be tried in order until one pass the test."
+        "the =fst-that= form takes a test and any number of update that will be tried in order until one pass the test."
         (play dur:8
               (rep 60 (fst-that (within-pitch-bounds? :C0 :C1)
                                 (one-of c5 c5-)
@@ -653,7 +655,7 @@
         (play (fit (rep 8 d1))
               (m/rotation 3))]
        [:forms
-        "The 'noon.lib.melody/rotation accepts several types of argument:"
+        "The =noon.lib.melody/rotation= accepts several types of argument:"
         {(m/rotation 2) "rotate two notes forward"
          (m/rotation -3) "rotate three notes backward"
          (m/rotation 1/2) "rotate half the size forward"
@@ -662,7 +664,7 @@
          (m/rotation [0 1/2]) "random rotation between first and half the size"}
 
         "This kind of argument (that I will call a 'member-pick') will be used at many other places within this section,
-       it came from the #'noon.utils.sequences/member function, here the docstring:"
+       it came from the =noon.utils.sequences/member= function, here the docstring:"
 
         "Find or pick an element within a sequence 's.
        available forms:
@@ -673,7 +675,7 @@
         (member s <:rand|:random>) picks a random member"]
 
        [:chords
-        "Not only pure melodies can be rotated, if we feed chords into the 'rotation transformation it behaves as intended"
+        "Not only pure melodies can be rotated, if we feed chords into the =rotation= transformation it behaves as intended"
         (play (fit (rep 8 d1))
               ($ (par d0 d3 d6))
               (m/rotation 1/4))]]
@@ -684,7 +686,7 @@
        "For this reason, permutations are ordered and requested by complexity (similarity degree with the original)"
 
        [:forms
-        "Like the rotation function, the 'permutation function uses a 'member-pick argument."
+        "Like the rotation function, the =permutation= function uses a 'member-pick argument."
         {(m/permutation 2) "the second most similar permutation"
          (m/permutation -1) "the less similar permutation"
          (m/permutation 1/2) "half way between most similar and most different"
@@ -717,13 +719,13 @@
          "In addition to this the returned permutations for a given grade are ordered starting from the more balanced splits."
          "As you can see in the previous example, (2 3 0 1) is the first permutation of grade 1, and contains 2 splits of size 2: (2 3) and (0 1)."
 
-         "We can leverage those grades via our 'm/permutation function like this:"
+         "We can leverage those grades via our =m/permutation= function like this:"
          (m/permutation 0 {:grade 1}) "get the first grade 1 permutation."
          (m/permutation -1 {:grade [1 3]}) "get the last permutation for a randomly picked grade between 1 and 3."]
 
         [:layers
          "As we've seen, our melodies are built on different harmonic layers (chromatic, diatonic, structural and tonic),
-        the 'm/permutation function is letting you act on or inside a particular layer."
+        the =m/permutation= function is letting you act on or inside a particular layer."
          "As an example for this, please consider this kind of melody."
          (play dur2
                (tup s0 s1 s2 s3)
@@ -867,7 +869,7 @@
                                     (cat s2 s1 s1-)
                                     (catn> 4 (one-of s1- s1)))))
 
-       "The 'simple-line function is built on top of the more general function #'noon.lib.melody/line"
+       "The =simple-line= function is built on top of the more general function =noon.lib.melody/line="
 
        (play {:description
               "another way to build a melodic line from a bunch of randomly chosen transformations."}
@@ -883,16 +885,16 @@
      [:rythmn
       "So far we havn't discuss rythmn so much, let see what we have at our disposal to deal with it."
       [:simple
-       "As we've seen earlier, we can use the 'duration related transformations to write simple rythmns"
+       "As we've seen earlier, we can use the =duration= related transformations to write simple rythmns"
        (play (patch :woodblock)
              dur:4
              (cat same dur:2 dur:2 same dur2 same same))
        "This is not a pretty way to write it !"
-       "We can use the _ shortcut instead of 'same, and the 'tup function for making this a bit more readable."
+       "We can use the _ shortcut instead of =same=, and the =tup= function for making this a bit more readable."
        (play (patch :woodblock)
              dur:4
              (cat _ (tup _ _) _ dur2 _ _))
-       "We can also use the 'dupt function if we prefer."
+       "We can also use the =dupt= function if we prefer."
        (play (patch :woodblock)
              dur:4
              (cat _ (dupt 2) _ dur2 _ _))
@@ -920,7 +922,7 @@
        size: the number of notes that the generated tup will contain.
        options:
          euclidean: generates an euclydean tup.
-         durations: the multiples of 'resolution that we are allowed to use (fractionals allowed).
+         durations: the multiples of =resolution= that we are allowed to use (fractionals allowed).
          shifted: the possibility for the generated tup to not begin on beat.
          "]
 
@@ -1216,7 +1218,7 @@
               ($ [(par s0 s1 s2) (h/drop -1)])
               h/voice-led
               (dup 2))
-        "The 'voice-led transformation is using inversions and drops in order to minimize voices motion between successive chords."
+        "The =voice-led= transformation is using inversions and drops in order to minimize voices motion between successive chords."
 
         "It is a really smooth way to transition between voicings but it would be nice to get the original bass motion back."
         (play (cat I VI II V)
@@ -1235,7 +1237,7 @@
 
        [:melodies
         "Once you have a chord progression, you may want to apply a melody on it."
-        "One way to do so is to use the #'h/align-contexts transformation"
+        "One way to do so is to use the =h/align-contexts= transformation"
         [h/align-contexts
          "Let's start with a simple chord progression in minor."
          (play (patch :clarinet)
@@ -1281,7 +1283,7 @@
                (tup s0 s1 [s2 (cat d1 d1- _)] s1)
                (dupt 4)
                (adjust {:duration 4}))
-         "Now let's use the #'h/grid-zipped function to apply this to a chord progression"
+         "Now let's use the =h/grid-zipped= function to apply this to a chord progression"
          (play [(scale :harmonic-minor)
                 (tup I IV VII I)
                 (h/align-contexts)]

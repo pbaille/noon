@@ -17,4 +17,4 @@ For blocks to be correctly fontified, we need to install those using cider."
     (font-lock-flush)))
 
 ;; evaluate this to fontify the guide.org buffer
-'(pb-clojure-babel_refresh-dynamic-font-lock-keywords "noon.doc.intro")
+(pb-clojure-babel_refresh-dynamic-font-lock-keywords "noon.doc.intro")
