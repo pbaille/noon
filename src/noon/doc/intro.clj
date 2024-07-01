@@ -28,24 +28,26 @@
 
     [:elements
 
-     "We can create a score with the =mk= function"
-     "With no arguments it simply returns the default score containing only a middle C."
-     (= (mk)
-        #{{:position 0,
-           :channel 0,
-           :track 0,
-           :duration 1,
-           :pitch <C0>
-           :velocity 80}})
+     [:top-forms
 
-     "The =mk= function can take any number of arguments, each one being a score transformation."
-     "Those transformations are applied in order to the default score."
+      "We can create a score with the =mk= function"
+      "With no arguments it simply returns the default score containing only a middle C."
+      (= (mk)
+         #{{:position 0,
+            :channel 0,
+            :track 0,
+            :duration 1,
+            :pitch <C0>
+            :velocity 80}})
 
-     '(mk transformation1 transformation2 ...)
+      "The =mk= function can take any number of arguments, each one being a score transformation."
+      "Those transformations are applied in order to the default score."
 
-     "the =play= macro acts exactly like =mk= except it plays the resulting score with general MIDI."
+      '(mk transformation1 transformation2 ...)
 
-     '(play transformation1 transformation2 ...)
+      "the =play= macro acts exactly like =mk= except it plays the resulting score with general MIDI."
+
+      '(play transformation1 transformation2 ...)]
 
      [:transformations-1
 
