@@ -18,3 +18,14 @@ For blocks to be correctly fontified, we need to install those using cider."
 
 ;; evaluate this to fontify the guide.org buffer
 (pb-clojure-babel_refresh-dynamic-font-lock-keywords "noon.doc.intro")
+
+(require 'pb-org-babel)
+
+(pb-org-babel_add-custom-param
+ :proll :clojure
+ (km :content (lambda (content)
+                (format "((requiring-resolve 'noon.doc.utils/->piano-roll) %s)"
+                        content))
+     :result (lambda (result)
+               (pr-render-buffer "*pr*" (pr-make result))
+               nil)))
