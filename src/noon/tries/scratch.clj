@@ -638,8 +638,7 @@
          (play dorian
                (rep 4 s1)
                ($ (tup _ s2))
-               ($ (tup c1- d2 d1 d0))
-               )
+               ($ (tup c1- d2 d1 d0)))
 
          (play melodic-minor
                dur4
@@ -648,8 +647,7 @@
                ($ (shuftup s0 s1 s2 s3 s4))
                ($ (tup _ (one-of s1 s2 s1- s2- s3 s3-)))
                ($ (one-of (tup c1- d2 d1 d0)
-                          (tup c1- s1- s0 s2)))
-               )
+                          (tup c1- s1- s0 s2))))
 
          (stop)
          (play dur4
@@ -668,9 +666,7 @@
                        ($ (one-of (tup c1- d2 d1 d0)
                                   (tup c1- s1- s0 s2)
                                   (tup c1- s1- s2- s0)))
-                       ($ (one-of vel5 vel6 vel7 vel9))])
-
-               )
+                       ($ (one-of vel5 vel6 vel7 vel9))]))
 
          (play melodic-minor
                (shufcat s0 s1 s2 s3)
@@ -681,8 +677,7 @@
 
          (play melodic-minor
                (cat (shufcat s0 s1 s2 s3)
-                    [{:passing true} (shufcat s0 s1 s2 s3)]
-                    )
+                    [{:passing true} (shufcat s0 s1 s2 s3)])
                ($ (let [step (one-of s1 s2 s3 s1- s2- s3-)
                         ap (cat c1- d1)]
                     (tup [_ ap] [step ap] _ step (par s2- s2))))
@@ -850,6 +845,4 @@
                  (randomly-interleaved
                   [(chan 1) (catn 4 (shuftup s0 s1 s2 s3)) ($ rand-double-passing)]
                   [(chan 2) (catn 4 (shuftup s0 s1 s2 s3)) s4- ($ rand-double-passing)]
-                  [(chan 3) (catn 4 (shuftup s0 s1 s2 s3)) s4 ($ rand-double-passing)])))
-
-         )
+                  [(chan 3) (catn 4 (shuftup s0 s1 s2 s3)) s4 ($ rand-double-passing)]))))
