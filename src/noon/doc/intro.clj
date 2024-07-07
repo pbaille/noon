@@ -21,10 +21,12 @@
      [:events
       "An event is the basic building block we are dealing with."
       "It can represent any MIDI event, a note, a control change etc..."
-      "It is represented using a clojure map"]
+      "It is represented using a clojure map"
+      DEFAULT_EVENT]
 
      [:score
-      "A score is a collection of events, represented using a clojure set."]]
+      "A score is a collection of events, represented using a clojure set."
+      (mk)]]
 
     [:elements
 
@@ -32,13 +34,7 @@
 
       "We can create a score with the =mk= function"
       "With no arguments it simply returns the default score containing only a middle C."
-      (= (mk)
-         #{{:position 0,
-            :channel 0,
-            :track 0,
-            :duration 1,
-            :pitch <C0>
-            :velocity 80}})
+      (mk)
 
       "The =mk= function can take any number of arguments, each one being a score transformation."
       "Those transformations are applied in order to the default score."
@@ -116,7 +112,7 @@
 
        "Like for duration there is also a more flexible form:"
        (play (vel 100)) "sets the midi velocity of the current event to 100 (forte)."
-       (play (vel #(/ % 2))) "divide the current velocity by 2 (by default the velocity is 80)"]
+       (play (vel (fn [x] (/ x 2)))) "divide the current velocity by 2 (by default the velocity is 80)"]
 
       [:sounds
        "By default, we are using general MIDI to emit sounds, it is not the most exciting way to play MIDI but it is everywhere and gives you a rapid feedback without extra setup."
@@ -1310,8 +1306,14 @@
                (dup 2)
                (adjust {:duration 12}))]]]]]])
 
+(defn play-form? [x]
+  (and (seq? x)
+       (= 'play (first x))))
+
 (defn org-code-block [x]
-  (str "#+begin_src clojure :results none\n"
+  (str (if (play-form? x)
+         "#+begin_src clojure :proll\n"
+         "#+begin_src clojure :pp\n")
        (with-out-str (pprint/pprint x))
        "#+end_src\n\n"))
 

@@ -27,5 +27,8 @@ For blocks to be correctly fontified, we need to install those using cider."
                 (format "((requiring-resolve 'noon.doc.utils/->piano-roll) %s)"
                         content))
      :result (lambda (result)
-               (pr-render-buffer "*pr*" (pr-make result))
+               (pr-with-buf
+                (erase-buffer)
+                (insert (format "'%s" result))
+                (proll-mode 1))
                nil)))

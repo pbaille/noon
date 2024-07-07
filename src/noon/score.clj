@@ -1124,7 +1124,7 @@
 
          (swap! history* conj files)
 
-         files)))
+         (with-meta files {:score score}))))
 
     (defmacro write [opts & xs]
       `(noon (merge {:midi true
