@@ -3,7 +3,7 @@ Il s'agit d'une espèce de langage de programmation musical.
 
 Les motivations initiales sont les suivantes:
 En premier lieu, j'ai été en quelque sorte frustré par l'expérience de composition musicale assisté par ordinateur.
-Les outils couramment utilisé pour ça, appelé station audionumériques, dont font partie par exemple logic audio ou cubase sont certes puissants, mais se révèle assez besogneux à l'usage.
+Les outils couramment utilisé pour ça, appelé station audionumériques, dont font partie par exemple logic audio ou cubase sont certes puissants, mais se révèlent assez besogneux à l'usage.
 La boucle de rétroaction (feedback loop en anglais) est un peu longue à mon gout. Les modifications sont répétitives et assez lentes, on passe beaucoup de temps à cliquer, glisser déposer, et peu de temps à écouter.
 
 D'autre part, Ayant principalement étudié le jazz, j'aurais aimé retrouvé le même type d'approche lorsque je compose à l'aide d'un ordinateur.
