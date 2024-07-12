@@ -366,7 +366,9 @@
 
         (def SOUNDFONTS
           {:chorium "midi/soundfonts/choriumreva.sf2"
-           :squid "midi/soundfonts/squid.sf2"})
+           :squid "midi/soundfonts/squid.sf2"
+           :airfont "midi/soundfonts/airfont_340.sf2"
+           :fluid "midi/soundfonts/FluidR3_GM.sf2"})
 
         (defn init-synth [sf2-path]
           (let [bank (MidiSystem/getSoundbank (resource->buffered-input-stream (io/resource sf2-path)))
@@ -381,6 +383,12 @@
         (def get-squid-synth
           (memoize (fn [] (init-synth (SOUNDFONTS :squid)))))
 
+        (def get-airfont-synth
+          (memoize (fn [] (init-synth (SOUNDFONTS :airfont)))))
+
+        (def get-fluid-synth
+          (memoize (fn [] (init-synth (SOUNDFONTS :fluid)))))
+
         (defn init-soundfont-sequencer [synth]
           (let [sq (MidiSystem/getSequencer false)]
             (.setReceiver
@@ -392,7 +400,13 @@
           (init-soundfont-sequencer (get-chorium-synth)))
 
         (defn new-squid-sequencer []
-          (init-soundfont-sequencer (get-squid-synth))))
+          (init-soundfont-sequencer (get-squid-synth)))
+
+        (defn new-airfont-sequencer []
+          (init-soundfont-sequencer (get-airfont-synth)))
+
+        (defn new-fluid-sequencer []
+          (init-soundfont-sequencer (get-fluid-synth))))
 
     (do :external-device
 
@@ -435,7 +449,9 @@
   (case x
     :default (new-midi-sequencer true)
     :chorium (new-chorium-sequencer)
+    :airfont (new-airfont-sequencer)
     :squid (new-squid-sequencer)
+    :fluid (new-fluid-sequencer)
     (:bus1 :bus2 :bus3 :bus4) (new-virtual-output-sequencer x)
     (if (instance? Sequencer x)
       x
