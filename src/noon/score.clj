@@ -1079,11 +1079,12 @@
                   file-barename (gen-filename)}} (u/parse-file-path filename)
             base (str directory "/" file-barename)]
         (u/ensure-directory directory)
-        {:midi-file (if (or midi pdf xml) (str base ".mid"))
-         :source-file (str base ".mut")
-         :seed-file (str base ".seed")
-         :xml-file (if (or pdf xml) (str base ".xml"))
-         :pdf-file (if pdf (str base ".pdf"))}))
+        (merge
+         {:source-file (str base ".mut")
+          :seed-file (str base ".seed")}
+         (when (or midi pdf xml) {:midi-file (str base ".mid")})
+         (when (or pdf xml) {:xml-file (str base ".xml")})
+         (when pdf {:pdf-file (str base ".pdf")}))))
 
     (defn noon
       ([score]
