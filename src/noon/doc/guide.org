@@ -79,7 +79,7 @@ DEFAULT_EVENT
 A score is a collection of events, represented using a clojure set.
 
 #+begin_src clojure :pp
-(mk)
+(mk) ; the `mk` function is used to build score, more on it later
 #+end_src
 
 #+RESULTS:
@@ -99,31 +99,98 @@ A score is a collection of events, represented using a clojure set.
 
 #+end_src
 
-*** Top forms
+*** Top form
 
-**** mk
+=noon.score/noon= is the top level form of the library.
+
+#+begin_src clojure
+'(noon <option-map> <score>)
+#+end_src
+
+Here a minimal example:
+
+#+begin_src clojure :results silent
+(noon
+ ;; the play option let you play the given score
+ {:play true}
+ ;; calling mk without argument just build the default score (middle C)
+ (mk))
+#+end_src
+
+**** Options
+
+The option map let you stay what you want to do with your score.
+
+- =:midi true=
+  Write the score as MIDI file.
+  Default to false.
+
+- =:bpm <number>=
+  Set the tempo to <number> beats per minute.
+  Default value is 60.
+
+- =:play true=
+  Play the score.
+  Default to false.
+
+- =:filename <path>=
+  Setting the name and location of emitted files.
+  File extensions will be appended to this filename.
+
+- =:tracks {<track-idx> <sequencer> ...}=
+  Set each track idxs to a =javax.sound.midi.Sequencer=
+  This library comes with 4 nice soundfonts that sounds way better than builtin one (=:default=):
+  1. =:squid=
+  2. =:chorium=
+  3. =:fluid=
+  4. =:airfont=
+
+#+begin_src clojure
+(noon {:play true
+       :tracks {0 :chorium}} ;; try to change soundfont here
+
+      ;; this will be explained later
+      ;; it repeats an ascending scale with different patches
+      ;; in order to demonstrate the soundfont
+      (mk dur2
+          (rup 8 d1)
+          (cat (patch :clarinet)
+               (patch :electric-piano-1)
+               (patch :trumpet)
+               (patch :ocarina))))
+#+end_src
+
+In addition to those soundfonts, you can send the output of noon to any output device available on your machine.
+
+#+begin_src clojure
+(require 'noon.midi)
+;; retrieve a device by name
+(def bus1 (noon.midi/get-output-device "Bus 1"))
+;; build a sequencer from it
+(def bus1-sequencer (noon.midi/init-device-sequencer bus1))
+;; use it to play a score
+(noon {:play true
+       :tracks {0 bus1-sequencer}}
+      (mk (par s0 s1 s2)))
+#+end_src
+
+***** Musescore options
+
+If you have [[https://musescore.org/en][musecore]] installed on your machine, you can emit music XML and pdf score.
+
+- =:xml true=
+  write the score as musicXML file.
+
+- =:pdf true=
+  write the score pdf file.
+
+**** score
+
 As we've just seen, we can create a score with the =mk= function.
 With no arguments it simply returns the default score containing only a middle C.
 
 #+begin_src clojure :pp
 (mk)
-#+end_src
-
-#+RESULTS:
-#+begin_src clojure
-#{{:position 0,
-   :channel 0,
-   :track 0,
-   :duration 1,
-   :pitch
-   {:scale [0 2 4 5 7 9 11],
-    :struct [0 2 4],
-    :origin {:d 35, :c 60},
-    :position {:t 0, :s 0, :d 0, :c 0}},
-   :velocity 80,
-   :voice 0,
-   :patch [0 4]}}
-
 #+end_src
 
 The =mk= function can take any number of arguments, each one being a score transformation.
@@ -134,44 +201,33 @@ Those transformations are applied in order to the default score.
 '(mk transformation1 transformation2 ...)
 #+end_src
 
-**** noon
+**** shorthands
 
-=noon.score/noon= is the top level form of the library.
+As a convenience some thin =noon.score/noon= wrappers are defined:
 
-#+begin_src clojure
-'(noon <option-map> <score>)
-#+end_src
-
-Here a minimal example:
-
-#+begin_src clojure :pp
-(noon
- ;; the play option let you play the given score
- {:play true}
- ;; calling mk without argument just build the default score (middle C)
- (mk))
-#+end_src
-
-The option map let you stay what you want to do with your score:
-- writing midi file
-- setting the tempo
-- setting various midi setup parameters
-- writing a music xml and/or pdf file (musescore needed)
-
-For a complete description of available options, please see the dedicated section *TODO*
-
-From now on, as a shorthand for examples, we will use the =play= function:
+***** =noon.score/play=
 
 #+begin_src clojure :noeval
 (play transformation1 transformation2 ...)
 #+end_src
 
-That is roughly equivalent to:
+Which is is roughly equivalent to:
 
 #+begin_src clojure :noeval
 (noon {:play true}
       (mk transformation1 transformation2 ...))
 #+end_src
+
+More concretly:
+
+#+begin_src clojure :proll
+(play dur2
+      (tup s0 s1 s2 s3))
+#+end_src
+
+***** =noon.score/write=
+
+TODO
 *** Transformations 1
 
 There is a bunch of transformations available, let's see the basics.
@@ -201,26 +257,6 @@ Here some examples of pitches:
 Pitches are not often used as is, we will prefer more relative constructs like intervals, patterns etc...
 But it may be a little overwhelming to start with, so for now we will use them to introduce the basics building blocks of the system.
 
-**** First melody
-
-Using the =cat= function we can create our first melody.
-
-#+begin_src clojure :proll
-(play (cat C0 E0 G0 B0))
-#+end_src
-
-**** First chord
-
-Using the =par= function we can stack things up.
-
-#+begin_src clojure :proll
-(play (par C0 Eb0 G0)) ; a C minor chord.
-#+end_src
-
-#+begin_src clojure :proll
-(play #{C0 Eb0 G0}) ; it can also be notated using clojure set litteral:
-#+end_src
-
 **** Durations
 
 We can operate on durations by multiplying or dividing them.
@@ -233,7 +269,7 @@ We can operate on durations by multiplying or dividing them.
 (play dur:3) ; divides it by 3
 #+end_src
 
-There is also a more verbose and flexible way to build duration transformations.
+There is also a more flexible (and verbose) way to build duration transformations.
 
 #+begin_src clojure :pp
 (dur 2) ; sets the duration to 2
@@ -241,11 +277,6 @@ There is also a more verbose and flexible way to build duration transformations.
 
 #+begin_src clojure :pp
 (dur 1/4) ; sets the duration to 1/4
-#+end_src
-
-#+RESULTS:
-#+begin_src clojure
-class java.lang.RuntimeException
 #+end_src
 
 #+begin_src clojure :pp
@@ -256,34 +287,6 @@ Those 3 forms return a transformation that can be used in =mk= or =play=
 
 #+begin_src clojure :proll
 (play (dur 1/4))
-#+end_src
-
-**** Composing transformations
-
-We can compose any number of transformations together using a clojure vector.
-
-#+begin_src clojure :proll
-(play [Eb0 dur:2]) ; plays a Eb of half duration
-#+end_src
-
-#+begin_src clojure :proll
-(play [F#-1 dur4]) ; F# above the middle C with quadruple duration.
-#+end_src
-
-#+begin_src clojure :proll
-(play [dur4 F#-1]) ; the order do not matter here.
-#+end_src
-
-For simple cases like this don't forget that the =play= macro and the =mk= function variadic arities are doing the same thing.
-
-#+begin_src clojure :proll
-(play F#-1 dur4)
-#+end_src
-
-But in a =cat= form for instance we need the vectors (square brackets)
-
-#+begin_src clojure :proll
-(play (cat [C0 dur:2] [Eb0 dur:4] [G0 dur:4] C1))
 #+end_src
 
 **** Velocities
@@ -318,6 +321,66 @@ Like for duration there is also a more flexible form:
 
 #+begin_src clojure :proll
 (play (vel (fn [x] (/ x 2)))) ; divide the current velocity by 2 (by default the velocity is 80)
+#+end_src
+
+**** Composition
+
+We can compose any number of transformations together using a clojure vector.
+
+#+begin_src clojure :proll
+(play [Eb0 dur:2]) ; plays a Eb of half duration
+#+end_src
+
+#+begin_src clojure :proll
+(play [F#-1 dur4 (vel 127)]) ; F# above the middle C with quadruple duration and max velocity.
+#+end_src
+
+#+begin_src clojure :proll
+(play [dur4 F#-1]) ; the order do not matter here.
+#+end_src
+
+The =play= and the =mk= functions, when given several arguments are doing exactly this
+
+#+begin_src clojure :proll
+(play F#-1 dur4) ; is the same as (play [F#-1 dur4])
+#+end_src
+
+**** Concatenation
+
+Using the =cat= function we can create our first melody.
+The =cat= function takes an arbitrary number of transformations and concatenate their result into one score.
+
+#+begin_src clojure :proll
+(play (cat C0 E0 G0 B0))
+#+end_src
+
+Using transformation composition
+
+#+begin_src clojure :proll
+(play (cat [C0 dur:2]
+           [Eb0 dur:4]
+           [G0 dur:4]
+           C1))
+#+end_src
+
+**** Superposition
+
+Using the =par= function we can stack things up.
+
+#+begin_src clojure :proll
+(play (par C0 Eb0 G0)) ; a C minor chord.
+#+end_src
+
+#+begin_src clojure :proll
+(play #{C0 Eb0 G0}) ; it can also be notated using clojure set litteral:
+#+end_src
+
+A pianissimo, double duration, Csus4 chord:
+
+#+begin_src clojure :proll
+(play vel2
+      dur2
+      (par C0 F0 G0))
 #+end_src
 
 **** Sounds
@@ -376,8 +439,11 @@ The 2 most common type of steps are chromatic steps and diatonic steps
 A chromatic step is a movement by semitones.
 
 #+begin_src clojure :pp
-{"going up 3 semitones from wherever we are." (c-step 3),
- "going down one semitone." (c-step -1)}
+(c-step 3) ; going up 3 semitones from wherever we are.
+#+end_src
+
+#+begin_src clojure
+(c-step -1) ; going down one semitone
 #+end_src
 
 Those kind of transformation are so common that they are available as vars:
@@ -390,7 +456,7 @@ c1 ; equivalent to (c-step 1)
 c2- ; equivalent to (c-step -2)
 #+end_src
 
-all chromatic steps from =c36= to =c36-= are available.
+All chromatic steps from =c36= to =c36-= are available.
 
 If we apply the =c3= step to the default score, it transpose the default middle C (=C0=) 3 semitones up to =Eb0= (or =D#0=).
 
@@ -448,7 +514,7 @@ all diatonic steps from =d21= to =d21-= are available.
 (play dur:4 (cat d0 d2- d1- d3- d2- d4- d3- d5- d4-)) ; same downward
 #+end_src
 
-By default, we are in the C major scale, but of course it can be changed. (see :harmony section)
+By default, we are in the C major scale, but of course it can be changed. (see [[*Harmony][Harmony]] section)
 
 As a quick example, pretty self explanatory (but explained in more details later).
 
@@ -460,9 +526,10 @@ There is 2 more type of steps: structural and tonic, but we will see them later.
 
 ***** Octaves
 
-paraphrasing wiki: In music, an octave is the interval between one musical pitch and another with double its frequency. The octave relationship is a natural phenomenon that has been referred to as 'the basic miracle of music'. The interval between the first and second harmonics of the harmonic series is an octave.
+Paraphrasing wiki:
+In music, an octave is the interval between one musical pitch and another with double its frequency. The octave relationship is a natural phenomenon that has been referred to as 'the basic miracle of music'. The interval between the first and second harmonics of the harmonic series is an octave.
 
-In noon, octaves are a different kind of interval, they are belonging to the =shift= family.
+In noon, octaves are a different kind of interval, they belong to the =shift= family.
 
 The nuance will appear more clearly later... Until then, let see how to use them:
 
