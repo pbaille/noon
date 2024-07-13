@@ -819,13 +819,13 @@ There is a bunch of things to know in order to ease things.
 
 **** Star functions
 
-variadic functions have a 'star' counterpart that accepts a sequence instead of variadic args.
+Variadic functions have a 'star' counterpart that accepts a sequence instead of variadic args.
 
 #+begin_src clojure :pp
 (tup c1 c2 c3)
 #+end_src
 
-is similar to
+Is similar to:
 
 #+begin_src clojure :pp
 (tup* [c1 c2 c3])
@@ -837,7 +837,7 @@ or
 (tup* (list c1 c2 c3))
 #+end_src
 
-It ease things a bit when using clojure to generate arguments of those functions. Avoiding to write apply everywhere.
+It ease things a bit when using clojure to generate arguments of those functions. Avoiding to write =apply= everywhere.
 
 **** Map functions
 
@@ -847,7 +847,7 @@ maps can be used to compose event transformations
 (play {:velocity (fn [x] (/ x 2)), :duration (fn [x] (* x 2))})
 #+end_src
 
-Some examples:
+**** Examples
 
 #+begin_src clojure :proll
 (play (tup* (shuffle [c0 c3 c7 c9])))
@@ -873,7 +873,7 @@ We can use some great available tools like =test.check.generators= to handle non
 
 **** one-of
 
-pick randomly one of the given transformations and apply it.
+=one-of= picks randomly one of the given transformations and apply it.
 
 #+begin_src clojure :proll
 (play (one-of o1- o1))
@@ -885,14 +885,14 @@ pick randomly one of the given transformations and apply it.
 
 **** maybe
 
-=maybe= is very similar to one-of except it has a chance to do nothing (identity transformation).
+=maybe= is very similar to =one-of= except it has a chance to do nothing (identity transformation).
 
 #+begin_src clojure :proll
 (play (maybe o1 o2)) ; may do nothing, or one octave up, or two octave up
 #+end_src
 
 #+begin_src clojure :proll
-(play (one-of same o1 o2)) ; the equivalent =one=-of form
+(play (one-of same o1 o2)) ; the equivalent `one-of` form
 #+end_src
 
 #+begin_src clojure :proll
@@ -913,23 +913,26 @@ pick randomly one of the given transformations and apply it.
 
 **** any-that
 
-=any=-that is similar to one-of except it takes an extra first argument that check if the picked transformation is valid.
+=any-that= is similar to =one-of= except it takes an extra first argument that check if the picked transformation is valid.
+
+A melody of 60 notes using the 6 given intervals but remaining in the given pitch bounds:
 
 #+begin_src clojure :proll
-(play
- dur:8
- (rep
-  60
-  (any-that (within-pitch-bounds? :C-1 :C1) c2 c5 c7 c2- c5- c7-))) ; a melody of 60 notes using the 6 given intervals but remaining in the given pitch bounds. 
+(play dur:8
+      (rep 60
+           (any-that (within-pitch-bounds? :C-1 :C1)
+                     c2 c5 c7 c2- c5- c7-)))
 #+end_src
 
-The =within=-pitch-bounds? is just a score transformation that return the score unchanged if it is within the given bounds, else it returns nil. Any function of this kind can be used has first argument to =any-that=.
+The =within-pitch-bounds?= is just a score transformation that return the score unchanged if it is within the given bounds, else it returns =nil=. Any function of this kind can be used has first argument to =any-that=.
 
 **** !
 
 the =!= macro can be useful to deal with raw non deterministic expressions. here the docstring:
 
+#+begin_quote
 Takes a non deterministic expression resulting in a score transformation. return a score transformation that wraps the expression so that it is evaluated each time the transformation is used.
+#+end_quote
 
 #+begin_src clojure :proll
 (play (catn 4 (! (tup* (shuffle [d0 d2 d4 d6])))))
@@ -941,7 +944,7 @@ Takes a non deterministic expression resulting in a score transformation. return
 
 **** Shuffling
 
-As in the previews example, building a tup or a cat with shuffled sequence of transformation is quite fun.
+As in the previews example, building a =tup= or a =cat= with shuffled sequence of transformation is quite fun.
 
 So two shortcuts are defined:
 
