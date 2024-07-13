@@ -30,7 +30,6 @@
     (defclosure mul [x] (f_ (* _ x)))
     (defclosure div [x] (f_ (/ _ x)))
 
-
     (defclosure eq [x] (f_ (= _ x)))
     (defclosure gt [x] (f_ (> _ x)))
     (defclosure lt [x] (f_ (< _ x)))
@@ -46,11 +45,11 @@
                 (or (f a e) (reduced nil)))
               init xs))
 
-    (defmacro defclosure*
-      "Like 'noon.utils/defclosure but last argument is bound to the variadicaly.
+    '(defmacro defclosure*-bu
+      "Like 'noon.utils/defclosure but last argument is bound variadicaly.
        it defines two functions,
-       - one that binds the last argument as to variadic arguments.
-       - one (postfixed by *) that takes it as a seq.
+       - one that binds the last ARGV pattern to variadic arguments.
+       - one (postfixed by *) that expect it as a seq.
        This is somehow analogous to #'list and #'list*"
       [name doc argv & body]
       (let [applied-name (symbol (str name "*"))
@@ -59,6 +58,28 @@
                ~argv
                ~@body)
              (defn ~name ~doc
+               ~variadic-argv
+               (~applied-name ~@argv)))))
+
+    (defmacro defclosure*
+      "Like 'noon.utils/defclosure but last argument is bound variadicaly.
+       it defines two functions,
+       - one that binds the last ARGV pattern to variadic arguments.
+       - one (postfixed by *) that expect it as a seq.
+       This is somehow analogous to #'list and #'list*"
+      [& form]
+      (let [{:keys [name doc attrs arities]} (u/parse-defn form)
+            applied-name (symbol (str name "*"))
+            [argv & body] (first arities)
+            variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
+        `(do (defclosure ~applied-name
+               ~@(if doc [doc])
+               ~@(if attrs [attrs])
+               ~argv
+               ~@body)
+             (defn ~name
+               ~@(if doc [doc])
+               ~@(if attrs [attrs])
                ~variadic-argv
                (~applied-name ~@argv))))))
 
@@ -117,13 +138,17 @@
         ;; defines some duration update vars
         ;; d2 ... d11 to multiply it
         ;; d:2 ... d:11 to divide it
-        (doseq [i (range 2 12)]
-          (eval (list 'def (symbol (str "dur" i)) `(dur (mul ~i))))
-          (eval (list 'def (symbol (str "dur:" i)) `(dur (div ~i)))))
-        (doseq [n (range 2 12)]
-          (doseq [d (range 2 12)]
-            (eval (list 'def (symbol (str "dur" n ":" d))
-                        `(dur (mul (/ ~n ~d)))))))
+        (defmacro -def-durations []
+          (cons 'do
+                (concat (for [i (range 2 12)]
+                          (list 'do
+                                (list 'def (symbol (str "dur" i)) `(dur (mul ~i)))
+                                (list 'def (symbol (str "dur:" i)) `(dur (div ~i)))))
+                        (for [n (range 2 12)
+                              d (range 2 12)]
+                          (list 'def (symbol (str "dur" n ":" d))
+                                `(dur (mul (/ ~n ~d))))))))
+        (-def-durations)
 
         (defn vel [x]
           {:velocity x})
@@ -135,9 +160,12 @@
 
         ;; defines 12 levels of velocity from 10 to 127
         ;; as v1 ... v12
-        (doseq [i (range 1 13)]
-          (eval (list 'def (symbol (str "vel" i))
-                      `(vel ~(int (* i (/ 127 12)))))))
+        (defmacro -def-velocities []
+          (cons 'do
+                (for [i (range 1 13)]
+                  (list 'def (symbol (str "vel" i))
+                        `(vel ~(int (* i (/ 127 12))))))))
+        (-def-velocities)
 
         ;; channels
         (defn chan [x]
@@ -146,8 +174,11 @@
         (defn chan+ [x] (chan (add x)))
         (defn chan- [x] (chan (sub x)))
 
-        (doseq [i (range 0 16)]
-          (eval (list 'def (symbol (str "chan" i)) `(chan ~i))))
+        (defmacro -def-channels []
+          (cons 'do
+                (for [i (range 0 16)]
+                  (list 'def (symbol (str "chan" i)) `(chan ~i)))))
+        (-def-channels)
 
         ;; tracks
         (defn track [x]
@@ -156,8 +187,11 @@
         (defn track+ [x] (track (add x)))
         (defn track- [x] (track (sub x)))
 
-        (doseq [i (range 0 16)]
-          (eval (list 'def (symbol (str "track" i)) `(track ~i))))
+        (defmacro -def-tracks []
+          (cons 'do
+                (for [i (range 0 16)]
+                  (list 'def (symbol (str "track" i)) `(track ~i)))))
+        (-def-tracks)
 
         (do :voice
 
@@ -245,14 +279,15 @@
 
             (do :defs
 
-                (u/hm->defs 'noon.score
-                            (u/map-vals struct constants/structs))
+                (defmacro -def-wrapped [wrapper m]
+                  (cons 'do (for [[k v] (eval m)]
+                              (list 'def (symbol (name k)) (list wrapper v)))))
 
-                (u/hm->defs 'noon.score
-                            (u/map-vals scale constants/modes))
+                (-def-wrapped struct constants/structs)
 
-                (u/hm->defs 'noon.score
-                            (u/map-vals repitch constants/pitches))
+                (-def-wrapped scale constants/modes)
+
+                (-def-wrapped repitch constants/pitches)
 
                 (do :intervals
 

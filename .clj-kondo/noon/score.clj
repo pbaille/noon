@@ -16,19 +16,34 @@
 (defmacro sf_ [& body]
   `(sfn ~'_ ~@body))
 
+(defn parse-defn [[name x & xs]]
+  (let [[doc [x & xs]] (if (string? x) [x xs] [nil (cons x xs)])
+        [attrs body] (if (map? x) [x xs] [nil (cons x xs)])
+        arities (if (vector? (first body)) (list body) body)]
+    {:name name
+     :doc doc
+     :attrs attrs
+     :arities arities}))
+
 (defmacro defclosure*
-  "Like defclosure but last argument is bound to the variadicaly.
+  "Like 'noon.utils/defclosure but last argument is bound variadicaly.
        it defines two functions,
-       - one that binds the last argument as to variadic arguments.
-       - one (postfixed by *) that takes it as a seq.
+       - one that binds the last ARGV pattern to variadic arguments.
+       - one (postfixed by *) that expect it as a seq.
        This is somehow analogous to #'list and #'list*"
-  [name doc argv & body]
-  (let [applied-name (symbol (str name "*"))
+  [& form]
+  (let [{:keys [name doc attrs arities]} (parse-defn form)
+        applied-name (symbol (str name "*"))
+        [argv & body] (first arities)
         variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
-    `(do (defn ~applied-name ~doc
+    `(do (defclosure ~applied-name
+           ~@(if doc [doc])
+           ~@(if attrs [attrs])
            ~argv
            ~@body)
-         (defn ~name ~doc
+         (defn ~name
+           ~@(if doc [doc])
+           ~@(if attrs [attrs])
            ~variadic-argv
            (~applied-name ~@argv)))))
 
