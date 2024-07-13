@@ -203,7 +203,7 @@ Those transformations are applied in order to the default score.
 
 **** shorthands
 
-As a convenience some thin =noon.score/noon= wrappers are defined:
+As a convenience, some thin =noon.score/noon= wrappers are defined:
 
 ***** =noon.score/play=
 
@@ -336,7 +336,7 @@ We can compose any number of transformations together using a clojure vector.
 #+end_src
 
 #+begin_src clojure :proll
-(play [dur4 F#-1]) ; the order do not matter here.
+(play [(vel 127) dur4 F#-1]) ; the order do not matter in this case.
 #+end_src
 
 The =play= and the =mk= functions, when given several arguments are doing exactly this
@@ -348,13 +348,13 @@ The =play= and the =mk= functions, when given several arguments are doing exactl
 **** Concatenation
 
 Using the =cat= function we can create our first melody.
-The =cat= function takes an arbitrary number of transformations and concatenate their result into one score.
+The =cat= function takes an arbitrary number of transformations and concatenate their results into one score.
 
 #+begin_src clojure :proll
 (play (cat C0 E0 G0 B0))
 #+end_src
 
-Using transformation composition
+=cat= accept any valid transformation, here we are using composite transformations.
 
 #+begin_src clojure :proll
 (play (cat [C0 dur:2]
@@ -424,15 +424,15 @@ In MIDI there is this concept of channel, it serve the purpose to separate diffe
 
 **** Intervals 1
 
-It is now time to brings intervals into the equation, pitches were nice for introduction purposes but lacks the flexibility that intervals have. When a musician thinks about music, he do not think in precise pitches most of the time, he more often thinks of scales, intervals, degrees, melodic contour etc... Those higher level abstractions are available in this system and in fact it is the whole point of it. Some really nice libraries already exists to deal with low levels aspects of music notation and sound synthesis.
+It is now time to brings intervals into the equation, pitches were nice for introduction purposes but lacks the flexibility that intervals have. When musicians think about music, they do not think in precise pitches most of the time, they more often thinks of scales, intervals, degrees, melodic contour etc... Those higher level abstractions are available in this system and in fact it is the whole point of it. Some really nice libraries already exists to deal with low levels aspects of music notation and sound synthesis.
 
-In noon there is two types of intervals: steps and shifts.
+In noon there is two types of intervals: *steps* and *shifts*.
 
 ***** Steps
 
 Steps are the most commonly used type of interval.
 
-The 2 most common type of steps are chromatic steps and diatonic steps
+The 2 most common types of steps are chromatic steps and diatonic steps
 
 ****** Chromatic
 
@@ -522,12 +522,14 @@ As a quick example, pretty self explanatory (but explained in more details later
 (play dur:4 (root :Eb) (scale :hungarian) (cat d0 d1 d2 d3 d4 d5 d6 d7))
 #+end_src
 
-There is 2 more type of steps: structural and tonic, but we will see them later.
+There is 2 more type of steps: *structural* and *tonic*, but we will see them later.
 
 ***** Octaves
 
 Paraphrasing wiki:
-In music, an octave is the interval between one musical pitch and another with double its frequency. The octave relationship is a natural phenomenon that has been referred to as 'the basic miracle of music'. The interval between the first and second harmonics of the harmonic series is an octave.
+#+BEGIN_QUOTE
+In music, an octave is the interval between one musical pitch and another with double its frequency. The octave relationship is a natural phenomenon that has been referred to as *the basic miracle of music*. The interval between the first and second harmonics of the harmonic series is an octave.
+#+END_QUOTE
 
 In noon, octaves are a different kind of interval, they belong to the =shift= family.
 
@@ -595,17 +597,17 @@ Like =cat= it can of course be chained with other transformations, as an example
 
 =rep= let you apply a transformation several times in a row accumulating intermediate results.
 
+A melody of 8 successive major thirds (4 semitones):
+
 #+begin_src clojure :proll
 (play dur:4 (rep 8 c4))
 #+end_src
 
-a melody of 8 successive major thirds (4 semitones).
+Be careful, with more complex transformations it can quickly become hairy:
 
 #+begin_src clojure :proll
 (play (rep 6 (tup c5 c10)))
 #+end_src
-
-be careful, with more complex transformations it can quickly become hairy.
 
 You can remove the input score at the start of the result by giving an extra argument:
 
@@ -615,7 +617,8 @@ You can remove the input score at the start of the result by giving an extra arg
 
 **** fit
 
-=fit= is used to make a transformation fit the current duration of the score. The 2 previous transformations introduced: =dup= and =rep=, are actually changing the score length. Sometimes we want to transform our score in place, stretching or compressing it, in the same way =tup= is acting.
+=fit= is used to make a transformation fit the current duration of the score.
+The 2 previous transformations introduced: =dup= and =rep=, are changing the score duration, but sometimes we want to transform our score in place, stretching or compressing it, in the same way =tup= is acting.
 
 #+begin_src clojure :proll
 (play (tup c0 c4) (fit (rep 4 c2)))
@@ -671,7 +674,7 @@ the fitted version of =catn=
 
 **** tup>
 
-=tup>= is doing the same as cat>, except it maintains the score original duration.
+=tup>= is doing the same as =cat>=, except it maintains the score original duration.
 
 #+begin_src clojure :proll
 (play (tup> d0 d1 d1 d1 d1 d1 d1 d1))
@@ -694,17 +697,23 @@ But we are not limited to use simple intervals, we can use any score transformat
 #+begin_src clojure :proll
 (play
  (patch :electric-piano-1)
- (par (tup d0 d2 d4 o1) [vel3 (par> o1 d4) (fit (rep 8 d1))] o1-))
+ (par (tup d0 d2 d4 o1)
+      [vel3 (par> o1 d4) (fit (rep 8 d1))]
+      o1-))
 #+end_src
 
 Parallels transformations can be used anywhere of course. Here inside a =tup=.
 
 #+begin_src clojure :proll
-(play o1 (tup c0 #{c15 c10} c9 #{c6 c4}) (rep 3 c3))
+(play o1
+      (tup c0 #{c15 c10}
+           c9 #{c6 c4})
+      (rep 3 c3))
 #+end_src
 
 #+begin_src clojure :proll
-(play (par (rep 12 c1) (rep 12 c1-)))
+(play (par (rep 12 c1)
+           (rep 12 c1-)))
 #+end_src
 
 Like =cat= and =tup=, =par= has its accumulative counterpart:
@@ -714,7 +723,9 @@ Like =cat= and =tup=, =par= has its accumulative counterpart:
 #+end_src
 
 #+begin_src clojure :proll
-(play (patch :string-ensemble-1) o2- (par> c0 c7 c7 c7 c7 c7)) ; piling perfect fifths.
+(play (patch :string-ensemble-1)
+      o2-
+      (par> c0 c7 c7 c7 c7 c7)) ; piling perfect fifths.
 #+end_src
 
 **** Channels
@@ -730,37 +741,34 @@ To be more precise it put each of its argument on subsequent midi channels start
 When we want more fine control we can use the =chan= function, that works like =vel= and =dur=
 
 #+begin_src clojure :pp
-(chan 1)
+(chan 1) ; set midi channel to 1
 #+end_src
-
-set midi channel to 1
 
 #+begin_src clojure :pp
-(chan 3)
+(chan 3) ; set midi channel to 3
 #+end_src
-
-set midi channel to 3
 
 #+begin_src clojure :pp
-(chan inc)
+(chan inc) ; increment the current midi channel.
 #+end_src
-
-increment the current midi channel.
 
 We can achieve the same thing as the first expression of the section using =par= and =chan= like this:
 
 #+begin_src clojure :proll
-(play (par [(chan 0) c0] [(chan 1) c3] [(chan 2) c7]))
+(play (par [(chan 0) c0]
+           [(chan 1) c3]
+           [(chan 2) c7]))
 #+end_src
 
 **** Tracks
 
-Tracks are a way of not be limited to only 16 channels, you can create virtually as many as you want. Most of the time, 16 channels are enough but who knows... The =tracks= function works exactly like the =chans= function, except that it operates on the :track entry of events.
+Tracks are a way of not be limited to only 16 channels, you can create virtually as many as you want. Most of the time, 16 channels are enough but who knows... The =tracks= function works exactly like the =chans= function, except that it operates on the =:track= entry of events.
 
 #+begin_src clojure :proll
 (play
  (patch :flute)
- (tracks (tup> c0 c5 c5 c5- c2- c7-) (tup> c0 c2- c5 c5))
+ (tracks (tup> c0 c5 c5 c5- c2- c7-)
+         (tup> c0 c2- c5 c5))
  (dup 4))
 #+end_src
 
@@ -780,22 +788,25 @@ By default we are on track 0. So the second argument of tracks goes on track 1. 
 
 *** Mapping
 
-All the transformation we've seen so far are acting on a score to produce another score, but sometimes what we need is to apply a transformation on each event of a score, for this we are using the =$= function.
+All the transformations we've seen so far are acting on a score to produce another score, but sometimes what we need is to apply a transformation on each event of a score, for this we are using the =$= function.
 
 As an illustration, here those two fragments:
 
 #+begin_src clojure :proll
-(play (cat c0 c1 c2 c3) (tup c0 o1)) ; each member of this `tup` form receives and operate on the whole score
+(play (cat c0 c1 c2 c3)
+      (tup c0 o1)) ; each member of this `tup` form receives and operate on the whole score
 #+end_src
 
 #+begin_src clojure :proll
-(play (cat c0 c1 c2 c3) ($ (tup c0 o1))) ; each event of the score is transformed using this `tup` transformation.
+(play (cat c0 c1 c2 c3)
+      ($ (tup c0 o1))) ; each event of the score is transformed using this `tup` transformation.
 #+end_src
 
 One important thing to be aware of is that events will be mapped in place, so if the given transformation expand the score, some superposition will occur.
 
 #+begin_src clojure :proll
-(play (cat c0 o1) ($ [dur:4 (rep 8 c1-)]))
+(play (cat c0 o1)
+      ($ [dur:4 (rep 8 c1-)]))
 #+end_src
 
 Some others functions exists to transform only subparts of the score, if interested you can look at =$by= and/or =parts=.
