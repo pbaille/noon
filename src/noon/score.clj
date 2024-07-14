@@ -205,24 +205,42 @@
 
             (defmacro import-wrap-harmony-update-constructors [& xs]
               `(do ~@(map (fn [x]
-                            `(defn ~x [~'& xs#]
-                               (let [u# (apply ~(symbol "noon.harmony" (name x)) xs#)]
-                                 #_(println '~x xs#)
-                                 (map->efn
-                                  {:pitch
-                                   (fn [ctx#]
-                                     #_(println ctx#)
-                                     (h/upd ctx# u#))}))))
+                            (let [original-sym (symbol "noon.harmony" (name x))]
+                              `(defn ~x
+                                 ~(str "Build an harmonic event-update using " original-sym
+                                       "\n  The resulting transformation will be used to update the :pitch value of the received event.\n\n"
+                                       "  " original-sym
+                                       "\n\n  arglists:\n\n  "
+                                       (:arglists (meta (resolve original-sym)))
+                                       "\n\n  doc:\n\n  "
+                                       (:doc (meta (resolve original-sym))
+                                             "undocumented"))
+                                 {:tags [:event-update :harmonic]}
+                                 [~'& xs#]
+                                 (let [u# (apply ~(symbol "noon.harmony" (name x)) xs#)]
+                                   #_(println '~x xs#)
+                                   (map->efn
+                                    {:pitch
+                                     (fn [ctx#]
+                                       #_(println ctx#)
+                                       (h/upd ctx# u#))})))))
                           xs)))
 
             (defmacro import-wrap-harmony-updates [& xs]
               `(do ~@(map (fn [x]
-                            `(def ~x
-                               (map->efn
-                                {:pitch
-                                 (fn [ctx#]
-                                   #_(println ctx#)
-                                   (h/upd ctx# ~(symbol "noon.harmony" (name x))))})))
+                            (let [original-sym (symbol "noon.harmony" (name x))]
+                              (list 'def (with-meta x
+                                           {:doc (str "Updates the :pitch value of the received event using "
+                                                      original-sym
+                                                      "\n\ndoc:\n\n"
+                                                      (:doc (meta (resolve original-sym))
+                                                            "undocumented"))
+                                            :tags [:event-update :harmmonic]})
+                                    `(map->efn
+                                      {:pitch
+                                       (fn [ctx#]
+                                         #_(println ctx#)
+                                         (h/upd ctx# ~(symbol "noon.harmony" (name x))))}))))
                           xs)))
 
             (import-wrap-harmony-update-constructors
@@ -246,6 +264,7 @@
 
             (defn transpose
               "Transpose the pitch origin of all events by the given update."
+              {:tags [:event-update :harmonic]}
               [f]
               (assert (event-update? f) "transpose only takes event-update")
               (ef_ (let [new-origin (h/hc->pitch (:pitch (f ((position 0) _))))]
@@ -253,6 +272,7 @@
 
             (defn rebase
               "Applies the given transformations while preserving pitch."
+              {:tags [:event-update :harmonic]}
               [& fs]
               (ef_
                (reduce #(%2 %1) _
