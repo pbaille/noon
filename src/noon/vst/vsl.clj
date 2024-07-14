@@ -83,7 +83,7 @@
         (u/throw* "vsl-instrument: unknown instrument: " instrument-name))))
 
 (defn patch [patch-name]
-  (n/efn e (if-let [{:keys [instrument category]} (get e :vsl)]
+  (n/efn e (if-let [{:keys [_instrument category]} (get e :vsl)]
              (let [{:keys [programs tree]} (get-in CONFIG [category :patches])]
                (or (first (keep-indexed (fn [idx [_ patches]]
                                           (if-let [patch-idx (u/index-of patches patch-name)]

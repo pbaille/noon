@@ -57,7 +57,7 @@
     (defn sum->tup [xs]
       (n/tup* (map n/dur xs)))
 
-    (n/defn* durtup
+    (u/defn* durtup
       "build a tup from some numbers"
       [xs]
       (sum->tup xs))

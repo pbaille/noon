@@ -295,51 +295,6 @@
     (defn with-form [x f]
       (vary-meta x assoc :form f)))
 
-(comment :deprecated
-  (do :eq
-
-      (defn eq
-        ([x]
-         (with-form
-           (fn [y] (eq x y))
-           `(eq ~x)))
-        ([x y]
-         (= (form x)
-            (form y)))))
-
-  (do :closures
-
-      (defn- qualify-closure-name [x]
-        (symbol (str *ns*) (name x)))
-
-      (defn- closure-form-expression [nam argv]
-        (let [variadic? (some #{'&} argv)
-              name (qualify-closure-name nam)]
-          (if variadic?
-            `(list* '~name ~@(drop-last 2 argv) ~(last argv))
-            `(list '~name ~@argv))))
-
-      (defmacro defn
-        "utility to define functions that returns functions.
-       the point is to mark the returned function so it can be compared."
-        ([name return]
-         `(def ~name
-            (with-form ~return
-              '~(qualify-closure-name name))))
-        ([name x & xs]
-         (let [{:keys [doc attrs arities]}
-               (parse-defn (list* name x xs))]
-
-           `(defn ~name
-              ~@(if doc [doc])
-              ~@(if attrs [attrs])
-              ~@(map (fn [[argv & body]]
-                       (assert (every? symbol? argv)
-                               "no destructuration allowed here")
-                       `(~argv (with-form (do ~@body)
-                                 ~(closure-form-expression name argv))))
-                     arities)))))))
-
 (do :files&paths
 
     (defn parse-file-path [n]

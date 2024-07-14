@@ -1,6 +1,6 @@
 (ns noon.harmony
   (:refer-clojure :exclude [struct])
-  (:require [noon.utils.misc :as u :refer [t t? defn*]]
+  (:require [noon.utils.misc :as u :refer [t t?]]
             [noon.constants :as constants]))
 
 (do :impl

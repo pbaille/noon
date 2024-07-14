@@ -60,8 +60,8 @@
           :harmony (harmonic-chunks score)}))))
 
 (comment
-  (use 'noon.score)
-  (require '[noon.lib.harmony :as lh])
+  '(do (use 'noon.score)
+       (require '[noon.lib.harmony :as lh]))
   (spit "src/noon/doc/sample-pr.el"
         (with-out-str
           (clojure.pprint/pprint
@@ -88,14 +88,16 @@
       (and (seq? x)
            (= 'play (first x))))
 
-    (defn annotations? [x]
+    (defn annotations?
       "A map with exopressions as keys and strings as values denotes annotated snippets of code.
 Each expression becomes a code block with the annotation as a side comment."
+      [x]
       (and (map? x)
            (every? string? (vals x))))
 
-    (defn paragraph? [x]
+    (defn paragraph?
       "a vector of string denotes a paragraph."
+      [x]
       (and (vector? x)
            (every? string? x)))
 
@@ -109,17 +111,18 @@ Each expression becomes a code block with the annotation as a side comment."
              "\n\n")))
 
     (def org-markup-builders
-      {:ol (fn [xs lvl] (str (str/join "\n" (map-indexed (fn [i x] (str (inc i) ". " x)) xs))
+      {:ol (fn [xs _] (str (str/join "\n" (map-indexed (fn [i x] (str (inc i) ". " x)) xs))
                              "\n\n"))
-       :ul (fn [xs lvl] (str (str/join "\n" (map (fn [x] (str "- " x)) xs))
+       :ul (fn [xs _] (str (str/join "\n" (map (fn [x] (str "- " x)) xs))
                              "\n\n"))
-       :* (fn [[title & content] lvl]
+       :* (fn [[_title & _content] _lvl]
             ())
-       :table (fn [xs lvl]
+       :table (fn [xs _lvl]
                 (build-org-table xs))})
 
-    (defn org-markup? [x]
+    (defn org-markup?
       "Some special keywords are interpreted as markup builders when in first position of a vector."
+      [x]
       (and (seq? x)
            (= 'org (first x))))
 

@@ -16,7 +16,7 @@
                        noon.score/ef_ noon.score/ef_
                        noon.score/sfn noon.score/sfn
                        noon.score/sf_ noon.score/sf_
-                       noon.score/defn* noon.score/defn*
+                       noon.utils.misc/defn* noon.utils.misc/defn*
                        noon.utils.misc/f_ noon.utils.misc/f_
                        noon.utils.misc/>_ noon.utils.misc/>_
                        noon.score/import-wrap-harmony-update-constructors noon.score/import-wrap-harmony-update-constructors

@@ -41,3 +41,20 @@
     `(def ~name
        ~@(if doc [doc])
        (reduction (fn ~argv ~@body)))))
+
+(defmacro defn*
+  [& form]
+  (let [{:keys [name doc attrs arities]} (parse-defn form)
+        applied-name (symbol (str name "*"))
+        [argv & body] (first arities)
+        variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
+    `(do (defn ~applied-name
+           ~@(if doc [doc])
+           ~@(if attrs [attrs])
+           ~argv
+           ~@body)
+         (defn ~name
+           ~@(if doc [doc])
+           ~@(if attrs [attrs])
+           ~variadic-argv
+           (~applied-name ~@argv)))))

@@ -171,7 +171,7 @@
                   (recur (conj ret (assoc x :pitch aligned)) xs))
                 (set ret)))))))
 
-(n/defn* grid-zipped
+(u/defn* grid-zipped
   "zip the current score (which should represent an harmonic grid)
    to the resulting of applying 'xs updates to a fresh score."
   [xs]
@@ -199,7 +199,7 @@
                       (recur (conj ret fw) fws bws)))))))
           #{} xs))
 
-(n/defn* grid
+(u/defn* grid
   "grid"
   [xs]
   (n/sf_ (->> (map (fn [[position [{:keys [duration pitch]}]]]

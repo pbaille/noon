@@ -16,32 +16,6 @@
 (defmacro sf_ [& body]
   `(sfn ~'_ ~@body))
 
-(defn parse-defn [[name x & xs]]
-  (let [[doc [x & xs]] (if (string? x) [x xs] [nil (cons x xs)])
-        [attrs body] (if (map? x) [x xs] [nil (cons x xs)])
-        arities (if (vector? (first body)) (list body) body)]
-    {:name name
-     :doc doc
-     :attrs attrs
-     :arities arities}))
-
-(defmacro defn*
-  [& form]
-  (let [{:keys [name doc attrs arities]} (parse-defn form)
-        applied-name (symbol (str name "*"))
-        [argv & body] (first arities)
-        variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
-    `(do (defn ~applied-name
-           ~@(if doc [doc])
-           ~@(if attrs [attrs])
-           ~argv
-           ~@body)
-         (defn ~name
-           ~@(if doc [doc])
-           ~@(if attrs [attrs])
-           ~variadic-argv
-           (~applied-name ~@argv)))))
-
 (defmacro import-wrap-harmony-update-constructors [& xs]
   `(do ~@(mapv (fn [x]
                  (macroexpand `(defn ~x ~'[& _] nil)))
