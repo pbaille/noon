@@ -1,12 +1,4 @@
-(ns noon.doc.intro
-  (:use noon.score)
-  (:refer-clojure :exclude [cat struct while])
-  (:require [clojure.pprint :as pprint]
-            [noon.lib.harmony :as h]
-            [noon.lib.melody :as m]
-            [noon.lib.rythmn :as r]
-            [noon.utils.sequences :as seqs]
-            [clojure.string :as str]))
+(ns noon.doc.intro)
 
 (def guide
 
