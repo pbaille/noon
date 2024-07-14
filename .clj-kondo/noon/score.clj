@@ -36,7 +36,7 @@
         applied-name (symbol (str name "*"))
         [argv & body] (first arities)
         variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
-    `(do (defclosure ~applied-name
+    `(do (noon.utils.misc/defclosure ~applied-name
            ~@(if doc [doc])
            ~@(if attrs [attrs])
            ~argv

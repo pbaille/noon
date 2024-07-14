@@ -635,6 +635,7 @@
 
     (defclosure* k
       "Act like 'mk, ignoring current score."
+      {:tags [:base]}
       [xs]
       (sf_ (mk* xs)))
 
@@ -643,16 +644,19 @@
 
     (defclosure* lin
       "Compose several updates together linearly."
+      {:tags [:base]}
       [xs]
       (sf_ (?reduce upd _ xs)))
 
     (defclosure* par
       "Apply several update on a score merging the results."
+      {:tags [:base :parallel]}
       [xs]
       (sf_ (ms/mk (map #(upd _ %) xs))))
 
     (defclosure* par>
       "Accumulative 'par."
+      {:tags [:accumulative :parallel]}
       [xs]
       (sf_ (loop [segments [_] xs xs]
              (if-let [[x & xs] xs]
@@ -661,12 +665,14 @@
 
     (defclosure* $
       "Apply an update to each events of a score."
+      {:tags [:base :iterative]}
       [xs]
       (sf_ (?reduce (fn [s x] (ms/$ s (->event-upd x)))
                     _ xs)))
 
     (defclosure* cat
       "Feed each transformations with the current score and concatenate the results."
+      {:tags [:base :linear]}
       [xs]
       (sfn score
            (concat-scores
@@ -674,6 +680,7 @@
 
     (defclosure* cat>
       "Accumulative 'cat."
+      {:tags [:base :linear :accumulative]}
       [xs]
       (sf_ (loop [segments [_] xs xs]
              (if-let [[x & xs] xs]
@@ -683,30 +690,36 @@
     (defclosure* fit
       "Wraps the given transformation 'x, stretching its output to the input score duration.
        In other words, turn any transformation into another one that do not change the duration of its input score."
+      {:tags [:base]}
       [xs]
       (sf_ (fit-score (upd _ (lin* xs))
                       {:duration (score-duration _)})))
 
     (defclosure* tup
       "Like 'cat but preserve the length of the input score"
+      {:tags [:base :linear]}
       [xs] (fit (cat* xs)))
 
     (defclosure* tup>
       "Accumulative 'tup."
+      {:tags [:accumulative :linear]}
       [xs] (fit (cat>* xs)))
 
     (defclosure* append
       "Like 'cat but insert the current score before."
+      {:tags [:base :linear]}
       [xs]
       (cat* (cons same xs)))
 
     (defclosure* superpose
       "Like 'par but keep the current score."
+      {:tags [:base :parallel]}
       [xs]
       (par* (cons same xs)))
 
     (defclosure rep
       "Iterates the given update n times over the input score and cat the results."
+      {:tags [:base :linear :accumulative]}
       ([n x]
        (rep n x false))
       ([n x skip-first]
@@ -717,6 +730,7 @@
 
     (defclosure rup
       "Iterates the given update n times over the input score and tup the results."
+      {:tags [:base :linear :accumulative]}
       ([n x]
        (rup n x false))
       ([n x skip-first]
@@ -724,25 +738,30 @@
 
     (defclosure dup
       "Duplicate n times and concat the duplicates."
+      {:tags [:base :linear :multiplicative]}
       [n]
       (sf_ (concat-scores (repeat n _))))
 
     (defclosure dupt
       "Duplicate n times and tup the duplicates."
+      {:tags [:base :linear :multiplicative]}
       [n]
       (fit (dup n)))
 
     (defclosure tupn
       "Creates a tup of size n using the 'f update."
+      {:tags [:base :linear :multiplicative]}
       [n f] (tup* (repeat n f)))
 
     (defclosure catn
       "Duplicate n times the score resulting from applying 'f on the current score."
+      {:tags [:base :linear :multiplicative]}
       [n f] (cat* (repeat n f)))
 
     (defclosure* parts
       "Apply updates to subscores
        (parts sel1 upd1 sel2 upd2 ...)"
+      {:tags [:base :partial]}
       [xs]
       (sf_ (reduce (fn [s [filt upd]]
                      (partial-upd2 s filt upd))
@@ -750,6 +769,7 @@
 
     (defclosure while
       "Iterate the given transformation 'f while 'test is passing."
+      {:tags [:base :iterative]}
       ([test f] (while test f same))
       ([test f after]
        (sf_ (let [nxt (upd _ f)]
@@ -759,6 +779,7 @@
 
     (defclosure* fst
       "Tries given transformations in order until the first success (non empty score)."
+      {:tags [:base :selective]}
       [xs]
       (sf_ (loop [xs xs]
              (if-let [[x & xs] (seq xs)]
@@ -767,18 +788,21 @@
 
     (defclosure* fst-that
       "Tries given transformations in order until one passes the given test."
+      {:tags [:base :selective]}
       [test fs]
       (fst* (map (f_ (lin _ test))
                  fs)))
 
     (defclosure shrink
       "Shrink a score using 'f on each events to determine if it is kept or not."
+      {:tags [:base :temporal]}
       [f]
       (sf_ (ms/shrink _ f)))
 
     (defclosure adjust
       "Time stretching/shifting operation
        syntax sugar over 'fit-score."
+      {:tags [:base :temporal]}
       [x]
       (let [opts (cond (map? x) x
                        (number? x) {:duration x}
@@ -796,10 +820,12 @@
 
     (defclosure* chans
       "Apply each update in parallel on subsequent midi channels."
+      {:tags [:base :parallel]}
       [xs] (fork-with* chan+ xs))
 
     (defclosure* tracks
       "Apply each update in parallel on subsequent midi tracks."
+      {:tags [:base :parallel]}
       [xs] (fork-with* track+ xs))
 
     (defclosure mirror
@@ -862,7 +888,7 @@
                        (upd {:position 0}))))
 
             (defclosure trim
-              "Removes everything before 'beg and after 'end from the score 
+              "Removes everything before 'beg and after 'end from the score
                (triming overlapping durations)."
               [beg end]
               ($ (efn {:as evt :keys [position duration]}
@@ -1065,7 +1091,7 @@
                       (reduce into #{})))))
 
         (defn try-until
-          "Given the undeterministic update 'u, 
+          "Given the undeterministic update 'u,
            tries it on the score until the result of it passes 'test"
           [test u & {:keys [max] :or {max 100}}]
           (sf_ (loop [n 0]
