@@ -97,22 +97,6 @@
         (defn dur [x]
           {:duration x})
 
-        ;; defines some duration update vars
-        ;; d2 ... d11 to multiply it
-        ;; d:2 ... d:11 to divide it
-        ;; TODO add meta on those vars (doc and tags)
-        (defmacro -def-durations []
-          (cons 'do
-                (concat (for [i (range 2 12)]
-                          (list 'do
-                                (list 'def (symbol (str "dur" i)) `(dur (mul ~i)))
-                                (list 'def (symbol (str "dur:" i)) `(dur (div ~i)))))
-                        (for [n (range 2 12)
-                              d (range 2 12)]
-                          (list 'def (symbol (str "dur" n ":" d))
-                                `(dur (mul (/ ~n ~d))))))))
-        (-def-durations)
-
         (defn vel [x]
           {:velocity x})
 
@@ -121,40 +105,18 @@
 
         (def vel0 (vel 0))
 
-        ;; defines 12 levels of velocity from 10 to 127
-        ;; as v1 ... v12
-        (defmacro -def-velocities []
-          (cons 'do
-                (for [i (range 1 13)]
-                  (list 'def (symbol (str "vel" i))
-                        `(vel ~(int (* i (/ 127 12))))))))
-        (-def-velocities)
-
         ;; channels
         (defn chan [x]
           {:channel x})
 
         (defn chan+ [x] (chan (add x)))
         (defn chan- [x] (chan (sub x)))
-
-        (defmacro -def-channels []
-          (cons 'do
-                (for [i (range 0 16)]
-                  (list 'def (symbol (str "chan" i)) `(chan ~i)))))
-        (-def-channels)
-
         ;; tracks
         (defn track [x]
           {:track x})
 
         (defn track+ [x] (track (add x)))
         (defn track- [x] (track (sub x)))
-
-        (defmacro -def-tracks []
-          (cons 'do
-                (for [i (range 0 16)]
-                  (list 'def (symbol (str "track" i)) `(track ~i)))))
-        (-def-tracks)
 
         (do :voice
 
@@ -179,6 +141,63 @@
                  (number? x) (patch nil x)))
           ([bank program]
            (patch [bank program])))
+
+        (do :var-definitions
+
+            "defines some vars shorthands for duration, velocity, channel and track updates."
+
+            ;; defines some duration update vars
+            ;; d2 ... d11 to multiply it
+            ;; d:2 ... d:11 to divide it
+            (defmacro -def-durations []
+              (cons 'do
+                    (concat (for [i (range 2 12)]
+                              (list 'do
+                                    (list 'def (with-meta (symbol (str "dur" i))
+                                                 {:doc (str "Multiply event duration by " i)
+                                                  :tags [:event-update :temporal]})
+                                          `(dur (mul ~i)))
+                                    (list 'def (with-meta (symbol (str "dur:" i))
+                                                 {:doc (str "Divide event duration by " i)
+                                                  :tags [:event-update :temporal]})
+                                          `(dur (div ~i)))))
+                            (for [n (range 2 12)
+                                  d (range 2 12)]
+                              (list 'def (with-meta (symbol (str "dur" n ":" d))
+                                           {:doc (str "Multiply event duration by " n "/" d)
+                                            :tags [:event-update :temporal]})
+                                    `(dur (mul (/ ~n ~d))))))))
+            (-def-durations)
+
+            ;; defines 12 levels of velocity from 10 to 127
+            ;; as v1 ... v12
+            (defmacro -def-velocities []
+              (cons 'do
+                    (for [i (range 1 13)]
+                      (let [v (int (* i (/ 127 12)))]
+                        (list 'def (with-meta (symbol (str "vel" i))
+                                     {:doc (str "Set event velocity to " v)
+                                      :tags [:event-update]})
+                              `(vel ~v))))))
+            (-def-velocities)
+
+            (defmacro -def-channels []
+              (cons 'do
+                    (for [i (range 0 16)]
+                      (list 'def (with-meta (symbol (str "chan" i))
+                                   {:doc (str "Set event midi channel to " i)
+                                    :tags [:event-update]})
+                            `(chan ~i)))))
+            (-def-channels)
+
+            (defmacro -def-tracks []
+              (cons 'do
+                    (for [i (range 0 16)]
+                      (list 'def (with-meta (symbol (str "track" i))
+                                   {:doc (str "Set event midi channel to " i)
+                                    :tags [:event-update]})
+                            `(track ~i)))))
+            (-def-tracks))
 
         (do :pitch
 
