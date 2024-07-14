@@ -304,20 +304,59 @@
                     (def s0 (s-step 0))
                     (def t0 (t-step 0))
 
-                    (h/defsteps "c" 37 c-step)
-                    (h/defsteps "d" 22 d-step)
-                    (h/defsteps "s" 13 s-step)
-                    (h/defsteps "t" 13 t-step)
-                    (h/defsteps "o" 9 (fn [i] (t-shift i :forced))))
+                    (defmacro -def-steps [name prefix max f]
+                      (cons 'do
+                            (mapcat
+                             (fn [n]
+                               [(list 'def (with-meta (symbol (str prefix n))
+                                             {:doc (str "Step up "
+                                                        n " " name " " (if (> n 1) "steps" "step") ".")
+                                              :tags [:event-update :harmonic]})
+                                      (list f n))
+                                (list 'def (with-meta (symbol (str prefix n "-"))
+                                             {:doc (str "Step down " n " " name " " (if (> n 1) "steps" "step") ".")
+                                              :tags [:event-update :harmonic]})
+                                      (list f (list `- n)))])
+                             (range 1 max))))
 
-                (doseq [[n v] (map vector '[I II III IV V VI VII] (range))]
-                  (eval (list 'def n (degree v))))
+                    (-def-steps "chromatic" "c" 37 c-step)
+                    (-def-steps "diatonic" "d" 22 d-step)
+                    (-def-steps "structural" "s" 13 s-step)
+                    (-def-steps "tonic" "t" 13 t-step)
 
-                (doseq [[dn dv an av]
-                        (for [[degree-sym degree-val] (map vector '[I II III IV V VI VII] (range))
-                              [alteration-sym alteration-val] [["#" c1] ["b" c1-]]]
-                          [degree-sym degree-val alteration-sym alteration-val])]
-                  (eval (list 'def (symbol (str dn an)) [(transpose av) (degree dv)])))))))
+                    (defmacro -def-shifts [name prefix max f]
+                      (cons 'do
+                            (mapcat
+                             (fn [n]
+                               [(list 'def (with-meta (symbol (str prefix n))
+                                             {:doc (str "Shift up "
+                                                        n " " name (when (> n 1) "s") ".")
+                                              :tags [:event-update :harmonic]})
+                                      (list f n))
+                                (list 'def (with-meta (symbol (str prefix n "-"))
+                                             {:doc (str "Shift down " n " " name (when (> n 1) "s") ".")
+                                              :tags [:event-update :harmonic]})
+                                      (list f (list `- n)))])
+                             (range 1 max))))
+
+                    (-def-shifts "octave" "o" 9 (fn [i] (t-shift i :forced))))
+
+                (defmacro -def-degrees []
+                  (cons 'do
+                        (concat (for [[n v] (map vector '[I II III IV V VI VII] (range))]
+                                  (list 'def (with-meta n
+                                               {:doc (str "Go to degree " n)
+                                                :tags [:event-update :harmonic]})
+                                        (degree v)))
+                                (for [[degree-sym degree-val] (map vector '[I II III IV V VI VII] (range))
+                                      [alteration-sym alteration-val] [["#" c1] ["b" c1-]]]
+                                  (let [[dn dv an av] [degree-sym degree-val alteration-sym alteration-val]]
+                                    (list 'def (with-meta (symbol (str dn an))
+                                                 {:doc (str "Go to degree " an dn)
+                                                  :tags [:event-update :harmonic]})
+                                          `[(transpose ~av) (degree ~dv)]))))))
+
+                (-def-degrees)))))
 
 (do :score
 
