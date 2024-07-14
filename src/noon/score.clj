@@ -8,7 +8,7 @@
             [noon.harmony :as h]
             [noon.vst.index :as vst]
             [noon.constants :as constants]
-            [noon.utils.misc :as u :refer [t t? f_ defclosure]]
+            [noon.utils.misc :as u :refer [t t? f_ defn*]]
             [noon.utils.mapsets :as ms]
             [noon.utils.maps :as m]
             [noon.utils.chance :as g]
@@ -25,16 +25,16 @@
            (println '~&form)
            (pp ~@xs)))
 
-    (defclosure sub [x] (f_ (- _ x)))
-    (defclosure add [x] (f_ (+ _ x)))
-    (defclosure mul [x] (f_ (* _ x)))
-    (defclosure div [x] (f_ (/ _ x)))
+    (defn sub [x] (f_ (- _ x)))
+    (defn add [x] (f_ (+ _ x)))
+    (defn mul [x] (f_ (* _ x)))
+    (defn div [x] (f_ (/ _ x)))
 
-    (defclosure eq [x] (f_ (= _ x)))
-    (defclosure gt [x] (f_ (> _ x)))
-    (defclosure lt [x] (f_ (< _ x)))
-    (defclosure gte [x] (f_ (>= _ x)))
-    (defclosure lte [x] (f_ (<= _ x)))
+    (defn eq [x] (f_ (= _ x)))
+    (defn gt [x] (f_ (> _ x)))
+    (defn lt [x] (f_ (< _ x)))
+    (defn gte [x] (f_ (>= _ x)))
+    (defn lte [x] (f_ (<= _ x)))
 
     (def hm* (partial apply hash-map))
 
@@ -43,45 +43,7 @@
       [f init xs]
       (reduce (fn [a e]
                 (or (f a e) (reduced nil)))
-              init xs))
-
-    '(defmacro defclosure*-bu
-      "Like 'noon.utils/defclosure but last argument is bound variadicaly.
-       it defines two functions,
-       - one that binds the last ARGV pattern to variadic arguments.
-       - one (postfixed by *) that expect it as a seq.
-       This is somehow analogous to #'list and #'list*"
-      [name doc argv & body]
-      (let [applied-name (symbol (str name "*"))
-            variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
-        `(do (defclosure ~applied-name ~doc
-               ~argv
-               ~@body)
-             (defn ~name ~doc
-               ~variadic-argv
-               (~applied-name ~@argv)))))
-
-    (defmacro defclosure*
-      "Like 'noon.utils/defclosure but last argument is bound variadicaly.
-       it defines two functions,
-       - one that binds the last ARGV pattern to variadic arguments.
-       - one (postfixed by *) that expect it as a seq.
-       This is somehow analogous to #'list and #'list*"
-      [& form]
-      (let [{:keys [name doc attrs arities]} (u/parse-defn form)
-            applied-name (symbol (str name "*"))
-            [argv & body] (first arities)
-            variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
-        `(do (defclosure ~applied-name
-               ~@(if doc [doc])
-               ~@(if attrs [attrs])
-               ~argv
-               ~@body)
-             (defn ~name
-               ~@(if doc [doc])
-               ~@(if attrs [attrs])
-               ~variadic-argv
-               (~applied-name ~@argv))))))
+              init xs)))
 
 (do :event
 
@@ -138,6 +100,7 @@
         ;; defines some duration update vars
         ;; d2 ... d11 to multiply it
         ;; d:2 ... d:11 to divide it
+        ;; TODO add meta on those vars (doc and tags)
         (defmacro -def-durations []
           (cons 'do
                 (concat (for [i (range 2 12)]
@@ -223,7 +186,7 @@
 
             (defmacro import-wrap-harmony-update-constructors [& xs]
               `(do ~@(map (fn [x]
-                            `(u/defclosure ~x [~'& xs#]
+                            `(defn ~x [~'& xs#]
                                (let [u# (apply ~(symbol "noon.harmony" (name x)) xs#)]
                                  #_(println '~x xs#)
                                  (map->efn
@@ -262,14 +225,14 @@
              d-round d-ceil d-floor
              s+ s-)
 
-            (defclosure transpose
+            (defn transpose
               "Transpose the pitch origin of all events by the given update."
               [f]
               (assert (event-update? f) "transpose only takes event-update")
               (ef_ (let [new-origin (h/hc->pitch (:pitch (f ((position 0) _))))]
                      (assoc-in _ [:pitch :origin] new-origin))))
 
-            (defclosure rebase
+            (defn rebase
               "Applies the given transformations while preserving pitch."
               [& fs]
               (ef_
@@ -628,33 +591,39 @@
 
     "The main forms you will use inside 'mk or 'play."
 
-    (def same
+    (def ^{:doc "Identity transformation"
+           :tags [:base]}
+      same
       (sf_ _))
 
-    (def _ same)
+    (def ^{:doc "Identity transformation"
+           :tags [:base]}
+      _ same)
 
-    (defclosure* k
+    (defn* k
       "Act like 'mk, ignoring current score."
       {:tags [:base]}
       [xs]
       (sf_ (mk* xs)))
 
-    (def void
+    (def ^{:doc "Returns the empty score regardless of input."
+           :tags [:base]}
+      void
       (sf_ #{}))
 
-    (defclosure* lin
+    (defn* lin
       "Compose several updates together linearly."
       {:tags [:base]}
       [xs]
       (sf_ (?reduce upd _ xs)))
 
-    (defclosure* par
+    (defn* par
       "Apply several update on a score merging the results."
       {:tags [:base :parallel]}
       [xs]
       (sf_ (ms/mk (map #(upd _ %) xs))))
 
-    (defclosure* par>
+    (defn* par>
       "Accumulative 'par."
       {:tags [:accumulative :parallel]}
       [xs]
@@ -663,14 +632,14 @@
                (recur (conj segments (upd (peek segments) x)) xs)
                (reduce into #{} (next segments))))))
 
-    (defclosure* $
+    (defn* $
       "Apply an update to each events of a score."
       {:tags [:base :iterative]}
       [xs]
       (sf_ (?reduce (fn [s x] (ms/$ s (->event-upd x)))
                     _ xs)))
 
-    (defclosure* cat
+    (defn* cat
       "Feed each transformations with the current score and concatenate the results."
       {:tags [:base :linear]}
       [xs]
@@ -678,7 +647,7 @@
            (concat-scores
             (map (f_ (upd score _)) xs))))
 
-    (defclosure* cat>
+    (defn* cat>
       "Accumulative 'cat."
       {:tags [:base :linear :accumulative]}
       [xs]
@@ -687,7 +656,7 @@
                (recur (conj segments (upd (peek segments) x)) xs)
                (concat-scores (next segments))))))
 
-    (defclosure* fit
+    (defn* fit
       "Wraps the given transformation 'x, stretching its output to the input score duration.
        In other words, turn any transformation into another one that do not change the duration of its input score."
       {:tags [:base]}
@@ -695,29 +664,29 @@
       (sf_ (fit-score (upd _ (lin* xs))
                       {:duration (score-duration _)})))
 
-    (defclosure* tup
+    (defn* tup
       "Like 'cat but preserve the length of the input score"
       {:tags [:base :linear]}
       [xs] (fit (cat* xs)))
 
-    (defclosure* tup>
+    (defn* tup>
       "Accumulative 'tup."
       {:tags [:accumulative :linear]}
       [xs] (fit (cat>* xs)))
 
-    (defclosure* append
+    (defn* append
       "Like 'cat but insert the current score before."
       {:tags [:base :linear]}
       [xs]
       (cat* (cons same xs)))
 
-    (defclosure* superpose
+    (defn* superpose
       "Like 'par but keep the current score."
       {:tags [:base :parallel]}
       [xs]
       (par* (cons same xs)))
 
-    (defclosure rep
+    (defn rep
       "Iterates the given update n times over the input score and cat the results."
       {:tags [:base :linear :accumulative]}
       ([n x]
@@ -728,7 +697,7 @@
                  (take n)
                  (concat-scores)))))
 
-    (defclosure rup
+    (defn rup
       "Iterates the given update n times over the input score and tup the results."
       {:tags [:base :linear :accumulative]}
       ([n x]
@@ -736,29 +705,29 @@
       ([n x skip-first]
        (fit (rep n x skip-first))))
 
-    (defclosure dup
+    (defn dup
       "Duplicate n times and concat the duplicates."
       {:tags [:base :linear :multiplicative]}
       [n]
       (sf_ (concat-scores (repeat n _))))
 
-    (defclosure dupt
+    (defn dupt
       "Duplicate n times and tup the duplicates."
       {:tags [:base :linear :multiplicative]}
       [n]
       (fit (dup n)))
 
-    (defclosure tupn
+    (defn tupn
       "Creates a tup of size n using the 'f update."
       {:tags [:base :linear :multiplicative]}
       [n f] (tup* (repeat n f)))
 
-    (defclosure catn
+    (defn catn
       "Duplicate n times the score resulting from applying 'f on the current score."
       {:tags [:base :linear :multiplicative]}
       [n f] (cat* (repeat n f)))
 
-    (defclosure* parts
+    (defn* parts
       "Apply updates to subscores
        (parts sel1 upd1 sel2 upd2 ...)"
       {:tags [:base :partial]}
@@ -767,7 +736,7 @@
                      (partial-upd2 s filt upd))
                    _ (partition 2 xs))))
 
-    (defclosure while
+    (defn while
       "Iterate the given transformation 'f while 'test is passing."
       {:tags [:base :iterative]}
       ([test f] (while test f same))
@@ -777,7 +746,7 @@
                 (recur nxt)
                 (upd nxt after))))))
 
-    (defclosure* fst
+    (defn* fst
       "Tries given transformations in order until the first success (non empty score)."
       {:tags [:base :selective]}
       [xs]
@@ -786,20 +755,20 @@
                (or (not-empty (upd _ x))
                    (recur xs))))))
 
-    (defclosure* fst-that
+    (defn* fst-that
       "Tries given transformations in order until one passes the given test."
       {:tags [:base :selective]}
       [test fs]
       (fst* (map (f_ (lin _ test))
                  fs)))
 
-    (defclosure shrink
+    (defn shrink
       "Shrink a score using 'f on each events to determine if it is kept or not."
       {:tags [:base :temporal]}
       [f]
       (sf_ (ms/shrink _ f)))
 
-    (defclosure adjust
+    (defn adjust
       "Time stretching/shifting operation
        syntax sugar over 'fit-score."
       {:tags [:base :temporal]}
@@ -809,7 +778,7 @@
                        (vector? x) {:duration (x 1) :position (x 0)})]
         (sf_ (fit-score _ opts))))
 
-    (defclosure* fork-with
+    (defn* fork-with
       "Like 'par
        but let you the opportunity to do something
        on the score based on the index of the branch
@@ -818,24 +787,27 @@
       (par* (map-indexed (fn [i x] (lin (f i) x))
                          xs)))
 
-    (defclosure* chans
+    (defn* chans
       "Apply each update in parallel on subsequent midi channels."
       {:tags [:base :parallel]}
       [xs] (fork-with* chan+ xs))
 
-    (defclosure* tracks
+    (defn* tracks
       "Apply each update in parallel on subsequent midi tracks."
       {:tags [:base :parallel]}
       [xs] (fork-with* track+ xs))
 
-    (defclosure mirror
+    (defn mirror
       "Mirrors all pitches around 'p."
+      {:tags [:harmonic]}
       [p] ($ {:pitch (h/mirror p)}))
 
-    (def rev
+    (def ^{:doc "Reverse the given score."
+           :tags [:temporal]}
+      rev
       (sf_ (reverse-score _)))
 
-    (defclosure event-scale
+    (defn event-scale
       "Restrains and scale one event dimension to the given bounds over the whole score."
       [dim x]
       (let [[min-out max-out]
@@ -847,10 +819,10 @@
 
     (do :selection
 
-        (defclosure min-by [f]
+        (defn min-by [f]
           (sf_ #{(first (sort-by f _))}))
 
-        (defclosure max-by [f]
+        (defn max-by [f]
           (sf_ #{(last (sort-by f _))}))
 
         (def min-pitch (min-by pitch-value))
@@ -861,22 +833,22 @@
 
             "Updates to select time sections of a score."
 
-            (defclosure from
+            (defn from
               "Removes the elements anterior to the given position from the score."
               [x]
               (shrink {:position (gte x)}))
 
-            (defclosure until
+            (defn until
               "Removes the elements posterior to the given position from the score."
               [x]
               (shrink {:position (lt x)}))
 
-            (defclosure between
+            (defn between
               "Keep only events that are positioned between x and y positions."
               [x y]
               (lin (from x) (until y)))
 
-            (defclosure start-from
+            (defn start-from
               "Shift the score to the given position, removing all anterior events."
               [x]
               (lin (from x) {:position (sub x)}))
@@ -887,7 +859,7 @@
                        sort last val set
                        (upd {:position 0}))))
 
-            (defclosure trim
+            (defn trim
               "Removes everything before 'beg and after 'end from the score
                (triming overlapping durations)."
               [beg end]
@@ -907,20 +879,20 @@
 
     (do :checks
 
-        (defclosure within-bounds?
+        (defn within-bounds?
           "Returns score unchanged if 'ef applied to each event is between 'min and 'max."
           [ef min max]
           (sf_ (if (every? (fn [e] (<= min (ef e) max)) _)
                  _)))
 
-        (defclosure within-time-bounds?
+        (defn within-time-bounds?
           "Returns the score unchanged if all its events are between 'start and 'end."
           [start end]
           (sf_ (if (and (>= (score-origin _) start)
                         (<= (score-duration _) end))
                  _)))
 
-        (defclosure within-pitch-bounds?
+        (defn within-pitch-bounds?
           "Returns the score unchanged if all pitches are between 'min and 'max.
           'min and 'max should be 'pitchable' (pitch map | pitch keyword | int)."
           [min max]
@@ -940,49 +912,49 @@
           `(vary-meta (sfn score# (upd score# ~expr))
                       assoc :non-deterministic true))
 
-        (defclosure* one-of
+        (defn* one-of
           "Returns an update that choose randomly one of the given updates before applying it."
           [xs]
           (! (pr/rand-nth xs)))
 
-        (defclosure* maybe
+        (defn* maybe
           "Like 'one-of, return an update that choose randomly one of the given updates, but can also do nothing."
           [xs]
           (one-of* (cons same xs)))
 
-        (defclosure probs
+        (defn probs
           "Takes a map of type {update number}
            where each key is an update and each value is its probability of occurence."
           [m]
           (let [pm (g/weighted m)]
             (! (pm))))
 
-        (defclosure* any-that
+        (defn* any-that
           "Tries given transformations in random order until one passes the given test."
           [test fs]
           (! (fst-that* test (pr/shuffle fs))))
 
-        (defclosure* mixtup
+        (defn* mixtup
           "A tup that mix its elements."
           [xs]
           (tup* (pr/shuffle xs)))
 
-        (defclosure* shuftup
+        (defn* shuftup
           "A tup that shuffles its elements everytime it is used."
           [xs]
           (! (mixtup* xs)))
 
-        (defclosure* mixcat
+        (defn* mixcat
           "A cat that mix its elements."
           [xs]
           (cat* (pr/shuffle xs)))
 
-        (defclosure* shufcat
+        (defn* shufcat
           "A cat that shuffles its elements everytime it is used."
           [xs]
           (! (mixcat* xs)))
 
-        (defclosure* shuf
+        (defn* shuf
           "Shuffles the values of the given dimensions."
           [dims]
           (sf_ (let [size (count _)
@@ -1022,7 +994,7 @@
                   (pr/shuffle (map (fn [e] #{(assoc e :position 0)})
                                    _))))))
 
-        (defclosure permute-line
+        (defn permute-line
           [idxs]
           (let [length (count idxs)]
             (sf_ (if (and (line? _) (= length (count _)))
@@ -1031,7 +1003,7 @@
                       (map (fn [e] #{(assoc e :position 0)})
                            (map notes idxs))))))))
 
-        (defclosure* $cat
+        (defn* $cat
           "'mapcat for score, works only on lines."
           [xs]
           (sf_ (if (line? _)
@@ -1042,27 +1014,27 @@
 
     (do :incubator
 
-        (defclosure* voices
+        (defn* voices
           "Like 'par but keep track of voice number."
           [xs]
           (fork-with* voice+ xs))
 
-        (defclosure* voices>
+        (defn* voices>
           "Like 'par> but keep track of voice number."
           [xs]
           (par>* (map (fn [i x] (lin (voice+ i) x))
                       (range)
                       xs)))
 
-        (defclosure catn>
+        (defn catn>
           "Creates a 'cat> of size n using the 'f update."
           [n f] (cat>* (repeat n f)))
 
-        (defclosure tupn>
+        (defn tupn>
           "Creates a 'tup> of size n using the 'f update."
           [n f] (tup>* (repeat n f)))
 
-        (defclosure $by
+        (defn $by
           "Splits the score according to the return of 'f applied to each event,
            apply 'g on each subscore and merge all the results together."
           [f g]
@@ -1075,7 +1047,7 @@
                                  (shift-score o)))))
                     (reduce into #{}))))
 
-        (u/defclosure zip
+        (defn zip
           "Zips the current score with the result of updating it with the given update 'x.
            the zipping is done by :position with the given function 'f that takes two scores and produce one.
            All the scores returned by 'f are merged into a final one which is returned."

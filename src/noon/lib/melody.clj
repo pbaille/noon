@@ -224,7 +224,7 @@
 
 (do :line
 
-    (u/defclosure line
+    (defn line
       "creating a melodic line.
        1. 'connect is called on the current score, to produce another one that will be fed into 'step
        2. 'step is called on the result of 'connect, and the result concatenated with the original score.
@@ -236,7 +236,7 @@
                      (done? nxt) (n/upd nxt finish)
                      :else (recur nxt)))))
 
-    (u/defclosure simple-line
+    (defn simple-line
       "a simple way to create a line of given 'length using the given 'step"
       [length step]
       (n/sf_ (let [last-event (fn [s] (-> (sort-by :position s) last))
@@ -324,7 +324,7 @@
   [layer steps]
   (n/tup>* (map (partial n/layer-step layer) steps)))
 
-(n/defclosure* append>
+(u/defn* append>
   "accumulative append"
   [xs]
   (n/lin* (map n/append xs)))

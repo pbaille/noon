@@ -28,7 +28,7 @@
                     (n/trim 0 duration)))
              (range 0 (:duration last-event) increment))))
 
-    (u/defclosure rand-shift [resolution]
+    (defn rand-shift [resolution]
       (n/sf_ (let [increment (/ (n/score-duration _) resolution)]
              (pr/rand-nth (score-fw-shifts _ increment)))))
 
@@ -57,12 +57,12 @@
     (defn sum->tup [xs]
       (n/tup* (map n/dur xs)))
 
-    (n/defclosure* durtup
+    (n/defn* durtup
       "build a tup from some numbers"
       [xs]
       (sum->tup xs))
 
-    (u/defclosure rotation
+    (defn rotation
       "time rotation of a score.
        forms:
           (rotation <offset>) : rotate by the given offset
@@ -81,7 +81,7 @@
          :rand-by (n/sf_ (n/upd _ (rotation (rand-nth (range 0 (n/score-duration _) arg)))))
          :rand-sub (n/sf_ (n/upd _ (rotation (* (rand-nth (range 0 arg)) (/ (n/score-duration _) arg))))))))
 
-    (u/defclosure permutation
+    (defn permutation
       "permute a score by time slices,
         'n is the number of slices,
         'i is a permutation index (int:absolute | float:gradual | :random)."
@@ -92,7 +92,7 @@
 
     (do :euclidean
 
-        (u/defclosure euclidean-tup
+        (defn euclidean-tup
           "make a tuple from an euclidean sum"
           [resolution size]
           (sum->tup (eucl/euclidean-sum size resolution)))

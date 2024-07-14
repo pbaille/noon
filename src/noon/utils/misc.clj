@@ -177,6 +177,28 @@
              :attrs attrs
              :arities arities})))
 
+    (defmacro defn*
+      "Like defn but last argument is bound variadicaly.
+       it defines two functions,
+       - one that binds the last ARGV pattern to variadic arguments.
+       - one (postfixed by *) that expect it as a seq.
+       This is somehow analogous to #'list and #'list*"
+      [& form]
+      (let [{:keys [name doc attrs arities]} (parse-defn form)
+            applied-name (symbol (str name "*"))
+            [argv & body] (first arities)
+            variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
+        `(do (defn ~applied-name
+               ~@(if doc [doc])
+               ~@(if attrs [attrs])
+               ~argv
+               ~@body)
+             (defn ~name
+               ~@(if doc [doc])
+               ~@(if attrs [attrs])
+               ~variadic-argv
+               (~applied-name ~@argv)))))
+
     (defmacro template
       {:clj-kondo/ignore true}
       [x]
@@ -273,49 +295,50 @@
     (defn with-form [x f]
       (vary-meta x assoc :form f)))
 
-(do :eq
+(comment :deprecated
+  (do :eq
 
-    (defn eq
-      ([x]
-       (with-form
-         (fn [y] (eq x y))
-         `(eq ~x)))
-      ([x y]
-       (= (form x)
-          (form y)))))
+      (defn eq
+        ([x]
+         (with-form
+           (fn [y] (eq x y))
+           `(eq ~x)))
+        ([x y]
+         (= (form x)
+            (form y)))))
 
-(do :closures
+  (do :closures
 
-    (defn- qualify-closure-name [x]
-      (symbol (str *ns*) (name x)))
+      (defn- qualify-closure-name [x]
+        (symbol (str *ns*) (name x)))
 
-    (defn- closure-form-expression [nam argv]
-      (let [variadic? (some #{'&} argv)
-            name (qualify-closure-name nam)]
-        (if variadic?
-          `(list* '~name ~@(drop-last 2 argv) ~(last argv))
-          `(list '~name ~@argv))))
+      (defn- closure-form-expression [nam argv]
+        (let [variadic? (some #{'&} argv)
+              name (qualify-closure-name nam)]
+          (if variadic?
+            `(list* '~name ~@(drop-last 2 argv) ~(last argv))
+            `(list '~name ~@argv))))
 
-    (defmacro defclosure
-      "utility to define functions that returns functions.
+      (defmacro defn
+        "utility to define functions that returns functions.
        the point is to mark the returned function so it can be compared."
-      ([name return]
-       `(def ~name
-          (with-form ~return
-            '~(qualify-closure-name name))))
-      ([name x & xs]
-       (let [{:keys [doc attrs arities]}
-             (parse-defn (list* name x xs))]
+        ([name return]
+         `(def ~name
+            (with-form ~return
+              '~(qualify-closure-name name))))
+        ([name x & xs]
+         (let [{:keys [doc attrs arities]}
+               (parse-defn (list* name x xs))]
 
-         `(defn ~name
-            ~@(if doc [doc])
-            ~@(if attrs [attrs])
-            ~@(map (fn [[argv & body]]
-                     (assert (every? symbol? argv)
-                             "no destructuration allowed here")
-                     `(~argv (with-form (do ~@body)
-                               ~(closure-form-expression name argv))))
-                   arities))))))
+           `(defn ~name
+              ~@(if doc [doc])
+              ~@(if attrs [attrs])
+              ~@(map (fn [[argv & body]]
+                       (assert (every? symbol? argv)
+                               "no destructuration allowed here")
+                       `(~argv (with-form (do ~@body)
+                                 ~(closure-form-expression name argv))))
+                     arities)))))))
 
 (do :files&paths
 

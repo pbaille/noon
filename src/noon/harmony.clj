@@ -1,6 +1,6 @@
 (ns noon.harmony
   (:refer-clojure :exclude [struct])
-  (:require [noon.utils.misc :as u :refer [t t? defclosure]]
+  (:require [noon.utils.misc :as u :refer [t t? defn*]]
             [noon.constants :as constants]))
 
 (do :impl
@@ -455,21 +455,21 @@
 
     (do :update-constructors
 
-        (defclosure origin
+        (defn origin
           "reset the origin of an harmonic context"
           [x]
           (if-let [p (constants/get-pitch x)]
             (fn [ctx] (assoc ctx :origin p))
             (u/throw* "cannot make a pitch from: " x)))
 
-        (defclosure scale
+        (defn scale
           "reset the scale of an harmonic context"
           [x]
           (if-let [m (constants/get-mode x)]
             (fn [ctx] (assoc ctx :scale m))
             (u/throw* "cannot make a scale from: " x)))
 
-        (defclosure struct
+        (defn struct
           "reset the struct of an harmonic context"
           [x]
           (if-let [s (constants/get-struct x)]
@@ -478,13 +478,13 @@
 
         (declare upd)
 
-        (defclosure repitch
+        (defn repitch
           "reposition the context based on the given pitch"
           [x]
           (if-let [p (constants/get-pitch x)]
             (fn [ctx] (normalise (upd ctx (pitch->position ctx p))))
             (u/throw* "cannot make a pitch from: " x)))
-        (defclosure rebase
+        (defn rebase
           "Apply the given transformations while preserving pitch"
           [& fs]
           (fn [ctx]
@@ -511,7 +511,7 @@
 
 (do :extras
 
-    (defclosure root
+    (defn root
       "given a pitch class (name or map)
        reset the origin of the given context to the closest (to current origin) corresponding pitch"
       [pitch-class]
@@ -525,7 +525,7 @@
                  (upd ctx))))
         (u/throw* "cannot make a pitch-class from: " pitch-class)))
 
-    (defclosure degree
+    (defn degree
       "go to degree n (potentially negative) of the given hc
        preserving current position"
       [n]
@@ -536,7 +536,7 @@
                          (mod n (count sc))))
              (origin (hc->pitch (upd ctx (d-position n)))))))
 
-    (defclosure inversion
+    (defn inversion
       "go to inversion n (potentially negative) of the given hc
        preserving current position"
       [n]
@@ -558,7 +558,7 @@
     (def reroot (comp rebase root))
     (def redegree (comp rebase degree))
 
-    (defclosure transpose
+    (defn transpose
       "transpose the current origin by the given update"
       [x]
       (fn [ctx]
@@ -570,7 +570,7 @@
        ctx
        p))
 
-    (defclosure hc+
+    (defn hc+
       "merging with another context.
        scale, struct and origin are replaced, position is additioned."
       [ctx1]

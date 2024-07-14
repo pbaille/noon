@@ -14,14 +14,6 @@
           (tup d0 d1 d2 d4)
           (append c4 c8)))
 
-
-
-
-
-
-
-
-
 (comment
 
   [:examples
@@ -35,7 +27,6 @@
           ($ [(repitch :C-1) t-round]))
 
          (rep 4 s1))]
-
 
   (play dur2
         (chans [(patch :woodblock) (dupt 4)]
@@ -81,14 +72,14 @@
 
          (do :utils
 
-             (u/defclosure fill [dur f]
+             (defn fill [dur f]
                (sf_ (let [sdur (score-duration _)
                           n (quot sdur dur)]
                       (assert (zero? (rem sdur dur))
                               "fill: division length should be a multiple of score length ")
                       (upd _ (tupn n f)))))
 
-             (u/defclosure fill> [dur f]
+             (defn fill> [dur f]
                (sf_ (let [sdur (score-duration _)
                           n (quot sdur dur)]
                       (assert (zero? (rem sdur dur))
@@ -289,12 +280,12 @@
 
          (do :line-connection
 
-             (do (u/defclosure catm [n f]
+             (do (defn catm [n f]
                    (rep n [(sf_ #{(assoc (last (sort-by :position _))
                                          :position 0)})
                            f]))
 
-                 (u/defclosure line [len f]
+                 (defn line [len f]
                    (sf_ (let [nxt (upd _ (append [(sf_ #{(assoc (last (sort-by :position _))
                                                                 :position 0)})
                                                   f]))]
@@ -302,7 +293,7 @@
                             (recur nxt)
                             (set (take len (sort-by :position nxt)))))))
 
-                 (u/defclosure tupline [len f]
+                 (defn tupline [len f]
                    (fit (line len f)))
 
                  (def s? (one-of s2- s1- s1 s2)))
@@ -604,9 +595,6 @@
          )
 
 
-
-
-
 (comment :passings
 
          (defn lowest-layer [n]
@@ -813,7 +801,7 @@
                    []
                    (comb/permutations (concat (repeat (count a) 0) (repeat (count b) 1)))))
 
-         (defclosure* randomly-interleaved
+         (u/defn* randomly-interleaved
            "randomly interleave the result of the given updates"
            [xs]
            (sf_ (:score

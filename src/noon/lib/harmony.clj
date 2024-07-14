@@ -61,7 +61,7 @@
                                               (range) d))))
                    (abstract-drops (dec size)))))))
 
-    (u/defclosure drop
+    (defn drop
       [x]
       (n/sf_ (s/member (drops _) x)))
 
@@ -100,7 +100,7 @@
             :upward (take length-upward (iterate (partial shift :up) s))
             :downward (take length-downward (iterate (partial shift :down) s))}))))
 
-    (u/defclosure inversion
+    (defn inversion
       [n]
       (n/sf_
        (cond (zero? n) _
@@ -150,7 +150,7 @@
                      (recur (conj ret (voice-lead2 (peek ret) x)) xs)
                      (reduce into #{} ret))))))))
 
-(u/defclosure align-contexts
+(defn align-contexts
 
   "align successive harmonic contexts based on the given 'layer:
      :tonic (:t) | :structural (:s) | :diatonic (:d) | :chromatic (:c)
@@ -171,7 +171,7 @@
                   (recur (conj ret (assoc x :pitch aligned)) xs))
                 (set ret)))))))
 
-(n/defclosure* grid-zipped
+(n/defn* grid-zipped
   "zip the current score (which should represent an harmonic grid)
    to the resulting of applying 'xs updates to a fresh score."
   [xs]
@@ -199,7 +199,7 @@
                       (recur (conj ret fw) fws bws)))))))
           #{} xs))
 
-(n/defclosure* grid
+(n/defn* grid
   "grid"
   [xs]
   (n/sf_ (->> (map (fn [[position [{:keys [duration pitch]}]]]
