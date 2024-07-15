@@ -9,7 +9,7 @@
   "Merge several mapset(able) things into a mapset.
    Valid arguments are:
    - regular mapsets
-   - maps (that will be interpreted as a mapset of 1 element.
+   - maps (that will be interpreted as a mapset of 1 element).
    - seqs of mapset(able) that will be merged on after the other using this function.
    - nil, that is equivalent to the empty set."
   [s x]
@@ -42,7 +42,7 @@
   ([x]
    (cond (fn? x) x
          (map? x) (f_ ($ _ x))
-         :else ()))
+         :else (u/throw* "noon.utils.mapsets/->upd :: bad argument: " x)))
   ([x & xs]
    (reduce (fn [a b]
              (comp (->upd b) a))
