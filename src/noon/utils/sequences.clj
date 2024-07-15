@@ -7,9 +7,7 @@
 ;; impl ----
 
 (defn rotate [coll n]
-  (let [c (count coll)
-        n (if (>= n 0) (mod n c) (+ n (count coll)))
-        splited (split-at n coll)]
+  (let [splited (split-at (mod n (count coll)) coll)]
     (concat (splited 1) (splited 0))))
 
 (def shuffle-no-rep
@@ -51,9 +49,6 @@
     (if mirror?
       (- (dec cnt) abs-idx)
       abs-idx)))
-(= 2 (mirror-idx (list 1 2 3 4) 1))
-
-(= 0 (mirror-idx (list 1 2 3 4) 3))
 
 (defn seq-idx [s x]
   (cond (int? x) (if (neg? x) (mirror-idx s (u/abs (inc x))) x)
@@ -149,7 +144,7 @@
   "takes a seq 's and a number of splits 'n
    return all possible splits of 's of size 'n"
   ([s n]
-   (splits s n (range 1 (inc (count n)))))
+   (splits s n (range 1 (inc (count s)))))
   ([s n sizes]
    (->> (u/sums (count s) n sizes)
         reverse
@@ -211,23 +206,3 @@
                  idx))
        (member (reduce concat (vals (gradual-permutations s split-sizes)))
                idx)))))
-
-(comment :tries
-
-  (do :misc
-      (idx-permutations 4)
-      (take 10 (simple-permutations (range 8)))
-      (partitions '(1 2 3 4 5 6))
-      (simple-subseqs '(0 1 2 3 4 5))
-      (splits (range 10) 3)
-      (u/sums 10 3 (range 1 10)))
-
-  (split-permutations 1)
-  (grade-permutations [0 1 2 3 4 5] 3 [2 4])
-
-  (count (c/permutations (range 6)))
-  (count (gradual-permutations (range 6)))
-  (member (range 6) 0)
-  (default-split-sizes (range 5))
-  (permutation (range 6) 0)
-  (permutation (range 6) :rand {:grade 2}))
