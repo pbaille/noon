@@ -1,6 +1,6 @@
-(ns test.noon.utils.maps
-  (:require [clojure.test :refer :all]
-            [noon.utils.maps :refer :all]))
+(ns noon.utils.maps-test
+  (:require [clojure.test :refer [deftest testing is]]
+            [noon.utils.maps :refer [++ value-merge upd check match]]))
 
 (deftest test-value-merge
 
