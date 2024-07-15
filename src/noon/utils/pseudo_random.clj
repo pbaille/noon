@@ -27,7 +27,7 @@
    (* max (rand))))
 
 (defn rand-int [max]
-  (Math/floor (rand max)))
+  (int (Math/floor (rand max))))
 
 (defn rand-int-between
   "Uniform distribution from lo (inclusive) to hi (exclusive).
