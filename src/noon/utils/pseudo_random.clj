@@ -56,14 +56,3 @@
   "Shuffle coll based on *rnd*"
   [xs]
   (fisher-yates xs))
-
-(comment
-  (binding [*rnd* (java.util.Random. 42)]
-    (vec (repeatedly 3 rand)))
-  (with-rand 42
-    (vec (repeatedly 10 #(rand-nth (range 10)))))
-  (with-rand 42
-    (shuffle [1 2 3 4]))
-  (do *rnd*)
-  (with-rand 43
-    (vec (repeatedly 10 #(shuffle [1 2 3 4])))))
