@@ -90,3 +90,27 @@
   (testing "nested"
     (is (match {:a 1 :b {:c 2}} {:b {:c 2} :a pos?}))
     (is (not (match {:a 1 :b {:c 2}} {:b {:c 3}})))))
+
+(comment :tries2
+
+         (require '[noon.utils.chance :as c])
+
+         (def sampler
+           (c/setof (c/mapof (c/bag [:a :b :c :d :e :f])
+                             (c/nat -10 10)
+                             :size 3)
+                    :size 20))
+
+         (-> (sampler)
+             ($ (f_ (assoc _ :sum (reduce + (vals _)))))
+             (split {:sum pos?}))
+
+         (split (sampler)
+                {:a number?})
+
+         (split (sampler)
+                {:a 0})
+
+         (-> (sampler)
+             (split-upd (f_ (contains? _ :a))
+                        ($_ (assoc _ :double-a (* (:a _) 2))))))
