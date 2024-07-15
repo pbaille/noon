@@ -62,11 +62,3 @@ Updates has to be valid arguments to the `noon.utils.maps/->upd` function."
   "Compose several map updates together."
   [& fs]
   (f_ (apply upd _ fs)))
-
-(comment
-  (++ {:a {}} {:a {:b (fnil (partial + 3) 0)}})
-  (++ {} {:a {:b (fnil (partial + 3) 0)}})
-  ;; the p update returns nil so the key is dissociated
-  (upd {:a 1} {:p (f_ _)})
-  (upd {:a 1 :p true} {:p not})
-  (u/hm-leaves {:a {:b (fnil (partial + 3) 0)}}))

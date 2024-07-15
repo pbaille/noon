@@ -61,6 +61,8 @@
            {:a {:c 3, :b 0}}))
     (is (= (upd {:a {:b 1 :c 3}} {:a count})
            {:a 2}))
+    (is (= (upd {:a 1} {:p identity})
+           {:a 1}))
     (is (thrown? java.lang.Exception (upd {} nil)))
     (is (thrown? java.lang.Exception (upd {} 1)))))
 
@@ -83,8 +85,7 @@
     (is (match {:a 1} {:a pos?}))
     (is (not (match {:a 1} {:a 2})))
     (is (not (match {:a 1} {:a even?})))
-    (is (not (match {:a 1}
-                    {:a even? :b identity}))))
+    (is (not (match {:a 1} {:a even? :b identity}))))
 
   (testing "nested"
     (is (match {:a 1 :b {:c 2}} {:b {:c 2} :a pos?}))
