@@ -249,7 +249,7 @@
           (and (coll? data) (some #(deep-find % x) data))))
 
     (defn map-vals [f m]
-      (apply merge (map (fn [[k v]] {k (f v)}) m)))
+      (into {} (map (fn [[k v]] [k (f v)]) m)))
 
     (defn all-paths
       "given a nested map,
@@ -285,16 +285,6 @@
             at
             (recur (next s) (inc at)))))))
 
-(do :form
-
-    (defn form
-      [x]
-      (or (some-> x meta :form form)
-          (if (coll? x) ($ x form) x)))
-
-    (defn with-form [x f]
-      (vary-meta x assoc :form f)))
-
 (do :files&paths
 
     (defn parse-file-path [n]
@@ -311,14 +301,13 @@
                (filter (comp seq val))
                (into {})))))
 
-    #_(parse-file-path "yo/gro/tonk.op")
-    #_(parse-file-path nil)
-
     (defn ensure-directory [x]
       (when-not (fs/exists? x)
         (fs/mkdirs x)))
 
     (comment
+      (parse-file-path "a/bc/d/efg.h")
+      (parse-file-path nil)
       (ensure-directory "generated/history")
       (ensure-file "generated/history/one.bob"))
 
@@ -329,29 +318,9 @@
           (fs/create (fs/file name)))))
 
     (defn copy-file [file name]
-      #_(if (fs/exists? name)
-          (fs/delete name))
       (fs/copy file name)))
 
 (do :more-macros
-
-    (defmacro definvokable
-      [type argv body]
-      (let [invoke-sym (gensym)
-            args (repeatedly 20 gensym)
-            arity (fn [n]
-                    (let [args (take n args)]
-                      `(invoke [this# ~@args] (~invoke-sym this# ~@args))))
-            vararg `(invoke [this# ~@args more#]
-                            (apply ~invoke-sym ~@args more#))
-            apply-to `(applyTo [this# args#] (apply ~invoke-sym this# args#))]
-        `(do
-           (def ~invoke-sym (fn ~argv ~body))
-           (defrecord ~type []
-             clojure.lang.IFn
-             ~@(map arity (range (inc 20)))
-             ~vararg
-             ~apply-to))))
 
     (defn hm->defs
       "takes an hashmap of type (named x) -> any, and def all in the given ns"
