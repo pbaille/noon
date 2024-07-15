@@ -190,7 +190,7 @@
    (pr/shuffle s))
   ([s idx]
    (if (u/random-kw? idx)
-     (shuffle s)
+     (pr/shuffle s)
      (permutation s idx {})))
   ([s idx {:keys [grade split-bounds split-sizes min-split max-split]}]
    (let [cnt (count s)

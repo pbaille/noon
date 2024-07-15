@@ -112,7 +112,7 @@
          (list 3 4 1 2)))
   (is (= (pr/with-rand 2
            (s/permutation [1 2 3 4] :rand))
-         [4 3 1 2]))
+         [2 1 4 3]))
   (is (= (s/permutation [1 2 3 4] -1)
          [4 3 2 1]))
   (is (= (s/permutation [1 2 3 4] 0.5)
