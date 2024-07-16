@@ -12,7 +12,13 @@
 (do :bidirectional-seq
 
     (defn bds
-      "bidirectional lazy sequence"
+      "Bidirectional lazy sequence.
+       `seq` is the base starting forward sequence.
+       `mod` is the interval of repetition of `seq`.
+       example:
+       (bds [0 2 4] 5)
+       {:fw (0 2 4 5 7 9 10 12 14 15 ...),
+        :bw (0 -1 -3 -5 -6 -8 -10 -11 -13 -15...)}"
       [seq mod]
       {:fw (mapcat #(map (partial + (* mod %)) seq)
                    (range))
@@ -23,7 +29,7 @@
              (next (range))))})
 
     (defn bds-get
-      "access value at index idx, neg idxs go backward"
+      "Access `bds` value at index `idx`, neg idxs go backward."
       [bds idx]
       (condp = (compare 0 idx)
         0 (first (:fw bds))
@@ -31,7 +37,7 @@
         -1 (nth (:fw bds) idx)))
 
     (defn bds-shift
-      "shift a bidirectional seq by the given idx"
+      "Shift a bidirectional seq `bds` by the given `idx`." .
       [bds idx]
       (condp = (compare 0 idx)
 
@@ -46,7 +52,7 @@
                         (next (:bw bds)))}))
 
     (defn bds-idx
-      "return the index of the given value and the reminder in a vector: [idx rem]"
+      "Return the index of the given value `v` and the reminder in a vector: `[idx rem]`"
       [{:keys [fw bw] :as _bds} v]
 
       (let [fw? (> v (first fw))
@@ -65,12 +71,9 @@
               (u/dist v (last taken)))]))
 
     (defn bds-go
-      "shift the bds to the given val, ignoring reminder"
+      "Shift the `bds` to the given `val`, ignoring reminder."
       [bds val]
-      (bds-shift bds (first (bds-idx bds val))))
-
-    #_(take 10 (:bw (bds [0 2 4 5] 6)))
-    )
+      (bds-shift bds (first (bds-idx bds val)))))
 
 (do :ctx
 
@@ -180,6 +183,11 @@
 
         (do :downward
 
+            ;; TODO investigate
+            ;; some of the follwing operation are returning partial positions
+            ;; I mean positions where not all layer keys are present
+            ;; I believe some transformations (I think of `noon.lib.melody/contour`) are relying on this but it is not clear.
+
             (defn t->s
               [{:as ctx {:keys [t]} :position}]
               (if-not t
@@ -241,17 +249,7 @@
                       (:diatonic :d) [t->d :d]
                       (:chromatic :c) [t->c :c])]
                 (get-in (converter ctx)
-                        [:position k])))
-
-            (comment :to-move
-
-                     (layer-idx :s (upd (hc) (position 3 2 1 0)))
-                     (layer-idx :d (upd (hc) (position 3 2 1 0)))
-                     (layer-idx :d (upd (hc) (position 0 0 1 0)))
-
-                     (t->s (upd (hc) (position 3 2 1 0)))
-                     (s->d (upd (hc) (position 0 2 1 0)))
-                     (t->s (upd (hc) superlocrian (struct [2 3 5 6]) (t-step 0))))))
+                        [:position k])))))
 
     (do :views
 
@@ -360,6 +358,12 @@
                    (s-step 1)))
 
         (do :roundings
+
+            ;; TODO to clarify.
+            ;; those operations not necessarly returns ctx positioned on the operated level
+            ;; (s-round ((position 0) (hc)))
+            ;; => do not add neither :s nor :d entries to the position...
+            ;; it is due to the way `s-trim' is working
 
             (def t-round
               (fn [ctx]
@@ -484,6 +488,7 @@
           (if-let [p (constants/get-pitch x)]
             (fn [ctx] (normalise (upd ctx (pitch->position ctx p))))
             (u/throw* "cannot make a pitch from: " x)))
+
         (defn rebase
           "Apply the given transformations while preserving pitch"
           [& fs]
@@ -562,7 +567,7 @@
       "transpose the current origin by the given update"
       [x]
       (fn [ctx]
-        (assoc ctx :origin (hc->pitch (upd ctx POSITION_ZERO x)))))
+        (assoc ctx :origin (hc->pitch (upd ctx (position 0 0 0 0) x)))))
 
     (defn position+ [ctx p]
       (reduce
@@ -822,7 +827,7 @@ intermediate-ctxs: sorted ctxs that are between hc1 and hc2 on the corresponding
          (position+ POSITION_ZERO p2)
          (upd (hc) (hc+ (upd (hc) t1 d3)))
 
-         (upd (hc) (transpose di1))
+         (upd (hc) (transpose d1))
 
          (hc->chromatic-value (upd (hc) ti2))
 
