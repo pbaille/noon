@@ -191,17 +191,17 @@
                               (list 'do
                                     (list 'def (with-meta (symbol (str "dur" i))
                                                  {:doc (str "Multiply event duration by " i)
-                                                  :tags [:event-update :temporal]})
+                                                  :tags [:event-update :alias :temporal]})
                                           `(dur (mul ~i)))
                                     (list 'def (with-meta (symbol (str "dur:" i))
                                                  {:doc (str "Divide event duration by " i)
-                                                  :tags [:event-update :temporal]})
+                                                  :tags [:event-update :alias :temporal]})
                                           `(dur (div ~i)))))
                             (for [n (range 2 12)
                                   d (range 2 12)]
                               (list 'def (with-meta (symbol (str "dur" n ":" d))
                                            {:doc (str "Multiply event duration by " n "/" d)
-                                            :tags [:event-update :temporal]})
+                                            :tags [:event-update :alias :temporal]})
                                     `(dur (mul (/ ~n ~d))))))))
             (-def-durations)
 
@@ -213,7 +213,7 @@
                       (let [v (int (* i (/ 127 12)))]
                         (list 'def (with-meta (symbol (str "vel" i))
                                      {:doc (str "Set event velocity to " v)
-                                      :tags [:event-update]})
+                                      :tags [:event-update :alias]})
                               `(vel ~v))))))
             (-def-velocities)
 
@@ -222,7 +222,7 @@
                     (for [i (range 0 16)]
                       (list 'def (with-meta (symbol (str "chan" i))
                                    {:doc (str "Set event midi channel to " i)
-                                    :tags [:event-update]})
+                                    :tags [:event-update :alias]})
                             `(chan ~i)))))
             (-def-channels)
 
@@ -231,7 +231,7 @@
                     (for [i (range 0 16)]
                       (list 'def (with-meta (symbol (str "track" i))
                                    {:doc (str "Set event midi channel to " i)
-                                    :tags [:event-update]})
+                                    :tags [:event-update :alias]})
                             `(track ~i)))))
             (-def-tracks))
 
@@ -251,7 +251,7 @@
                                        "\n\n  doc:\n\n  "
                                        (:doc (meta (resolve original-sym))
                                              "undocumented"))
-                                 {:tags [:event-update :harmonic]}
+                                 {:tags [:event-update :alias :harmonic]}
                                  [~'& xs#]
                                  (let [u# (apply ~(symbol "noon.harmony" (name x)) xs#)]
                                    #_(println '~x xs#)
@@ -271,7 +271,7 @@
                                                       "\n\ndoc:\n\n"
                                                       (:doc (meta (resolve original-sym))
                                                             "undocumented"))
-                                            :tags [:event-update :harmmonic]})
+                                            :tags [:event-update :alias :harmmonic]})
                                     `(map->efn
                                       {:pitch
                                        (fn [ctx#]
@@ -319,7 +319,11 @@
 
                 (defmacro -def-wrapped [wrapper m]
                   (cons 'do (for [[k v] (eval m)]
-                              (list 'def (symbol (name k)) (list wrapper v)))))
+                              (list 'def
+                                    (with-meta (symbol (name k))
+                                      {:tags [:event-update :alias :harmonic]
+                                       :doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))})
+                                    (list wrapper v)))))
 
                 (-def-wrapped struct constants/structs)
 
