@@ -87,28 +87,56 @@
        :position POSITION_ZERO})
 
     (defn hc
-      "harmonic context constructor"
+      "Harmonic context constructor.
+       Defaults to `DEFAULT_HARMONIC_CONTEXT`, but accepts a `spec` map that takes precedence over it."
       [& [spec]]
       (t :harmonic-context
          (merge DEFAULT_HARMONIC_CONTEXT spec)))
 
-    (def hc? (t? :harmonic-context))
+    (def ^{:doc "Test if something is an harmonic context."}
+      hc?
+      (t? :harmonic-context))
 
-    (def hc0 (hc))
+    (def ^{:doc "The default harmonic context. C Major, triad, middle C positioned"}
+      hc0 (hc))
 
-    (defn hc-seqs [{:keys [scale struct]}]
+    (defn hc-seqs
+      "Build bidirectional seqs based on the given given harmonic context,
+       based on its `:scale` and `:struct` values."
+      [{:keys [scale struct]}]
       {:scale (bds scale 12)
        :struct (bds struct (count scale))})
 
     (do :position
 
-        (defn position [& [t s d c]]
+        (defn position
+          "Build a position update.
+           takes 0 to four arguments:
+           t: tonic layer offset.
+           s: structural layer offset.
+           d: diatonic layer offset.
+           c: chromatic layer offset."
+          [& [t s d c]]
           (let [p (into {} (filter val {:t t :s s :d d :c c}))]
             (fn [ctx] (assoc ctx :position p))))
 
-        (def s-position (partial position nil))
-        (def d-position (partial position nil nil))
-        (def c-position (partial position nil nil nil))
+        (def ^{:doc "Build a structural position update.
+                     takes 0 to 3 arguments:
+                     s: structural layer offset.
+                     d: diatonic layer offset.
+                     c: chromatic layer offset."}
+          s-position (partial position nil))
+
+        (def ^{:doc "Build a diatonic position update.
+                     takes 0 to 2 arguments:
+                     d: diatonic layer offset.
+                     c: chromatic layer offset."}
+          d-position (partial position nil nil))
+
+        (def ^{:doc "Build a chromatic position update.
+                     takes 0 or 1 arguments:
+                     c: chromatic layer offset."}
+          c-position (partial position nil nil nil))
 
         (defn tonic?
           "Does the given context is positioned exactly on the tonic layer ?"
@@ -135,7 +163,7 @@
         (do :upward
 
             (defn c->d
-              "feed as much as possible of the c value into the d value"
+              "Feed as much as possible of the c value into the d value."
               [{{:keys [s d c]} :position :as ctx}]
               (if-not c
                 ctx
@@ -147,7 +175,7 @@
                   (update ctx :position merge {:d d :c c}))))
 
             (defn d->s
-              "feed as much as possible of the d value into the s value"
+              "Feed as much as possible of the d value into the s value."
               [{{:keys [s d]} :position :as ctx}]
               (if-not d
                 ctx
@@ -158,7 +186,7 @@
                   (update ctx :position merge {:s s :d d}))))
 
             (defn s->t
-              "feed as much as possible of the s value into the o value"
+              "Feed as much as possible of the s value into the o value."
               [{{:keys [t s]} :position :as ctx}]
               (if-not s
                 ctx
@@ -167,19 +195,19 @@
                   (update ctx :position merge {:t (+ (or t 0) tonic-delta) :s (rem s struct-size)}))))
 
             (defn d->t
-              "feed as much as possible of the d value into the upward layers"
-              [x]
-              (-> x d->s s->t))
+              "Feed as much as possible of the d value into the upward layers."
+              [ctx]
+              (-> ctx d->s s->t))
 
             (defn c->s
-              "feed as much as possible of the c value into the d value and s value"
-              [x]
-              (-> x c->d d->s))
+              "Feed as much as possible of the c value into the d value and s value."
+              [ctx]
+              (-> ctx c->d d->s))
 
             (defn c->t
-              "feed as much as possible of the c value to the upward layers"
-              [x]
-              (-> x c->s s->t)))
+              "Feed as much as possible of the c value to the upward layers."
+              [ctx]
+              (-> ctx c->s s->t)))
 
         (do :downward
 
@@ -189,6 +217,7 @@
             ;; I believe some transformations (I think of `noon.lib.melody/contour`) are relying on this but it is not clear.
 
             (defn t->s
+              "Push tonic offset into structural layer."
               [{:as ctx {:keys [t]} :position}]
               (if-not t
                 ctx
@@ -206,6 +235,7 @@
                                   (update :d safe-add (- (first struct))))))))))
 
             (defn s->d
+              "Push structural offset into diatonic layer."
               [{:as ctx {:keys [s]} :position}]
               (if-not s
                 ctx
@@ -216,6 +246,7 @@
                                 (update :d safe-add (bds-get struct s))))))))
 
             (defn d->c
+              "Push diatonic offset into chromatic layer."
               [{:as ctx {:keys [d]} :position}]
               (if-not d
                 ctx
@@ -225,23 +256,33 @@
                             (-> (dissoc p :d)
                                 (update :c safe-add (bds-get scale d))))))))
 
-            (defn t->d [ctx]
+            (defn t->d
+              "Push tonic and structural offsets into diatonic layer."
+              [ctx]
               (-> ctx t->s s->d))
 
-            (defn s->c [ctx]
+            (defn s->c
+              "Push structural and diatonic offsets into chromatic layer."
+              [ctx]
               (-> ctx s->d d->c))
 
-            (defn t->c [ctx]
+            (defn t->c
+              "Push tonic, structural and diatonic offsets into chromatic layer."
+              [ctx]
               (-> ctx t->s s->c))
 
-            (defn down-to-layer [layer ctx]
+            (defn down-to-layer
+              "Constrain `ctx`'s position down to `layer` by transferring upper offsets into lower layers."
+              [layer ctx]
               (case layer
                 (:tonic :t) ctx
                 (:structural :s) (t->s ctx)
                 (:diatonic :d) (t->d ctx)
                 (:chromatic :c) (t->c ctx)))
 
-            (defn layer-idx [layer ctx]
+            (defn layer-idx
+              "Get the `layer` offset of `ctx` transfering upper offsets into given `layer`."
+              [layer ctx]
               (let [[converter k]
                     (case layer
                       (:tonic :t) [identity :t]
@@ -264,33 +305,38 @@
                 {:d (get-in dctx [:position :d])
                  :c (get-in cctx [:position :c])})))))
 
-        (def hc->chromatic-value (comp :c hc->pitch))
-        (def hc->diatonic-value (comp :d hc->pitch))
+        (def ^{:doc "Get the chromatic value of the given harmonic context."}
+          hc->chromatic-value (comp :c hc->pitch))
+        (def ^{:doc "Get the diatonic value of the given harmonic context."}
+          hc->diatonic-value (comp :d hc->pitch))
 
         (defn chromatic-distance
-          "return the chromatic distance between two context"
+          "Return the chromatic distance between two contexts."
           [ctx1 ctx2]
           (u/dist (hc->chromatic-value ctx1)
                   (hc->chromatic-value ctx2)))
 
         (defn diatonic-distance
-          "return the diatonic distance between two context"
+          "Return the diatonic distance between two contexts."
           [ctx1 ctx2]
           (u/dist (hc->diatonic-value ctx1)
                   (hc->diatonic-value ctx2)))
 
-        (defn distance [a b]
+        (defn distance
+          "Return a tuple [chromatic-distance diatonic-distance] between the two given contexts `a` and `b`."
+          [a b]
           [(chromatic-distance a b)
            (diatonic-distance a b)])
 
         (defn- closest
-          "return the closest context to 'reference-ctx from the 'candidate-ctx list"
+          "Return the closest context to `reference-ctx` from the `candidate-ctx` list."
           [reference-ctx candidate-ctxs]
           (->> candidate-ctxs
                (sort-by (partial distance reference-ctx))
                (first)))
 
         (defn pitch->position
+          "Turn a pitch `p` into a position according to context `ctx`."
           [ctx p]
           (let [struct-size (count (:struct ctx))
                 {:keys [c d]} (merge-with - p (:origin ctx))
@@ -305,41 +351,77 @@
 
         (do :intervals
 
-            (defn t-trim [{:as ctx}]
+            (defn t-trim
+              "Push as much as possible structural, diatonic and chromatic offsets into the tonic offset,
+               Then remove the remainders from those sublayers, returning a context with a pure tonic position."
+              [{:as ctx}]
               (update (c->t ctx) :position dissoc :s :d :c))
 
-            (defn t-step [n]
+            (defn t-step
+              "Build a tonic step update which operates as follow:
+               - Trim structural, diatonic and chromatic layer offsets after feeding
+                 as much as possible to the tonic layer offset
+               - Adds `n` to tonic offset."
+              [n]
               (fn [ctx]
                 (-> (t-trim ctx)
                     (update-in [:position :t] safe-add n))))
 
-            (defn s-trim [{:as ctx}]
+            (defn s-trim
+              "Push as much as possible diatonic and chromatic offsets into the structural offset,
+               Remove the remainders from those layers,
+               Return a context with a position containing only tonic and structural offsets."
+              [{:as ctx}]
               (update (c->s ctx) :position dissoc :d :c))
 
-            (defn s-step [n]
+            (defn s-step
+              "Build a structural step update which operates as follow:
+               - Trim diatonic and chromatic layer offsets after feeding
+                 as much as possible to the structural layer offset
+               - Adds `n` to structural offset."
+              [n]
               (fn [ctx]
                 (-> (s-trim ctx)
                     (update-in [:position :s] safe-add n))))
 
-            (defn d-trim [{:as ctx}]
+            (defn d-trim
+              "Push as much chromatic offset into the diatonic offset,
+               Remove the remainder from the chromatic layer,
+               Return a context with a position containing only tonic, structural and diatonic offsets."
+              [{:as ctx}]
               (update (c->d ctx) :position dissoc :c))
 
-            (defn d-step [n]
+            (defn d-step
+              "Build a diatonic step update which operates as follow:
+               - Trim chromatic layer offset after feeding
+                 as much as possible to the diatonic layer offset
+               - Adds `n` to diatonic offset."
+              [n]
               (fn [ctx]
                 (-> (d-trim ctx)
                     (update-in [:position :d] safe-add n))))
 
-            (defn c-step [n]
+            (defn c-step
+              "Build a chromatic step update, which adds `n` to the given context's position's chromatic layer offset."
+              [n]
               (fn [ctx] (update-in ctx [:position :c] safe-add n)))
 
-            (defn layer-step [layer n]
+            (defn layer-step
+              "Build a step update according to `layer` and offset `n`.
+               Please refer to `t-step`, `s-step`, `d-step` and `c-step` documentation."
+              [layer n]
               (case layer
                 (:tonic :t) (t-step n)
                 (:structural :s) (s-step n)
                 (:diatonic :d) (d-step n)
                 (:chromatic :c) (c-step n)))
 
-            (defn layer-shift [l]
+            (defn layer-shift
+              "Build a shift update constructor for layer `l`.
+               Unlike step updates, shift updates are not trimming context's position before updating it.
+               If the layer offset we are trying to shift is not present in the context's position, the shift has no effect.
+               Unless the `forced` optional argument is given."
+              [l]
               (fn [n & [forced]]
                 (fn [ctx]
                   (cond
@@ -347,10 +429,14 @@
                     (get-in ctx [:position l]) (update-in ctx [:position l] + n)
                     :else ctx))))
 
-            (def t-shift (layer-shift :t))
-            (def s-shift (layer-shift :s))
-            (def d-shift (layer-shift :d))
-            (def c-shift (layer-shift :c))
+            (def ^{:doc "Builds a tonic shift update. see `noon.harmony/layer-shift` documentation."}
+              t-shift (layer-shift :t))
+            (def ^{:doc "Builds a structural shift update. see `noon.harmony/layer-shift` documentation."}
+              s-shift (layer-shift :s))
+            (def ^{:doc "Builds a diatonic shift update. see `noon.harmony/layer-shift` documentation."}
+              d-shift (layer-shift :d))
+            (def ^{:doc "Builds a chromatic shift update. see `noon.harmony/layer-shift` documentation."}
+              c-shift (layer-shift :c))
 
             #_(upd (hc)
                    (t-step 2)
@@ -360,52 +446,61 @@
         (do :roundings
 
             ;; TODO to clarify.
-            ;; those operations not necessarly returns ctx positioned on the operated level
+            ;; those operations not necessarly returns ctx positioned on the operated layer
             ;; (s-round ((position 0) (hc)))
             ;; => do not add neither :s nor :d entries to the position...
             ;; it is due to the way `s-trim' is working
 
-            (def t-round
+            (def ^{:doc "Build an update that bring received context to the closest tonic position."}
+              t-round
               (fn [ctx]
                 (or (tonic? ctx)
                     (closest ctx [((t-step -1) ctx) (t-trim ctx) ((t-step 1) ctx)]))))
-            (def t-ceil
+            (def ^{:doc "Build an update that bring received context to the closest tonic position above."}
+              t-ceil
               (fn [ctx]
                 (or (tonic? ctx)
                     (closest ctx [(t-trim ctx) ((t-step 1) ctx)]))))
-            (def t-floor
+            (def ^{:doc "Build an update that bring received context to the closest tonic position below."}
+              t-floor
               (fn [ctx]
                 (or (tonic? ctx)
                     (closest ctx [(t-trim ctx) ((t-step -1) ctx)]))))
 
-            (def s-round
+            (def ^{:doc "Build an update that bring received context to the closest structural position."}
+              s-round
               (fn [ctx]
                 (or (structural? ctx)
                     (closest ctx [((s-step -1) ctx) (s-trim ctx) ((s-step 1) ctx)]))))
-            (def s-ceil
+            (def ^{:doc "Build an update that bring received context to the closest structural position above."}
+              s-ceil
               (fn [ctx]
                 (or (structural? ctx)
                     (closest ctx [(s-trim ctx) ((s-step 1) ctx)]))))
-            (def s-floor
+            (def ^{:doc "Build an update that bring received context to the closest structural position below."}
+              s-floor
               (fn [ctx]
                 (or (structural? ctx)
                     (closest ctx [(s-trim ctx) ((s-step -1) ctx)]))))
 
-            (def d-round
+            (def ^{:doc "Build an update that bring received context to the closest diatonic position."}
+              d-round
               (fn [ctx]
                 (or (diatonic? ctx)
                     (closest ctx [((d-step -1) ctx) (d-trim ctx) ((d-step 1) ctx)]))))
-            (def d-ceil
+            (def ^{:doc "Build an update that bring received context to the closest diatonic position above."}
+              d-ceil
               (fn [ctx]
                 (or (diatonic? ctx)
                     (closest ctx [(d-trim ctx) ((d-step 1) ctx)]))))
-            (def d-floor
+            (def ^{:doc "Build an update that bring received context to the closest diatonic position below."}
+              d-floor
               (fn [ctx]
                 (or (diatonic? ctx)
                     (closest ctx [(d-trim ctx) ((d-step -1) ctx)])))))
 
         (defn normalise
-          "normalise the context position to its simplest form."
+          "Normalise `ctx`'s position to its simplest form."
           [ctx]
           (let [cval (hc->chromatic-value ctx)
                 {:as tctx {t :t} :position} (t-round (c->t ctx))
@@ -416,25 +511,6 @@
                 c (- cval (hc->chromatic-value dctx))
                 position (into {} (filter val {:t t :s s :d d :c c}))]
             (assoc ctx :position position)))
-
-        (comment :normalise-tries
-
-                 (upd (hc)
-                      (d-position 10)
-                      normalise)
-
-                 (upd (hc)
-                      (position 1 4 3 -2)
-                      normalise)
-
-                 (hc->chromatic-value
-                  (upd (hc)
-                       (position 1 4 3 -2)))
-
-                 (hc->chromatic-value
-                  (upd (hc)
-                       (position 1 4 4 -2)
-                       normalise)))
 
         (do :vars
 
@@ -460,21 +536,32 @@
     (do :update-constructors
 
         (defn origin
-          "reset the origin of an harmonic context"
+          "Build an update that resets the `:origin` of the received context to `x`.
+           `x` can be either:
+            - a pitch object {:d _ :c _}
+            - a pitch interpretable keyword, symbol or string (e.g C0, F#-2 , Gx2)"
           [x]
           (if-let [p (constants/get-pitch x)]
             (fn [ctx] (assoc ctx :origin p))
             (u/throw* "cannot make a pitch from: " x)))
 
         (defn scale
-          "reset the scale of an harmonic context"
+          "Build an update that resets the `:scale` of the received context to `x`.
+           `x` can be either:
+           - a known scale keyword, symbol or string (e.g :dorian, 'melodic-minor, \"hungarian\" ...)
+             refer to `noon.constants/modes` for complete list.
+           - a mode vector like [0 2 3 5 7 9 10] (for :dorian)"
           [x]
           (if-let [m (constants/get-mode x)]
             (fn [ctx] (assoc ctx :scale m))
             (u/throw* "cannot make a scale from: " x)))
 
         (defn struct
-          "reset the struct of an harmonic context"
+          "Build an update that resets the `:struct` of the received context to `x`.
+           `x` can be either:
+           - a known struct keyword, symbol or string (e.g :triad, 'tetrad, \"sus4\" ...)
+             refer to `noon.constants/structs` for complete list.
+           - a struct vector like [0 2 4 6] (for :tetrad)"
           [x]
           (if-let [s (constants/get-struct x)]
             (fn [ctx] (assoc ctx :struct s))
@@ -483,25 +570,34 @@
         (declare upd)
 
         (defn repitch
-          "reposition the context based on the given pitch"
+          "Build an update that repositions the received context based on the given pitch `x`"
           [x]
           (if-let [p (constants/get-pitch x)]
             (fn [ctx] (normalise (upd ctx (pitch->position ctx p))))
             (u/throw* "cannot make a pitch from: " x)))
 
         (defn rebase
-          "Apply the given transformations while preserving pitch"
+          "Build an update that applies the given updates `fs` while preserving pitch."
           [& fs]
           (fn [ctx]
             ((repitch (hc->pitch ctx)) (reduce upd ctx fs))))
 
-        (def rescale (comp rebase scale))
-        (def restruct (comp rebase struct))
-        (def reorigin (comp rebase origin)))
+        (def ^{:doc "Build an update that change the scale of the received context without changing its pitch. see `noon.harmony/scale`"}
+          rescale (comp rebase scale))
+        (def ^{:doc "Build an update that change the struct of the received context without changing its pitch. see `noon.harmony/scale`"}
+          restruct (comp rebase struct))
+        (def ^{:doc "Build an update that change the origin of the received context without changing its pitch. see `noon.harmony/scale`"}
+          reorigin (comp rebase origin)))
 
     (do :update
 
-        (defn ->hc-update [x]
+        (defn ->hc-update
+          "Turn `x` into an harmonic context update
+           `x` can be either:
+            - nil which represent the identity update.
+            - a function from context to context.
+            - another context that will replace the received one preserving its current pitch."
+          [x]
           (cond
             (nil? x) identity
             (fn? x) x
@@ -509,6 +605,7 @@
             :else (u/throw* "not an update " x)))
 
         (defn upd
+          "thread context `ctx` through given updates `x & xs`."
           ([ctx x]
            ((->hc-update x) ctx))
           ([ctx x & xs]
@@ -517,8 +614,8 @@
 (do :extras
 
     (defn root
-      "given a pitch class (name or map)
-       reset the origin of the given context to the closest (to current origin) corresponding pitch"
+      "Build an update that given a pitch class (name or map),
+       resets the :origin of the received context to the closest (to current origin) corresponding pitch."
       [pitch-class]
       (if-let [pc (constants/get-pitch-class pitch-class)]
         (fn [ctx]
@@ -531,8 +628,7 @@
         (u/throw* "cannot make a pitch-class from: " pitch-class)))
 
     (defn degree
-      "go to degree n (potentially negative) of the given hc
-       preserving current position"
+      "Build an update that go to degree `n` (potentially negative) of the received context preserving its position."
       [n]
       (fn [{:as ctx sc :scale}]
         #_(println "degree fn " ctx)
@@ -542,8 +638,7 @@
              (origin (hc->pitch (upd ctx (d-position n)))))))
 
     (defn inversion
-      "go to inversion n (potentially negative) of the given hc
-       preserving current position"
+      "Build an update that go to inversion `n` (potentially negative) of the received context preserving its position."
       [n]
       (fn [{:as ctx sc :scale st :struct}]
         (let [new-origin (upd ctx (s-position n))
@@ -560,24 +655,32 @@
       (constants/struct-inversions [0 2 4 5 7 9 11] [0 1 2 4])
       (upd hc0 (inversion 2)))
 
-    (def reroot (comp rebase root))
-    (def redegree (comp rebase degree))
+    (def ^{:doc "Build an update that changes the root of the received context, without changing its pitch. see `noon.harmony/root`."}
+      reroot (comp rebase root))
+    (def ^{:doc "Build an update that changes the degree of the received context, without changing its pitch. see `noon.harmony/degree`."}
+      redegree (comp rebase degree))
 
     (defn transpose
-      "transpose the current origin by the given update"
+      "Build an update that transposes the current :origin using the given update `x`.
+       It works as follow:
+       - Reposition received context to POSITION_ZERO.
+       - Updates it using `x`.
+       - Use the resulting pitch as the new :origin for the received context."
       [x]
       (fn [ctx]
         (assoc ctx :origin (hc->pitch (upd ctx (position 0 0 0 0) x)))))
 
-    (defn position+ [ctx p]
+    (defn position+
+      "Shift `ctx`'s :position by given position `p`."
+      [ctx p]
       (reduce
        (fn [ctx [k v]] (upd ctx ((layer-shift k) v)))
        ctx
        p))
 
     (defn hc+
-      "merging with another context.
-       scale, struct and origin are replaced, position is additioned."
+      "Build an update that merge `ctx1` into received context.
+       :scale, :struct and :origin will be replaced, :position will be shifted by `ctx1`'s :position."
       [ctx1]
       (fn [ctx2]
         (normalise
@@ -585,8 +688,8 @@
                     (:position ctx1)))))
 
     (defn align
-      "align context b on context a, rounding on the given layer
-       it is useful when writing harmonic or melodic sequences that traverse several contexts"
+      "Align context `b` on context `a`, rounding on the given `layer`.
+       Useful when writing harmonic or melodic sequences that traverse several contexts."
       [layer a b]
       (let [ret (upd b (repitch (hc->pitch a)))]
         (case layer
