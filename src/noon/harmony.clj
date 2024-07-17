@@ -700,17 +700,15 @@
 
     ;; passing-tones
 
-    (defn mirror [pitch]
+    (defn mirror
+      "Build an update that mirror received context against `pitch`."
+      [pitch]
       (fn [ctx]
         (let [pivot (constants/get-pitch pitch)
               p (hc->pitch ctx)
               delta (merge-with - p pivot)
               nxt-p (merge-with - pivot delta)]
           (upd ctx (repitch nxt-p)))))
-
-    (comment
-      (upd (hc) (mirror :F0))
-      (upd (hc) (di 1) (mirror :C0)))
 
     (do :passings
         (defn s+
@@ -916,14 +914,18 @@ intermediate-ctxs: sorted ctxs that are between hc1 and hc2 on the corresponding
 
 (do :defs
 
-    (u/hm->defs 'noon.harmony
-                (u/map-vals struct constants/structs))
+    (defmacro -def-wrapped [wrapper m]
+      (cons 'do (for [[k v] (eval m)]
+                  (list 'def
+                        (with-meta (symbol (name k))
+                          {:doc (str "Change the :" wrapper " of received context to " k ".")})
+                        (list wrapper v)))))
 
-    (u/hm->defs 'noon.harmony
-                (u/map-vals scale constants/modes))
+    (-def-wrapped struct constants/structs)
 
-    (u/hm->defs 'noon.harmony
-                (u/map-vals origin constants/pitches)))
+    (-def-wrapped scale constants/modes)
+
+    (-def-wrapped origin constants/pitches))
 
 (comment :tries
 
