@@ -43,7 +43,27 @@
       [f init xs]
       (reduce (fn [a e]
                 (or (f a e) (reduced nil)))
-              init xs)))
+              init xs))
+
+    (defn ->7bits-natural
+      "MIDI often deals with natural between 0 and 127,
+       this function coerce its input to this range."
+      [x]
+      (if (number? x)
+        (-> (int x)
+            (max 0)
+            (min 127))
+        0))
+
+    (defn ->4bits-natural
+      "MIDI sometimes deals with natural between 0 and 16,
+       this function coerce its input to this range."
+      [x]
+      (if (number? x)
+        (-> (int x)
+            (max 0)
+            (min 15))
+        0)))
 
 (do :event
 
@@ -94,20 +114,36 @@
 
         (def e0 (t :event-update identity))
 
-        (defn dur [x]
-          {:duration x})
+        (defn dur
+          "Builds a :duration event-update based on `x`."
+          {:tags [:event-update :temporal]}
+          [x]
+          (map->efn {:duration x}))
 
-        (defn vel [x]
-          {:velocity x})
+        (defn vel
+          "Builds a :velocity event-update based on `x`."
+          {:tags [:event-update]}
+          [x]
+          (ef_ (m/++ _ {:velocity x} {:velocity ->7bits-natural})))
 
-        (defn vel+ [n] (vel (add n)))
-        (defn vel- [n] (vel (sub n)))
+        (defn vel+
+          "Builds an event update that adds `n` to :velocity value"
+          {:tags [:event-update]}
+          [n] (vel (add n)))
+
+        (defn vel-
+          "Builds an event update that substract `n` to :velocity value"
+          {:tags [:event-update]}
+          [n] (vel (sub n)))
 
         (def vel0 (vel 0))
 
         ;; channels
-        (defn chan [x]
-          {:channel x})
+        (defn chan
+          "Builds a :velocity event-update based on `x`."
+          {:tags [:event-update]}
+          [x]
+          (ef_ (m/++ _ {:channel x} {:channel ->4bits-natural})))
 
         (defn chan+ [x] (chan (add x)))
         (defn chan- [x] (chan (sub x)))
