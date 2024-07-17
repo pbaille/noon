@@ -45,25 +45,28 @@
                 (or (f a e) (reduced nil)))
               init xs))
 
+    (defn ->int
+      "Turn `x` into an integer, rounding it if needed, returning 0 if not a number."
+      [x]
+      (cond (integer? x) x
+            (number? x) (int (Math/round (float x)))
+            :else 0))
+
     (defn ->7bits-natural
       "MIDI often deals with natural between 0 and 127,
        this function coerce its input to this range."
       [x]
-      (if (number? x)
-        (-> (int x)
-            (max 0)
-            (min 127))
-        0))
+      (-> (->int x)
+          (max 0)
+          (min 127)))
 
     (defn ->4bits-natural
       "MIDI sometimes deals with natural between 0 and 16,
        this function coerce its input to this range."
       [x]
-      (if (number? x)
-        (-> (int x)
-            (max 0)
-            (min 15))
-        0)))
+      (-> (->int x)
+          (max 0)
+          (min 15))))
 
 (do :event
 
@@ -120,39 +123,44 @@
           [x]
           (map->efn {:duration x}))
 
-        (defn vel
-          "Builds a :velocity event-update based on `x`."
-          {:tags [:event-update]}
-          [x]
-          (ef_ (m/++ _ {:velocity x} {:velocity ->7bits-natural})))
+        (do :velocity
+            (defn vel
+              "Builds a :velocity event-update based on `x`."
+              {:tags [:event-update]}
+              [x]
+              (ef_ (update _ :velocity
+                           (fn [v] (->7bits-natural (m/value-merge v x))))))
 
-        (defn vel+
-          "Builds an event update that adds `n` to :velocity value"
-          {:tags [:event-update]}
-          [n] (vel (add n)))
+            (defn vel+
+              "Builds an event update that adds `n` to :velocity value"
+              {:tags [:event-update]}
+              [n] (vel (add n)))
 
-        (defn vel-
-          "Builds an event update that substract `n` to :velocity value"
-          {:tags [:event-update]}
-          [n] (vel (sub n)))
+            (defn vel-
+              "Builds an event update that substract `n` to :velocity value"
+              {:tags [:event-update]}
+              [n] (vel (sub n)))
 
-        (def vel0 (vel 0))
+            (def vel0 (vel 0)))
 
-        ;; channels
-        (defn chan
-          "Builds a :velocity event-update based on `x`."
-          {:tags [:event-update]}
-          [x]
-          (ef_ (m/++ _ {:channel x} {:channel ->4bits-natural})))
+        (do :channel
 
-        (defn chan+ [x] (chan (add x)))
-        (defn chan- [x] (chan (sub x)))
-        ;; tracks
-        (defn track [x]
-          {:track x})
+            (defn chan
+              "Builds a :velocity event-update based on `x`."
+              {:tags [:event-update]}
+              [x]
+              (ef_ (update _ :channel
+                           (fn [v] (->4bits-natural (m/value-merge v x))))))
 
-        (defn track+ [x] (track (add x)))
-        (defn track- [x] (track (sub x)))
+            (defn chan+ [x] (chan (add x)))
+            (defn chan- [x] (chan (sub x))))
+
+        (do :tracks
+            (defn track [x]
+              {:track x})
+
+            (defn track+ [x] (track (add x)))
+            (defn track- [x] (track (sub x))))
 
         (do :voice
 
