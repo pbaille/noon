@@ -21,5 +21,10 @@
                        noon.utils.misc/>_ noon.utils.misc/>_
                        noon.score/import-wrap-harmony-update-constructors noon.score/import-wrap-harmony-update-constructors
                        noon.score/import-wrap-harmony-updates  noon.score/import-wrap-harmony-updates
+                       noon.score/-def-channels noon.score/-def-channels
+                       noon.score/-def-velocities noon.score/-def-velocities
+                       noon.score/-def-durations noon.score/-def-durations
+                       noon.score/-def-tracks noon.score/-def-tracks
+                       noon.score/-def-wrapped noon.score/-def-wrapped
                        noon.harmony/defsteps noon.harmony/defsteps
                        noon.utils.misc/defreduction noon.utils.misc/defreduction}}}
