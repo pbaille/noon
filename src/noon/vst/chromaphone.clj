@@ -61,7 +61,8 @@
                                 elems
                                 (->> (str/split (slurp path) #"\n")
                                      (keep (fn [l] (second (re-matches #"\{name=([^,]*).*" l))))
-                                     (mapv #(str/replace % #"[\"\(\)]" "")))]
+                                     (mapv #(str/replace % #"[\"\(\)]" ""))
+                                     (mapv #(str/replace % #"@" "at")))]
                             {:idx (read-string idx)
                              :name name
                              :key (u/str->keyword name)
