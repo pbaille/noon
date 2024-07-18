@@ -9,10 +9,17 @@
     (defn fn->gen
       [f]
       (with-meta
-        (fn
+        (fn self
           ([] (f))
-          ([n] (take n (repeatedly f))))
+          ([_] (u/throw* "gen arity one is deprecated, use sample instead")))
         {:generator true}))
+
+    (defn- realise-n
+      "This could be done more concisely using `clojure.core/repeatedly`
+       but it was breaking the pseudo randomness."
+      [g n]
+      (if-not (zero? n)
+        (cons (g) (realise-n g (dec n)))))
 
     (defn gen?
       [x] (:generator (meta x)))
@@ -23,7 +30,7 @@
     (declare data)
 
     (defn sample
-      [n g] (cond (gen? g) (g n)
+      [n g] (cond (gen? g) (realise-n g n)
                   (coll? g) (sample n (data g))
                   :else (repeat n g))))
 
@@ -60,9 +67,9 @@
       ($ (data g)
          (partial apply f)))
 
-    (defn bind
+    (defgen bind
       [g h]
-      (h (realise g)))
+      (realise (h (realise g))))
 
     (defn bind*
       [g h]
