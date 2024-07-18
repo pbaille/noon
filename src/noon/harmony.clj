@@ -37,7 +37,7 @@
         -1 (nth (:fw bds) idx)))
 
     (defn bds-shift
-      "Shift a bidirectional seq `bds` by the given `idx`." .
+      "Shift a bidirectional seq `bds` by the given `idx`."
       [bds idx]
       (condp = (compare 0 idx)
 
