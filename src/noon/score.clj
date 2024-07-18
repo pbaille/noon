@@ -183,10 +183,12 @@
             (defn voice- [x] (voice (sub x))))
 
         (defn cc [key val]
-          {:cc {key val}})
+          (if-let [code (midi/cc-code key)]
+            (map->efn {:cc {code (fn [v] (->7bits-natural (m/value-merge v val)))}})
+            (u/throw* "Unrecognised control change code: " key)))
 
         (defn pc [& xs]
-          {:pc (vec xs)})
+          (map->efn {:pc (vec xs)}))
 
         (defn patch
           ([x]
