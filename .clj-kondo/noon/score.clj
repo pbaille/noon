@@ -1,4 +1,5 @@
-(ns noon.score)
+(ns noon.score
+  (:require noon.constants))
 
 (defmacro efn
   "just a tagged lambda that represents an event update function"
@@ -70,6 +71,14 @@
                         :tags [:event-update :alias]})
                 `(noon.score/track ~i)))))
 
+(defmacro -def-wrapped [wrapper m]
+  (cons 'do (for [[k v] (eval m)]
+              (list 'def
+                    (with-meta (symbol (name k))
+                      {:tags [:event-update :alias :harmonic]
+                       :doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))})
+                    (list wrapper v)))))
+
 (defmacro -def-steps [name prefix max f]
   (cons 'do
         (mapcat
@@ -85,10 +94,17 @@
                   (list f (list `- n)))])
          (range 1 max))))
 
-(defmacro -def-wrapped [wrapper m]
-  (cons 'do (for [[k v] (eval m)]
-              (list 'def
-                    (with-meta (symbol (name k))
-                      {:tags [:event-update :alias :harmonic]
-                       :doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))})
-                    (list wrapper v)))))
+(defmacro -def-shifts [name prefix max f]
+  (cons 'do
+        (mapcat
+         (fn [n]
+           [(list 'def (with-meta (symbol (str prefix n))
+                         {:doc (str "Shift up "
+                                    n " " name (when (> n 1) "s") ".")
+                          :tags [:event-update :harmonic]})
+                  (list f n))
+            (list 'def (with-meta (symbol (str prefix n "-"))
+                         {:doc (str "Shift down " n " " name (when (> n 1) "s") ".")
+                          :tags [:event-update :harmonic]})
+                  (list f (list `- n)))])
+         (range 1 max))))
