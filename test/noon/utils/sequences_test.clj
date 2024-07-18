@@ -1,6 +1,6 @@
 (ns noon.utils.sequences-test
   (:require [noon.utils.sequences :as s]
-            [clojure.test :refer [deftest testing is]]
+            [clojure.test :refer [deftest is]]
             [noon.utils.pseudo-random :as pr]))
 
 (deftest impl

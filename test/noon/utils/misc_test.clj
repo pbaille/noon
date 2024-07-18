@@ -87,6 +87,12 @@
     (is (u/flagged? :bar (u/flagged :foo :bar {})))
     (is (not (u/flagged? :baz (u/flagged :foo :bar {}))))))
 
+(u/defn* defn-star-test
+  "just for tests"
+  {:meta :data}
+  [xs]
+  (reduce + 0 xs))
+
 (deftest macros
   (testing "parse-defn"
     (is (= (u/parse-defn '(plus [a b] (+ 1 2)))
@@ -114,12 +120,6 @@
              :doc nil,
              :attrs {:meta :data},
              :arities (([x y] (+ x y)) ([x y & more] (reduce plus (plus x y) more)))})))
-
-  (u/defn* defn-star-test
-    "just for tests"
-    {:meta :data}
-    [xs]
-    (reduce + 0 xs))
 
   (testing "defn*"
     (is (= 6
@@ -208,17 +208,17 @@
     (is (= (u/index-of [1 2 3 :x] :x) 3))
     (is (not (u/index-of [1 2 3 4] :x)))))
 
+(u/defreduction my-plus [x y] (+ x y))
+
+(defn cons-if-gte-first [acc x]
+  (when (<= (first acc) x) (cons x acc)))
+
+(u/defreduction my-redtest
+  "Add elements to the head of the list if they are sorted"
+  [x y]
+  (cons-if-gte-first x y))
+
 (deftest more-macros
-
-  (u/defreduction my-plus [x y] (+ x y))
-
-  (defn cons-if-gte-first [acc x]
-    (when (<= (first acc) x) (cons x acc)))
-
-  (u/defreduction my-redtest
-    "Add elements to the head of the list if they are sorted"
-    [x y]
-    (cons-if-gte-first x y))
 
   (testing "reductions"
     (is (= (my-plus 1 2 3 4)

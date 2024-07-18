@@ -1,7 +1,6 @@
 (ns noon.harmony-test
   (:require [noon.harmony :as h]
-            [clojure.test :refer [deftest testing is]]
-            [noon.utils.chance :as g]))
+            [clojure.test :refer [deftest testing is]]))
 
 (defn limit-bds [bds & [limit]]
   (-> bds

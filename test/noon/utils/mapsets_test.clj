@@ -39,7 +39,7 @@
                   hash-set)
              (m/$ #{{:a 1} {:a 2}}
                   list)
-             ((m/$_ (hash-set _) (list _)) #{{:a 1} {:a 2}})
+             ((m/$_ hash-set list) #{{:a 1} {:a 2}})
              #{{:a 1} {:a 2}}))))
 
   (testing "upd"

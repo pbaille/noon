@@ -14,6 +14,16 @@
     (is (= (c/sample 3 (c/fn->gen (constantly :ok)))
            (repeat 3 :ok)))))
 
+(c/defgen pouet
+  "a pouet generator"
+  {:meta :data
+   :interesting false
+   :deterministic false}
+  ([]
+   (pr/rand-nth [:pouet :pwet :puette]))
+  ([strict?]
+   (if strict? :pouet :pwet)))
+
 (deftest syntax
   (testing "gen"
     (is (= 1 (c/realise (c/gen 1))))
@@ -25,16 +35,6 @@
            (list 0.7309677600860596
                  0.8314409852027893
                  0.2405363917350769))))
-  (c/defgen pouet
-    "a pouet generator"
-    {:meta :data
-     :interesting false
-     :deterministic false}
-    ([]
-     (pr/rand-nth [:pouet :pwet :puette]))
-    ([strict?]
-     (if strict? :pouet :pwet)))
-
   (testing "defgen"
     (is (contains? #{:pouet :pwet :puette}
                    (c/realise (pouet))))

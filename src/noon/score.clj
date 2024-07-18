@@ -346,11 +346,11 @@
                                        :doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))})
                                     (list wrapper v)))))
 
-                (-def-wrapped struct constants/structs)
+                (-def-wrapped struct noon.constants/structs)
 
-                (-def-wrapped scale constants/modes)
+                (-def-wrapped scale noon.constants/modes)
 
-                (-def-wrapped repitch constants/pitches)
+                (-def-wrapped repitch noon.constants/pitches)
 
                 (do :intervals
 
