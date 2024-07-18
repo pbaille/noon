@@ -60,6 +60,14 @@
           (max 0)
           (min 127)))
 
+    (defn ->16bits-natural
+      "MIDI sometimes deals with 16 bits between values,
+       this function coerce its input to this range."
+      [x]
+      (-> (->int x)
+          (max 0)
+          (min 65535)))
+
     (defn ->4bits-natural
       "MIDI sometimes deals with natural between 0 and 16,
        this function coerce its input to this range."
@@ -157,7 +165,8 @@
 
         (do :tracks
             (defn track [x]
-              {:track x})
+              (ef_ (update _ :track
+                           (fn [t] (->16bits-natural (m/value-merge t x))))))
 
             (defn track+ [x] (track (add x)))
             (defn track- [x] (track (sub x))))
@@ -167,7 +176,8 @@
             " incubation "
 
             (defn voice [x]
-              {:voice x})
+              (ef_ (update _ :voice
+                           (fn [v] (->4bits-natural (m/value-merge v x))))))
 
             (defn voice+ [x] (voice (add x)))
             (defn voice- [x] (voice (sub x))))
