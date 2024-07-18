@@ -397,4 +397,22 @@
                     (h/position 0 1 1 0)
                     (h/scale :dorian)
                     (h/hc+ ((h/position 0 1 1 0) (h/hc))))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d -1, :c 0}})))))
+             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d -1, :c 0}}))
+
+      (is (= (h/align :diatonic
+                      (h/upd (h/hc) (h/scale :lydian) (h/root :E))
+                      (h/upd (h/hc) (h/scale :dorian) (h/root :D)))
+             {:scale [0 2 3 5 7 9 10], :struct [0 2 4], :origin {:d 36, :c 62}, :position {:t 0, :s 1, :d -1}}))
+
+      (is (= (h/align :diatonic
+                      (h/upd (h/hc) (h/scale :dorian) (h/root :D))
+                      (h/upd (h/hc) (h/scale :lydian) (h/root :E)))
+             {:scale [0 2 4 6 7 9 11], :struct [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d -1}}))
+
+      (is (= (h/upd (h/hc)
+                    (h/mirror :G0))
+             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d 1, :c 0}})))
+
+    (deftest "passing TODO")
+
+    (deftest "connections TODO")))
