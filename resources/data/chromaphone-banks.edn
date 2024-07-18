@@ -525,7 +525,7 @@
    {:idx 28, :name "UFO  Bass", :key :ufo--bass}
    {:idx 29, :name "Chifty Tuby Bass", :key :chifty-tuby-bass}
    {:idx 30, :name "Welcome to the House", :key :welcome-to-the-house}
-   {:idx 31, :name "Trance @ NAMM", :key :trance-@-namm}
+   {:idx 31, :name "Trance at NAMM", :key :trance-at-namm}
    {:idx 32, :name "Vacationer Pluck", :key :vacationer-pluck}]}
  {:idx 11,
   :name "Keys",
