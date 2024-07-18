@@ -26,5 +26,6 @@
                        noon.score/-def-durations noon.score/-def-durations
                        noon.score/-def-tracks noon.score/-def-tracks
                        noon.score/-def-wrapped noon.score/-def-wrapped
+                       noon.score/-def-steps noon.score/-def-steps
                        noon.harmony/defsteps noon.harmony/defsteps
                        noon.utils.misc/defreduction noon.utils.misc/defreduction}}}

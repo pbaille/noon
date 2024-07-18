@@ -70,6 +70,21 @@
                         :tags [:event-update :alias]})
                 `(noon.score/track ~i)))))
 
+(defmacro -def-steps [name prefix max f]
+  (cons 'do
+        (mapcat
+         (fn [n]
+           [(list 'def (with-meta (symbol (str prefix n))
+                         {:doc (str "Step up "
+                                    n " " name " " (if (> n 1) "steps" "step") ".")
+                          :tags [:event-update :harmonic]})
+                  (list f n))
+            (list 'def (with-meta (symbol (str prefix n "-"))
+                         {:doc (str "Step down " n " " name " " (if (> n 1) "steps" "step") ".")
+                          :tags [:event-update :harmonic]})
+                  (list f (list `- n)))])
+         (range 1 max))))
+
 (defmacro -def-wrapped [wrapper m]
   (cons 'do (for [[k v] (eval m)]
               (list 'def
