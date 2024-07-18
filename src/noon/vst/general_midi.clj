@@ -3,7 +3,8 @@
             [noon.utils.misc :as u]
             [clojure.string :as str]
             [clj-fuzzy.metrics :as fm]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [noon.utils.pseudo-random :as pr]))
 
 (defn name->key [name]
   (u/str->keyword (str/replace name #"\((.*)\)" "$1")))
@@ -25,8 +26,9 @@
 (defn get-instrument [k]
   (or (by-key k)
       (if-let [instruments (groups k)]
-        (rand-nth instruments)
-        (first (sort-by (fn [i] (fm/dice (name k) (:name i))) > (shuffle instruments))))))
+        (pr/rand-nth instruments)
+        (first (sort-by (fn [i] (fm/dice (name k) (:name i)))
+                        > (pr/shuffle instruments))))))
 
 (def summary
   (u/map-vals
