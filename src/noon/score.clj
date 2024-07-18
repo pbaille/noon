@@ -193,8 +193,9 @@
         (defn patch
           ([x]
            (cond (keyword? x) (patch (vst/pick x))
-                 (vector? x) {:patch x}
-                 (number? x) (patch nil x)))
+                 (vector? x) (ef_ (assoc _ :patch x))
+                 (number? x) (patch nil x)
+                 :else (u/throw* "noon.score/patch :: bad argument " x)))
           ([bank program]
            (patch [bank program])))
 
