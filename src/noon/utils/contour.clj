@@ -72,8 +72,8 @@
           size (size s)
           max-size (+ emax size)
           min-size (+ emin size)]
-         (mapcat (partial contour-growths contour)
-                 (range (max contour-size min-size) (inc max-size))))
+      (mapcat (partial contour-growths contour)
+              (range (max contour-size min-size) (inc max-size))))
     :else (u/throw* `similars
                     "unexpected 2nd argument: "
                     extent)))
