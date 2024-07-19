@@ -217,7 +217,9 @@
                 (merge DEFAULT_EVENT event)]
             (doseq [prog pc]
               (add-event sequence
-                         (short-message ShortMessage/PROGRAM_CHANGE channel prog)
+                         (if (vector? prog)
+                           (short-message ShortMessage/PROGRAM_CHANGE channel (prog 0) (prog 1))
+                           (short-message ShortMessage/PROGRAM_CHANGE channel prog))
                          position
                          track
                          :program-change))
