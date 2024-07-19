@@ -426,14 +426,22 @@
     (def score0 #{DEFAULT_EVENT})
 
     (defn score
-      "Build a score from some clojure datastructure.
-       A score is simply a seq of notes objects."
+      "Build a score from `x`.
+       `x` can be either:
+        - a set of event maps.
+        - a single event map.
+        - nil (empty score)
+        - a generator that will be realized and fed into this function again."
       [x]
       (cond (set? x) x
             (map? x) #{x}
-            (g/gen? x) (score (x))))
+            (g/gen? x) (score (x))
+            (nil? x) #{}
+            :else (u/throw* "noon.score/score :: bad argument : " x)))
 
-    (defn score? [x]
+    (defn score?
+      "Test if `x` is a score."
+      [x]
       (if (set? x)
         (every? map? x)))
 
@@ -560,8 +568,8 @@
                                          todo)
                                   same-program-changes
                                   (recur (conj ret (dissoc x :pc))
-                                         current-patch
                                          (:patch x)
+                                         current-program-changes
                                          todo)
                                   :else
                                   (recur (conj ret x)
