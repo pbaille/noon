@@ -184,7 +184,12 @@
 
         (defn cc [key val]
           (if-let [code (midi/cc-code key)]
-            (map->efn {:cc {code (fn [v] (->7bits-natural (m/value-merge v val)))}})
+            (map->efn {:cc {code (fn [v]
+                                   (let [v (m/value-merge v val)]
+                                     (cond
+                                       (number? v) (->7bits-natural v)
+                                       (sequential? v) (mapv ->7bits-natural v)
+                                       :else (u/throw* "Bad value for event's :cc entry: " v))))}})
             (u/throw* "Unrecognised control change code: " key)))
 
         (defn patch
