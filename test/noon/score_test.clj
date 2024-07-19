@@ -2,7 +2,8 @@
   (:require [noon.score :as s]
             [clojure.test :refer [deftest testing is]]
             [noon.utils.pseudo-random :as pr]
-            [noon.utils.chance :as g]))
+            [noon.utils.chance :as g]
+            [noon.utils.misc :as u]))
 
 (def E0 s/DEFAULT_EVENT)
 (def S0 s/score0)
@@ -325,4 +326,110 @@
            (list [0 [0 4] nil] [1 [nil 11] {7 70}] [2 nil nil]))))
 
   (testing "updates"
-    ()))
+    (is (u/t? :score-update (s/sf_ _)))
+    (is (s/score-update? (s/sfn [s] s)))
+    (is (= (s/upd S0 (s/sf_ _))
+           S0))
+    (is (= (s/upd S0 s/dur2)
+           (s/mk s/dur2)))
+    (is (= (s/upd S0 [s/vel10 s/dur2])
+           (s/mk s/dur2 s/vel10)))
+    (is (= (s/upd S0 (g/one-of s/vel10))
+           (s/mk s/vel10)))
+    (is (= (s/upd S0 #{s/vel5 s/d1})
+           (s/mk (s/par s/vel5 s/d1))
+           (into (s/upd S0 s/vel5)
+                 (s/upd S0 s/d1))))
+
+    (is (= (s/mk s/same)
+           (s/mk s/_)
+           S0))
+
+    (is (= (s/mk (s/k S0))
+           S0))
+
+    (is (= (s/mk s/void)
+           #{}))
+
+    (is (= (s/mk (s/lin s/chan2 s/vel2))
+           (s/mk (s/lin (s/lin s/chan2) (s/lin s/vel2)))
+           (s/mk [s/chan2 s/vel2])
+           (s/upd (s/upd S0 s/chan2)
+                  s/vel2)))
+
+    (is (= S0 (s/mk (s/lin))))
+
+    (is (= (s/mk (s/par s/chan2 s/chan3))
+           (s/mk (s/par s/chan2 s/chan3 s/chan3))
+           (into (s/mk s/chan2)
+                 (s/mk s/chan3))))
+
+    (is (= (s/mk (s/par> s/d1 s/d1))
+           (s/mk (s/par s/d1 s/d2))))
+
+    (is (= (s/mk (s/cat s/s0 s/s1 s/s2)
+                 (s/$ s/d1))
+           (s/mk (s/cat [s/s0 s/d1] [s/s1 s/d1] [s/s2 s/d1]))))
+    (is (= (s/mk (s/cat s/s0 s/s1 s/s2)
+                 (s/$ s/d1 s/c1))
+           (s/mk (s/cat [s/s0 s/d1 s/c1]
+                        [s/s1 s/d1 s/c1]
+                        [s/s2 s/d1 s/c1]))
+           #{{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1, :c 1}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
+             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 1, :c 1}}, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}
+             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 1, :c 1}}, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}}))
+
+    (is (= (s/mk (s/cat s/s1 [s/chan2 s/s3]))
+           (s/concat-score (s/mk s/s1) (s/mk s/chan2 s/s3))
+           #{{:patch [0 4], :channel 2, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 3}}, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}
+             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}}))
+
+    (is (= (s/mk (s/cat> s/d1 s/d1 s/d1))
+           (s/mk (s/cat s/d1 s/d2 s/d3))))
+
+    (is (= (s/mk (s/fit s/dur2))
+           S0))
+
+    (is (= (s/mk (s/fit (s/cat s/d1 s/d2 s/d3)))
+           (s/mk (s/tup s/d1 s/d2 s/d3))))
+
+    (is (= (s/score-duration
+            (s/mk (s/tup s/d0 s/d2 s/d3)))
+           1))
+
+    (is (= (s/mk (s/tup> s/d1 s/d1 s/d1))
+           (s/mk (s/tup s/d1 s/d2 s/d3))))
+
+    (is (= (s/mk (s/append s/d1))
+           (s/mk (s/cat s/same s/d1))))
+
+    (is (= (s/mk (s/superpose s/d1))
+           (s/mk (s/par s/same s/d1))))
+
+    (is (= (s/mk (s/rep 3 s/d1))
+           (s/mk (s/cat s/same s/d1 s/d2))))
+
+    (is (= (s/mk (s/rep 3 s/d1 :skip-first))
+           (s/mk (s/cat s/d1 s/d2 s/d3))))
+
+    (is (= (s/mk (s/rup 3 s/d1))
+           (s/mk (s/tup s/same s/d1 s/d2))))
+
+    (is (= (s/mk (s/rup 3 s/d1 :skip-first))
+           (s/mk (s/tup s/d1 s/d2 s/d3))))
+
+    (is (= (s/mk (s/dup 3))
+           (s/mk (s/cat s/same s/same s/same))))
+
+    (is (= (s/mk (s/dupt 3))
+           (s/mk (s/tup s/same s/same s/same))))
+
+    (is (= (s/mk (s/tupn 3 s/d1))
+           (s/mk (s/tup s/d1 s/d1 s/d1))))
+
+    (is (= (s/mk (s/catn 3 s/d1))
+           (s/mk (s/cat s/d1 s/d1 s/d1))))
+
+    (is (= (s/mk (s/par s/chan1 s/chan2)
+                 (s/parts s/chan1 s/d1))
+           (s/mk (s/par [s/chan1 s/d1] s/chan2))))))
