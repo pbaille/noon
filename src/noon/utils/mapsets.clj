@@ -28,11 +28,6 @@
   [s f]
   (mk (map (m/->upd f) s)))
 
-(defmacro $_ [& xs]
-  `(fn [this#]
-     (-> this#
-         ~@(map (f_ `($ (f_ ~_))) xs))))
-
 (defn ->upd
   "Build a mapset update using given arguments.
   arguments have to be either:
