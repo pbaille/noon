@@ -123,6 +123,11 @@
            (:cc ((s/cc 'Volume 10) E0))
            {7 10}))
 
+    (is (= (:cc ((s/cc :volume [50 100]) E0))
+           {7 [50 100]}))
+    (is (= (:cc ((s/cc :volume [-50 80 150]) E0))
+           {7 [0 80 127]}))
+
     (is (= (:cc ((s/cc :bank-select-1 10) E0))
            {0 10}))
 
@@ -308,4 +313,15 @@
     (is (= (->> (s/dedupe-patches-and-program-changes (s/mk (s/cat s/s0 s/s2 s/s4)))
                 (s/sort-score)
                 (map (juxt :position :patch :pc)))
-           (list [0 [0 4] nil] [1 nil nil] [2 nil nil])))))
+           (list [0 [0 4] nil] [1 nil nil] [2 nil nil])))
+
+    (is (= (->> (s/mk (s/cat s/s0
+                             [(s/patch :vibraphone)
+                              (s/pc [70 89])
+                              (s/cat s/s2 s/s4)]))
+                (s/dedupe-patches-and-program-changes)
+                (s/sort-score)
+                (map (juxt :position :patch :pc)))
+           (list [0 [0 4] nil]
+                 [1 [nil 11] [[70 89]]]
+                 [2 nil nil])))))
