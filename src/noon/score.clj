@@ -187,9 +187,6 @@
             (map->efn {:cc {code (fn [v] (->7bits-natural (m/value-merge v val)))}})
             (u/throw* "Unrecognised control change code: " key)))
 
-        (defn pc [& xs]
-          (map->efn {:pc (vec xs)}))
-
         (defn patch
           ([x]
            (cond (keyword? x) (patch (vst/pick x))

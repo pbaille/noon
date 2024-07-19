@@ -129,7 +129,7 @@
        & [type]]
       (let [track (aget (.getTracks sequence) track)
             tick-position (position->tick sequence position)
-            tick-delta (case type :control-change 0 (:note-off :program-change :patch-change) 1 2)]
+            tick-delta (case type :control-change 0 (:note-off :patch-change) 1 2)]
         (.add track (MidiEvent. message (+ tick-position tick-delta)))))
 
     (defn add-note
@@ -209,28 +209,13 @@
                          position
                          track
                          :patch-change))
-            sequence))
-
-        (defn add-program-changes
-          [sequence event]
-          (let [{:keys [channel pc track position]}
-                (merge DEFAULT_EVENT event)]
-            (doseq [prog pc]
-              (add-event sequence
-                         (if (vector? prog)
-                           (short-message ShortMessage/PROGRAM_CHANGE channel (prog 0) (prog 1))
-                           (short-message ShortMessage/PROGRAM_CHANGE channel prog))
-                         position
-                         track
-                         :program-change))
             sequence)))
 
     (defn add-events
       [sequence events]
-      (doseq [{:as e :keys [pitch cc patch pc]} events]
+      (doseq [{:as e :keys [pitch cc patch]} events]
         (if pitch (add-note sequence e))
         (if patch (add-patch-change sequence e))
-        (if pc (add-program-changes sequence e))
         (doseq [[k v] cc] (add-control-change sequence e k v)))
       sequence))
 
@@ -497,6 +482,8 @@
      :close (fn [] (doseq [s sequencers] (close-sequencer s)))}))
 
 
+
+'(clojure.pprint/pprint (.getInstruments (.getDefaultSoundbank (MidiSystem/getSynthesizer))))
 
 (comment :scratch
 
