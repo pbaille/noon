@@ -310,18 +310,19 @@
              {:patch [0 4], :channel 0, :pitch 67, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}
              {:patch [0 4], :channel 0, :pitch 76, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}}))
 
-    (is (= (->> (s/dedupe-patches-and-program-changes (s/mk (s/cat s/s0 s/s2 s/s4)))
+    (is (= (->> (s/dedupe-patches-and-control-changes (s/mk (s/cat s/s0 s/s2 s/s4)))
                 (s/sort-score)
-                (map (juxt :position :patch :pc)))
+                (map (juxt :position :patch :cc)))
            (list [0 [0 4] nil] [1 nil nil] [2 nil nil])))
 
     (is (= (->> (s/mk (s/cat s/s0
                              [(s/patch :vibraphone)
-                              (s/pc [70 89])
+                              (s/cc :volume 70)
                               (s/cat s/s2 s/s4)]))
-                (s/dedupe-patches-and-program-changes)
+                (s/dedupe-patches-and-control-changes)
                 (s/sort-score)
-                (map (juxt :position :patch :pc)))
-           (list [0 [0 4] nil]
-                 [1 [nil 11] [[70 89]]]
-                 [2 nil nil])))))
+                (map (juxt :position :patch :cc)))
+           (list [0 [0 4] nil] [1 [nil 11] {7 70}] [2 nil nil]))))
+
+  (testing "updates"
+    ()))

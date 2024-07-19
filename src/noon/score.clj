@@ -516,22 +516,29 @@
               scaled)))
 
         (defn normalise-score
+          "Normalise score to {:position 0 :duration 1}"
           [score]
           (fit-score score
                      {:position 0 :duration 1}))
 
-        (defn concat-score [a b]
+        (defn concat-score
+          "Concat 2 scores temporally."
+          [a b]
           (->> (score-duration a)
                (shift-score b)
                (into a)))
 
-        (defn concat-scores [xs]
+        (defn concat-scores
+          "Concat several scores temporally."
+          [xs]
           (case (count xs)
             0 #{}
             1 (first xs)
             (reduce concat-score xs)))
 
-        (defn reverse-score [score]
+        (defn reverse-score
+          "Reverse score temporally."
+          [score]
           (let [total-duration (score-duration score)]
             (ms/$ score
                   (fn [e]
@@ -541,42 +548,50 @@
                                 (:duration e)))))))
 
         (defn sort-score
+          "Sort `score` events.
+           arity 1: by :position.
+           arity 2: by `f`
+           arity 3: by `f` using `comp` as compare fn."
           ([score] (sort-score :position score))
           ([f score] (sort-by f score))
           ([f comp score] (sort-by f comp score)))
 
-        (defn numerify-pitches [score]
+        (defn numerify-pitches
+          "Replace the pitch entry value of each event by its MIDI pitch value (7bits natural)."
+          [score]
           (ms/$ score (fn [e] (update e :pitch h/hc->chromatic-value))))
 
-        (defn dedupe-patches-and-program-changes [score]
+        (defn dedupe-patches-and-control-changes
+          "Remove redondant :patch and :cc event entries from `score`"
+          [score]
           (->> (group-by (juxt :track :channel) score)
                (map (fn [[_ xs]]
                       (loop [ret #{}
                              current-patch nil
-                             current-program-changes nil
+                             current-control-changes nil
                              todo (sort-by :position xs)]
                         (if-let [[x & todo] (seq todo)]
                           (let [same-patch (= current-patch (:patch x))
-                                same-program-changes (= current-program-changes (:pc x))]
-                            (cond (and same-patch same-program-changes)
-                                  (recur (conj ret (dissoc x :pc :patch))
+                                same-control-changes (= current-control-changes (:cc x))]
+                            (cond (and same-patch same-control-changes)
+                                  (recur (conj ret (dissoc x :cc :patch))
                                          current-patch
-                                         current-program-changes
+                                         current-control-changes
                                          todo)
                                   same-patch
                                   (recur (conj ret (dissoc x :patch))
                                          current-patch
-                                         (:pc x)
+                                         (:cc x)
                                          todo)
-                                  same-program-changes
-                                  (recur (conj ret (dissoc x :pc))
+                                  same-control-changes
+                                  (recur (conj ret (dissoc x :cc))
                                          (:patch x)
-                                         current-program-changes
+                                         current-control-changes
                                          todo)
                                   :else
                                   (recur (conj ret x)
                                          (:patch x)
-                                         (:pc x)
+                                         (:cc x)
                                          todo)))
                           ret))))
                (reduce into #{})))
@@ -1245,7 +1260,7 @@
           name)))
 
     (defn midifiable-score [score]
-      (vec (-> score numerify-pitches dedupe-patches-and-program-changes)))
+      (vec (-> score numerify-pitches dedupe-patches-and-control-changes)))
 
     (defn options [& {:as options}]
       (sf_ (vary-meta _ assoc ::options options)))
