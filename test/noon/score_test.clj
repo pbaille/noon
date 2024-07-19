@@ -1,9 +1,11 @@
 (ns noon.score-test
   (:require [noon.score :as s]
             [clojure.test :refer [deftest testing is]]
-            [noon.utils.pseudo-random :as pr]))
+            [noon.utils.pseudo-random :as pr]
+            [noon.utils.chance :as g]))
 
 (def E0 s/DEFAULT_EVENT)
+(def S0 s/score0)
 
 (defn E0> [& xs]
   (s/?reduce #(%2 %1) E0 xs))
@@ -206,3 +208,104 @@
 
     (is (= (E0> s/s1- s/d2 s/o2- :pitch)
            {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t -2, :s -1, :d 2}}))))
+
+
+(deftest score
+
+  (is (= (s/score s/score0)
+         s/score0))
+
+  (is (s/score? (s/score s/score0)))
+
+  (is (= (s/score E0)
+         #{E0}))
+
+  (is (s/score? (s/score E0)))
+
+  (is (= (s/score (g/one-of E0))
+         s/score0))
+
+  (is (not (s/score? 23)))
+  (is (not (s/score? {:a 1})))
+
+  (testing "views"
+
+    (is (= (s/score-duration S0)
+           1))
+    (is (= (s/score-duration (s/upd S0 s/dur2))
+           2))
+    (is (= (s/score-duration (s/mk (s/cat s/s0 s/s2 s/s4)))
+           3))
+
+    (is (= (s/score-track-count S0)
+           1))
+    (is (= (s/score-track-count (s/mk (s/superpose s/track1)))
+           2))
+
+    (is (= (s/score-bounds S0 :position)
+           [{:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}
+            {:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}]))
+
+    (is (= (s/score-bounds (s/mk (s/cat s/s0 s/s2 s/s4)) :position)
+           [{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
+            {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 4}}, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}]))
+
+    (is (= (s/score-origin S0)
+           0))
+    (is (= (s/score-origin (s/upd S0 {:position (s/add 10)}))
+           10))
+
+    (is (= (s/pitch-value-bounds S0)
+           [60 60]))
+    (is (= (s/pitch-value-bounds (s/mk (s/cat s/s0 s/s2 s/s4)))
+           [60 76])))
+
+  (testing "transformations"
+
+    (is (= (s/score-duration
+            (s/scale-score (s/mk (s/cat s/s0 s/s2 s/s4))
+                           1/3))
+           1))
+    (is (= (s/score-duration
+            (s/scale-score (s/shift-score S0 10)
+                           1/3))
+           11/3))
+    (is (= (s/score-origin
+            (s/scale-score (s/shift-score S0 10)
+                           1/3))
+           10/3))
+    (is (= (s/shift-score S0 10)
+           (s/upd S0 {:position (s/add 10)})))
+    (is (let [s0 (s/mk (s/cat s/s0 s/s2 s/s4))
+              s1 (s/fit-score s0 E0)
+              s2 (s/normalise-score s0)]
+          (and (= s1 s2)
+               (= 1 (s/score-duration s1))
+               (= 0 (s/score-origin s2)))))
+    (is (let [s (s/fit-score (s/mk (s/cat s/s0 s/s2 s/s4))
+                             {:position 3 :duration 2})]
+          (and (= 5 (s/score-duration s))
+               (= 3 (s/score-origin s)))))
+
+    (is (let [s (s/concat-score S0 S0)]
+          (and (= 2 (s/score-duration s))
+               (= 0 (s/score-origin s)))))
+    (is (= #{} (s/concat-scores [])))
+    (is (= S0 (s/concat-scores [S0])))
+    (is (let [s (s/concat-score S0 S0)
+              s (s/concat-scores [s s s])]
+          (and (= 6 (s/score-duration s))
+               (= 0 (s/score-origin s)))))
+
+    (is (= (s/reverse-score (s/mk (s/cat s/s0 s/s2 s/s4)))
+           (s/mk (s/cat s/s4 s/s2 s/s0))))
+
+    (is (= (s/numerify-pitches (s/mk (s/cat s/s0 s/s2 s/s4)))
+           #{{:patch [0 4], :channel 0, :pitch 60, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
+             {:patch [0 4], :channel 0, :pitch 67, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}
+             {:patch [0 4], :channel 0, :pitch 76, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}}))
+
+    (is (= (->> (s/dedupe-patches-and-program-changes (s/mk (s/cat s/s0 s/s2 s/s4)))
+                (s/sort-score)
+                (map (juxt :position :patch :pc)))
+           (list [0 [0 4] nil] [1 nil nil] [2 nil nil])))))
