@@ -1,7 +1,8 @@
 (ns noon.midi
   (:require [noon.utils.misc :as u]
             [clojure.string :as str]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [clojure.data.codec.base64 :as b64])
   (:import (java.io File)
            (java.nio ByteBuffer)
            (java.util Arrays)
@@ -233,6 +234,10 @@
       (let [baos (java.io.ByteArrayOutputStream.)]
         (MidiSystem/write sequence 1 baos)
         (.toByteArray baos)))
+
+    (defn sequence->midi-string
+      [sequence]
+      (str (b64/encode (get-midi-bytes sequence))))
 
     (defn write-midi-file2
       [sequence filename]
@@ -478,14 +483,16 @@
              (doseq [s sequencers] (reset-sequencer s))
              (doseq [s sequencers] (restart-sequencer s)))
      :write (fn [filename] (write-midi-file sequence filename))
+     :midi-string (fn [] (sequence->midi-string sequence))
      :stop (fn [] (doseq [s sequencers] (stop-sequencer s)))
      :close (fn [] (doseq [s sequencers] (close-sequencer s)))}))
 
 
 
-'(clojure.pprint/pprint (.getInstruments (.getDefaultSoundbank (MidiSystem/getSynthesizer))))
-
 (comment :scratch
+
+         (clojure.pprint/pprint
+          (.getInstruments (.getDefaultSoundbank (MidiSystem/getSynthesizer))))
 
          (defn write-pitch-line
            [pitches filename & [opts]]
@@ -496,39 +503,6 @@
                       (new-state :bpm (or tempo bpm 60))
                       (map vector (range) pitches))
               filename)))
-
-         (comment :first-xp
-
-                  (ShortMessage/CONTROL_CHANGE)
-
-                  (defn export-midi-file!
-                    [sq filename]
-                    (MidiSystem/write sq 0 (File. filename)))
-
-                  (defn hello-midi
-                    "just try to emit a midi file with one note"
-                    []
-                    (let [sequencer (new-midi-sequencer)
-                          sq (Sequence. Sequence/PPQ 128)
-                          track (.createTrack sq)
-                          tempo 60]
-                      (doto sequencer
-                        (.setSequence sq)
-                        (.setTickPosition 0))
-
-                      (.add track (MidiEvent. (set-tempo-message tempo) 0))
-
-                      (let [note-on (doto (ShortMessage.)
-                                      (.setMessage ShortMessage/NOTE_ON
-                                                   0 60 80))
-                            note-off (doto (ShortMessage.)
-                                       (.setMessage ShortMessage/NOTE_OFF
-                                                    0 60 80))]
-
-                        (.add track (MidiEvent. note-on 0))
-                        (.add track (MidiEvent. note-off 512)))
-
-                      (export-midi-file! sq "test.mid"))))
 
          (comment
            (-> (new-state)
@@ -569,12 +543,6 @@
                (add-control-change-over-time {:cc :expression :duration 1 :start-value 50 :end-value 70})
                (write-midi-file "hello-multi-track.mid")))
 
-         (comment
-           ((short-message ShortMessage/PROGRAM_CHANGE 1 2))
-           (write-pitch-line [60 64 68 71]
-                             "generated/write-pitch-line_test.mid"
-                             {:duration 1/2}))
-
          ;; https://stackoverflow.com/questions/53922543/javax-midi-play-midi-file-with-custom-soundfont
          (comment :play-with-custom-soundfont
 
@@ -590,35 +558,3 @@
                     (.start sq)
                     (Thread/sleep 10000)
                     (.stop sq))))
-
-(comment :gpt
-
-         (defn send-midi [bus-name note velocity]
-           (let [info  (->> (MidiSystem/getMidiDeviceInfo)
-                            (map (fn [info] {:name (.getName info) :device (MidiSystem/getMidiDevice info)}))
-                            (filter #(.contains (:name %) bus-name))
-                            first)
-                 device (:device info)
-                 sq (MidiSystem/getSequencer false)]
-             (.open device)
-             (.setReceiver (.getTransmitter sq) (.getReceiver device))
-             (let [sequence (Sequence. Sequence/PPQ 1 1)
-                   _ (.setSequence sq sequence)
-                   track (.createTrack sequence)
-                   message (doto (ShortMessage.) (.setMessage ShortMessage/NOTE_ON 0 note velocity))
-                   message-off (doto (ShortMessage.) (.setMessage ShortMessage/NOTE_OFF 0 note 0))
-                   note-on-event (javax.sound.midi.MidiEvent. message 0)
-                   note-off-event (javax.sound.midi.MidiEvent. message-off 1)]
-               (.add track note-on-event)
-               (.add track note-off-event)
-               sq)))
-
-         (let [sq (send-midi "Bus 1" 60 93)]
-           (.open sq)
-           (.start sq))
-
-         (let [s (-> (new-state :sequencer chorium-sequencer)
-                     (add-note DEFAULT_NOTE)
-                     (:sequencer))]
-           (.open s)
-           (.start s)))
