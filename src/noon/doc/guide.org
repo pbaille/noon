@@ -184,6 +184,14 @@ If you have [[https://musescore.org/en][musecore]] installed on your machine, yo
 - =:pdf true=
   write the score pdf file.
 
+***** mp3 export
+
+It is possible to create an mp3 file by passing this option:
+
+=:mp3 true=
+
+[[https://ffmpeg.org/][FFmpeg]] and [[https://www.fluidsynth.org/][FluidSynth]] have to be installed on your machine.
+
 **** score
 
 As we've just seen, we can create a score with the =mk= function.
