@@ -3,7 +3,6 @@
   (:refer-clojure :exclude [cat while struct])
   (:require [clojure.core :as c]
             [clojure.pprint :refer [pprint]]
-            [clojure.java.shell :as shell]
             [noon.midi :as midi]
             [noon.harmony :as h]
             [noon.vst.index :as vst]
@@ -12,7 +11,8 @@
             [noon.utils.mapsets :as ms]
             [noon.utils.maps :as m]
             [noon.utils.chance :as g]
-            [noon.utils.pseudo-random :as pr]))
+            [noon.utils.pseudo-random :as pr]
+            [noon.externals :as externals]))
 
 (do :help
 
@@ -1244,10 +1244,6 @@
       {:default "generated"
        :history "generated/history"})
 
-    (def MUSESCORE_BIN "mscore")
-    (def FLUIDSYNTH_BIN "fluidsynth")
-    (def FFMPEG_BIN "ffmpeg")
-
     (def options* (atom MIDI_DEFAULT_OPTIONS))
 
     (def sequencer* (atom nil))
@@ -1278,7 +1274,7 @@
             base (str directory "/" file-barename)]
         (u/ensure-directory directory)
         (merge
-         {:source-file (str base ".mut")
+         {:source-file (str base ".noon")
           :seed-file (str base ".seed")}
          (when (or midi mp3 pdf xml) {:midi-file (str base ".mid")})
          (when (or pdf xml) {:xml-file (str base ".xml")})
@@ -1293,7 +1289,7 @@
               :keys [tracks bpm play source]} (merge @options* opts (-> score meta ::options))
 
              {:as files
-              :keys [midi-file source-file seed-file xml-file pdf-file mp3-file]} (output-files options)
+              :keys [midi-file source-file seed-file]} (output-files options)
 
              multi-sequencer (midi/midi :bpm bpm
                                         :track-idx->sequencer (or tracks (constantly :default)) :data (midifiable-score score))]
@@ -1310,22 +1306,7 @@
          (if midi-file
            ((:write @sequencer*) midi-file))
 
-         (when (and mp3-file
-                    (zero? (:exit (shell/sh "which" FLUIDSYNTH_BIN)))
-                    (zero? (:exit (shell/sh "which" FFMPEG_BIN))))
-           (shell/sh "sh" "-c" (str FLUIDSYNTH_BIN " -a alsa -T raw -F -"
-                                    " ./resources/midi/soundfonts/choriumreva.sf2"
-                                    (str " ./" midi-file)
-                                    " | " FFMPEG_BIN " -f s32le -i -"
-                                    (str " ./" mp3-file))))
-
-         (when (zero? (:exit (shell/sh "which" MUSESCORE_BIN)))
-           (if xml-file
-             (shell/sh MUSESCORE_BIN "--export-to" xml-file midi-file))
-
-           (when pdf-file
-             (shell/sh MUSESCORE_BIN xml-file "-o" pdf-file)
-             (u/copy-file pdf-file "last.pdf")))
+         (externals/handle-externals files)
 
          (when source
            (spit source-file source)
