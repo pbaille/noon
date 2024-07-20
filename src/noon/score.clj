@@ -1244,8 +1244,9 @@
       {:default "generated"
        :history "generated/history"})
 
-    (def MUSESCORE_BIN
-      "/Applications/MuseScore 4.app/Contents/MacOS/mscore")
+    (def MUSESCORE_BIN "mscore")
+    (def FLUIDSYNTH_BIN "fluidsynth")
+    (def FFMPEG_BIN "ffmpeg")
 
     (def options* (atom MIDI_DEFAULT_OPTIONS))
 
@@ -1270,7 +1271,7 @@
           (midi/add-events (midifiable-score score))
           (midi/get-midi-bytes)))
 
-    (defn output-files [{:keys [filename midi pdf xml]}]
+    (defn output-files [{:keys [filename midi pdf xml mp3]}]
       (let [{:keys [directory file-barename]
              :or {directory (MIDI_DIRECTORIES :default)
                   file-barename (gen-filename)}} (u/parse-file-path filename)
@@ -1279,9 +1280,10 @@
         (merge
          {:source-file (str base ".mut")
           :seed-file (str base ".seed")}
-         (when (or midi pdf xml) {:midi-file (str base ".mid")})
+         (when (or midi mp3 pdf xml) {:midi-file (str base ".mid")})
          (when (or pdf xml) {:xml-file (str base ".xml")})
-         (when pdf {:pdf-file (str base ".pdf")}))))
+         (when pdf {:pdf-file (str base ".pdf")})
+         (when mp3 {:mp3-file (str base ".mp3")}))))
 
     (defn noon
       ([score]
@@ -1291,7 +1293,7 @@
               :keys [tracks bpm play source]} (merge @options* opts (-> score meta ::options))
 
              {:as files
-              :keys [midi-file source-file seed-file xml-file pdf-file]} (output-files options)
+              :keys [midi-file source-file seed-file xml-file pdf-file mp3-file]} (output-files options)
 
              multi-sequencer (midi/midi :bpm bpm
                                         :track-idx->sequencer (or tracks (constantly :default)) :data (midifiable-score score))]
@@ -1307,6 +1309,15 @@
 
          (if midi-file
            ((:write @sequencer*) midi-file))
+
+         (when (and mp3-file
+                    (zero? (:exit (shell/sh "which" FLUIDSYNTH_BIN)))
+                    (zero? (:exit (shell/sh "which" FFMPEG_BIN))))
+           (shell/sh "sh" "-c" (str FLUIDSYNTH_BIN " -a alsa -T raw -F -"
+                                    " ./resources/midi/soundfonts/choriumreva.sf2"
+                                    (str " ./" midi-file)
+                                    " | " FFMPEG_BIN " -f s32le -i -"
+                                    (str " ./" mp3-file))))
 
          (when (zero? (:exit (shell/sh "which" MUSESCORE_BIN)))
            (if xml-file
