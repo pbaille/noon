@@ -3,7 +3,8 @@
             [clojure.test :refer [deftest testing is]]
             [noon.utils.pseudo-random :as pr]
             [noon.utils.chance :as g]
-            [noon.utils.misc :as u]))
+            [noon.utils.misc :as u]
+            [noon.test :as tu]))
 
 (def E0 s/DEFAULT_EVENT)
 (def S0 s/score0)
@@ -215,24 +216,24 @@
     (is (= (E0> s/s1- s/d2 s/o2- :pitch)
            {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t -2, :s -1, :d 2}}))))
 
-
 (deftest score
 
-  (is (= (s/score s/score0)
-         s/score0))
+  (testing "basic"
+    (is (= (s/score s/score0)
+           s/score0))
 
-  (is (s/score? (s/score s/score0)))
+    (is (s/score? (s/score s/score0)))
 
-  (is (= (s/score E0)
-         #{E0}))
+    (is (= (s/score E0)
+           #{E0}))
 
-  (is (s/score? (s/score E0)))
+    (is (s/score? (s/score E0)))
 
-  (is (= (s/score (g/one-of E0))
-         s/score0))
+    (is (= (s/score (g/one-of E0))
+           s/score0))
 
-  (is (not (s/score? 23)))
-  (is (not (s/score? {:a 1})))
+    (is (not (s/score? 23)))
+    (is (not (s/score? {:a 1}))))
 
   (testing "views"
 
@@ -432,4 +433,7 @@
 
     (is (= (s/mk (s/par s/chan1 s/chan2)
                  (s/parts s/chan1 s/d1))
-           (s/mk (s/par [s/chan1 s/d1] s/chan2))))))
+           (s/mk (s/par [s/chan1 s/d1] s/chan2))))
+
+    (is (tu/freeze :cat1
+                   (s/mk (s/cat s/d1 s/d2 s/d3))))))
