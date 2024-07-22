@@ -92,6 +92,7 @@
 
     (comment :examples
 
+             (use 'noon.score)
              (play (rup 8 d1)
                    (permutation {:grade 5 :layer :d}))
 
@@ -375,6 +376,21 @@
            ([layer length size & {:as options}]
             (gen-tup2 (assoc options :layer layer :length length :size size)))))
 
+(def connect-repetitions
+  (n/$by (juxt :channel :track :voice)
+         (n/sf_ (let [[e1 & todo] (sort-by :position _)]
+                  (loop [[last-note & prev-notes :as ret] (list e1)
+                         todo todo]
+                    (if-let [[e & todo] (seq todo)]
+                      (if (and (= (n/pitch-value e) (n/pitch-value last-note))
+                               (= (dissoc e :position :duration :pitch)
+                                  (dissoc last-note :position :duration :pitch)))
+                        (recur (cons (update last-note :duration + (:duration e))
+                                     prev-notes)
+                               todo)
+                        (recur (cons e ret) todo))
+                      (set ret)))))))
+
 (comment :sum-scratch-useless
 
          "When building a step line it is important to be aware of the intermediate values of the sum we use"
@@ -384,7 +400,6 @@
 
          (def SAMPLE_STEP_LINES
            (mapcat comb/permutations SAMPLE_SUMS))
-
 
          (defn step-line-infos [steps]
            (let [vals (reductions + steps)
@@ -410,8 +425,8 @@
                            [(k (tup IV VI)) (dupt 2) (chan 2) (patch :acoustic-bass) t2- vel10])
                 (transpose c3)
 
-                #_ [(transpose c4-)
-                    (superpose [(chan 2) o1 d5 (patch :vibraphone) ($ (probs {vel0 3 _ 1}))])])
+                #_[(transpose c4-)
+                   (superpose [(chan 2) o1 d5 (patch :vibraphone) ($ (probs {vel0 3 _ 1}))])])
                (adjust 48))
 
          (count SAMPLE_STEP_LINES)
