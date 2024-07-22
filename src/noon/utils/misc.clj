@@ -283,7 +283,11 @@
         (if (seq s)
           (if (= x (first s))
             at
-            (recur (next s) (inc at)))))))
+            (recur (next s) (inc at))))))
+
+    (defn lazy-map [xs f]
+      (if-let [[x & xs] (seq xs)]
+        (cons (f x) (lazy-seq (lazy-map xs f))))))
 
 (do :files&paths
 
