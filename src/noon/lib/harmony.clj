@@ -51,15 +51,15 @@
                     (into #{bass})))))
 
     (def drops
-      (do memoize ; TODO uncomment memo
-          (fn [s]
-            (let [size (count s)
-                  _ (assert (c/< size 8) "cannot drop more than 7 notes")
-                  notes (vec (sort-by n/pitch-value (closed s)))]
-              (map (fn [d] (set (cons (notes 0)
-                                      (mapcat (fn [o idxs] (map (fn [idx] ((n/t-shift o) (notes (inc idx)))) idxs))
-                                              (range) d))))
-                   (abstract-drops (dec size)))))))
+      (memoize
+       (fn [s]
+         (let [size (count s)
+               _ (assert (c/< size 8) "cannot drop more than 7 notes")
+               notes (vec (sort-by n/pitch-value (closed s)))]
+           (map (fn [d] (set (cons (notes 0)
+                                   (mapcat (fn [o idxs] (map (fn [idx] ((n/t-shift o) (notes (inc idx)))) idxs))
+                                           (range) d))))
+                (abstract-drops (dec size)))))))
 
     (defn drop
       [x]
@@ -181,7 +181,6 @@
 
 (defn- connect-trimmed-chunks [xs]
   (reduce (fn [score x]
-            ;; TODO do it
             (let [{trimmed-fws true score-rest nil} (group-by :trimed-fw score)
                   {trimmed-bws true x-rest nil} (group-by :trimed-bw x)]
               (loop [ret (set (concat score-rest x-rest)) fws trimmed-fws bws (set trimmed-bws)]
