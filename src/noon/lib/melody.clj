@@ -312,6 +312,7 @@
          (defn gen-line [{:as opts :keys [_contour _grow layer _pick]}]
            (tup* (map (partial layer-step layer) (c/gen-line opts))))
 
+         (use 'noon.score)
          (play dur:2
                (patch :whistle)
                (gen-line {:contour [6 4] :grow 6 :layer :c})
@@ -367,6 +368,61 @@
                                todo)
                         (recur (cons e ret) todo))
                       (set ret)))))))
+
+(do :sums-again
+
+    (defn step-seqs
+      "Return a collection of step sequences according to given options.
+       - :delta is the overall step of the resulting sequences.
+         e.g a step sequence [1 2 1] have a delta of 4.
+       - :length is the number of steps the resulting sequences will count.
+       - :bounds specifies the allowed range for sequence's intermediates values
+         it is a vector of the form [minimal-intermediate-value maximum-intermediate-value]
+       - :steps specifies available steps
+       - :step-range is an alternative to :steps
+         it specifies the minimal and maximal steps via a vector [min-step max-step]
+         all intermediate values are allowed.
+         e.g :step-range [-2 2] is equivalent to :steps [-2 -1 1 2] (zero step is excluded)."
+      [{:keys [delta length bounds steps step-range]
+        :or {delta 0 step-range [-3 3]}}]
+      (let [steps (or steps (remove zero? (range (get step-range 0 -3) (inc (get step-range 1 3)))))
+            within-bounds
+            (fn [s] (or (not bounds)
+                        (let [reds (reductions + 0 s)]
+                          (and (>= (apply min reds) (get bounds 0))
+                               (<= (apply max reds) (get bounds 1))))))
+            drop-until-in-bound
+            (fn [sum-permutations]
+              (if-let [[perm & perms] (seq sum-permutations)]
+                (if (within-bounds perm)
+                  [perm perms]
+                  (recur perms))))]
+        (letfn [(looop [sums-permutations]
+                  (if-let [[perms1 & perms-more] (seq (pr/shuffle sums-permutations))]
+                    (if-let [[s perms] (drop-until-in-bound perms1)]
+                      (cons s (lazy-seq (looop (cons perms perms-more)))))))]
+          (looop (u/lazy-map (pr/shuffle (u/sums delta length steps))
+                             (comp comb/permutations pr/shuffle))))))
+
+    (def DEFAULT_LAYERS_DELTAS
+      {:c 12 :d 7 :s 3 :t 1})
+
+    (defn gen-tup3
+      ([{:as options
+         :keys [layer]}]
+       (if-let [step-seq (first (step-seqs options))]
+         (n/tup>* (map (partial n/layer-step layer)
+                       step-seq))))
+      ([layer length delta & {:as options}]
+       (gen-tup3 (assoc options :layer layer :length length :delta delta))))
+
+    (comment
+      (step-seqs {:length 5
+                  :delta 0
+                  :bounds [-2 6]
+                  :step-range [-4 4]})
+      (n/play (gen-tup3 :d 5 2 {:bounds [-2 6]
+                                :step-range [-4 4]}))))
 
 (comment :sum-scratch-useless
 
@@ -432,5 +488,6 @@
                                            tmin tmax step max-step)))
                               steps)))))
 
-         (count (sums 10 5 [-5 -1 0 1 5] -5 15))
+         (count (sums 10 5 (range -5 5)))
+         (count (sums 10 5 (range -5 5) -5 15))
          (count (sums 10 5 (range -10 11) -50 50)))
