@@ -1,6 +1,7 @@
-(ns noon.utils
+(ns noon.test
   (:require [noon.score :as s]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [me.raynes.fs :as fs]))
 
 (defn dir-exists? [dir-name]
   (let [dir (io/file dir-name)]
@@ -15,12 +16,14 @@
 (def FREEZE_DIR "./test/data/freeze/")
 
 (defn freeze [id score]
-  (let [dir (str FREEZE_DIR id)
+  (let [id (name id)
+        dir (str FREEZE_DIR id)
         filename (str dir "/" id)
         options {:filename filename :midi true}]
 
     (if (dir-exists? dir)
       (let [temp-dir (str FREEZE_DIR "temp")]
+        (fs/delete-dir temp-dir)
         (s/noon (assoc options :filename (str temp-dir "/" id))
                 score)
         (dir-equal? dir temp-dir))
