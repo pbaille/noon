@@ -64,13 +64,13 @@
       ([pick {:as options :keys [layer layers]}]
        (let [layers (or layers (if layer (list layer)))]
          (n/sf_ (n/concat-scores
-               (if-let [nxt-layers (next layers)]
-                 (map (rotation pick (assoc options :layers nxt-layers))
-                      (sorted-layer-splits (first layers) _))
-                 (s/rotation (if layers
-                               (sorted-layer-splits (last layers) _)
-                               (sorted-position-splits _))
-                             pick)))))))
+                 (if-let [nxt-layers (next layers)]
+                   (map (rotation pick (assoc options :layers nxt-layers))
+                        (sorted-layer-splits (first layers) _))
+                   (s/rotation (if layers
+                                 (sorted-layer-splits (last layers) _)
+                                 (sorted-position-splits _))
+                               pick)))))))
 
     (defn permutation
       ([]
@@ -82,13 +82,13 @@
       ([pick {:as options :keys [layer layers]}]
        (let [layers (or layers (if layer (list layer)))]
          (n/sf_ (n/concat-scores
-               (if-let [nxt-layers (next layers)]
-                 (map (permutation pick (assoc options :layers nxt-layers))
-                      (sorted-layer-splits (first layers) _))
-                 (s/permutation (if layers
-                                  (sorted-layer-splits (last layers) _)
-                                  (sorted-position-splits _))
-                                pick options)))))))
+                 (if-let [nxt-layers (next layers)]
+                   (map (permutation pick (assoc options :layers nxt-layers))
+                        (sorted-layer-splits (first layers) _))
+                   (s/permutation (if layers
+                                    (sorted-layer-splits (last layers) _)
+                                    (sorted-position-splits _))
+                                  pick options)))))))
 
     (comment :examples
 
@@ -107,30 +107,7 @@
              (play dur2
                    (tup s0 s1 s2)
                    ($ (rup 4 d1))
-                   (permutation 0 {:layers [:s :d]}))
-
-             (play {:description "rand harmonic seq using IV II and VI degrees on vibraphone,
-                                  ocarina melody derives using transposition, rotation and permutation."}
-
-                   (chans
-
-                    [(patch :vibraphone)
-                     vel3
-                     (tupn 4 [(one-of IV II VI) tetrad (par [t2- vel5] s0 s1 s2 s3)])]
-
-                    [(patch :ocarina)
-                     vel5
-                     (shuftup d1 d2 d3 d4 d5)
-                     ($ (maybe (par d0 d3)))
-                     (rup 16
-                          (probs {(permutation :rand) 1
-                                  (rotation :rand) 3
-                                  (one-of* (map d-step (range -3 4))) 5}))])
-
-                   (adjust 10)
-                   (append [d2- (transpose c3)]
-                           [d2 (transpose c3-)]
-                           same))))
+                   (permutation 0 {:layers [:s :d]}))))
 
 (do :contour
 
