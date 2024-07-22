@@ -1292,7 +1292,8 @@
               :keys [midi-file source-file seed-file]} (output-files options)
 
              multi-sequencer (midi/midi :bpm bpm
-                                        :track-idx->sequencer (or tracks (constantly :default)) :data (midifiable-score score))]
+                                        :track-idx->sequencer (or tracks (constantly :default))
+                                        :data (midifiable-score score))]
 
          (when @sequencer*
            ((:stop @sequencer*))
