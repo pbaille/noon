@@ -403,21 +403,12 @@ One more shredding experiment
         (adjust 64)))
 #+end_src
 
-#+RESULTS:
-#+begin_src clojure
-{:source-file "generated/history/1721646651272.noon",
- :seed-file "generated/history/1721646651272.seed",
- :midi-file "generated/history/1721646651272.mid"}
-
-#+end_src
-
 ** Gradual melodic transformation
 
-#+begin_src clojure :pp
-(play {:description "rand harmonic seq using IV II and VI degrees on vibraphone,
-                                  ocarina melody derives using transposition, rotation and permutation."}
+Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody derives using transposition, rotation and permutation.
 
-      (chans
+#+begin_src clojure :pp
+(play (chans
 
        [(patch :vibraphone)
         vel3
