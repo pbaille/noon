@@ -51,13 +51,12 @@
                                         (m/gen-line {:contour [6 4] :grow 6 :layer :c})
                                         (n/append> n/c3 n/c4 n/c2 n/rev (n/$ (n/maybe n/o1 n/o1-)))))))
 
-    (= (pr/with-rand 0
-         (take 10 (m/step-seqs {:length 5
-                                :delta 0
-                                :bounds [-2 6]
-                                :step-range [-4 4]})))
-       '([-1 1 2 -4 2] [-2 3 -2 3 -2] (4 -2 -2 -2 2) (1 -3 4 -1 -1) (3 -2 1 -4 2)
-                       (4 -3 -2 -1 2) (4 -2 -2 3 -3) (3 3 -4 1 -3) (2 2 -4 3 -3) (3 -3 4 -3 -1)))
+    (is (= (pr/with-rand 0
+             (take 10 (m/step-seqs {:length 5
+                                    :delta 0
+                                    :bounds [-2 6]
+                                    :step-range [-4 4]})))
+           '([-1 1 2 -4 2] (-2 3 -2 3 -2) (-2 4 -2 -2 2) (-1 -1 4 -3 1) [-2 1 2 3 -4] (4 -2 -1 2 -3) (-2 3 -3 4 -2) (3 -3 3 -4 1) (2 -3 2 3 -4) [-1 3 -3 4 -3])))
 
     (is (t/freeze :gen-tup1
                   (pr/with-rand 0
