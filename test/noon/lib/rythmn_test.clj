@@ -55,9 +55,7 @@
                        [o1 (r/gen-tup 12 7 :shifted :durations [2 1 3])])
                   (dup 4)))
 
-    ;; why does this do not freeze correctly ??
-    #_(is (t/frozen {:description "rotation examplee"}
-                  (chans
+    (is (t/frozen (chans
                    [(patch :woodblock) o2-]
                    [(patch :woodblock) (tup dur2 dur3 dur3)
                     (r/rotation :rand-sub 5)])

@@ -78,8 +78,8 @@
       ([k arg]
        (case k
          :relative (n/sf_ (n/upd _ (rotation (* (n/score-duration _) arg))))
-         :rand-by (n/sf_ (n/upd _ (rotation (rand-nth (range 0 (n/score-duration _) arg)))))
-         :rand-sub (n/sf_ (n/upd _ (rotation (* (rand-nth (range 0 arg)) (/ (n/score-duration _) arg))))))))
+         :rand-by (n/sf_ (n/upd _ (rotation (pr/rand-nth (range 0 (n/score-duration _) arg)))))
+         :rand-sub (n/sf_ (n/upd _ (rotation (* (pr/rand-nth (range 0 arg)) (/ (n/score-duration _) arg))))))))
 
     (defn permutation
       "permute a score by time slices,
