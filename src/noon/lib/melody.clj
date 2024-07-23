@@ -1,8 +1,6 @@
 (ns noon.lib.melody
   "providing facilities to deal with melodic development"
-  (:refer-clojure :exclude [cat struct while])
   (:require [noon.score :as n]
-            #_[noon.utils.chance :as g]
             [noon.utils.contour :as c]
             [noon.utils.sequences :as s]
             [noon.utils.misc :as u]
@@ -358,7 +356,7 @@
    (gen-tup (assoc options :layer layer :length length :delta delta))))
 
 (def connect-repetitions
-  (n/$by (juxt :channel :track :voice)
+  (n/$by (juxt :track :channel :voice)
          (n/sf_ (let [[e1 & todo] (sort-by :position _)]
                   (loop [[last-note & prev-notes :as ret] (list e1)
                          todo todo]
