@@ -307,52 +307,60 @@
   [xs]
   (n/lin* (map n/append xs)))
 
-(comment :gen-tup
+(defn gen-line
+  "Generate a tuple by generating a contour, producing lines from it and picking one.
+   options are:
+   - :layer, the harmonic layer the contour is based on (default to :diatonic)
+   - :contour, a vector [contour-length contour-height].
+   - :grow, a vector [min-grow max-grow] that is used to grow the generated contour.
+   - :pick, a member-pick argument used to pick one line from generated ones. (default :rand)"
+  [opts]
+  (tup* (map (partial layer-step (:layer opts :d))
+             (c/gen-line opts))))
 
-         (defn gen-line [{:as opts :keys [_contour _grow layer _pick]}]
-           (tup* (map (partial layer-step layer) (c/gen-line opts))))
+(defn step-seqs
+  "Return a collection of step sequences according to given options.
+   A step sequence is a vector of integers like [-1 2 1 -3]
+   - :delta is the overall step of the resulting sequences.
+     e.g a step sequence [1 2 1] have a delta of 4.
+   - :length is the number of steps the resulting sequences will count.
+   - :bounds specifies the allowed range for sequence's intermediates values
+     it is a vector of the form [minimal-intermediate-value maximum-intermediate-value]
+   - :steps specifies available steps
+   - :step-range is an alternative to :steps
+     it specifies the minimal and maximal steps via a vector [min-step max-step]
+     all intermediate values are allowed.
+     e.g :step-range [-2 2] is equivalent to :steps [-2 -1 1 2] (zero step is excluded)."
+  [{:keys [delta length bounds steps step-range]
+    :or {delta 0 step-range [-3 3]}}]
+  (let [steps (or steps (remove zero? (range (get step-range 0 -3) (inc (get step-range 1 3)))))
+        within-bounds
+        (fn [s] (or (not bounds)
+                    (let [reds (reductions + 0 s)]
+                      (and (>= (apply min reds) (get bounds 0))
+                           (<= (apply max reds) (get bounds 1))))))
+        drop-until-in-bound
+        (fn [sum-permutations]
+          (if-let [[perm & perms] (seq sum-permutations)]
+            (if (within-bounds perm)
+              [perm perms]
+              (recur perms))))]
+    (letfn [(looop [sums-permutations]
+              (if-not (empty? sums-permutations)
+                (if-let [[s perms] (drop-until-in-bound (first sums-permutations))]
+                       (cons s (lazy-seq (looop (concat (rest sums-permutations) (list perms)))))
+                       (looop (rest sums-permutations)))))]
+      (looop (u/lazy-map (pr/shuffle (u/sums delta length steps))
+                         (comp comb/permutations pr/shuffle))))))
 
-         (use 'noon.score)
-         (play dur:2
-               (patch :whistle)
-               (gen-line {:contour [6 4] :grow 6 :layer :c})
-               (append c3)
-               (append c4)
-               (append c2)
-               (append rev)
-               (append ($ (maybe o1 o1-))))
-
-         (play dur:2
-               (patch :whistle)
-               (gen-line {:contour [6 4] :grow 6 :layer :c})
-               (append> c3 c4 c2 rev)
-               (dup 2))
-
-         #_(defn gen-steps [{:keys [min max]}])
-
-         (defn gen-tup
-           ([{:as _options
-              :keys [layer size steps pick delta]
-              :or {layer :d steps (range -7 8) pick :rand delta 0}}]
-            (let [step (partial n/layer-step layer)]
-              (n/tup>* (map step (pr/shuffle (s/member (u/sums delta size steps)
-                                                       pick)))))))
-
-         (def DEFAULT_LAYERS_DELTAS
-           {:c 12 :d 7 :s 3 :t 1})
-
-         (defn gen-tup2
-           ([{:as _options
-              :keys [layer length size steps bounds]
-              :or {layer :d size 0}}]
-            (let [delta (DEFAULT_LAYERS_DELTAS layer)
-                  steps (or steps (let [abs-rng (range 1 (inc delta))]
-                                    (concat (map - abs-rng) abs-rng)))
-                  _bounds (or bounds [(- delta) delta])]
-              (n/tup>* (map (partial n/layer-step layer)
-                            (pr/shuffle (pr/rand-nth (u/sums size length steps)))))))
-           ([layer length size & {:as options}]
-            (gen-tup2 (assoc options :layer layer :length length :size size)))))
+(defn gen-tup
+  ([{:as options
+     :keys [layer]}]
+   (if-let [step-seq (first (step-seqs options))]
+     (n/tup>* (map (partial n/layer-step layer)
+                   step-seq))))
+  ([layer length delta & {:as options}]
+   (gen-tup (assoc options :layer layer :length length :delta delta))))
 
 (def connect-repetitions
   (n/$by (juxt :channel :track :voice)
@@ -369,125 +377,27 @@
                         (recur (cons e ret) todo))
                       (set ret)))))))
 
-(do :sums-again
+(comment
+  (use 'noon.score)
+  (play dur:2
+        (patch :whistle)
+        (gen-line {:contour [6 4] :grow 6 :layer :c})
+        (append c3)
+        (append c4)
+        (append c2)
+        (append rev)
+        (append ($ (maybe o1 o1-))))
 
-    (defn step-seqs
-      "Return a collection of step sequences according to given options.
-       - :delta is the overall step of the resulting sequences.
-         e.g a step sequence [1 2 1] have a delta of 4.
-       - :length is the number of steps the resulting sequences will count.
-       - :bounds specifies the allowed range for sequence's intermediates values
-         it is a vector of the form [minimal-intermediate-value maximum-intermediate-value]
-       - :steps specifies available steps
-       - :step-range is an alternative to :steps
-         it specifies the minimal and maximal steps via a vector [min-step max-step]
-         all intermediate values are allowed.
-         e.g :step-range [-2 2] is equivalent to :steps [-2 -1 1 2] (zero step is excluded)."
-      [{:keys [delta length bounds steps step-range]
-        :or {delta 0 step-range [-3 3]}}]
-      (let [steps (or steps (remove zero? (range (get step-range 0 -3) (inc (get step-range 1 3)))))
-            within-bounds
-            (fn [s] (or (not bounds)
-                        (let [reds (reductions + 0 s)]
-                          (and (>= (apply min reds) (get bounds 0))
-                               (<= (apply max reds) (get bounds 1))))))
-            drop-until-in-bound
-            (fn [sum-permutations]
-              (if-let [[perm & perms] (seq sum-permutations)]
-                (if (within-bounds perm)
-                  [perm perms]
-                  (recur perms))))]
-        (letfn [(looop [sums-permutations]
-                  (if-let [[perms1 & perms-more] (seq (pr/shuffle sums-permutations))]
-                    (if-let [[s perms] (drop-until-in-bound perms1)]
-                      (cons s (lazy-seq (looop (cons perms perms-more)))))))]
-          (looop (u/lazy-map (pr/shuffle (u/sums delta length steps))
-                             (comp comb/permutations pr/shuffle))))))
+  (play dur:2
+        (patch :whistle)
+        (gen-line {:contour [6 4] :grow 6 :layer :c})
+        (append> c3 c4 c2 rev)
+        (dup 2))
 
-    (def DEFAULT_LAYERS_DELTAS
-      {:c 12 :d 7 :s 3 :t 1})
-
-    (defn gen-tup3
-      ([{:as options
-         :keys [layer]}]
-       (if-let [step-seq (first (step-seqs options))]
-         (n/tup>* (map (partial n/layer-step layer)
-                       step-seq))))
-      ([layer length delta & {:as options}]
-       (gen-tup3 (assoc options :layer layer :length length :delta delta))))
-
-    (comment
-      (step-seqs {:length 5
-                  :delta 0
-                  :bounds [-2 6]
-                  :step-range [-4 4]})
-      (n/play (gen-tup3 :d 5 2 {:bounds [-2 6]
-                                :step-range [-4 4]}))))
-
-(comment :sum-scratch-useless
-
-         "When building a step line it is important to be aware of the intermediate values of the sum we use"
-
-         (def SAMPLE_SUMS
-           (u/sums 0 4 (remove zero? (range -5 6))))
-
-         (def SAMPLE_STEP_LINES
-           (mapcat comb/permutations SAMPLE_SUMS))
-
-         (defn step-line-infos [steps]
-           (let [vals (reductions + steps)
-                 abs-steps (map u/abs steps)
-                 abs-vals (map u/abs vals)
-                 cnt (count steps)]
-             {:steps steps
-              :values vals
-              :step-bounds (c/bounds steps)
-              :val-bounds (c/bounds vals)
-              :abs-step-bounds (c/bounds abs-steps)
-              :abs-vals-bounds (c/bounds abs-vals)
-              :val-repetitions (- cnt (count (set vals)))
-              :step-repetitions (- cnt (count (set steps)))
-              :mean-step (/ (reduce + (map u/abs steps)) cnt)}))
-
-         (step-line-infos (rand-nth SAMPLE_STEP_LINES))
-
-         (play (patch :electric-piano-1)
-               (tup* (take 32 (map (partial stup> :d) (pr/shuffle SAMPLE_STEP_LINES))))
-               (append>
-                (superpose [(chan 1) o1 d3 (patch :flute) vel7]
-                           [(k (tup IV VI)) (dupt 2) (chan 2) (patch :acoustic-bass) t2- vel10])
-                (transpose c3)
-
-                #_[(transpose c4-)
-                   (superpose [(chan 2) o1 d5 (patch :vibraphone) ($ (probs {vel0 3 _ 1}))])])
-               (adjust 48))
-
-         (count SAMPLE_STEP_LINES)
-         (sort-by (comp (juxt :val-repetitions :abs-step-bounds)
-                        step-line-infos)
-                  SAMPLE_STEP_LINES)
-
-         (defn sums
-
-           ([total size steps]
-            (let [smin (apply min steps)
-                  smax (apply max steps)]
-              (sums total size (sort steps) (* size smin) (* size smax) smin smax)))
-           ([total size steps tmin tmax]
-            (sums total size (sort steps) tmin tmax (apply min steps) (apply max steps)))
-           ([total size steps tmin tmax min-step max-step]
-            (if (and (>= tmax total tmin)
-                     (>= (* size max-step) total (* size min-step)))
-              (cond
-                (= 1 size) (if ((set steps) total)
-                             (list (list total)))
-                :else (mapcat (fn [step]
-                                (map (partial cons step)
-                                     (sums (- total step) (dec size)
-                                           (drop-while (fn [s] (< s step)) steps)
-                                           tmin tmax step max-step)))
-                              steps)))))
-
-         (count (sums 10 5 (range -5 5)))
-         (count (sums 10 5 (range -5 5) -5 15))
-         (count (sums 10 5 (range -10 11) -50 50)))
+  (take 10 (step-seqs {:length 5
+                       :delta 0
+                       :bounds [-2 6]
+                       :step-range [-4 4]}))
+  (n/play dur:2
+          (catn 100 (! (gen-tup :c 6 6 {:bounds [-12 12]
+                                        :step-range [-7 7]})))))
