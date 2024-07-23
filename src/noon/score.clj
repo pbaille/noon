@@ -844,11 +844,23 @@
       [xs]
       (cat* (cons same xs)))
 
+    (defn* append>
+      "Accumulative 'append."
+      {:tags [:linear :accumulative]}
+      [xs]
+      (lin* (map append xs)))
+
     (defn* superpose
       "Like 'par but keep the current score."
       {:tags [:base :parallel]}
       [xs]
       (par* (cons same xs)))
+
+    (defn* superpose>
+      "Accumulative 'superpose."
+      {:tags [:parallel :accumulative]}
+      [xs]
+      (lin* (map superpose xs)))
 
     (defn rep
       "Iterates the given update n times over the input score and cat the results."
