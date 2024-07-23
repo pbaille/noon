@@ -43,12 +43,7 @@
       (->> (group-by :position s)
            (sort-by key)
            (map (fn [[position events]]
-                  (n/shift-score (set events) (- position))))))
-
-    (comment
-      (layer-split :s
-                   (mk (tup s0 s1 s2)
-                       ($ (tup d0 d1 d2))))))
+                  (n/shift-score (set events) (- position)))))))
 
 (do :permutations-rotations
 
@@ -86,26 +81,7 @@
                    (s/permutation (if layers
                                     (sorted-layer-splits (last layers) _)
                                     (sorted-position-splits _))
-                                  pick options)))))))
-
-    (comment :examples
-
-             (use 'noon.score)
-             (play (rup 8 d1)
-                   (permutation {:grade 5 :layer :d}))
-
-             (play (rup 8 d1)
-                   (permutation))
-
-             (play dur2
-                   (tup s0 s1 s2 s3)
-                   ($ (tup d1 d1- d0))
-                   (permutation :rand {:layer :s}))
-
-             (play dur2
-                   (tup s0 s1 s2)
-                   ($ (rup 4 d1))
-                   (permutation 0 {:layers [:s :d]}))))
+                                  pick options))))))))
 
 (do :contour
 
@@ -180,23 +156,7 @@
           (case cmd
             :mirror c/contour-mirror
             :rotation #(s/member (c/contour-inversions %) pick)
-            :similar #(s/member (c/similars % (or extent delta 0)) pick))))))
-
-    (comment :contour-tries
-
-             (mk (tup d0 d1 d2)
-                 (contour :mirror {:layer :d}))
-
-             (mk dur:2
-                 (shufcat s0 s1 s2 s4)
-                 ($ (tup d0 c1- d1 d0))
-                 (cat same
-                      [dur:4 vel0]
-                      (contour :mirror {:layer :s})
-                      [dur:4 vel0]
-                      (contour :similar {:extent [4 4] :layer :s})
-                      [dur:4 vel0]
-                      (contour :rotation {:layer :s})))))
+            :similar #(s/member (c/similars % (or extent delta 0)) pick)))))))
 
 (do :line
 
@@ -224,34 +184,7 @@
                (n/upd _ (line connect step done? (n/trim 0 total-duration))))))
 
     (defn simple-tupline [len step]
-      (n/fit (simple-line len step)))
-
-    (comment :line-tries
-
-             (play (simple-line 32 (one-of s1 s1- d1 d1-))
-                   (adjust 4))
-
-             (play (simple-line 32 (one-of s1 s1- (tup d1 d0 s2-) (tup d1- d0 s2)))
-                   (adjust 8))
-
-             (play dur:4
-                   (simple-line 64
-                                (one-of (catn> 4 (one-of d1- d1))
-                                        (tup d1 d1- s0)
-                                        (cat s2 s1 s1-)
-                                        (catn> 4 (one-of s1- s1))))
-                   (chans (patch :electric-piano-1)
-                          [(patch :ocarina) o1 ($ d3)]))
-
-             (play {:description "another way to build a melodic line from a bunch of randomly chosen updates"}
-                   (patch :acoustic-guitar-nylon)
-                   (while (within-time-bounds? 0 32)
-                     (append [start-from-last
-                              (any-that (within-pitch-bounds? :C-1 :C2)
-                                        (rep 3 d3 :skip-first)
-                                        (rep 3 d3- :skip-first)
-                                        d1 d1-)]))
-                   (adjust 3))))
+      (n/fit (simple-line len step))))
 
 (do :connect
 
@@ -308,7 +241,7 @@
    - :grow, a vector [min-grow max-grow] that is used to grow the generated contour.
    - :pick, a member-pick argument used to pick one line from generated ones. (default :rand)"
   [opts]
-  (tup* (map (partial layer-step (:layer opts :d))
+  (n/tup* (map (partial n/layer-step (:layer opts :d))
              (c/gen-line opts))))
 
 (defn step-seqs
@@ -328,10 +261,11 @@
     :or {delta 0 step-range [-3 3]}}]
   (let [steps (or steps (remove zero? (range (get step-range 0 -3) (inc (get step-range 1 3)))))
         within-bounds
-        (fn [s] (or (not bounds)
-                    (let [reds (reductions + 0 s)]
-                      (and (>= (apply min reds) (get bounds 0))
-                           (<= (apply max reds) (get bounds 1))))))
+        (fn [s]
+          (or (not bounds)
+              (let [reds (reductions + 0 s)]
+                (and (>= (apply min reds) (get bounds 0))
+                     (<= (apply max reds) (get bounds 1))))))
         drop-until-in-bound
         (fn [sum-permutations]
           (if-let [[perm & perms] (seq sum-permutations)]
@@ -341,8 +275,8 @@
     (letfn [(looop [sums-permutations]
               (if-not (empty? sums-permutations)
                 (if-let [[s perms] (drop-until-in-bound (first sums-permutations))]
-                       (cons s (lazy-seq (looop (concat (rest sums-permutations) (list perms)))))
-                       (looop (rest sums-permutations)))))]
+                  (cons s (lazy-seq (looop (concat (rest sums-permutations) (list perms)))))
+                  (looop (rest sums-permutations)))))]
       (looop (u/lazy-map (pr/shuffle (u/sums delta length steps))
                          (comp comb/permutations pr/shuffle))))))
 
@@ -369,28 +303,3 @@
                                todo)
                         (recur (cons e ret) todo))
                       (set ret)))))))
-
-(comment
-  (use 'noon.score)
-  (play dur:2
-        (patch :whistle)
-        (gen-line {:contour [6 4] :grow 6 :layer :c})
-        (append c3)
-        (append c4)
-        (append c2)
-        (append rev)
-        (append ($ (maybe o1 o1-))))
-
-  (play dur:2
-        (patch :whistle)
-        (gen-line {:contour [6 4] :grow 6 :layer :c})
-        (append> c3 c4 c2 rev)
-        (dup 2))
-
-  (take 10 (step-seqs {:length 5
-                       :delta 0
-                       :bounds [-2 6]
-                       :step-range [-4 4]}))
-  (n/play dur:2
-          (catn 100 (! (gen-tup :c 6 6 {:bounds [-12 12]
-                                        :step-range [-7 7]})))))
