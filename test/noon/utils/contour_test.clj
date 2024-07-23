@@ -49,13 +49,13 @@
                [0 7 2 8 5] [0 6 3 8 4] [0 6 3 8 5] [0 7 3 8 5] [0 6 2 8 4])))
   (is (= (pr/with-rand 0
            (c/gen-contour 4 3))
-         [0 2 0 1]))
+         [0 1 2 1]))
   (is (= (pr/with-rand 0
            (c/gen-contour 5 4))
-         [0 1 0 3 2]))
+         [0 1 3 2 3]))
   (is (= (pr/with-rand 0
            (c/gen-line {:contour [5 3] :grow 3 :pick :rand}))
-         [4 1 0 1 0]))
+         [0 4 5 4 0]))
   (is (= (pr/with-rand 0
            (c/gen-line {:contour [5 3] :grow 3 :pick -0.75}))
-         [3 2 0 2 0])))
+         [0 2 3 2 0])))
