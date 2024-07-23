@@ -435,5 +435,4 @@
                  (s/parts s/chan1 s/d1))
            (s/mk (s/par [s/chan1 s/d1] s/chan2))))
 
-    (is (tu/freeze :cat1
-                   (s/mk (s/cat s/d1 s/d2 s/d3))))))
+    (is (tu/frozen (s/cat s/d1 s/d2 s/d3)))))
