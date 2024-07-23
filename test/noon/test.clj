@@ -1,7 +1,8 @@
 (ns noon.test
   (:require [noon.score :as s]
             [clojure.java.io :as io]
-            [me.raynes.fs :as fs]))
+            [me.raynes.fs :as fs]
+            [noon.utils.pseudo-random :as pr]))
 
 (defn dir-exists? [dir-name]
   (let [dir (io/file dir-name)]
@@ -15,7 +16,7 @@
 
 (def FREEZE_DIR "./test/data/freeze/")
 
-(defn freeze [id score]
+(defn frozen? [id score]
   (let [id (name id)
         dir (str FREEZE_DIR id)
         filename (str dir "/" id)
@@ -29,5 +30,9 @@
         (dir-equal? dir temp-dir))
       (s/noon options score))))
 
-(comment (freeze "one"
-                 (s/mk (s/cat s/d0 s/d1))))
+(defmacro frozen [& xs]
+  `(frozen? ~(str (hash xs))
+            (pr/with-rand 0 (noon.score/mk ~@xs))))
+
+(comment (macroexpand '(freezm (s/cat s/d0 s/d1)))
+         (freezm (s/cat s/d0 s/d1)))
