@@ -2,7 +2,8 @@
   "an experiment around simple int sequence development"
   (:require [clojure.math.combinatorics :as c]
             [noon.utils.misc :as u]
-            [noon.utils.sequences :as s]))
+            [noon.utils.sequences :as s]
+            [noon.utils.pseudo-random :as pr]))
 
 (defn bounds [s]
   [(apply min s)
@@ -48,7 +49,7 @@
          updates)))
 
 (defn lines
-  "given a contour returns a seq of increasingly wide lines following it"
+  "Given a contour vector,returns a seq of increasingly wide lines following it."
   [contour growth]
   (let [base-size (apply max contour)]
     (cond (int? growth)
@@ -59,7 +60,11 @@
                   (map (partial + base-size) (range (growth 0) (inc (growth 1)))))
           )))
 
-(defn similars [s extent]
+(defn similars
+  "Given a sequence of ints `s`, builds a list of sequences that follow the same contour.
+   The `extent` argument is here to bound sequence height grow and shrink.
+   e.g `extent` = [-2 3] means that resulting sequence can be taller by 3 and/or smaller by 2 than `s`."
+  [s extent]
   (cond
     (int? extent)
     (let [contour (contour s)
@@ -79,19 +84,26 @@
                     extent)))
 
 (defn gen-contour
-  "produce a contour vector of length 'x and height 'y"
+  "Produce a contour vector of length 'x and height 'y"
   ([x]
    (cond (int? x) (gen-contour x x)
          (vector? x) (gen-contour (x 0) (x 1))))
   ([x y]
-   (let [base (range y)]
-     (->> (concat base (cycle base))
+   (if (>= x y)
+     (->> (cycle (pr/shuffle (range y)))
           (take x)
           s/shuffle-no-rep
-          vec))))
+          vec)
+     (u/throw* `gen-contour
+               "bad arguments: " [:length x :height y]
+               "length has to be >= height"))))
 
 (defn gen-line
-  "generate a line"
+  "Generate a line by generating a contour, producing lines from it, picking one.
+   options are:
+   - :contour, a vector [contour-length contour-height].
+   - :grow, a vector [min-grow max-grow] that is used to grow the generated contour.
+   - :pick, a member-pick argument used to pick one line from generated ones. (default :rand)"
   [{:keys [contour grow pick]}]
   (-> (gen-contour contour)
       (lines grow)
