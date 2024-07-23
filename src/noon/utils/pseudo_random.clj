@@ -8,21 +8,21 @@
 
 ;; from clojure.data.generators
 
-(def ^:dynamic ^java.util.Random
-  *rnd*
-  (java.util.Random. (Math/floor (* (core/rand) Long/MAX_VALUE))))
+(def random*
+  (atom (java.util.Random.
+         (Math/floor (* (core/rand) Long/MAX_VALUE)))))
 
 (defmacro with-rand [s & exprs]
   `(let [r# ~s]
-     (binding [~`*rnd* (cond (number? r#) (java.util.Random. r#)
-                             (string? r#) (u/unserialize-from-base64 r#)
-                             (instance? java.util.Random r#) r#)]
-       ~@exprs)))
+     (reset! random* (cond (number? r#) (java.util.Random. r#)
+                           (string? r#) (u/unserialize-from-base64 r#)
+                           (instance? java.util.Random r#) r#))
+     ~@exprs))
 
 (defn rand
-  "Generate a float between 0 and 1 based on *rnd*"
+  "Generate a float between 0 and 1 based on random*"
   (^double []
-   (.nextFloat *rnd*))
+   (.nextFloat @random*))
   (^double [max]
    (* max (rand))))
 
@@ -32,9 +32,9 @@
 (defn rand-int-between
   "Uniform distribution from lo (inclusive) to hi (exclusive).
    Defaults to range of Java long."
-  (^long [] (.nextLong *rnd*))
+  (^long [] (.nextLong @random*))
   (^long [lo hi] {:pre [(< lo hi)]}
-                 (clojure.core/long (Math/floor (+ lo (* (.nextDouble *rnd*) (- hi lo)))))))
+                 (clojure.core/long (Math/floor (+ lo (* (.nextDouble @random*) (- hi lo)))))))
 
 (defn rand-nth [xs]
   (nth xs (rand-int-between 0 (count xs))))
@@ -53,6 +53,6 @@
         (vec as)))))
 
 (defn shuffle
-  "Shuffle coll based on *rnd*"
+  "Shuffle coll based on random*"
   [xs]
   (fisher-yates xs))
