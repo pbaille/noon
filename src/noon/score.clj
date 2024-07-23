@@ -1323,7 +1323,7 @@
 
          (when source
            (spit source-file source)
-           (spit seed-file (u/serialize-to-base64 pr/*rnd*)))
+           (spit seed-file (u/serialize-to-base64 @pr/random*)))
 
          (swap! history* conj files)
 
