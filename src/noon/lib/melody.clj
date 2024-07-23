@@ -203,9 +203,9 @@
 (do :line
 
     (defn line
-      "creating a melodic line.
+      "Create a melodic line.
        1. 'connect is called on the current score, to produce another one that will be fed into 'step
-       2. 'step is called on the result of 'connect, and the result concatenated with the original score.
+       2. 'step is called on the result of 'connect, and the result is concatenated with the original score.
        3. if 'done? called with this new score is true, feed it to 'finish and return.
        4. else go to step 1."
       [connect step done? finish]
@@ -215,7 +215,7 @@
                      :else (recur nxt)))))
 
     (defn simple-line
-      "a simple way to create a line of given 'length using the given 'step"
+      "A simple way to create a line of given 'length using the given 'step"
       [length step]
       (n/sf_ (let [last-event (fn [s] (-> (sort-by :position s) last))
                    {:as _connection dur :duration} (last-event _)
@@ -301,11 +301,6 @@
      steps: a sequence of ints."
   [layer steps]
   (n/tup>* (map (partial n/layer-step layer) steps)))
-
-(u/defn* append>
-  "accumulative append"
-  [xs]
-  (n/lin* (map n/append xs)))
 
 (defn gen-line
   "Generate a tuple by generating a contour, producing lines from it and picking one.
