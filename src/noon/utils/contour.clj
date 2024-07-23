@@ -104,7 +104,8 @@
    - :contour, a vector [contour-length contour-height].
    - :grow, a vector [min-grow max-grow] that is used to grow the generated contour.
    - :pick, a member-pick argument used to pick one line from generated ones. (default :rand)"
-  [{:keys [contour grow pick]}]
+  [{:keys [contour grow pick]
+    :or {pick :rand}}]
   (-> (gen-contour contour)
       (lines grow)
       (s/member pick)))
