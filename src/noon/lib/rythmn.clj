@@ -72,9 +72,9 @@
        "
       ([offset]
        (n/sf_ (let [duration (n/score-duration _)]
-              (n/upd _
-                   [(n/$ {:position (fn [p] (mod (+ p offset) duration))})
-                    (n/trim 0 duration)]))))
+                (n/upd _
+                       [(n/$ {:position (fn [p] (mod (+ p offset) duration))})
+                        (n/trim 0 duration)]))))
       ([k arg]
        (case k
          :relative (n/sf_ (n/upd _ (rotation (* (n/score-duration _) arg))))
@@ -104,20 +104,20 @@
                s/rotations distinct
                (mapv sum->tup)))
 
-        #_ (defn euclidean-shifted-tups
-             "A shifted euclidean tuple is one that do not necessarly start at the begining position.
+        #_(defn euclidean-shifted-tups
+            "A shifted euclidean tuple is one that do not necessarly start at the begining position.
        This function list all potentially rotated and/or shifted euclidean tuples for the given arguments."
-             [size resolution]
-             (->> (eucl/euclidean-sum size resolution)
-                  s/rotations distinct
-                  (mapcat (fn [xs]
-                            (map (fn [shift]
-                                   (->> (- (last xs) shift)
-                                        (u/snoc (butlast xs))
-                                        (map dur)
-                                        (cons [vel0 (dur shift)])
-                                        tup*))
-                                 (range 0 (last xs))))))))
+            [size resolution]
+            (->> (eucl/euclidean-sum size resolution)
+                 s/rotations distinct
+                 (mapcat (fn [xs]
+                           (map (fn [shift]
+                                  (->> (- (last xs) shift)
+                                       (u/snoc (butlast xs))
+                                       (map dur)
+                                       (cons [vel0 (dur shift)])
+                                       tup*))
+                                (range 0 (last xs))))))))
 
     (defn gen-tup-options [x]
       (let [flags (map first (take-while (comp keyword? second) (partition 2 1 (concat x [:end]))))
@@ -184,109 +184,12 @@
           ([resolution size]
            (gen-bintup resolution size {}))
           ([resolution size & options]
-           (let [{:keys [shifted durations euclidean ]
+           (let [{:keys [shifted durations euclidean]
                   :or {durations (range 1 (inc resolution))}} (gen-tup-options options)
                  sum (if euclidean
                        (eucl/euclidean-sum size resolution)
                        (rand-sum resolution size durations))
                  bins (sum->bins sum)]
              (n/tup* (if shifted
-                     (pr/rand-nth (s/rotations bins))
-                     bins)))))
-
-        (comment
-          (play dur4
-                dorian
-                (chans [(patch :vibraphone) vel4 (par> d3 d3 d3)]
-                       [(patch :taiko-drum) (gen-tup 9 3 :durations [1 2 3]) ($ (one-of vel4 vel3) (maybe d3 d3-))]
-                       [(patch :acoustic-bass) o1- (gen-bintup 9 5)
-                        (parts {:bintup 0} _
-                               {:bintup 1} ($ (one-of vel0 d3-)))]
-                       [(patch :ocarina)
-                        (gen-bintup 27 11  :shifted :euclidean)
-                        ($ (one-of vel0 vel3 vel5 vel7))
-                        (parts {:bintup 0} ($ (one-of d2 d4 d6))
-                               {:bintup 1} ($ (one-of d3 d5 d7)))])
-                (append [rev lydian (transpose c4)] [lydian+2 (transpose c4-)] melodic-minor)
-                (append lydian)
-                (dup 2)
-                )))
-
-
-    (comment :tries
-
-             (play (patch :tinkle-bell)
-                   (gen-tup 8 5 :durations [2 1/2 1])
-                   (dup 4))
-
-             (play (patch :tinkle-bell)
-                   dur2
-                   (par [o1- (dupt 2)]
-                        (gen-tup 12 5 :durations [2 1/2 1 3])
-                        [o1 (gen-tup 12 7 :durations [2 1/2 1 3])])
-                   (dup 4))
-
-             "shifted"
-             (play (patch :tinkle-bell)
-                   dur2
-                   (par [o1- (dupt 2)]
-                        (gen-tup 8 5 :shifted :durations [1/4 1/2 1 2 4]))
-                   (dup 4))
-
-             (play (patch :tinkle-bell)
-                   dur2
-                   (par [o1- (dupt 2)]
-                        (gen-tup 12 5 :shifted)
-                        [o1 (gen-tup 12 5 :shifted)])
-                   (dup 4))
-
-             (play (patch :tinkle-bell)
-                   dur2
-                   (par [o1- (dupt 2)]
-                        (gen-tup 12 5 :shifted :durations [1 2 3])
-                        [o1 (gen-tup 12 7 :shifted :durations [2 1 3])])
-                   (dup 4))
-
-             (play {:description "rotation example"}
-                   (chans
-                    [(patch :woodblock) o2-]
-                    [(patch :woodblock) (tup dur2 dur3 dur3)
-                     (rotation :rand-sub 5)])
-                   (dup 4))
-
-             (play {:description "rythmic permutation demo"}
-                   (chans
-                    ;; beat
-                    [(patch :taiko-drum) vel5 (dup 4)]
-                    ;; rythmic permutations
-                    [(patch :woodblock)
-                     (sum->tup [2 1 1 1/2 1/2])
-                     ($ (maybe o1 o1-))
-                     (catn 4 (slice-permutation 5))]
-                    ;; chords
-                    [(patch :electric-piano-1)
-                     o1- vel4 lydian
-                     (par> d0 d3 d3 d3 d3)
-                     (cat (root :C) (root :Eb) (root :Ab) (root :Db))])
-                   ;; loop 4
-                   (dup 4))
-
-             (comment :euclidean
-
-                      (play (patch :tinkle-bell)
-                            dur2
-                            (chans o1-
-                                   (gen-tup 12 5 :euclidean)
-                                   [o1 (gen-tup 12 7 :euclidean :shifted)])
-                            (dup 4))
-
-                      (let [rtup (! (gen-tup 16 5 :euclidean :shifted))]
-                        (play (patch :tinkle-bell)
-                              (chans (tupn 2 o1-)
-                                     rtup
-                                     [o1 rtup]
-                                     [o2 rtup]
-                                     #_[oct3 rtup])
-
-                              (dup 4)
-                              (adjust {:duration 8}))))))
+                       (pr/rand-nth (s/rotations bins))
+                       bins)))))))
