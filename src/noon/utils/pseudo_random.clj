@@ -26,6 +26,12 @@
   (^double [max]
    (* max (rand))))
 
+(defn rand-between
+  "Generate a float between min and max based on random*"
+  (^double [min max]
+   (+ min (rand (- max min)))))
+
+
 (defn rand-int [max]
   (int (Math/floor (rand max))))
 
