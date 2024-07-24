@@ -12,8 +12,7 @@
             [noon.utils.maps :as m]
             [noon.utils.chance :as g]
             [noon.utils.pseudo-random :as pr]
-            [noon.externals :as externals]
-            [clojure.core :as core]))
+            [noon.externals :as externals]))
 
 (do :help
 
@@ -149,9 +148,8 @@
              - nil, indicating that any step can be made within specified :bounds (default to the whole midi value range 0-127)
            - :bounds is a vector of the form [min-value max-value] that constrain input and output of the created update.
              the two value it contains can be any valid `noon.score/midi-val` argument (natural, rational,float or :min and :max keywords)"
-          [& {:keys [max-step bounds]
-              :or {bounds [0 127]}}]
-          (let [[min-val max-val] (mapv midi-val bounds)
+          [& {:keys [max-step bounds]}]
+          (let [[min-val max-val] (mapv midi-val (or bounds [0 127]))
                 bound (fn [x] (-> x (min max-val) (max min-val)))
                 in-bounds? (fn [x] (<= min-val x max-val))
                 max-step (cond (not max-step) (- max-val min-val)
@@ -194,7 +192,8 @@
               "Build an event update that humanize the :velocity value.
                please refer to the `noon.score/humanize` doc."
               [max-step & [bounds]]
-              (ef_ (update _ :velocity (humanize :bounds bounds :max-step max-step))))
+              (let [f (humanize {:bounds bounds :max-step max-step})]
+                (ef_ (update _ :velocity f))))
 
             (def vel0 (vel 0)))
 

@@ -4,8 +4,7 @@
             [noon.utils.pseudo-random :as pr]
             [noon.utils.chance :as g]
             [noon.utils.misc :as u]
-            [noon.test :as tu]
-            [noon.score :as n]))
+            [noon.test :as tu]))
 
 (def E0 s/DEFAULT_EVENT)
 (def S0 s/score0)
@@ -74,26 +73,26 @@
 
 (deftest midi-alues
   (is (= 0
-         (n/midi-val 0)
-         (n/midi-val -1)
-         (n/midi-val :min)
-         (n/midi-val 0.0)
-         (n/midi-val 0/1)
-         (n/midi-val -1/2)))
+         (s/midi-val 0)
+         (s/midi-val -1)
+         (s/midi-val :min)
+         (s/midi-val 0.0)
+         (s/midi-val 0/1)
+         (s/midi-val -1/2)))
   (is (= 127
-         (n/midi-val 127)
-         (n/midi-val 1270)
-         (n/midi-val 1.0)
-         (n/midi-val 1.5)
-         (n/midi-val 3/2)
-         (n/midi-val :max)))
+         (s/midi-val 127)
+         (s/midi-val 1270)
+         (s/midi-val 1.0)
+         (s/midi-val 1.5)
+         (s/midi-val 3/2)
+         (s/midi-val :max)))
   (is (= 64
-         (n/midi-val 64)
-         (n/midi-val 1/2)
-         (n/midi-val 0.5)))
+         (s/midi-val 64)
+         (s/midi-val 1/2)
+         (s/midi-val 0.5)))
 
   (is (= (pr/with-rand 0 (take 100 (iterate
-                                     (n/humanize :max-step 1/10 :bounds [20 80])
+                                     (s/humanize :max-step 1/10 :bounds [20 80])
                                      60)))
          (list 60 63 59 61 62 64 61 59 65 70 76 72 67 62 56 57 63 58 60 58 62 68 67 70 73 77 79 76
                79 73 67 73 76 78 73 72 66 60 58 56 61 67 72 74 70 66 71 65 68 72 75 71 75 80 74 72 77 79 80
