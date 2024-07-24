@@ -1,6 +1,6 @@
 #+title: Examples
 
-* Noon examples
+* Noon experiments
 
 #+begin_src clojure
 (ns noon.doc.examples
@@ -17,12 +17,6 @@ Let's use the chorium soundfont:
 
 #+begin_src clojure :pp
 (swap! options* assoc :tracks {0 :chorium})
-#+end_src
-
-#+RESULTS:
-#+begin_src clojure
-{:bpm 60, :tracks {0 :chorium}}
-
 #+end_src
 
 ** simple I IV I V
@@ -132,7 +126,6 @@ Ocarina runs over simplistic bass and piano comping.
       m/connect-repetitions
       (adjust 32))
 #+end_src
-
 
 ** ESP (Wayne Shorter)
 
@@ -265,7 +258,6 @@ full grid:
       (catn 4 (s-shift -1)))
 #+end_src
 
-
 ** Tritonal experiment
 
 A rich harmonic sequence using V I progressions over tritonal modulation cycle (like Giant step).
@@ -341,7 +333,6 @@ Simple experiment on the first part of autumn leavs grid:
                         ($ [(shuftup s0 s1 s2 s3)
                             (tup same (one-of s1 s1- s2 s2-))])]))))
 #+end_src
-
 
 ** Cyclic episode (Sam Rivers)
 One more shredding experiment
@@ -427,4 +418,81 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
       (append [d2- (transpose c3)]
               [d2 (transpose c3-)]
               same))
+#+end_src
+
+** =noon.lib.rythmn/bintup=
+
+An experiment around =noon.lib.rythmn/gen-bintup=
+The =gen-bintup= function is used to produce a bass line and a fast rythmic texture alternating between electric-piano and marimba.
+
+#+begin_src clojure
+(play dur6
+      (cat [I dorian]
+           [III mixolydian]
+           [VIb lydian]
+           [I lydian])
+      (append> (transpose c1-) (transpose c1-) (transpose c1-))
+      (dup 2)
+      (h/align-contexts)
+      ($ (chans [(patch :new-age) vel3  o1- (par s0 s1 s2 s3 [o1 (par> d3 d3 d3 d3)])]
+                [(patch :taiko-drum) (r/gen-tup 9 3 :durations [2 3 4]) ($ (one-of vel4 vel3) (maybe d3 d3-))]
+                [(patch :acoustic-bass)
+                 t-floor o1-
+                 (r/gen-bintup 9 4 :euclidean :shifted)
+                 vel4 (vel-humanize 1/5)
+                 (parts {:bintup 0} ($ (vel+ 20) (one-of s0 s1))
+                        {:bintup 1} ($ (probs {vel0 2 (one-of d3- d4) 1})))]
+                [(r/gen-bintup 54 11  :shifted :euclidean)
+                 (parts {:bintup 0} [(patch :electric-piano-1)
+                                     sus4
+                                     ($ vel3
+                                        (vel-humanize 1/10)
+                                        (one-of d2 d4 d6)
+                                        (probs {_ 3 [(one-of s0 s1 s2) (par s0 s1 s2)] 1}))]
+                        {:bintup 1} [(patch :marimba)
+                                     vel4
+                                     (vel-humanize 1/5)
+                                     (chan+ 1)
+                                     ($ [(one-of d3 d5 d7) (maybe o1 (par _ d4))])])])))
+#+end_src
+
+** textures 1
+
+Trying to produce vibrating textures by playing very fast note sequences.
+
+#+begin_src clojure :pp
+(play dur2
+      lydian
+      (patch :flute)
+      (chans _ d3 d6 d9)
+      ($ [(dupt 24) ($ (one-of vel1 vel3 vel6)
+                       (probs {_ 6 d1 1}))])
+      ($by :channel (maybe rev))
+      (append (transpose c3-))
+      (append (transpose c1-)))
+#+end_src
+
+
+#+begin_src clojure :pp
+(play dur3
+      lydian
+      (chans [(patch :marimba) (cat _ c1)]
+             [(patch :vibraphone) (cat d3 d2)]
+             [(patch :celesta) (cat d6 d6)]
+             [(patch :orchestral-harp) (cat d9 d9)])
+      (append (transpose c2-))
+      (dup 2)
+
+      ($ [(dupt 34)
+          ($ (one-of vel0 vel3 vel6 vel9)
+             (probs {_ 4 o1 1}))]))
+#+end_src
+
+
+#+begin_src clojure :pp
+(play dur8
+      o2
+      (dupt 128)
+      ($ (par> d4 d4 d4)
+         (one-of vel0 vel1 vel2 vel3 vel4 vel5)))
 #+end_src
