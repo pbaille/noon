@@ -4,7 +4,8 @@
             [noon.utils.pseudo-random :as pr]
             [noon.utils.chance :as g]
             [noon.utils.misc :as u]
-            [noon.test :as tu]))
+            [noon.test :as tu]
+            [noon.score :as n]))
 
 (def E0 s/DEFAULT_EVENT)
 (def S0 s/score0)
@@ -70,6 +71,34 @@
            (s/->4bits-natural 9.7)
            (s/->4bits-natural 10)
            10))))
+
+(deftest midi-alues
+  (is (= 0
+         (n/midi-val 0)
+         (n/midi-val -1)
+         (n/midi-val :min)
+         (n/midi-val 0.0)
+         (n/midi-val 0/1)
+         (n/midi-val -1/2)))
+  (is (= 127
+         (n/midi-val 127)
+         (n/midi-val 1270)
+         (n/midi-val 1.0)
+         (n/midi-val 1.5)
+         (n/midi-val 3/2)
+         (n/midi-val :max)))
+  (is (= 64
+         (n/midi-val 64)
+         (n/midi-val 1/2)
+         (n/midi-val 0.5)))
+
+  (is (= (pr/with-rand 0 (take 100 (iterate
+                                     (n/humanize :max-step 1/10 :bounds [20 80])
+                                     60)))
+         (list 60 63 59 61 62 64 61 59 65 70 76 72 67 62 56 57 63 58 60 58 62 68 67 70 73 77 79 76
+               79 73 67 73 76 78 73 72 66 60 58 56 61 67 72 74 70 66 71 65 68 72 75 71 75 80 74 72 77 79 80
+               79 74 80 78 77 79 76 74 79 76 80 79 75 69 63 57 56 62 68 72 73 70 67 72 66 60 58 53 58 52 49 50
+               56 53 58 60 65 59 61 60 61))))
 
 (deftest event-updates
   (testing "simples"
