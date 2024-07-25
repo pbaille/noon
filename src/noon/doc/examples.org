@@ -121,7 +121,7 @@ Ocarina runs over simplistic bass and piano comping.
         (h/grid-zipped
          (tupn 32 [(one-of o1 o2)
                    (! (rup (rand-nth [5 6 7]) s1))
-                   (tup (maybe shuffle-line)
+                   (tup (maybe (m/permutation 1/4))
                         [(maybe rev) (one-of s1 s2 s2- s1-)])]))])
       m/connect-repetitions
       (adjust 32))
