@@ -323,11 +323,9 @@
                                  {:tags [:event-update :alias :harmonic]}
                                  [~'& xs#]
                                  (let [u# (apply ~(symbol "noon.harmony" (name x)) xs#)]
-                                   #_(println '~x xs#)
                                    (map->efn
                                     {:pitch
                                      (fn [ctx#]
-                                       #_(println ctx#)
                                        (h/upd ctx# u#))})))))
                           xs)))
 
@@ -1031,6 +1029,7 @@
 
     (defn event-scale
       "Restrains and scale one event dimension to the given bounds over the whole score."
+      {:tags [:scaling :bounding]}
       [dim x]
       (let [[min-out max-out]
             (cond (number? x) [0 x]
@@ -1041,49 +1040,67 @@
 
     (do :selection
 
-        (defn min-by [f]
+        (defn min-by
+          "Build an update that returns a one element score,
+           applying `f` to each event and selecting the event for which `f` returns the lowest value."
+          {:tags [:selective]}
+          [f]
           (sf_ #{(first (sort-by f _))}))
 
-        (defn max-by [f]
+        (defn max-by
+          "Build an update that returns a one element score,
+           applying `f` to each event and selecting the event for which `f` returns the greatest value."
+          {:tags [:selective]}
+          [f]
           (sf_ #{(last (sort-by f _))}))
 
-        (def min-pitch (min-by pitch-value))
+        (def ^{:doc "Return a one event score, holding the lowest pitch of the received score."
+               :tags [:selective :harmonic]}
+          min-pitch (min-by pitch-value))
 
-        (def max-pitch (max-by pitch-value))
+        (def ^{:doc "Return a one event score, holding the highest pitch of the received score."
+               :tags [:selective :harmonic]}
+          max-pitch (max-by pitch-value))
 
         (do :time
 
             "Updates to select time sections of a score."
 
             (defn from
-              "Removes the elements anterior to the given position from the score."
+              "Build an update that removes the elements anterior to the given position from the received score."
+              {:tags [:temporal :selective]}
               [x]
               (shrink {:position (gte x)}))
 
             (defn until
-              "Removes the elements posterior to the given position from the score."
+              "Build an update that removes the elements posterior to the given position from the received score."
+              {:tags [:temporal :selective]}
               [x]
               (shrink {:position (lt x)}))
 
             (defn between
-              "Keep only events that are positioned between x and y positions."
+              "Build an update that keeps only events that are positioned between x and y positions."
+              {:tags [:temporal :selective]}
               [x y]
               (lin (from x) (until y)))
 
             (defn start-from
-              "Shift the score to the given position, removing all anterior events."
+              "Build an update that shifts the score to the given position, removing all anterior events."
+              {:tags [:temporal :selective]}
               [x]
               (lin (from x) {:position (sub x)}))
 
-            (def start-from-last
-              "Shifting the score to last position erasing all anterior events."
+            (def ^{:doc "Shifting the score to last position erasing all anterior events."
+                   :tags [:temporal :selective]}
+              start-from-last
               (sf_ (-> (group-by :position _)
                        sort last val set
                        (upd {:position 0}))))
 
             (defn trim
-              "Removes everything before 'beg and after 'end from the score
+              "Build and update that removes everything before 'beg and after 'end from the received score
                (triming overlapping durations)."
+              {:tags [:temporal :selective]}
               [beg end]
               ($ (efn {:as evt :keys [position duration]}
                       (let [end-pos (+ position duration)]
@@ -1102,27 +1119,35 @@
     (do :checks
 
         (defn within-bounds?
-          "Returns score unchanged if 'ef applied to each event is between 'min and 'max."
+          "Build a check update (one that can return nil or the score unchanged)
+           succeed if 'ef applied to each event is between 'min and 'max."
+          {:tags [:check :bounding]}
           [ef min max]
           (sf_ (if (every? (fn [e] (<= min (ef e) max)) _)
                  _)))
 
         (defn within-time-bounds?
-          "Returns the score unchanged if all its events are between 'start and 'end."
+          "Build a check update (one that can return nil or the score unchanged)
+           Succeed if all its events are between 'start and 'end."
+          {:tags [:check :temporal]}
           [start end]
           (sf_ (if (and (>= (score-origin _) start)
                         (<= (score-duration _) end))
                  _)))
 
         (defn within-pitch-bounds?
-          "Returns the score unchanged if all pitches are between 'min and 'max.
-          'min and 'max should be 'pitchable' (pitch map | pitch keyword | int)."
+          "Build a check update (one that can return nil or the score unchanged)
+           Succeed if all pitches are between 'min and 'max.
+           'min and 'max should be 'pitchable' (pitch map | pitch keyword | int)."
+          {:tags [:check :harmonic]}
           [min max]
           (within-bounds? (comp h/hc->chromatic-value :pitch)
                           (:c (constants/get-pitch min))
                           (:c (constants/get-pitch max))))
 
-        (def within-midi-pitch-bounds?
+        (def ^{:doc "Returns the score unchanged if every pitch within it are in the 0-127 MIDI range."
+               :tags [:check :harmonic]}
+          within-midi-pitch-bounds?
           (within-pitch-bounds? 0 127)))
 
     (do :non-determinism
@@ -1130,54 +1155,64 @@
         (defmacro !
           "Takes a non deterministic expression resulting in a score update.
            Returns a score update that wraps the expression so that it is evaluated each time the update is called."
+          {:tags [:non-deterministic]}
           [expr]
           `(vary-meta (sfn score# (upd score# ~expr))
                       assoc :non-deterministic true))
 
         (defn* one-of
           "Returns an update that choose randomly one of the given updates before applying it."
+          {:tags [:non-deterministic]}
           [xs]
           (! (pr/rand-nth xs)))
 
         (defn* maybe
-          "Like 'one-of, return an update that choose randomly one of the given updates, but can also do nothing."
+          "Like `noon.score/one-of`, return an update that choose randomly one of the given updates, but can also do nothing."
+          {:tags [:non-deterministic]}
           [xs]
           (one-of* (cons same xs)))
 
         (defn probs
           "Takes a map of type {update number}
            where each key is an update and each value is its probability of occurence."
+          {:tags [:non-deterministic]}
           [m]
           (let [pm (g/weighted m)]
             (! (pm))))
 
         (defn* any-that
           "Tries given transformations in random order until one passes the given test."
+          {:tags [:non-deterministic :check]}
           [test fs]
           (! (fst-that* test (pr/shuffle fs))))
 
         (defn* mixtup
           "A tup that mix its elements."
+          {:tags [:linear :non-deterministic]}
           [xs]
           (tup* (pr/shuffle xs)))
 
         (defn* shuftup
           "A tup that shuffles its elements everytime it is used."
+          {:tags [:linear :non-deterministic]}
           [xs]
           (! (mixtup* xs)))
 
         (defn* mixcat
           "A cat that mix its elements."
+          {:tags [:linear :non-deterministic]}
           [xs]
           (cat* (pr/shuffle xs)))
 
         (defn* shufcat
           "A cat that shuffles its elements everytime it is used."
+          {:tags [:linear :non-deterministic]}
           [xs]
           (! (mixcat* xs)))
 
         (defn* shuf
           "Shuffles the values of the given dimensions."
+          {:tags [:non-deterministic]}
           [dims]
           (sf_ (let [size (count _)
                      idxs (range size)
@@ -1186,53 +1221,6 @@
                  (reduce (fn [s i] (conj s (merge (events i) (select-keys (events (mappings i)) dims))))
                          #{}
                          idxs)))))
-
-    (do :lines
-
-        "Updates related to scores representing single melodic lines"
-
-        (def line?
-          "Returns the given score if it is a 1 voice line with no holes or superpositions."
-          (sf_ (if (and (= (score-duration _)
-                           (reduce + (map :duration _)))
-                        (let [xs (sort-by :position _)
-                              [p1 :as ps] (map :position xs)]
-                          (= ps (reductions + p1 (butlast (map :duration xs))))))
-                 _)))
-
-        (def legato
-          (sf_ (->> (conj _ {:position (score-duration _)})
-                    (group-by :position)
-                    (sort-by key)
-                    (partition 2 1)
-                    (reduce (fn [score [[p1 xs] [p2 _]]]
-                              (into score (map #(assoc % :duration (- p2 p1)) xs)))
-                            #{}))))
-
-        (def shuffle-line
-          "If the given score is a line, shuffle the notes."
-          (sf_ (if (line? _)
-                 (concat-scores
-                  (pr/shuffle (map (fn [e] #{(assoc e :position 0)})
-                                   _))))))
-
-        (defn permute-line
-          [idxs]
-          (let [length (count idxs)]
-            (sf_ (if (and (line? _) (= length (count _)))
-                   (let [notes (vec (sort-by :position _))]
-                     (concat-scores
-                      (map (fn [e] #{(assoc e :position 0)})
-                           (map notes idxs))))))))
-
-        (defn* $cat
-          "'mapcat for score, works only on lines."
-          [xs]
-          (sf_ (if (line? _)
-                 (concat-scores
-                  (map (fn [e]
-                         ((cat* xs) #{(assoc e :position 0)}))
-                       (sort-score :position _)))))))
 
     (do :incubator
 
