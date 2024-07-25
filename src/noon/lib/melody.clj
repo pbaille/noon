@@ -281,6 +281,7 @@
                          (comp comb/permutations pr/shuffle))))))
 
 (defn gen-tup
+  "Generate a tup on the specified harmonic layer using `noon.lib.melody/step-seqs`."
   ([{:as options
      :keys [layer]}]
    (if-let [step-seq (first (step-seqs options))]
@@ -289,7 +290,9 @@
   ([layer length delta & {:as options}]
    (gen-tup (assoc options :layer layer :length length :delta delta))))
 
-(def connect-repetitions
+(def ^{:doc "Join successive pitch repetitions for each :track/:channel/:voice subscore."
+       :tags [:temporal :melodic]}
+  connect-repetitions
   (n/$by (juxt :track :channel :voice)
          (n/sf_ (let [[e1 & todo] (sort-by :position _)]
                   (loop [[last-note & prev-notes :as ret] (list e1)
@@ -303,3 +306,37 @@
                                todo)
                         (recur (cons e ret) todo))
                       (set ret)))))))
+
+(do :incubator
+
+    (def ^{:doc "Returns the given score if it is a 1 voice line with no holes or superpositions."
+           :tags [:check :temporal :melodic]}
+      line?
+      (n/sf_ (if (and (= (n/score-duration _)
+                         (reduce + (map :duration _)))
+                      (let [xs (sort-by :position _)
+                            [p1 :as ps] (map :position xs)]
+                        (= ps (reductions + p1 (butlast (map :duration xs))))))
+               _)))
+
+    (def ^{:doc "Fill melodic holes by extending each note to the start position of the following one in.
+                 It operates on each :track/channel/voice sub scores."
+           :tags [:temporal :melodic]}
+      legato
+      (n/$by (juxt :track :channel :voice)
+             (n/sf_ (->> (conj _ {:position (n/score-duration _)})
+                         (group-by :position)
+                         (sort-by key)
+                         (partition 2 1)
+                         (reduce (fn [score [[p1 xs] [p2 _]]]
+                                   (into score (map #(assoc % :duration (- p2 p1)) xs)))
+                                 #{})))))
+
+    (u/defn* $cat
+      "'mapcat for score, works only on lines."
+      [xs]
+      (n/sf_ (if (line? _)
+               (n/concat-scores
+                (map (fn [e]
+                       ((n/cat* xs) #{(assoc e :position 0)}))
+                     (n/sort-score :position _)))))))
