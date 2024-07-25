@@ -5,24 +5,30 @@
             [noon.harmony :as h]
             [noon.constants :as nc]
             [noon.utils.misc :as u]
+            [noon.utils.contour :as uc]
             [noon.utils.sequences :as s]
             [clojure.core :as c]
             [clojure.math.combinatorics :as comb]))
 
 (do :help
 
-    (defn bounds-gte [[a b] [c d]]
+    (defn bounds-gte
+      "Check if bounds [a b] contains bounds [c d]."
+      [[a b] [c d]]
       (and (<= a c) (>= b d)))
 
-    (defn in-bounds [bounds s]
+    (defn in-bounds
+      "Check if the score `s` is within given pitch `bounds`."
+      [bounds s]
       (bounds-gte bounds (n/pitch-value-bounds s))))
 
 (do :voicings
 
-    (def VOICE_LEADING_MAX_SHIFT 7)
-    (def INVERSIONS_MAX_SHIFT 4)
+    (def ^{:doc "The maximal step that can occur betwwen extreme voices of a voice leading."}
+      VOICE_LEADING_MAX_SHIFT 7)
 
-    (def abstract-drops
+    (def ^{:private true}
+      sorted-octave-splits
       (letfn [(octave-split [perm]
                 (loop [[x1 & xs] (next perm)
                        current [(first perm)]
@@ -37,13 +43,26 @@
                                 (mapv (partial + (* offset 10E6)) octave))
                               x (range)))))]
         (memoize
-         (fn [size]
+         (fn [xs]
            (sort-by
             comparable
             (map octave-split
-                 (comb/permutations (range size))))))))
+                 (comb/permutations xs)))))))
 
-    (def closed
+    (defn abstract-drops
+      "Get a list of abstract drops for `x`.
+       `x` cab be either:
+       - a natural number indicating the number of notes.
+       - a sequence of numbers representing different notes."
+      [x]
+      (cond (int? x) (sorted-octave-splits (range x))
+            (sequential? x) (sorted-octave-splits x)))
+
+    (def ^{:doc "Put a chord into closed position.
+                 Bring every notes within the octave following the bass note.
+                 If some notes have the same pitch class, it can produce unisons."
+           :tags [:harmonic :voicing]}
+      closed
       (n/sf_ (let [[[v1 bass] & others]
                    (sort (map (juxt n/pitch-value identity) _))]
                (->> others
@@ -51,57 +70,98 @@
                            ((n/t-shift (quot (c/- v1 v) 12)) note)))
                     (into #{bass})))))
 
-    (def drops
+    (def ^{:doc "Put a chord into closed position.
+                 Starting at bass note, bring every other notes as close as possible above it."
+           :tags [:harmonic :voicing]}
+      closed-no-unison
+      (n/sf_ (let [[[v1 bass] & others]
+                   (sort (map (juxt n/pitch-value identity) _))]
+               (loop [ret #{bass} pitch-values #{v1} notes others]
+                 (if-let [[[v note] & notes] (seq notes)]
+                   (letfn [(looop [n]
+                             (let [pitch-value (n/pitch-value n)]
+                               (if (contains? pitch-values pitch-value)
+                                 (looop (n/o1 n))
+                                 [n pitch-value])))]
+                     (let [[n v] (looop ((n/t-shift (quot (c/- v1 v) 12)) note))]
+                       (recur (conj ret n) (conj pitch-values v) notes)))
+                   ret)))))
+
+    (def ^{:doc "Computes all possible drops of the given score (that is supposed to represent a chord)."}
+      drops
       (memoize
        (fn [s]
-         (let [size (count s)
-               _ (assert (c/< size 8) "cannot drop more than 7 notes")
-               notes (vec (sort-by n/pitch-value (closed s)))]
-           (map (fn [d] (set (cons (notes 0)
-                                   (mapcat (fn [o idxs] (map (fn [idx] ((n/t-shift o) (notes (inc idx)))) idxs))
-                                           (range) d))))
-                (abstract-drops (dec size)))))))
+         (assert (c/< (count s) 8)
+                 "cannot drop more than 7 notes")
+         (let [notes (vec (sort-by n/pitch-value (closed s)))
+               contour (uc/contour (map n/pitch-value notes))
+               drop-seq (next contour)
+               no-repetitions? (= (count contour) (count (set contour)))
+               duplicated-bass? (if no-repetitions? false (contains? (set drop-seq) 0))
+               abstract-drops (abstract-drops (if duplicated-bass? drop-seq (map dec drop-seq)))]
+           (map (fn [d]
+                  (set (cons (notes 0)
+                             (mapcat (fn [o idxs]
+                                       (map (fn [idx]
+                                              ((n/t-shift o) (notes (inc idx))))
+                                            idxs))
+                                     (range) d))))
+                (if duplicated-bass?
+                  (remove (comp zero? ffirst) abstract-drops)
+                  abstract-drops))))))
 
     (defn drop
+      "Build an update that produce a drop of the received score (that is expected to represent a chord).
+       `x` is a member-pick argument that is used to pick a drop from the complete list of possible drops.
+       refer to `noon.utils.sequences/member` for complete documentation"
+      {:tags [:harmonic :voicing]}
       [x]
       (n/sf_ (s/member (drops _) x)))
 
-    (def shiftings
-      "try to speed up shiftings"
-      (fn
-        ([s]
-         (shiftings s [0 127]))
-        ([s bounds]
-         (let [size (count s)
-               pitch-values (sort (map n/pitch-value (closed s)))
+    (defn shiftings
+      "compute downward and upward inversion of the given chord (score).
+       return a map containing
+       - :self, the received chord (score)
+       - :upward, the list of upward inversions
+       - :downward, the list of downward inversions."
+      ([s]
+       (shiftings s [0 127]))
+      ([s bounds]
+       (let [size (count s)
+             pitch-values (sort (map n/pitch-value (closed s)))
 
-               neighbourhoods (->> (-> (cons (- (last pitch-values) 12) pitch-values)
-                                       (u/snoc (+ 12 (first pitch-values))))
-                                   (partition 3 1)
-                                   (map (fn [[dwn x up]]
-                                          [(mod x 12)
-                                           {:down (- dwn x)
-                                            :up (- up x)}]))
-                                   (into {}))
+             neighbourhoods (->> (-> (cons (- (last pitch-values) 12) pitch-values)
+                                     (u/snoc (+ 12 (first pitch-values))))
+                                 (partition 3 1)
+                                 (map (fn [[dwn x up]]
+                                        [(mod x 12)
+                                         {:down (- dwn x)
+                                          :up (- up x)}]))
+                                 (into {}))
 
-               get-neighbourhood (fn [n]
-                                   (get neighbourhoods (n/pitch-class-value n)))
-               shift (fn [dir x]
-                       (set (map (fn [n]
-                                   (update n :pitch
-                                           (comp h/c->t (h/c-step (get (get-neighbourhood n) dir)))))
-                                 x)))
+             get-neighbourhood (fn [n]
+                                 (get neighbourhoods (n/pitch-class-value n)))
+             shift (fn [dir x]
+                     (set (map (fn [n]
+                                 (update n :pitch
+                                         (comp h/c->t (h/c-step (get (get-neighbourhood n) dir)))))
+                               x)))
 
-               space-upward (- (bounds 1) (last pitch-values))
-               space-downward (- (first pitch-values) (bounds 0))
-               length-upward (* size (inc (quot space-upward 12)))
-               length-downward (* size (inc (quot space-downward 12)))]
+             space-upward (- (bounds 1) (last pitch-values))
+             space-downward (- (first pitch-values) (bounds 0))
+             length-upward (* size (inc (quot space-upward 12)))
+             length-downward (* size (inc (quot space-downward 12)))]
 
-           {:self s
-            :upward (take length-upward (iterate (partial shift :up) s))
-            :downward (take length-downward (iterate (partial shift :down) s))}))))
+         {:self s
+          :upward (take length-upward (iterate (partial shift :up) s))
+          :downward (take length-downward (iterate (partial shift :down) s))})))
 
     (defn inversion
+      "Build an update that produce an inversion of the received chord (score).
+       `x` is an integer that correspond to the index of the desired inversion.
+       - negative `x` picks the nth downward inversion
+       - positive `x` picks the nth upward inversion."
+      {:tags [:harmonic :voicing]}
       [n]
       (n/sf_
        (cond (zero? n) _
@@ -109,6 +169,9 @@
              :else (nth (:downward (shiftings _)) (- n)))))
 
     (defn voicings
+      "Computes a list of possible voicings for the given chord (score `s`).
+       The second argument is an option map that contain:
+       - :bounds, a vector of the form [lowest-pitch-value highest-pitch-value]"
       [s {:as _opts :keys [bounds]}]
       (let [check (partial in-bounds bounds)]
         (mapcat (fn [{:keys [self upward downward]}]
@@ -119,13 +182,16 @@
                             (if (<= (bounds 0) (self-bounds 0))
                               (->> downward (drop-while (complement check)) (take-while check))))))
                 (map #(shiftings % bounds)
-                     (drops (closed s))))))
+                     (drops s)))))
 
-    (defn pitch-values [chord]
+    (defn pitch-values
+      "Returns a sorted vector of all pitch-values in chord (score)."
+      [chord]
       (vec (sort (map n/pitch-value chord))))
 
-    (def voice-led
-
+    (def ^{:doc "Apply voice leading to the received score."
+           :tags [:harmonic :voicing]}
+      voice-led
       (letfn [(voice-leading-score
                 [a b]
                 (let [vas (map n/pitch-value a)
@@ -159,7 +225,7 @@
    can also take a second argument 'mode:
      :incremental | :static
    that stays if the alignement is done on the first chord only or incrementally."
-
+  {:tags [:harmonic]}
   ([] (align-contexts :structural :incremental))
   ([layer] (align-contexts layer :incremental))
   ([layer mode]
@@ -175,6 +241,7 @@
 (u/defn* grid-zipped
   "zip the current score (which should represent an harmonic grid)
    to the resulting of applying 'xs updates to a fresh score."
+  {:tags [:harmonic]}
   [xs]
   (n/sf_ (let [seed (dissoc (first _) :position :duration :pitch)
                zip-fn (fn [x y] (n/upd y {:pitch (h/hc+ (:pitch (first x)))}))]
