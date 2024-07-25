@@ -1,5 +1,6 @@
 (ns noon.lib.harmony
-  (:refer-clojure :exclude [cat struct while drop])
+  "Harmony related utilities"
+  (:refer-clojure :exclude [drop])
   (:require [noon.score :as n]
             [noon.harmony :as h]
             [noon.constants :as nc]
