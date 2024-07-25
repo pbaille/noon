@@ -36,9 +36,9 @@
 
 (comment ::m/gen-tup
          (play (scale :melodic-minor)
-               (catn 8 (! (m/gen-tup {:size 10 :delta 2 :steps [-3 -1 1 3]}))))
+               (catn 8 (! (m/gen-tup {:layer :d :length 10 :delta 2 :steps [-3 -1 1 3]}))))
          (noon {:play true
-                :tracks {0 :airfont}
+                :tracks {0 :chorium}
                 :filename "./test/data/scratch/1"}
                (mk dur2
                    (patch :electric-piano-1)
@@ -46,9 +46,12 @@
                    (cat I VII I IV I [IIb lydian] V I)
                    (h/align-contexts)
                    (append (transpose c3) (transpose c1-) same)
-                   ($ (m/gen-tup {:layer :s :size 6 :delta 2 :steps [-2 -1 1 2]}))
+                   ($ (m/gen-tup {:layer :s :length 6 :delta 2 :steps [-2 -1 1 2]}))
                    ($ (maybe (par s0 [vel3 s1] [vel3 s2])))
-                   ($ (superpose [(chan 2) o1 (patch :ocarina) (shuftup s1 s0 s1-) ($ (one-of vel1 vel3 vel7 vel9))])))))
+                   ($ (superpose [(chan 2) o1 (patch :ocarina)
+                                  (m/gen-tup {:layer :s :length 4 :delta 1 :steps [-1 1 -2 2]})
+                                  (maybe rev)
+                                  (vel-humanize 1/2 [0.1 0.5])])))))
 
 (comment :demos
 
@@ -225,7 +228,7 @@
                          [(d-shift -3) (transpose c6)]))
           (append (superpose (k (catn 4 [(patch :taiko-drum) (chan 3) (! [vel4 (maybe o1- d1) (r/gen-tup 7 3)])])
                                 (dup 8))))
-          (start-from 16))
+          #_(start-from 16))
 
          (play (patch :taiko-drum)
                (rep 4 o1))
@@ -315,7 +318,7 @@
                (shufcat s0 s2 s4)
                ($ (one-of (shuftup _ c1- d1)
                           (shuftup _ d1 d1-)))
-               shuffle-line
+               (m/permutation :rand)
                (rep 3 (one-of (s-shift 1) (s-shift -1)))
                (rep 3 (transpose c3))
                (dup 2))
@@ -325,7 +328,7 @@
                (cat I IV)
                ($cat [(shuftup s0 s2 s4)
                       (one-of (tup c1- _ d1) (tup d1- _ d1))
-                      shuffle-line
+                      (m/permutation :rand)
                       (rep 4 (one-of (s-shift 1) (s-shift -1)))])
                (append (transpose c3))
                (append (s-shift -1)))
