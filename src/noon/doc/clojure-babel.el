@@ -20,15 +20,24 @@ For blocks to be correctly fontified, we need to install those using cider."
 (pb-clojure-babel_refresh-dynamic-font-lock-keywords
  " *org-src-fontification:clojure-mode*"
  "noon.doc.guide")
+(pb-clojure-babel_refresh-dynamic-font-lock-keywords
+ " *org-src-fontification:clojure-mode*"
+ "noon.doc.examples")
 
-(defun pb-org-babel_edit-src-code-hook ()
-  (pb-clojure-babel_refresh-dynamic-font-lock-keywords
-   "*Org Src guide.org[ clojure ]*"
-   "noon.doc.guide")
+(defun pb-org-babel_edit-src-code-hook (fun &optional code buf-name)
+  (funcall fun code buf-name)
+  (cond ((equal (buffer-name) "*Org Src guide.org[ clojure ]*")
+         (pb-clojure-babel_refresh-dynamic-font-lock-keywords
+          "*Org Src guide.org[ clojure ]*"
+          "noon.doc.guide"))
+        ((equal (buffer-name) "*Org Src examples.org[ clojure ]*")
+         (pb-clojure-babel_refresh-dynamic-font-lock-keywords
+          "*Org Src examples.org[ clojure ]*"
+          "noon.doc.examples")))
   (flycheck-mode -1)
   (symex-mode-interface))
 
-(advice-add 'org-edit-src-code :after #'pb-org-babel_edit-src-code-hook)
+(advice-add 'org-edit-src-code :around #'pb-org-babel_edit-src-code-hook)
 
 (require 'pb-org-babel)
 
