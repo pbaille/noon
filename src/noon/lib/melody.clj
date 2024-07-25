@@ -1,5 +1,5 @@
 (ns noon.lib.melody
-  "providing facilities to deal with melodic development"
+  "Utilities to deal with melodic development"
   (:require [noon.score :as n]
             [noon.utils.contour :as c]
             [noon.utils.sequences :as s]
@@ -11,7 +11,7 @@
 (do :help
 
     (defn layer-split
-      "partition a score by position and harmonic layer index.
+      "Partition a score by position and harmonic layer index.
        returns a seq of maps with keys :position :layer-idx :score"
       [layer s]
 
@@ -48,6 +48,8 @@
 (do :permutations-rotations
 
     (defn rotation
+      "Build an update that rotates notes of the received score."
+      {:tags [:linear :melodic]}
       ([]
        (rotation :random {}))
       ([x]
@@ -66,6 +68,8 @@
                                pick)))))))
 
     (defn permutation
+      "Build an update that permutes notes of the received score."
+      {:tags [:linear :melodic]}
       ([]
        (permutation :random {}))
       ([x]
@@ -146,6 +150,7 @@
 
        :delta : (:similar command only)
            The amount of shrinking or growing we want to apply to the score."
+      {:tags [:melodic]}
       ([cmd]
        (contour cmd {}))
       ([cmd
@@ -166,6 +171,7 @@
        2. 'step is called on the result of 'connect, and the result is concatenated with the original score.
        3. if 'done? called with this new score is true, feed it to 'finish and return.
        4. else go to step 1."
+      {:tags [:linear :melodic]}
       [connect step done? finish]
       (n/sf_ (let [nxt (n/concat-score _ (n/upd (connect _) step))]
                (cond (empty? nxt) nil
@@ -174,6 +180,7 @@
 
     (defn simple-line
       "A simple way to create a line of given 'length using the given 'step"
+      {:tags [:linear :melodic]}
       [length step]
       (n/sf_ (let [last-event (fn [s] (-> (sort-by :position s) last))
                    {:as _connection dur :duration} (last-event _)
@@ -183,18 +190,29 @@
                    done? (fn [s] (> (n/score-duration s) total-duration))]
                (n/upd _ (line connect step done? (n/trim 0 total-duration))))))
 
-    (defn simple-tupline [len step]
+    (defn simple-tupline
+      "tuped version of `noon.lib.melody/simple-line`"
+      {:tags [:linear :melodic]}
+      [len step]
       (n/fit (simple-line len step))))
 
 (do :connect
 
-    (defn $connect [f]
+    (defn $connect
+      "Build an update that use `f` to join successive score's positional chunks.
+       - received score is chunked by position, resulting a list of scores sorted by position.
+       - iterates this list by pair, applying `f` to each one producing a new score.
+       - all those scores are merged together."
+      {:tags [:iterative :temporal]}
+      [f]
       (n/sf_ (let [sorted (sort-by :position _)]
                (reduce (fn [s [n1 n2]]
                          (into s (f n1 n2)))
                        #{(last sorted)} (partition 2 1 sorted)))))
 
-    (defn simple-connection [sizes]
+    (defn simple-connection
+      "A simple connection function that leverage `noon.harmony/simplest-connection`"
+      [sizes]
       (fn [start end]
         (let [hcs (loop [sizes sizes]
                     (if-let [[s & sizes] (seq sizes)]
@@ -212,10 +230,11 @@
             [start]))))
 
     (defn connect
-      "Tries to connect subsequent notes using one of the given step-sizes.
-       Intermediate step notes are selected on lowset layer in priority."
-      [& step-sizes]
-      ($connect (simple-connection step-sizes))))
+      "Tries to connect subsequent notes using one of the given connection-sizes.
+       Intermediate step notes are selected in priority on the lowest harmonic layer."
+      {:tags [:melodic]}
+      [& connection-sizes]
+      ($connect (simple-connection connection-sizes))))
 
 (defn stup
   "build a tup of steps on the specified layer
