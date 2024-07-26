@@ -1,7 +1,12 @@
 (ns noon.lib.harmony-test
   (:use noon.score)
   (:require [noon.lib.harmony :as h]
-            [clojure.test :refer [testing deftest is]]))
+            [clojure.test :refer [testing deftest is]]
+            [noon.test :as t]
+            [noon.score :as n]))
+
+(defn pitch-values= [& xs]
+    (apply = (map h/pitch-values xs)))
 
 (deftest helpers
   (is (and (not (h/bounds-gte [0 1] [1 2]))
@@ -21,16 +26,16 @@
 (deftest voicings
 
   (testing "abstract drops"
-    (is (= (h/abstract-drops 2)
+    (is (= (h/abstract-drops 2 true)
            (list [[0 1]] [[1] [0]])))
-    (is (= (h/abstract-drops 3)
+    (is (= (h/abstract-drops 3 true)
            (list [[0 1 2]] [[1 2] [0]] [[0 2] [1]] [[2] [0 1]] [[1] [0 2]] [[2] [1] [0]])))
-    (is (= (h/abstract-drops 4)
+    (is (= (h/abstract-drops 4 true)
            (list [[0 1 2 3]] [[1 2 3] [0]] [[0 2 3] [1]] [[2 3] [0 1]] [[0 1 3] [2]] [[0 3] [1 2]] [[1 3] [0 2]] [[3] [0 1 2]]
                  [[0 2] [1 3]] [[1 2] [0 3]] [[1] [0 2 3]] [[2] [0 1 3]] [[1 3] [2] [0]] [[2 3] [1] [0]] [[2] [1 3] [0]]
                  [[3] [1 2] [0]] [[0 3] [2] [1]] [[2] [0 3] [1]] [[3] [0 2] [1]] [[3] [2] [0 1]] [[1] [0 3] [2]]
                  [[3] [1] [0 2]] [[2] [1] [0 3]] [[3] [2] [1] [0]])))
-    (is (= (h/abstract-drops (list 0 1 1 2))
+    (is (= (h/abstract-drops (list 0 1 1 2) true)
            (list [[0 1 2] [1]] [[1 2] [0 1]] [[0 1] [1 2]] [[1] [0 1 2]]
                  [[1 2] [1] [0]] [[1] [1 2] [0]] [[0 2] [1] [1]] [[1] [0 2] [1]]
                  [[2] [0 1] [1]] [[2] [1] [0 1]] [[1] [1] [0 2]] [[2] [1] [1] [0]]))))
@@ -45,6 +50,124 @@
            (mk (par s0 s2 [o1- s4] [o1- s6])))))
 
   (testing "drops"
-    (h/drops (mk (par s0 s1 s2 s3)))
-    (h/drops (mk (par d0 d1 d2 d3)))
-    #_(h/drop)))
+    (testing "with two tonic"
+      (is (= 12 (count (h/drops (mk (par s0 s1 s2 s3))
+                                :inversions true)))))
+    (is (= 24 (count (h/drops (mk (par d0 d1 d2 d3))
+                              :inversions true))))
+
+    (is (= (mk (par s0 s1 s2)
+               (h/drop 1))
+           (mk (par s0 [o1 s1] s2))))
+    (is (= (mk tetrad
+               (par s0 s1 s2 s3)
+               (h/drop 1))
+           (mk tetrad
+               (par s0 [o1 s1] s2 s3))))
+    (is (= (mk tetrad
+               (par s0 s1 s2 s3)
+               (h/drop 2))
+           (mk tetrad
+               (par s0 s1 [o1 s2] s3))))
+    (is (= (mk tetrad
+               (par s0 s1 s2 s3)
+               (h/drop -1))
+           (mk tetrad
+               (par s0 [o2 s1] [o1 s2] s3))))
+
+    (is (pitch-values= (mk (par s0 s1 s2 s3)
+                           (h/drop 1))
+                       (mk (par s0 [o1 s1] s2 s3)))))
+
+  (testing "inversions"
+
+    (is (pitch-values= (mk (par s0 s1 s2)
+                           (h/inversion 1))
+                       (mk (par s1 s2 s3))))
+    (is (pitch-values= (mk (par s0 s1 s2)
+                           (h/inversion -1))
+                       (mk (par s1- s0 s1))))
+    (is (pitch-values= (mk (par s0 s1 s2)
+                           (h/inversion 0))
+                       (mk (par s0 s1 s2))))
+    (is (pitch-values= (mk (par d0 d2 d4 d6 d8)
+                           (h/inversion 1))
+                       (mk (par d1 d4 d6 d7 d9))))
+    (is (pitch-values= (mk (par d0 d2 d4 d6 d8)
+                           (h/inversion -1))
+                       (mk (par d1- d1 d2 d4 d7))))
+
+    (testing "with duplicates"
+      (is (pitch-values= (mk (par s0 s1 s2 s3)
+                             (h/inversion 1))
+                         (mk (par s1 s2 s3 s4))))
+      (is (pitch-values= (mk (par s0 s1 s2 s3)
+                             (h/inversion -1))
+                         (mk (par s1- s0 s1 s2)))))))
+
+
+(comment
+  (noon {:filename "test/data/drops"
+         :midi true}
+        (mk tetrad
+            (par s0 s1 s2 s3 s4)
+            (sf_ (concat-scores (h/drops _ :inversions true)))))
+
+  (noon {:filename "test/data/shiftings"
+         :midi true}
+        (mk tetrad
+            (par s0 s1 s2 s3 s4)
+            (sf_ (let [{:keys [upward downward self]} (h/shiftings _ [40 80])]
+                   (concat-scores (concat (reverse (next downward)) [self] (next upward)))))))
+
+  (noon {:filename "test/data/voicings"
+         :midi true}
+        (mk tetrad
+            (par s0 s1 s2 s3)
+            (sf_ (concat-scores (h/voicings _ {:bounds [40 100]})))))
+
+  (h/shiftings (mk tetrad (par s0 s1 s2 s3))
+               [40 100])
+  (h/drops (mk tetrad (par s0 s1 s2 s3))
+           :inversions true)
+  (h/voicings (mk tetrad (par s0 s1 s2 s3))
+              {:bounds [40 100]}))
+
+(comment :scratch-abstract-drop-remap
+         (let [contour (list 0 0 1 2)
+               notes (list :a :b :c :d)
+               idx->notes (reduce (fn [ret [c n]]
+                                    (update ret c (fnil conj []) n))
+                                  {}
+                                  (map vector contour notes))
+               drop [[0 2] [1] [0]]]
+           (loop [ret #{} drop drop octave 0 idx->notes idx->notes]
+             (if-let [[current-octave & upper-octaves] (seq drop)]
+               (if-let [[idx & current-octave] (seq current-octave)]
+                 (recur (conj ret [octave (first (get idx->notes idx))])
+                        (cons current-octave upper-octaves)
+                        octave
+                        (update idx->notes idx rest))
+                 (recur ret upper-octaves (inc octave) idx->notes))
+               ret)))
+
+         (defn abstract-drop->score
+           [abstract-drop idx->notes]
+           (loop [ret #{} drop abstract-drop octave 0 idx->notes idx->notes]
+             (if-let [[current-octave & upper-octaves] (seq drop)]
+               (if-let [[idx & current-octave] (seq current-octave)]
+                 (recur (conj ret ((n/t-shift octave) (first (get idx->notes idx))))
+                        (cons current-octave upper-octaves)
+                        octave
+                        (update idx->notes idx rest))
+                 (recur ret upper-octaves (inc octave) idx->notes))
+               ret)))
+
+         (let [contour (list 0 0 1 2)
+               notes (list :a :b :c :d)
+               idx->notes (reduce (fn [ret [c n]]
+                                    (update ret c (fnil conj []) n))
+                                  {}
+                                  (map vector contour notes))
+               drop [[0 2] [1] [0]]]
+           (abstract-drop->score drop idx->notes)))
