@@ -133,10 +133,6 @@
                       deg (rand-nth (range 1 scale-size))]
                   (upd #{_} (degree (rand-nth [(- deg) deg]))))))
 
-         (def closed-chord
-           (ef_ (let [struct-size (-> _ :pitch :struct count)]
-                  (upd #{_} (par* (mapv s-step (range struct-size)))))))
-
          (defn rand-tup [size]
            (ef_ (let [degree-count (-> _ :pitch :scale count)
                       degrees (first (mv/consume size (mv/mix* (range degree-count))))]
@@ -145,7 +141,7 @@
          (play (symetric-modes :half-whole)
                (rand-struct 3)
                (rep 3 rand-degree)
-               ($ (chans [vel4 closed-chord]
+               ($ (chans [vel4 h/simple-chord]
                          [(patch :music-box) o1 (rand-tup 7) ($ (one-of vel0 vel4 vel6 vel7))]))
                (append [rev s2])
                (append (transpose c5))
@@ -658,10 +654,6 @@
 
 (comment "elliot Smith chords"
 
-         (def closed-chord
-           (ef_ (let [struct-size (-> _ :pitch :struct count)]
-                  (upd #{_} (par* (mapv s-step (range struct-size)))))))
-
          (play dur2
                (cat [VI seventh]
                     [IV add2]
@@ -673,7 +665,7 @@
                     [IV])
                (h/align-contexts :d)
                ($ (chans [(patch :acoustic-bass) o1- t-round]
-                         closed-chord)))
+                         h/simple-chord)))
 
          (play (chans [(patch :electric-piano-1) (tup (shuftup s0 s1 s2 s3) (shuftup s2 s3 s4 s5))]
                       [(patch :acoustic-bass) o1- t-round])
@@ -822,7 +814,7 @@
          (stop)
          (let [rand-color (fn [] (let [k (rand-nth [:lydian+ :lydian :ionian :dorian :melodic-minor :mixolydian :phrygian6])]
                                    [(scale k)
-                                    (modal-struct 4)]))]
+                                    (h/modal-struct 4)]))]
            (play dur2
                  (cat* (map (comp transpose c-step) (shuffle (range 12))))
                  ($ (! (rand-color)))
