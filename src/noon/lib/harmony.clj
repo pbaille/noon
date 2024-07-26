@@ -51,7 +51,9 @@
 
     (defn abstract-drops
       "Get a list of abstract drops for `x`.
-       `x` cab be either:
+       An abstract-drop is a vec of the form [[first-octave-degree...][second-octave-degree...]...]
+       e.g a drop 2 for a tetrad can be represented as `[[0 2 3][1]]`
+       `x` can be either:
        - a natural number indicating the number of notes.
        - a sequence of numbers representing different notes."
       [x]
