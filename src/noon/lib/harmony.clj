@@ -43,11 +43,15 @@
                                 (mapv (partial + (* offset 10E6)) octave))
                               x (range)))))]
         (memoize
-         (fn [xs]
+         (fn [base inversions]
            (sort-by
             comparable
             (map octave-split
-                 (comb/permutations xs)))))))
+                 (if inversions
+                   (comb/permutations base)
+                   (let [[bass & others] (sort base)]
+                     (map (partial cons bass)
+                          (comb/permutations others))))))))))
 
     (defn abstract-drops
       "Get a list of abstract drops for `x`.
@@ -56,9 +60,10 @@
        `x` can be either:
        - a natural number indicating the number of notes.
        - a sequence of numbers representing different notes."
-      [x]
-      (cond (int? x) (sorted-octave-splits (range x))
-            (sequential? x) (sorted-octave-splits x)))
+      [x & [include-inversions]]
+      (let [base (cond (int? x) (range x)
+                       (sequential? x) x)]
+        (sorted-octave-splits base include-inversions)))
 
     (def ^{:doc "Put a chord into closed position.
                  Bring every notes within the octave following the bass note.
@@ -89,28 +94,23 @@
                        (recur (conj ret n) (conj pitch-values v) notes)))
                    ret)))))
 
-    (def ^{:doc "Computes all possible drops of the given score (that is supposed to represent a chord)."}
+    (def ^{:doc "Computes all possible drops of the given score (that is supposed to represent a chord).
+                 An :inversions option can be given to include inversions and their drops."}
       drops
       (memoize
-       (fn [s]
+       (fn [s & {:keys [inversions]}]
          (assert (c/< (count s) 8)
                  "cannot drop more than 7 notes")
          (let [notes (vec (sort-by n/pitch-value (closed s)))
                contour (uc/contour (map n/pitch-value notes))
-               drop-seq (next contour)
-               no-repetitions? (= (count contour) (count (set contour)))
-               duplicated-bass? (if no-repetitions? false (contains? (set drop-seq) 0))
-               abstract-drops (abstract-drops (if duplicated-bass? drop-seq (map dec drop-seq)))]
+               abstract-drops (abstract-drops contour inversions)]
            (map (fn [d]
-                  (set (cons (notes 0)
-                             (mapcat (fn [o idxs]
-                                       (map (fn [idx]
-                                              ((n/t-shift o) (notes (inc idx))))
-                                            idxs))
-                                     (range) d))))
-                (if duplicated-bass?
-                  (remove (comp zero? ffirst) abstract-drops)
-                  abstract-drops))))))
+                  (set (mapcat (fn [o idxs]
+                                 (map (fn [idx]
+                                        ((n/t-shift o) (notes (inc idx))))
+                                      idxs))
+                               (range) d)))
+                abstract-drops)))))
 
     (defn drop
       "Build an update that produce a drop of the received score (that is expected to represent a chord).
@@ -118,7 +118,7 @@
        refer to `noon.utils.sequences/member` for complete documentation"
       {:tags [:harmonic :voicing]}
       [x]
-      (n/sf_ (s/member (drops _) x)))
+      (n/sf_ (s/member (drops _ :inversions false) x)))
 
     (defn shiftings
       "compute downward and upward inversion of the given chord (score).
@@ -184,7 +184,7 @@
                             (if (<= (bounds 0) (self-bounds 0))
                               (->> downward (drop-while (complement check)) (take-while check))))))
                 (map #(shiftings % bounds)
-                     (drops s)))))
+                     (drops s :inversions true)))))
 
     (defn pitch-values
       "Returns a sorted vector of all pitch-values in chord (score)."
