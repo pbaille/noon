@@ -218,7 +218,6 @@
                      (reduce into #{} ret))))))))
 
 (defn align-contexts
-
   "align successive harmonic contexts based on the given 'layer:
      :tonic (:t) | :structural (:s) | :diatonic (:d) | :chromatic (:c)
 
@@ -267,7 +266,11 @@
           #{} xs))
 
 (u/defn* grid
-  "grid"
+  "Build an update that applies an harmonic grid to the received score.
+   The harmonic grid is created by threading a fresh score through the sequence of update `xs`.
+   e.g `(noon.score/mk* xs)`.
+   The resulting score (which represent an harmonic grid) is zipped over the received score,
+   All harmonies are applied accordingly to their position and duration."
   [xs]
   (n/sf_ (->> (map (fn [[position [{:keys [duration pitch]}]]]
                      (n/upd _
@@ -276,10 +279,19 @@
                    (sort-by key (group-by :position (n/mk* xs))))
               (connect-trimmed-chunks))))
 
-(defn modal-struct [size]
-  (n/ef_ (if-let [s (some-> _ :pitch :struct nc/struct->mode-keyword)]
-           (n/upd _ (n/struct (vec (sort (take size s)))))
+(defn modal-struct
+  "Change the harmonic struct of the received event to its <`size`> most characteristic degrees"
+  {:tags [:harmonic :chord]}
+  [size]
+  (n/ef_ (if-let [s (some-> _ :pitch :scale nc/scale->mode-keyword nc/degree-priority)]
+           (update _ :pitch  h/upd (h/struct (vec (sort (take size s)))))
            _)))
+
+(def ^{:doc "Build a structural chord on top of received event."
+       :tags [:event-update :chord :harmonic]}
+  simple-chord
+  (n/ef_ (let [struct-size (-> _ :pitch :struct count)]
+           (n/upd #{_} (n/par* (mapv n/s-step (range struct-size)))))))
 
 (comment :tries
 
