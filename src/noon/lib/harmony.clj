@@ -43,15 +43,15 @@
                                 (mapv (partial + (* offset 10E6)) octave))
                               x (range)))))]
         (memoize
-          (fn [base inversions]
-            (sort-by
-             comparable
-             (map octave-split
-                  (if inversions
-                    (comb/permutations base)
-                    (let [[bass & others] (sort base)]
-                      (map (partial cons bass)
-                           (comb/permutations others))))))))))
+         (fn [base inversions]
+           (sort-by
+            comparable
+            (map octave-split
+                 (if inversions
+                   (comb/permutations base)
+                   (let [[bass & others] (sort base)]
+                     (map (partial cons bass)
+                          (comb/permutations others))))))))))
 
     (defn abstract-drops
       "Get a list of abstract drops for `x`.
@@ -97,9 +97,8 @@
     (def ^{:doc "Computes all possible drops of the given score (that is supposed to represent a chord).
                  An :inversions option can be given to include inversions and their drops."}
       drops
-      (letfn [(concrete-drop
-                [abstract-drop idx->notes]
-                (loop [ret #{} drop abstract-drop octave 0 idx->notes idx->notes]
+      (letfn [(concrete-drop [abstract-drop contour-idx->notes]
+                (loop [ret #{} drop abstract-drop octave 0 idx->notes contour-idx->notes]
                   (if-let [[current-octave & upper-octaves] (seq drop)]
                     (if-let [[idx & current-octave] (seq current-octave)]
                       (recur (conj ret ((n/t-shift octave) (first (get idx->notes idx))))
@@ -111,19 +110,17 @@
               (contour-idx->notes [contour notes]
                 (reduce (fn [ret [c n]]
                           (update ret c (fnil conj []) n))
-                        {}
-                        (map vector contour notes)))]
+                        {} (map vector contour notes)))]
         (memoize
-          (fn [s & {:keys [inversions]}]
-            (assert (c/< (count s) 8)
-                    "cannot drop more than 7 notes")
-            (let [notes (vec (sort-by n/pitch-value (closed s)))
-                  contour (uc/contour (map n/pitch-value notes))
-                  drop-map (contour-idx->notes contour notes)
-                  abstract-drops (abstract-drops contour inversions)]
-              (map (fn [d]
-                     (concrete-drop d drop-map))
-                   abstract-drops))))))
+         (fn [s & {:keys [inversions]}]
+           (assert (c/< (count s) 8)
+                   "cannot drop more than 7 notes")
+           (let [notes (vec (sort-by n/pitch-value (closed s)))
+                 contour (uc/contour (map n/pitch-value notes))
+                 contour-idx->notes (contour-idx->notes contour notes)]
+             (map (fn [abstract-drop]
+                    (concrete-drop abstract-drop contour-idx->notes))
+                  (abstract-drops contour inversions)))))))
 
     (defn drop
       "Build an update that produce a drop of the received score (that is expected to represent a chord).

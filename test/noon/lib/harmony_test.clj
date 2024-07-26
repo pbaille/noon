@@ -2,7 +2,6 @@
   (:use noon.score)
   (:require [noon.lib.harmony :as h]
             [clojure.test :refer [testing deftest is]]
-            [noon.test :as t]
             [noon.score :as n]))
 
 (defn pitch-values= [& xs]
