@@ -130,7 +130,7 @@
        (shiftings s [0 127]))
       ([s bounds]
        (let [size (count s)
-             pitch-values (sort (map n/pitch-value (closed s)))
+             pitch-values (sort (set (map n/pitch-value (closed s))))
 
              neighbourhoods (->> (-> (cons (- (last pitch-values) 12) pitch-values)
                                      (u/snoc (+ 12 (first pitch-values))))
