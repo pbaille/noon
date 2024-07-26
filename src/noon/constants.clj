@@ -229,7 +229,7 @@
 
         (mode? x) x))
 
-    (defn struct->mode-keyword [s]
+    (defn scale->mode-keyword [s]
       (some->> (seq modes)
                (filter (fn [[_ s']] (= s s')))
                first
