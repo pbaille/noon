@@ -1,8 +1,10 @@
 (ns noon.lib.harmony-test
   (:use noon.score)
+  (:refer-clojure :exclude [cat])
   (:require [noon.lib.harmony :as h]
             [clojure.test :refer [testing deftest is]]
-            [noon.score :as n]))
+            [noon.score :as n]
+            [noon.test :as t]))
 
 (defn pitch-values= [& xs]
     (apply = (map h/pitch-values xs)))
@@ -102,7 +104,23 @@
                          (mk (par s1 s2 s3 s4))))
       (is (pitch-values= (mk (par s0 s1 s2 s3)
                              (h/inversion -1))
-                         (mk (par s1- s0 s1 s2)))))))
+                         (mk (par s1- s0 s1 s2))))))
+
+  (testing "voicings"
+    (is (t/frozen :voicings1
+                  tetrad
+                  (par s0 s1 s2 s3)
+                  (sf_ (concat-scores (h/voicings _ {:bounds [48 84]})))))
+    (testing "with duplicates"
+      (is (t/frozen :voicings-with-duplicates
+                    (par s0 s1 s2 s3)
+                    (sf_ (concat-scores (h/voicings _ {:bounds [48 84]})))))))
+
+  (testing "voice-led"
+    (is (t/frozen :voice-leading1
+                  (cat I VI II V)
+                  ($ tetrad h/simple-chord)
+                  h/voice-led))))
 
 
 (comment
@@ -112,11 +130,11 @@
             (par s0 s1 s2 s3 s4)
             (sf_ (concat-scores (h/drops _ :inversions true)))))
 
-  (noon {:filename "test/data/shiftings"
+  (noon {:filename "test/data/inversions"
          :midi true}
         (mk tetrad
             (par s0 s1 s2 s3 s4)
-            (sf_ (let [{:keys [upward downward self]} (h/shiftings _ [40 80])]
+            (sf_ (let [{:keys [upward downward self]} (h/inversions _ [40 80])]
                    (concat-scores (concat (reverse (next downward)) [self] (next upward)))))))
 
   (noon {:filename "test/data/voicings"
