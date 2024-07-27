@@ -108,3 +108,18 @@
                           :tags [:event-update :harmonic]})
                   (list f (list `- n)))])
          (range 1 max))))
+
+(defmacro -def-degrees []
+  (cons 'do
+        (concat (for [[n v] (map vector '[I II III IV V VI VII] (range))]
+                  (list 'def (with-meta n
+                               {:doc (str "Go to degree " n)
+                                :tags [:event-update :harmonic]})
+                        (list 'noon.score/degree v)))
+                (for [[degree-sym degree-val] (map vector '[I II III IV V VI VII] (range))
+                      [alteration-sym alteration-val] [["#" 'noon.score/c1] ["b" 'noon.score/c1-]]]
+                  (let [[dn dv an av] [degree-sym degree-val alteration-sym alteration-val]]
+                    (list 'def (with-meta (symbol (str dn an))
+                                 {:doc (str "Go to degree " an dn)
+                                  :tags [:event-update :harmonic]})
+                          `[(transpose ~av) (degree ~dv)]))))))

@@ -29,5 +29,6 @@
                        noon.score/-def-wrapped noon.score/-def-wrapped
                        noon.score/-def-steps noon.score/-def-steps
                        noon.score/-def-shifts noon.score/-def-shifts
+                       noon.score/-def-degrees noon.score/-def-degrees
                        noon.harmony/defsteps noon.harmony/defsteps
                        noon.utils.misc/defreduction noon.utils.misc/defreduction}}}
