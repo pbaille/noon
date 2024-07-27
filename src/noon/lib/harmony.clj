@@ -95,7 +95,7 @@
                    ret)))))
 
     (def ^{:doc "Computes all possible drops of the given score (that is supposed to represent a chord).
-                 An :inversions option can be given to include inversions and their drops."}
+                 The :inversions option can be given to include inversions and their drops."}
       drops
       (letfn [(concrete-drop [abstract-drop contour-idx->notes]
                 (loop [ret #{} drop abstract-drop octave 0 idx->notes contour-idx->notes]
@@ -130,14 +130,14 @@
       [x]
       (n/sf_ (s/member (drops _ :inversions false) x)))
 
-    (defn shiftings
+    (defn inversions
       "compute downward and upward inversion of the given chord (score).
        return a map containing
        - :self, the received chord (score)
        - :upward, the list of upward inversions
        - :downward, the list of downward inversions."
       ([s]
-       (shiftings s [0 127]))
+       (inversions s [0 127]))
       ([s bounds]
        (let [size (count s)
              pitch-values (sort (set (map n/pitch-value (closed s))))
@@ -177,8 +177,8 @@
       [n]
       (n/sf_
        (cond (zero? n) _
-             (pos? n) (nth (:upward (shiftings _)) n)
-             :else (nth (:downward (shiftings _)) (- n)))))
+             (pos? n) (nth (:upward (inversions _)) n)
+             :else (nth (:downward (inversions _)) (- n)))))
 
     (defn voicings
       "Computes a list of possible voicings for the given chord (score `s`).
@@ -193,7 +193,7 @@
                               (->> upward (drop-while (complement check)) (take-while check)))
                             (if (<= (bounds 0) (self-bounds 0))
                               (->> downward (drop-while (complement check)) (take-while check))))))
-                (map #(shiftings % bounds)
+                (map #(inversions % bounds)
                      (drops s :inversions true)))))
 
     (defn pitch-values
@@ -307,7 +307,7 @@
 
 (comment :tries
 
-         (time (->> (shiftings (mk (par> d0 d3 d3 d3 d3)))
+         (time (->> (inversions (mk (par> d0 d3 d3 d3 d3)))
                     :upward
                     (take 10)
                     (map pitch-values)))
