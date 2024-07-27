@@ -30,9 +30,10 @@
         (dir-equal? dir temp-dir))
       (s/noon options score))))
 
-(defmacro frozen [& xs]
-  `(frozen? ~(str (hash xs))
-            (pr/with-rand 0 (noon.score/mk ~@xs))))
+(defmacro frozen [x & xs]
+  (let [[id-prefix updates] (if (keyword? x) [(name x) xs] [nil (cons x xs)])]
+    `(frozen? ~(str id-prefix "___" (hash xs))
+              (pr/with-rand 0 (noon.score/mk ~@updates)))))
 
 (comment (macroexpand '(freezm (s/cat s/d0 s/d1)))
          (freezm (s/cat s/d0 s/d1)))
