@@ -86,6 +86,8 @@
        :origin {:d 35 :c 60}
        :position POSITION_ZERO})
 
+    (def LAYER_IDX {:t 0 :s 1 :d 2 :c 3})
+
     (defn hc
       "Harmonic context constructor.
        Defaults to `DEFAULT_HARMONIC_CONTEXT`, but accepts a `spec` map that takes precedence over it."
@@ -214,7 +216,7 @@
             ;; TODO investigate
             ;; some of the follwing operation are returning partial positions
             ;; I mean positions where not all layer keys are present
-            ;; I believe some transformations (I think of `noon.lib.melody/contour`) are relying on this but it is not clear.
+            ;; I believe some transformations (Maybe `noon.lib.melody/contour`) are relying on this but it is not clear.
 
             (defn t->s
               "Push tonic offset into structural layer."
