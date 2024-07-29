@@ -386,6 +386,13 @@
       (is (= (h/upd (h/hc)
                     (h/redegree 2))
              {:scale [0 1 3 5 7 8 10], :struct [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s -1, :d 1, :c 0}}))
+      (is (= (h/hc->pitch (h/upd (h/hc)
+                                 (h/redegree 2)))
+             (h/hc->pitch (h/hc))))
+      (is (let [hc (h/normalise ((h/position 1 -1 2 -3) (h/hc)))]
+            (= (h/hc->pitch (h/upd hc
+                                   (h/redegree 2)))
+               (h/hc->pitch hc))))
       (is (= (h/upd (h/hc)
                     (h/transpose (h/inversion 1)))
              {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
