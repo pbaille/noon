@@ -688,7 +688,7 @@
                     (:position ctx1)))))
 
     (defn align
-      "Align context `b` on context `a`, rounding on the given `layer`.
+      "Align position of context `b` on context `a`'s position, rounding on the given `layer`.
        Useful when writing harmonic or melodic sequences that traverse several contexts."
       [layer a b]
       (let [ret (upd b (repitch (hc->pitch a)))]
@@ -696,7 +696,7 @@
           (:tonic :t) (t-round ret)
           (:structural :s) (s-round ret)
           (:diatonic :d) (d-round ret)
-          (:chromtatic :c) ret)))
+          (:chromatic :c) ret)))
 
     ;; passing-tones
 
@@ -820,9 +820,9 @@
     (do :connections
         (defn connections
           "For each layer, computes the ctxs between hc1 and hc2
-returns a map of kind {layer intermediate-ctxs}
-layer: :t | :s | :d | :c
-intermediate-ctxs: sorted ctxs that are between hc1 and hc2 on the corresponding layer."
+           returns a map of kind {layer intermediate-ctxs}
+           layer: :t | :s | :d | :c
+           intermediate-ctxs: sorted ctxs that are between hc1 and hc2 on the corresponding layer."
           [hc1 hc2]
           (let [v1 (hc->chromatic-value hc1)
                 v2 (hc->chromatic-value hc2)
