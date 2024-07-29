@@ -230,9 +230,9 @@
                           (fn [{:as p :keys [t]}]
 
                             (if contains-tonic?
-                              (-> (dissoc p :t)
+                              (-> (assoc p :t 0)
                                   (update :s safe-add (* struct-size t)))
-                              (-> (dissoc p :t)
+                              (-> (assoc p :t 0)
                                   (update :s safe-add (* struct-size t))
                                   (update :d safe-add (- (first struct))))))))))
 
@@ -244,7 +244,7 @@
                 (let [{:keys [struct]} (hc-seqs ctx)]
                   (update ctx :position
                           (fn [p]
-                            (-> (dissoc p :s)
+                            (-> (assoc p :s 0)
                                 (update :d safe-add (bds-get struct s))))))))
 
             (defn d->c
@@ -255,7 +255,7 @@
                 (let [{:keys [scale]} (hc-seqs ctx)]
                   (update ctx :position
                           (fn [p]
-                            (-> (dissoc p :d)
+                            (-> (assoc p :d 0)
                                 (update :c safe-add (bds-get scale d))))))))
 
             (defn t->d
