@@ -110,13 +110,13 @@
       (is (= (h/d->t ((h/position 0 0 8) (h/hc)))
              {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d 1}}))
       (is (= (h/d->c ((h/position 0 0 -3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :c -5}})))
+             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0 :c -5}})))
 
     (testing "structural"
       (is (= (h/s->c ((h/position 0 3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :c 12}}))
+             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0 :d 0 :c 12}}))
       (is (= (h/s->d ((h/position 0 3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :d 7}}))
+             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0 :d 7}}))
       (is (= (h/s->t ((h/position 0 3) (h/hc)))
              {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0}})))
 
@@ -124,15 +124,15 @@
       (is (= (h/t->s ((h/position 1) (h/hc)))
              (h/down-to-layer :s ((h/position 1) (h/hc)))
              (h/down-to-layer :structural ((h/position 1) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:s 3}}))
+             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0 :s 3}}))
       (is (= (h/t->d ((h/position 1) (h/hc)))
              (h/down-to-layer :d ((h/position 1) (h/hc)))
              (h/down-to-layer :diatonic ((h/position 1) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:d 7}}))
+             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0 :s 0 :d 7}}))
       (is (= (h/t->c ((h/position 1) (h/hc)))
              (h/down-to-layer :c ((h/position 1) (h/hc)))
              (h/down-to-layer :chromatic ((h/position 1) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:c 12}})))
+             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0 :s 0 :d 0 :c 12}})))
 
     (testing "layer idx"
       (is (= (h/layer-idx :s (h/upd (h/hc) (h/position 3 2 1 0)))
@@ -419,6 +419,6 @@
                     (h/mirror :G0))
              {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d 1, :c 0}})))
 
-    (deftest "passing TODO")
+    #_(deftest "passing TODO")
 
-    (deftest "connections TODO")))
+    #_(deftest "connections TODO")))
