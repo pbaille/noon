@@ -1284,7 +1284,8 @@
 (do :midi
 
     (def MIDI_DEFAULT_OPTIONS
-      {:bpm 60})
+      {:bpm 60
+       :tracks {0 :chorium}})
 
     (def MIDI_DIRECTORIES
       {:default "generated"
