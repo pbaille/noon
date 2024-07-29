@@ -14,6 +14,10 @@
   (is (= (pr/with-rand 0
            (c/contour-inversions (pr/shuffle (range 4))))
          (list [3 1 0 2] [0 2 1 3] [1 3 2 0] [2 0 3 1])))
+  (is (= (c/contour-inversions (range 4))
+         (list [0 1 2 3] [1 2 3 0] [2 3 0 1] [3 0 1 2])))
+  (is (= (c/contour-inversions [0 1 0 2 1 3])
+         (list [0 1 0 2 1 3] [1 2 1 3 2 0] [2 3 2 0 3 1] [3 0 3 1 0 2])))
   (is (= (c/contour-mirror [0 3 2 4 2])
          [4 1 2 0 2]))
   (is (= (c/lines [0 3 1 4 2] 2)
