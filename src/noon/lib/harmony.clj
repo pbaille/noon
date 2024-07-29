@@ -8,7 +8,8 @@
             [noon.utils.contour :as uc]
             [noon.utils.sequences :as s]
             [clojure.core :as c]
-            [clojure.math.combinatorics :as comb]))
+            [clojure.math.combinatorics :as comb]
+            [noon.utils.maps :as m]))
 
 (do :help
 
@@ -258,17 +259,32 @@
                zip-fn (fn [x y] (n/upd y {:pitch (h/hc+ (:pitch (first x)))}))]
            (n/upd _ (n/zip zip-fn (n/k seed (n/lin* xs)))))))
 
-(defn- connect-trimmed-chunks [xs]
+(defn- connect-trimmed-chunks
+  "Put several score chunks back together by merging them into one and connecting splitted events back.
+   The `noon.lib.harmony/grid` function build an update that applies harmonies to corresponding chuncks of the received score.
+   For doing so it is splitting score and sometimes events that overlaps chunk bounderies,
+   once the harmonies are applied we need to connect back those splitted events.
+   In order to connect back a splitted event, we are simply extending the duration of the first by the duration of the second.
+
+   Notes:
+   There are other ways to connect a splitted event, we could move the position of the second split back by the duration of the first split.
+   Since those two splits have different :pitch values (harmonic-context) either way can make sense,
+   depending on if it is better to consider the event an anticipation or a retard (harmonically).
+   In the future, this function could accept an extra argument that specify this."
+  [xs]
   (reduce (fn [score x]
             (let [{trimmed-fws true score-rest nil} (group-by :trimed-fw score)
                   {trimmed-bws true x-rest nil} (group-by :trimed-bw x)]
               (loop [ret (set (concat score-rest x-rest)) fws trimmed-fws bws (set trimmed-bws)]
                 (if-not (seq fws)
                   (into ret bws)
-                  (let [[fw & fws] fws]
-                    (if-let [bw (some (fn [x] (and (= (n/pitch-value x) (n/pitch-value fw))
-                                                   (= (:position x) (+ (:position fw) (:duration fw)))
-                                                   x))
+                  (let [[fw & fws] fws
+                        candidate? (select-keys fw [:track :channel :voice])]
+                    (if-let [bw (some (fn [x]
+                                        (and (m/match x candidate?)
+                                             (= (n/pitch-value x) (n/pitch-value fw))
+                                             (= (:position x) (+ (:position fw) (:duration fw)))
+                                             x))
                                       bws)]
                       (recur (conj ret (-> bw
                                            (update :position - (:duration fw))
@@ -291,8 +307,30 @@
                    (sort-by key (group-by :position (n/mk* xs))))
               (connect-trimmed-chunks))))
 
+(defn harmonic-zip
+  "Build an update that zip a grid score over a content score.
+   grid score and content score are just regular scores, but they are representing different things.
+   grid score is representing an harmonic grid, and content score represents what is happening over those harmonies.
+
+   Two arguments are expected:
+   - `grid` is an update that will be applied to the received score in order to produce the grid score.
+   - `content` is an update that will be applied to received score in order to produce the content score.
+
+   Once those two scores are built, the harmonies of the grid score will be applied to the content score
+   accordingly to their position and duration."
+  [grid content]
+  (n/sf_ (let [g (n/upd _ grid)
+               c (n/upd _ content)]
+           (->> (map (fn [[position [{:keys [duration pitch]}]]]
+                       (n/upd c
+                              [(n/trim position (+ position duration))
+                               {:pitch (h/hc+ pitch) #_(h/position+ (h/upd pitch (h/repitch (:origin %))) (:position %))}]))
+                     (sort-by key (group-by :position g)))
+                (connect-trimmed-chunks)))))
+
 (defn modal-struct
-  "Change the harmonic struct of the received event to its <`size`> most characteristic degrees"
+  "Build an event update that change the harmonic struct of the received event to its N (`size`) most characteristic degrees.
+   The table of degree priority for known modes is available as `noon.constants/degree-priority`."
   {:tags [:harmonic :chord]}
   [size]
   (n/ef_ (if-let [s (some-> _ :pitch :scale nc/scale->mode-keyword nc/degree-priority)]
