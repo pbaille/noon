@@ -120,10 +120,64 @@
     (is (t/frozen :voice-leading1
                   (cat I VI II V)
                   ($ tetrad h/simple-chord)
-                  h/voice-led))))
+                  h/voice-led)))
+
+  (testing "align-contexts"
+    (is (t/frozen :align-contexts-diatonic-incremental
+                  (catn> 4 (transpose c4))
+                  (h/align-contexts :diatonic :incremental)
+                  ($ h/simple-chord)))
+    (is (t/frozen :align-contexts-diatonic-static
+                  (catn> 4 (transpose c4))
+                  (h/align-contexts :diatonic :static)
+                  ($ h/simple-chord)))
+    (is (t/frozen :align-contexts-structural-static
+                  (catn> 12 (transpose c1))
+                  (h/align-contexts :structural :static)
+                  ($ tetrad h/simple-chord)))
+    (is (t/frozen :align-contexts-structural-incremental
+                  (catn> 12 (transpose c1))
+                  (h/align-contexts :structural :incremental)
+                  ($ tetrad h/simple-chord)))))
 
 
 (comment
+
+  (defmacro log [x & xs]
+    `(noon.score/sfn ~x (noon.score/pp ~@xs) ~x))
+
+  (def spy
+    (log _ [:spy (map (juxt pitch-value
+                            (comp :position :pitch))
+                      (sort-by :position _))]))
+
+  ;; harmonic-zip do not work well on complex scores
+  ;; it can be used to pimp the base event but not really much more
+  ;; double shifts can occur when the seed is not in zero position
+  ;; TODO investigate the real value of harmonic-zip
+  (noon {:play true :midi true
+         :filename "test/data/hgrid"}
+        (mk (h/harmonic-zip
+             [tetrad
+              (fit (append> (transpose c3) (transpose c6)))
+              ($ C0 s-round (tup* (map redegree [0 5 1 4])))]
+
+             (chans [(patch :acoustic-bass) C-2 t-round]
+                    [(patch :electric-piano-1) vel5 (par s0 s1 s2 s3)]
+                    [(patch :ocarina) o1 (tupn 14 (tup s0 s1 s2 s3))]))
+            (adjust 16)))
+
+  (stop)
+
+  (noon {:play false
+         :midi true
+         :filename "test/data/aligned-contexts"}
+        (mk dur4
+            (append (transpose c3) (transpose c6))
+            ($ [tetrad (tup I VI II V)])
+            (h/align-contexts :s :static)
+            ($ (par s0 s1 s2 s3))))
+
   (noon {:filename "test/data/drops"
          :midi true}
         (mk tetrad
