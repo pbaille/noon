@@ -36,11 +36,9 @@
                                           (namespace x))
                                      (str *ns*))
                                  #"\."))
-        _ (println dir)
         [id-prefix updates] (if (keyword? x)
                               [(str (name x) "__") xs]
                               [nil (cons x xs)])]
-    (println (str dir "/" id-prefix (hash updates)))
     `(frozen? ~(str dir "/" id-prefix (hash updates))
               (pr/with-rand 0 (noon.score/mk ~@updates)))))
 
