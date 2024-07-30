@@ -51,34 +51,50 @@
            (mk (par s0 s2 [o1- s4] [o1- s6])))))
 
   (testing "drops"
+    (testing "simple-checks"
+      (is (= (mk (par s0 s1 s2)
+                 (h/drop 1))
+             (mk (par s0 [o1 s1] s2))))
+      (is (= (mk tetrad
+                 (par s0 s1 s2 s3)
+                 (h/drop 1))
+             (mk tetrad
+                 (par s0 [o1 s1] s2 s3))))
+      (is (= (mk tetrad
+                 (par s0 s1 s2 s3)
+                 (h/drop 2))
+             (mk tetrad
+                 (par s0 s1 [o1 s2] s3))))
+      (is (= (mk tetrad
+                 (par s0 s1 s2 s3)
+                 (h/drop -1))
+             (mk tetrad
+                 (par s0 [o2 s1] [o1 s2] s3))))
+
+      (is (pitch-values= (mk (par s0 s1 s2 s3)
+                             (h/drop 1))
+                         (mk (par s0 [o1 s1] s2 s3)))))
+    (testing "diatonic no duplicates"
+      (is (t/frozen :diatonic-drops
+            (par d0 d1 d2 d3)
+            (sf_ (concat-scores (h/drops _ :inversions true)))))
+      (is (t/frozen :diatonic-drops-no-inversions
+            (par d0 d1 d2 d3)
+            (sf_ (concat-scores (h/drops _))))))
     (testing "with two tonic"
-      (is (= 12 (count (h/drops (mk (par s0 s1 s2 s3))
-                                :inversions true)))))
-    (is (= 24 (count (h/drops (mk (par d0 d1 d2 d3))
-                              :inversions true))))
-
-    (is (= (mk (par s0 s1 s2)
-               (h/drop 1))
-           (mk (par s0 [o1 s1] s2))))
-    (is (= (mk tetrad
-               (par s0 s1 s2 s3)
-               (h/drop 1))
-           (mk tetrad
-               (par s0 [o1 s1] s2 s3))))
-    (is (= (mk tetrad
-               (par s0 s1 s2 s3)
-               (h/drop 2))
-           (mk tetrad
-               (par s0 s1 [o1 s2] s3))))
-    (is (= (mk tetrad
-               (par s0 s1 s2 s3)
-               (h/drop -1))
-           (mk tetrad
-               (par s0 [o2 s1] [o1 s2] s3))))
-
-    (is (pitch-values= (mk (par s0 s1 s2 s3)
-                           (h/drop 1))
-                       (mk (par s0 [o1 s1] s2 s3)))))
+      (is (t/frozen :drops-2-tonics
+                    (par s0 s1 s2 s3)
+                    (sf_ (concat-scores (h/drops _ :inversions true)))))
+      (is (t/frozen :drops-2-tonics-no-inversions
+                    (par s0 s1 s2 s3)
+                    (sf_ (concat-scores (h/drops _))))))
+    (testing "with duplicates"
+      (is (t/frozen :diatonic-drops-with-duplicates
+                    (par d0 d4 d8 d11)
+                    (sf_ (concat-scores (h/drops _ :inversions true)))))
+      (is (t/frozen :diatonic-drops-with-duplicates-no-inversions
+                    (par d0 d1 d4 d8)
+                    (sf_ (concat-scores (h/drops _)))))))
 
   (testing "inversions"
 
