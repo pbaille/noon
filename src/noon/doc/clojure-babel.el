@@ -20,7 +20,7 @@ For blocks to be correctly fontified, we need to install those using cider."
 (pb-clojure-babel_refresh-dynamic-font-lock-keywords
  " *org-src-fontification:clojure-mode*"
  "noon.doc.guide")
-(pb-clojure-babel_refresh-dynamic-font-lock-keywords
+'(pb-clojure-babel_refresh-dynamic-font-lock-keywords
  " *org-src-fontification:clojure-mode*"
  "noon.doc.examples")
 
@@ -40,6 +40,32 @@ For blocks to be correctly fontified, we need to install those using cider."
 (advice-add 'org-edit-src-code :around #'pb-org-babel_edit-src-code-hook)
 
 (require 'pb-org-babel)
+(require 'pb-cider)
+
+(defun pb-org-babel_jack-in ()
+  "Setup clojure literate org buffer.
+- cider-jack-in-clj if necessary,
+- send top block ns form to the repl,
+- set the corresponding namespace for code blocks fontification."
+  (interactive)
+  (let ((buffer (current-buffer)))
+    (when (not (cider-connected-p))
+      (call-interactively #'cider-jack-in-clj)
+      (sit-for 5))
+    (with-current-buffer buffer
+      (save-excursion
+        (goto-char (point-min))
+        (when (re-search-forward "#\\+begin_src clojure" nil t)
+          (let* ((element (org-element-context)))
+            (when (eq (org-element-type element) 'src-block)
+              (let ((block-content (org-element-property :value element)))
+                (pb-cider_eval! block-content)
+                (sit-for 3)
+                (string-match "(ns \\([^ ]+\\)" block-content)
+                (pb-clojure-babel_refresh-dynamic-font-lock-keywords
+                 " *org-src-fontification:clojure-mode*"
+                 (string-trim-right (match-string 1 block-content)))))))))))
+
 
 (pb-org-babel_add-custom-param
  :proll :clojure
@@ -47,8 +73,9 @@ For blocks to be correctly fontified, we need to install those using cider."
                 (format "((requiring-resolve 'noon.doc.utils/->piano-roll) %s)"
                         content))
      :result (lambda (result)
+               ;; (pp (cons :proll result))
                (with-current-buffer (get-buffer-create "*pr*")
-                (erase-buffer)
-                (insert (format "'%s" result))
-                (proll-mode 1))
+                 (erase-buffer)
+                 (insert (format "'%s" result))
+                 (proll-mode 1))
                nil)))
