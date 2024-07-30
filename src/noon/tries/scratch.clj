@@ -142,38 +142,38 @@
                         (parts (chan 0) s1-
                                (chan 1) s1))))
 
-         (do :grid-zipped
+         (do :harmonic-zipping
 
-             (play {:description "grid zipping demo"}
-                   (patch :electric-piano-1)
-                   ;; a simplistic grid
-                   harmonic-minor
-                   (tup* (map root [:C :Eb :Gb :A]))
-                   (h/align-contexts :s)
+             (play {:description "grid zipping demo 2"}
                    ;; a melodic pattern
-                   (h/grid-zipped
+                   [(patch :electric-piano-1)
                     (tupn 4 (tup s0 s1 s2))
-                    ($ (tup s0 [s2 (superpose o1)] s4)))
+                    ($ (tup s0 [s2 (superpose o1)] s4))]
+                   ;; simplistic grid
+                   (h/grid harmonic-minor
+                           (tup* (map root [:C :Eb :Gb :A]))
+                           (h/align-contexts :s))
                    ;; adjust and repeat
                    (adjust 2)
                    (rep 4 ($ c1-)))
 
              (play vel3
-                   ;; grid
-                   ;; 4 tonalities
-                   (tup* (map root [:C :Eb :F# :A]))
-                   ;; V I on each
-                   ($ (tup [V sus47] [lydian+ tetrad]))
-                   ;; align structurally
-                   (h/align-contexts :s)
+                   (h/harmonic-zip
+                    ;; grid
+                    [;; 4 tonalities
+                     (tup* (map root [:C :Eb :F# :A]))
+                     ;; V I on each
+                     ($ (tup [V sus47] [lydian+ tetrad]))
+                     ;; align structurally
+                     (h/align-contexts :s)]
 
-                   (h/grid-zipped
+                    ;; content
                     (tupn 4
                           (par
                            ;; simple arpegio
                            [o1 (tup (rup 6 s1) [s6 (rup 6 s1-)])]
                            ;; closed chord
-                           [(par s0 s1 s2 s3) (tupn 2 (maybe (shuftup s1- s1)))])))
+                           [(par s0 s1 s2 s3) (shuftup s1- s0 s1)])))
 
                    (adjust 8))))
 
