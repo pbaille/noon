@@ -8,7 +8,13 @@ Leveraging clojure and functional programming powers in order to *generate, mani
 
 #+begin_src clojure
 (ns noon.doc.guide
-  (:use noon.score))
+  ;; core
+  (:use noon.score)
+  ;; lib
+  (:require
+    [noon.lib.harmony :as h]
+    [noon.lib.melody :as m]
+    [noon.lib.rythmn :as r]))
 #+end_src
 
 ** Motivation
@@ -1256,12 +1262,6 @@ When composing music, 4 major aspects are considered: melody, rythmn, harmony an
  '[noon.utils.sequences :as seqs])
 #+end_src
 
-#+RESULTS:
-#+begin_src clojure
-
-
-#+end_src
-
 *** Melody
 
 Let see some ways to deal with melodies.
@@ -1416,6 +1416,8 @@ Like the rotation function, the =permutation= function uses a 'member-pick argum
 The permutations are categorised by grade, the grade of a permutation correspond to the number of splits that has to be made on the original seq to obtain it. For instance a grade 1 permutation is one that we can obtain by splitting our original sequence in 2 parts.
 
 #+begin_src clojure :pp
+(require '[noon.utils.sequences :as seqs])
+
 (=
  (seqs/grade-permutations [0 1 2 3] 1)
  '((2 3 0 1) (1 2 3 0) (3 0 1 2)))
