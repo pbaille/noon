@@ -131,43 +131,45 @@
       [x]
       (n/sf_ (s/member (drops _ :inversions false) x)))
 
-    (defn inversions
-      "compute downward and upward inversion of the given chord (score).
-       return a map containing
-       - :self, the received chord (score)
-       - :upward, the list of upward inversions
-       - :downward, the list of downward inversions."
-      ([s]
-       (inversions s [0 127]))
-      ([s bounds]
-       (let [size (count s)
-             pitch-values (sort (set (map n/pitch-value (closed s))))
+    (def ^{:doc "compute downward and upward inversion of the given chord (score).
+                 return a map containing
+                 - :self, the received chord (score)
+                 - :upward, the list of upward inversions
+                 - :downward, the list of downward inversions."}
+      inversions
+      (memoize
+       (fn self
+         ([s]
+          (self s [0 127]))
+         ([s bounds]
+          (let [size (count s)
+                pitch-values (sort (set (map n/pitch-value (closed s))))
 
-             neighbourhoods (->> (-> (cons (- (last pitch-values) 12) pitch-values)
-                                     (u/snoc (+ 12 (first pitch-values))))
-                                 (partition 3 1)
-                                 (map (fn [[dwn x up]]
-                                        [(mod x 12)
-                                         {:down (- dwn x)
-                                          :up (- up x)}]))
-                                 (into {}))
+                neighbourhoods (->> (-> (cons (- (last pitch-values) 12) pitch-values)
+                                        (u/snoc (+ 12 (first pitch-values))))
+                                    (partition 3 1)
+                                    (map (fn [[dwn x up]]
+                                           [(mod x 12)
+                                            {:down (- dwn x)
+                                             :up (- up x)}]))
+                                    (into {}))
 
-             get-neighbourhood (fn [n]
-                                 (get neighbourhoods (n/pitch-class-value n)))
-             shift (fn [dir x]
-                     (set (map (fn [n]
-                                 (update n :pitch
-                                         (comp h/c->t (h/c-step (get (get-neighbourhood n) dir)))))
-                               x)))
+                get-neighbourhood (fn [n]
+                                    (get neighbourhoods (n/pitch-class-value n)))
+                shift (fn [dir x]
+                        (set (map (fn [n]
+                                    (update n :pitch
+                                            (comp h/c->t (h/c-step (get (get-neighbourhood n) dir)))))
+                                  x)))
 
-             space-upward (- (bounds 1) (last pitch-values))
-             space-downward (- (first pitch-values) (bounds 0))
-             length-upward (* size (inc (quot space-upward 12)))
-             length-downward (* size (inc (quot space-downward 12)))]
+                space-upward (- (bounds 1) (last pitch-values))
+                space-downward (- (first pitch-values) (bounds 0))
+                length-upward (* size (inc (quot space-upward 12)))
+                length-downward (* size (inc (quot space-downward 12)))]
 
-         {:self s
-          :upward (take length-upward (iterate (partial shift :up) s))
-          :downward (take length-downward (iterate (partial shift :down) s))})))
+            {:self s
+             :upward (take length-upward (iterate (partial shift :up) s))
+             :downward (take length-downward (iterate (partial shift :down) s))})))))
 
     (defn inversion
       "Build an update that produce an inversion of the received chord (score).
