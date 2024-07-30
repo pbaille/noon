@@ -6,7 +6,7 @@ It provides a way to compose, play and export music as *MIDI*.
 The initial goal was to be able to define musical fragments in a very declarative way.
 Leveraging clojure and functional programming powers in order to *generate, manipulate and organize* musical content.
 
-#+begin_src clojure :results no
+#+begin_src clojure
 (ns noon.doc.guide
   (:use noon.score))
 #+end_src
@@ -55,23 +55,6 @@ It is represented using a clojure map
 
 #+begin_src clojure :pp
 DEFAULT_EVENT
-#+end_src
-
-#+RESULTS:
-#+begin_src clojure
-{:position 0,
- :channel 0,
- :track 0,
- :duration 1,
- :pitch
- {:scale [0 2 4 5 7 9 11],
-  :struct [0 2 4],
-  :origin {:d 35, :c 60},
-  :position {:t 0, :s 0, :d 0, :c 0}},
- :velocity 80,
- :voice 0,
- :patch [0 4]}
-
 #+end_src
 
 **** Score
@@ -1273,6 +1256,12 @@ When composing music, 4 major aspects are considered: melody, rythmn, harmony an
  '[noon.utils.sequences :as seqs])
 #+end_src
 
+#+RESULTS:
+#+begin_src clojure
+
+
+#+end_src
+
 *** Melody
 
 Let see some ways to deal with melodies.
@@ -2228,13 +2217,13 @@ A more elaborated example
   [(patch :acoustic-bass) vel3 o2-]))
 #+end_src
 
-****** grid-zipped
+****** harmonic-zip
 
-This transformation helps you to zip a melody on the current chord progression. This way you don't have to worry at all about the chords, just write a melody it will be adjusted to chord changes.
+This transformation helps you to zip a melody on a chord progression. This way you don't have to worry at all about the chords, just write a melody it will be adjusted to chord changes.
 
 Let's first write a simple melodic pattern.
 
-#+begin_src clojure :proll
+#+begin_src clojure :pp
 (play
  (patch :ocarina)
  (tup s0 s1 [s2 (cat d1 d1- _)] s1)
@@ -2242,13 +2231,13 @@ Let's first write a simple melodic pattern.
  (adjust {:duration 4}))
 #+end_src
 
-Now let's use the =h/grid-zipped= function to apply this to a chord progression.
+Now let's use the =h/harmonic-zip= function to apply this to a chord progression.
 
-#+begin_src clojure :proll
+#+begin_src clojure :pp
 (play
- [(scale :harmonic-minor) (tup I IV VII I) (h/align-contexts)]
- (h/grid-zipped
-  [(patch :ocarina) (tup s0 s1 [s2 (cat d1 d1- _)] s1) (dupt 4)])
+  (h/harmonic-zip
+   [(scale :harmonic-minor) (tup I IV VII I) (h/align-contexts :s)]
+   [(patch :ocarina) (tup s0 s1 [s2 (cat d1 d1- _)] s1) (dupt 4)])
  (dup 2)
  (adjust {:duration 6}))
 #+end_src
@@ -2257,16 +2246,14 @@ Almost the same with comping.
 
 #+begin_src clojure :proll
 (play
- [(scale :harmonic-minor) (tup I IV VII I) (h/align-contexts)]
- (chans
-  (h/grid-zipped
-   [(patch :ocarina)
-    (tup s0 s1 [s2 (cat d1 d1- _)] s1)
-    (tup s0 s2 s1)
-    (tupn> 2 s1-)])
-  [(patch :acoustic-bass) ($ t2-)]
-  [(patch :choir-aahs) vel4 ($ [(par s0 s2 s4)])])
- (dup 2)
- (adjust {:duration 12}))
+  (h/harmonic-zip
+   [(scale :harmonic-minor) (tup I IV VII I) (h/align-contexts :s)]
+   (chans
+    [(patch :ocarina)
+     (tup s0 s1 [s2 (cat d1 d1- _)] s1)
+     (dupt 4)]
+    [(patch :acoustic-bass) t2-]
+    [(patch :choir-aahs) vel4 (par s0 s2 s4)]))
+  (dup 2)
+  (adjust {:duration 12}))
 #+end_src
-
