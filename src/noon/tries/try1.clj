@@ -234,70 +234,61 @@
                              (map second) (reduce into #{}))]
                   (upd _ (start-from (score-origin _))))))
 
-         (defn humanize-vel [n]
-           (vel (fn [v] (-> (+ v (- (* n (rand)) (/ n 2)))
-                            (min 127)
-                            (max 0)))))
-
-         (play dur2
-               {:grid 1}
-               (cat [{:section :A}
-                     (cat (catn 4 [(root :F#) locrian2])
-                          (catn 4 [(root :F) lydian])
-                          (catn 4 [(root :Eb) lydian])
-                          (catn 4 [(root :Db) lydian]))]
-                    [{:section :B}
-                     lydian
-                     (cat* (map root [:E :Db :D :B :C :A :Bb :G]))])
-               (rep 4 {:grid inc})
-               (let [choir [(patch :choir-aahs) vel5 ($ (par> d3 d3 d3)) h/voice-led]
-                     bass [(patch :acoustic-bass) ($ [C-2 t-round])]
-                     lead-line (any-that (within-pitch-bounds? :C0 :C3)
-                                         (rep 2 d3 :skip-first)
-                                         (rep 2 d3- :skip-first)
-                                         d4 d4-
-                                         d1 d1-
-                                         (rep 3 d2 :skip-first)
-                                         (rep 3 d2- :skip-first))]
-                 (parts {:grid 1} (chans choir
-                                         bass
-                                         (h/grid-zipped
-                                          [(patch :music-box)
-                                           vel5 C1
-                                           (m/simple-line (* 24 10) lead-line)
-                                           (adjust 48)]))
-                        {:grid 2} (chans choir
-                                         bass
-                                         (h/grid-zipped
-                                          [(patch :ocarina)
-                                           vel4 C1
-                                           (m/simple-line (* 24 24) lead-line)
-                                           (adjust {:position 48 :duration 48})]))
-                        {:grid 3} (chans choir
-                                         bass
-                                         (h/grid-zipped
-                                          [(patch :sawtooth)
-                                           vel4 C1
-                                           (tup d0 d3 d6)
-                                           (tup d0 d4 d8)
-                                           (m/line (one-of (last-n-positions 10) (last-n-positions 7))
-                                                   (any-that (within-pitch-bounds? :C0 :C3)
-                                                             (m/permutation {:grade 3})
-                                                             #_(one-of (m/contour :rotation {:layer :d})
-                                                                       (m/contour :mirror {:layer :d})
-                                                                       (m/contour :similar {:delta 0 :layer :d}))
-                                                             (one-of d1 d1-)
-                                                             (one-of d2 d2-))
-                                                   (sf_ (> (score-duration _) 48))
-                                                   (trim 0 48))
-                                           (adjust {:position 96 :duration 48})
-                                           ($ (humanize-vel 10))]))
-                        {:grid 4} (chans [choir ($by :position [(! (one-of (r/gen-tup 8 3 :euclidean)
-                                                                           (r/gen-tup 8 3 :durations [2 3 4 5])))
-                                                                (sf_ (let [xs (-> (group-by :position _) seq sort vals)]
-                                                                       (reduce into #{} (map upd xs (shuffle [d0 d1 d1-])))))])]
-                                         bass)))
-               #_(start-from 96)))
+         (let [n-bars 24
+               choir [(patch :choir-aahs) vel5 (par> d3 d3 d3)]
+               bass [(patch :acoustic-bass) C-2 t-round]
+               lead-line (any-that (within-pitch-bounds? :C0 :C3)
+                                   (rep 2 d3 :skip-first)
+                                   (rep 2 d3- :skip-first)
+                                   d4 d4-
+                                   d1 d1-
+                                   (rep 3 d2 :skip-first)
+                                   (rep 3 d2- :skip-first))]
+           (play (h/harmonic-zip
+                  [(tup (cat (catn 4 [(root :F#) locrian2])
+                             (catn 4 [(root :F) lydian])
+                             (catn 4 [(root :Eb) lydian])
+                             (catn 4 [(root :Db) lydian]))
+                        [lydian
+                         (cat* (map root [:E :Db :D :B :C :A :Bb :G]))])
+                   (h/align-contexts :s)
+                   (dupt 4)]
+                  (tup (chans choir
+                              bass
+                              [(patch :music-box)
+                               vel5 C1
+                               (m/simple-tupline (* n-bars 10) lead-line)])
+                       (chans choir
+                              bass
+                              [(patch :ocarina)
+                               vel4 C1
+                               (m/simple-tupline (* n-bars 24) lead-line)])
+                       (chans choir
+                              bass
+                              [(patch :sawtooth)
+                               (dur (/ 1 n-bars))
+                               vel4 C1
+                               (tup d0 d3 d6)
+                               (tup d0 d4 d8)
+                               (m/line (one-of (last-n-positions 10) (last-n-positions 7))
+                                       (any-that (within-pitch-bounds? :C0 :C3)
+                                                 (m/permutation {:grade 3})
+                                                 #_(one-of (m/contour :rotation {:layer :d})
+                                                           (m/contour :mirror {:layer :d})
+                                                           (m/contour :similar {:delta 0 :layer :d}))
+                                                 (one-of d1 d1-)
+                                                 (one-of d2 d2-))
+                                       (sf_ (> (score-duration _) 1))
+                                       (trim 0 1))
+                               (vel-humanize 5 [40 80])])
+                       (chans [choir
+                               (tupn (/ n-bars 2) same)
+                               ($by :position [(! (one-of (r/gen-tup 8 3 :euclidean)
+                                                          (r/gen-tup 8 3 :durations [2 3 4 5])))
+                                               (sf_ (let [xs (-> (group-by :position _) seq sort vals)]
+                                                      (reduce into #{} (map upd xs (pr/shuffle [d0 d1 d1-])))))])]
+                              bass)))
+                 (adjust 180))))
 
 (comment :grid
          (stop)
@@ -314,6 +305,27 @@
                        (rep 6 (transpose c2-))
                        (dup 2)
                        (h/align-contexts :d :static)))
+
+         (play (tupn> 24 (one-of d1 d1-))
+               ($ (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
+                         [(patch :ocarina)
+                          (one-of (mixtup s0 s2 s4 s6)
+                                  (mixtup s0 s2 s4 s6))
+                          (one-of (mixtup d0 d3 d6)
+                                  (mixtup d0 d3 d6))
+                          (vel-humanize 10 [40 80])
+                          (tup _ rev)]
+                         [(patch :acoustic-bass) t2-]))
+               (h/grid tetrad
+                       (tup [I lydian]
+                            [IIb dorian]
+                            [V mixolydian]
+                            [Vb melodic-minor])
+                       ($ (h/modal-struct 4))
+                       (rup 4 (transpose c2-))
+                       (dupt 2)
+                       (h/align-contexts :d :static))
+               (adjust 60))
 
          (play (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
                       [(patch :acoustic-bass) t2-])
@@ -351,10 +363,11 @@
 (comment :zip-rythmn
 
          (play lydianb7
+               (h/modal-struct 5)
                (chans
                 [(patch :vibraphone)
-                 (shufcat d0 d1 d3 d4 d6)
-                 (catn 4 (one-of d2 d2-))
+                 (shufcat s0 s1 s2 s3 s4)
+                 (catn 4 (one-of s1 s2 s1- s2-))
                  (sf_ (let [rythmn (mk (catn 2 (! (r/gen-tup 12 5 :shifted))) (append rev))]
                         (set (map (fn [r n]
                                     (merge n (select-keys r [:position :duration])))
@@ -362,7 +375,7 @@
                                   (sort-by :position _)))))]
                 [(patch :woodblock) (r/gen-tup 12 5 :euclidean) (dup 4)]
                 [(patch :tinkle-bell) (dup 4)]
-                [(patch :metallic) (shufcat d0 d3 d1- d4) ($ (par d0 d1 d4))]
+                [(patch :metallic) (shufcat s0 s1 s2 s3) ($ (par s0 s1 s2))]
                 [(patch :acoustic-bass) t2- (dup 4)])
                (adjust 8)
                (append [(transpose c3-) s1 rev] _)))
