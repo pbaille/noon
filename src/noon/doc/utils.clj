@@ -2,8 +2,7 @@
   (:require [noon.score :as n]
             [noon.harmony :as h]
             [clojure.pprint :as pprint]
-            [clojure.string :as str]
-            [noon.doc.intro :as intro]))
+            [clojure.string :as str]))
 
 (do :piano-roll
     (defn elispify [x]
@@ -49,7 +48,7 @@
          {:notes (->> (filter :pitch score)
                       (sort-by :position)
                       (map (fn [{:as e
-                                p :pitch}]
+                                 p :pitch}]
                              (assoc (select-keys e [:position :duration :channel])
                                     :pitch (h/hc->chromatic-value p)
                                     :kind (cond
@@ -82,7 +81,7 @@
                 ($ (chans [o1 (shuftup s0 s1 s2 s4)]
                           (par s0 s1 s2)))))))))
 
-(do :org-guide
+(comment :org-guide
 
     (defn play-form? [x]
       (and (seq? x)
