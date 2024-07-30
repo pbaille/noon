@@ -252,15 +252,6 @@
                   (recur (conj ret (assoc x :pitch aligned)) xs))
                 (set ret)))))))
 
-(u/defn* grid-zipped
-  "zip the current score (which should represent an harmonic grid)
-   to the resulting of applying 'xs updates to a fresh score."
-  {:tags [:harmonic]}
-  [xs]
-  (n/sf_ (let [seed (dissoc (first _) :position :duration :pitch)
-               zip-fn (fn [x y] (n/upd y {:pitch (h/hc+ (:pitch (first x)))}))]
-           (n/upd _ (n/zip zip-fn (n/k seed (n/lin* xs)))))))
-
 (defn- connect-trimmed-chunks
   "Put several score chunks back together by merging them into one and connecting splitted events back.
    The `noon.lib.harmony/grid` function build an update that applies harmonies to corresponding chuncks of the received score.
@@ -273,7 +264,7 @@
    Since those two splits have different :pitch values (harmonic-context) either way can make sense,
    depending on if it is better to consider the event an anticipation or a retard (harmonically).
    In the future, this function could accept an extra argument that specify this."
-  [xs]
+  [xs & {:keys [forward forced]}]
   (reduce (fn [score x]
             (let [{trimmed-fws true score-rest nil} (group-by :trimed-fw score)
                   {trimmed-bws true x-rest nil} (group-by :trimed-bw x)]
@@ -284,30 +275,18 @@
                         candidate? (select-keys fw [:track :channel :voice])]
                     (if-let [bw (some (fn [x]
                                         (and (m/match x candidate?)
-                                             (= (n/pitch-value x) (n/pitch-value fw))
+                                             (or forced (= (n/pitch-value x) (n/pitch-value fw)))
                                              (= (:position x) (+ (:position fw) (:duration fw)))
                                              x))
                                       bws)]
-                      (recur (conj ret (-> bw
-                                           (update :position - (:duration fw))
-                                           (update :duration + (:duration fw))))
+                      (recur (conj ret (if forward
+                                         (update fw :duration + (:duration bw))
+                                         (-> bw
+                                             (update :position - (:duration fw))
+                                             (update :duration + (:duration fw)))))
                              fws (disj bws bw))
                       (recur (conj ret fw) fws bws)))))))
           #{} xs))
-
-(u/defn* grid
-  "Build an update that applies an harmonic grid to the received score.
-   The harmonic grid is created by threading a fresh score through the sequence of update `xs`.
-   e.g `(noon.score/mk* xs)`.
-   The resulting score (which represent an harmonic grid) is zipped over the received score,
-   All harmonies are applied accordingly to their position and duration."
-  [xs]
-  (n/sf_ (->> (map (fn [[position [{:keys [duration pitch]}]]]
-                     (n/upd _
-                            [(n/trim position (+ position duration))
-                             {:pitch (h/hc+ pitch)}]))
-                   (sort-by key (group-by :position (n/mk* xs))))
-              (connect-trimmed-chunks))))
 
 (defn harmonic-zip
   "Build an update that zip a grid score over a content score.
@@ -320,15 +299,36 @@
 
    Once those two scores are built, the harmonies of the grid score will be applied to the content score
    accordingly to their position and duration."
+  {:tags [:harmonic :zipping :grid]}
   [grid content]
   (n/sf_ (let [g (n/upd _ grid)
                c (n/upd _ content)]
            (->> (map (fn [[position [{:keys [duration pitch]}]]]
                        (n/upd c
                               [(n/trim position (+ position duration))
-                               {:pitch (h/hc+ pitch) #_(h/position+ (h/upd pitch (h/repitch (:origin %))) (:position %))}]))
+                               {:pitch (h/hc+ pitch)}]))
                      (sort-by key (group-by :position g)))
                 (connect-trimmed-chunks)))))
+
+(u/defn* grid
+  "Build an update that applies an harmonic grid to the received score.
+   The harmonic grid is created by threading a fresh score through the sequence of update `xs`.
+   e.g `(noon.score/mk* xs)`.
+   The resulting score (which represent an harmonic grid) is zipped over the received score,
+   All harmonies are applied accordingly to their position and duration."
+  {:tags [:harmonic :zipping :grid]}
+  [xs]
+  (harmonic-zip (n/k (n/lin* xs)) n/same))
+
+(u/defn* grid-zipped
+  "zip the current score (which should represent an harmonic grid)
+   to the resulting of applying 'xs updates to a fresh score."
+  {:tags [:harmonic :zipping :grid]}
+  [xs]
+  (n/sf_ (->> (n/k (dissoc (first _) :position :duration :pitch)
+                   (n/lin* xs))
+              (harmonic-zip n/same)
+              (n/upd _))))
 
 (defn modal-struct
   "Build an event update that change the harmonic struct of the received event to its N (`size`) most characteristic degrees.
