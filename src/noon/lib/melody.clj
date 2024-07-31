@@ -173,9 +173,9 @@
        4. else go to step 1."
       {:tags [:linear :melodic]}
       [connect step done? finish]
-      (n/sf_ (let [nxt (n/concat-score _ (n/upd (connect _) step))]
+      (n/sf_ (let [nxt (n/concat-score _ (n/update-score (connect _) step))]
                (cond (empty? nxt) nil
-                     (done? nxt) (n/upd nxt finish)
+                     (done? nxt) (n/update-score nxt finish)
                      :else (recur nxt)))))
 
     (defn simple-line
@@ -188,7 +188,7 @@
                    connect (fn [s] (-> (last-event s) normalise hash-set))
                    total-duration (* dur length)
                    done? (fn [s] (> (n/score-duration s) total-duration))]
-               (n/upd _ (line connect step done? (n/trim 0 total-duration))))))
+               (n/update-score _ (line connect step done? (n/trim 0 total-duration))))))
 
     (defn simple-tupline
       "tuped version of `noon.lib.melody/simple-line`"

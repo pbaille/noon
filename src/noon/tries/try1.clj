@@ -126,17 +126,17 @@
          (defn rand-structure [size]
            (ef_ (let [degree-count (-> _ :pitch :scale count)
                       degrees (first (mv/consume size (mv/mix* (range degree-count))))]
-                  (upd #{_} (structure (vec (sort degrees)))))))
+                  (update-score #{_} (structure (vec (sort degrees)))))))
 
          (def rand-degree
            (ef_ (let [scale-size (-> _ :pitch :scale count)
                       deg (rand-nth (range 1 scale-size))]
-                  (upd #{_} (degree (rand-nth [(- deg) deg]))))))
+                  (update-score #{_} (degree (rand-nth [(- deg) deg]))))))
 
          (defn rand-tup [size]
            (ef_ (let [degree-count (-> _ :pitch :scale count)
                       degrees (first (mv/consume size (mv/mix* (range degree-count))))]
-                  (upd #{_} (tup* (mapv d-step degrees))))))
+                  (update-score #{_} (tup* (mapv d-step degrees))))))
 
          (play (symetric-modes :half-whole)
                (rand-structure 3)
@@ -232,7 +232,7 @@
                              seq (sort-by key)
                              reverse (take n)
                              (map second) (reduce into #{}))]
-                  (upd _ (start-from (score-origin _))))))
+                  (update-score _ (start-from (score-origin _))))))
 
          (let [n-bars 24
                choir [(patch :choir-aahs) vel5 (par> d3 d3 d3)]
@@ -286,7 +286,7 @@
                                ($by :position [(! (one-of (r/gen-tup 8 3 :euclidean)
                                                           (r/gen-tup 8 3 :durations [2 3 4 5])))
                                                (sf_ (let [xs (-> (group-by :position _) seq sort vals)]
-                                                      (reduce into #{} (map upd xs (pr/shuffle [d0 d1 d1-])))))])]
+                                                      (reduce into #{} (map update-score xs (pr/shuffle [d0 d1 d1-])))))])]
                               bass)))
                  (adjust 180))))
 
@@ -405,7 +405,7 @@
                                                       cnt
                                                       (recur (inc cnt) (nh/upd current (nh/d-step -1))))))]
                                   (concat-score ret
-                                                (upd #{(assoc a :position 0)}
+                                                (update-score #{(assoc a :position 0)}
                                                      (rup cnt (case direction :up d1 :down d1-))))))
                               #{}
                               couples)
@@ -430,7 +430,7 @@
                                               cnt
                                               (recur (inc cnt) (nh/upd current (nh/layer-step layer increment)))))]
                                   (concat-score ret
-                                                (upd #{(assoc a :position 0)}
+                                                (update-score #{(assoc a :position 0)}
                                                      (rup cnt (ef_ (update _ :pitch (nh/layer-step layer increment))))))))
                               #{}
                               couples)
@@ -896,7 +896,7 @@
          (def decorate
            (sf_ (let [sorted (sort-by :position _)]
                   (reduce (fn [s [n1 n2]]
-                            (into s (upd #{n1 n2} (maybe (m/connect 1)))))
+                            (into s (update-score #{n1 n2} (maybe (m/connect 1)))))
                           #{(last sorted)} (partition 2 1 sorted)))))
 
          (noon {:play true :pdf true}
@@ -919,7 +919,7 @@
          (play harmonic-minor (tup s1 s2) (m/connect 1))
          (play harmonic-minor o1 (tup s0 s1- s2 s1) (sf_ (let [sorted (sort-by :position _)]
                                                            (reduce (fn [s [n1 n2]]
-                                                                     (into s (upd #{n1 n2} (m/connect 1))))
+                                                                     (into s (update-score #{n1 n2} (m/connect 1))))
                                                                    #{(last sorted)} (partition 2 1 sorted)))))
 
          (play (shuftup s0 s1 s2 s3) decorate (cat _ vel0 (m/contour :similar {:delta 1 :layer :s}))))
@@ -984,7 +984,7 @@
 
          (defn connect-with [f]
            (m/$connect (fn [from to]
-                         (upd #{(assoc from :position 0)}
+                         (update-score #{(assoc from :position 0)}
                               [(cat _ [(ef_ (assoc _ :pitch (:pitch to)))
                                        f])
                                (adjust from)]))))
@@ -1045,7 +1045,7 @@
            (m/$connect (fn [from to]
                          (let [{:keys [scale structure origin]} (:pitch from)
                                target-pitch (:pitch to)]
-                           (upd #{(assoc from :position 0)}
+                           (update-score #{(assoc from :position 0)}
                                 [(cat _ [(ef_ (assoc _ :pitch target-pitch))
                                          (rescale scale)
                                          (restructure structure)
@@ -1357,7 +1357,7 @@
                          harmonic-minor
                          (par* lines)
                          (cat _ (transpose c3-))
-                         ($by :channel (connect-with (sf_ (upd _
+                         ($by :channel (connect-with (sf_ (update-score _
                                                                (get-in choices [:ornamentation (:connection (first _))]))))))))
 
          (let [[arpegios ornamentations harmonic-sequences articulations]
@@ -1400,7 +1400,7 @@
                          dorian
                          (par* (cons bass lines))
                          (cat _ (transpose c3-))
-                         ($by :channel (connect-with (sf_ (upd _
+                         ($by :channel (connect-with (sf_ (update-score _
                                                                (get-in choices [:ornamentation (:connection (first _))])))))))))
 
 (comment "scanning"
@@ -1437,10 +1437,10 @@
          "another approach"
 
          (defn swap-between [from to f]
-           (sfn s (let [s' (upd s [(trim from to) (in-place f)])]
-                    (set (concat (upd s (trim 0 from))
+           (sfn s (let [s' (update-score s [(trim from to) (in-place f)])]
+                    (set (concat (update-score s (trim 0 from))
                                  s'
-                                 (upd s (trim to (score-duration s))))))))
+                                 (update-score s (trim to (score-duration s))))))))
 
          (noon (mk (catn> 8 d1)
                    (swap-between 4 6 o1)))
@@ -1450,7 +1450,7 @@
             (scan2 size size f))
            ([size step f]
             (sfn s (reduce (fn [s from]
-                             (upd s (swap-between from (+ from size) f)))
+                             (update-score s (swap-between from (+ from size) f)))
                            s (range 0 (score-duration s) step)))))
 
          (noon (mk (catn> 8 d1)
@@ -1476,7 +1476,7 @@
     (defn efit
       "build an efn using a sfn, constraining the result to the input event position and duration"
       [f]
-      (ef_ (upd #{(assoc _ :position 0)}
+      (ef_ (update-score #{(assoc _ :position 0)}
                 [f (adjust _)])))
 
     (defn in-place
@@ -1486,11 +1486,11 @@
       [u]
       (sf_ (let [score-origin (score-origin _)
                  score-duration (- (score-duration _) score-origin)]
-             (upd (shift-score _ (- score-origin))
+             (update-score (shift-score _ (- score-origin))
                   [u (adjust {:position score-origin :duration score-duration})]))))
 
     (defn upd-in-place [s u]
-      (upd (score s) (in-place u)))
+      (update-score (score s) (in-place u)))
 
     (defn connect-with [f]
       (m/$connect (fn [from to]

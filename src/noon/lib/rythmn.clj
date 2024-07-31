@@ -24,7 +24,7 @@
       (let [duration (n/score-duration score)
             last-event (last (sort-by :position score))]
         (map (fn [shift]
-               (n/upd (n/shift-score score shift)
+               (n/update-score (n/shift-score score shift)
                     (n/trim 0 duration)))
              (range 0 (:duration last-event) increment))))
 
@@ -39,7 +39,7 @@
             increment (/ duration n)
             points (map (n/mul increment) (range 0 (inc n)))]
         (map (fn [[from to]]
-               (n/upd score [(n/between from to) (n/trim from to)
+               (n/update-score score [(n/between from to) (n/trim from to)
                            (n/sf_ (if (empty? _) (n/mk n/vel0 {:duration increment :position from}) _))
                            (n/sf_ (n/shift-score _ (- from)))]))
              (partition 2 1 points))))
@@ -72,14 +72,14 @@
        "
       ([offset]
        (n/sf_ (let [duration (n/score-duration _)]
-                (n/upd _
+                (n/update-score _
                        [(n/$ {:position (fn [p] (mod (+ p offset) duration))})
                         (n/trim 0 duration)]))))
       ([k arg]
        (case k
-         :relative (n/sf_ (n/upd _ (rotation (* (n/score-duration _) arg))))
-         :rand-by (n/sf_ (n/upd _ (rotation (pr/rand-nth (range 0 (n/score-duration _) arg)))))
-         :rand-sub (n/sf_ (n/upd _ (rotation (* (pr/rand-nth (range 0 arg)) (/ (n/score-duration _) arg))))))))
+         :relative (n/sf_ (n/update-score _ (rotation (* (n/score-duration _) arg))))
+         :rand-by (n/sf_ (n/update-score _ (rotation (pr/rand-nth (range 0 (n/score-duration _) arg)))))
+         :rand-sub (n/sf_ (n/update-score _ (rotation (* (pr/rand-nth (range 0 arg)) (/ (n/score-duration _) arg))))))))
 
     (defn permutation
       "permute a score by time slices,

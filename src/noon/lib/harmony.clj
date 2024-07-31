@@ -301,10 +301,10 @@
    accordingly to their position and duration."
   {:tags [:harmonic :zipping :grid]}
   [grid content]
-  (n/sf_ (let [g (n/upd _ grid)
-               c (n/upd _ content)]
+  (n/sf_ (let [g (n/update-score _ grid)
+               c (n/update-score _ content)]
            (->> (map (fn [[position [{:keys [duration pitch]}]]]
-                       (n/upd c
+                       (n/update-score c
                               [(n/trim position (+ position duration))
                                {:pitch (h/hc+ pitch)}]))
                      (sort-by key (group-by :position g)))
@@ -328,7 +328,7 @@
   (n/sf_ (->> (n/k (dissoc (first _) :position :duration :pitch)
                    (n/lin* xs))
               (harmonic-zip n/same)
-              (n/upd _))))
+              (n/update-score _))))
 
 (defn modal-structure
   "Build an event update that change the harmonic structure of the received event to its N (`size`) most characteristic degrees.
@@ -343,7 +343,7 @@
        :tags [:event-update :chord :harmonic]}
   simple-chord
   (n/ef_ (let [structure-size (-> _ :pitch :structure count)]
-           (n/upd #{_} (n/par* (mapv n/s-step (range structure-size)))))))
+           (n/update-score #{_} (n/par* (mapv n/s-step (range structure-size)))))))
 
 (comment :tries
 

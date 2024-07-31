@@ -725,7 +725,7 @@
 
         (def score-update? (t? :score-update))
 
-        (defn upd
+        (defn update-score
           "Updates score 's with update 'x."
           [s x] ((->upd x) s))
 
@@ -790,7 +790,7 @@
     (defn mk*
       "Feed score0 into given updates."
       [xs]
-      (upd score0 (lin* xs)))
+      (update-score score0 (lin* xs)))
 
     (defn mk [& xs]
       (mk* xs)))
@@ -823,13 +823,13 @@
       "Compose several updates together linearly."
       {:tags [:base]}
       [xs]
-      (sf_ (?reduce upd _ xs)))
+      (sf_ (?reduce update-score _ xs)))
 
     (defn* par
       "Apply several update on a score merging the results."
       {:tags [:base :parallel]}
       [xs]
-      (sf_ (ms/mk (map #(upd _ %) xs))))
+      (sf_ (ms/mk (map #(update-score _ %) xs))))
 
     (defn* par>
       "Accumulative 'par."
@@ -837,7 +837,7 @@
       [xs]
       (sf_ (loop [segments [_] xs xs]
              (if-let [[x & xs] xs]
-               (recur (conj segments (upd (peek segments) x)) xs)
+               (recur (conj segments (update-score (peek segments) x)) xs)
                (reduce into #{} (next segments))))))
 
     (defn* $
@@ -853,7 +853,7 @@
       [xs]
       (sfn score
            (concat-scores
-            (map (f_ (upd score _)) xs))))
+            (map (f_ (update-score score _)) xs))))
 
     (defn* cat>
       "Accumulative 'cat."
@@ -861,7 +861,7 @@
       [xs]
       (sf_ (loop [segments [_] xs xs]
              (if-let [[x & xs] xs]
-               (recur (conj segments (upd (peek segments) x)) xs)
+               (recur (conj segments (update-score (peek segments) x)) xs)
                (concat-scores (next segments))))))
 
     (defn* fit
@@ -869,7 +869,7 @@
        In other words, turn any transformation into another one that do not change the duration of its input score."
       {:tags [:base]}
       [xs]
-      (sf_ (fit-score (upd _ (lin* xs))
+      (sf_ (fit-score (update-score _ (lin* xs))
                       {:duration (score-duration _)})))
 
     (defn* tup
@@ -912,7 +912,7 @@
       ([n x]
        (rep n x false))
       ([n x skip-first]
-       (sf_ (->> (if skip-first (upd _ x) _)
+       (sf_ (->> (if skip-first (update-score _ x) _)
                  (iterate (->upd x))
                  (take n)
                  (concat-scores)))))
@@ -961,10 +961,10 @@
       {:tags [:base :iterative]}
       ([test f] (repeat-while test f same))
       ([test f after]
-       (sf_ (let [nxt (upd _ f)]
-              (if (not-empty (upd nxt test))
+       (sf_ (let [nxt (update-score _ f)]
+              (if (not-empty (update-score nxt test))
                 (recur nxt)
-                (upd nxt after))))))
+                (update-score nxt after))))))
 
     (defn* fst
       "Tries given transformations in order until the first success (non empty score)."
@@ -972,7 +972,7 @@
       [xs]
       (sf_ (loop [xs xs]
              (if-let [[x & xs] (seq xs)]
-               (or (not-empty (upd _ x))
+               (or (not-empty (update-score _ x))
                    (recur xs))))))
 
     (defn* fst-that
@@ -1036,7 +1036,7 @@
                   (vector? x) x)]
         (sf_ (let [[min-in max-in] (mapv dim (score-bounds _ dim))
                    f #(u/scale-range % min-in max-in min-out max-out)]
-               (upd _ ($ (f_ (update _ dim f))))))))
+               (update-score _ ($ (f_ (update _ dim f))))))))
 
     (do :selection
 
@@ -1095,7 +1095,7 @@
               start-from-last
               (sf_ (-> (group-by :position _)
                        sort last val set
-                       (upd {:position 0}))))
+                       (update-score {:position 0}))))
 
             (defn trim
               "Build and update that removes everything before 'beg and after 'end from the received score
@@ -1157,7 +1157,7 @@
            Returns a score update that wraps the expression so that it is evaluated each time the update is called."
           {:tags [:non-deterministic]}
           [expr]
-          `(vary-meta (sfn score# (upd score# ~expr))
+          `(vary-meta (sfn score# (update-score score# ~expr))
                       assoc :non-deterministic true))
 
         (defn* one-of
@@ -1253,7 +1253,7 @@
                            (let [s (set group)
                                  o (score-origin s)]
                              (-> (shift-score s (- o))
-                                 (upd g)
+                                 (update-score g)
                                  (shift-score o)))))
                     (reduce into #{}))))
 
@@ -1262,12 +1262,12 @@
            the zipping is done by :position with the given function 'f that takes two scores and produce one.
            All the scores returned by 'f are merged into a final one which is returned."
           [f x]
-          (sf_ (let [updated (upd _ x)]
+          (sf_ (let [updated (update-score _ x)]
                  (->> (map (fn [[position xs]]
                              (assert (apply = (map :duration xs))
                                      "each position group should have events of the same duration.")
                              (let [duration (:duration (first xs))
-                                   chunk (upd updated (between position (+ position duration)))]
+                                   chunk (update-score updated (between position (+ position duration)))]
                                (f (set xs) chunk)))
                            (group-by :position _))
                       (reduce into #{})))))
@@ -1277,7 +1277,7 @@
            tries it on the score until the result of it passes 'test"
           [test u & {:keys [max] :or {max 100}}]
           (sf_ (loop [n 0]
-                 (or (upd _ (lin u test))
+                 (or (update-score _ (lin u test))
                      (if (>= max n)
                        (recur (inc n)))))))))
 

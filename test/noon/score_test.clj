@@ -267,7 +267,7 @@
 
     (is (= (s/score-duration S0)
            1))
-    (is (= (s/score-duration (s/upd S0 s/dur2))
+    (is (= (s/score-duration (s/update-score S0 s/dur2))
            2))
     (is (= (s/score-duration (s/mk (s/cat s/s0 s/s2 s/s4)))
            3))
@@ -287,7 +287,7 @@
 
     (is (= (s/score-origin S0)
            0))
-    (is (= (s/score-origin (s/upd S0 {:position (s/add 10)}))
+    (is (= (s/score-origin (s/update-score S0 {:position (s/add 10)}))
            10))
 
     (is (= (s/pitch-value-bounds S0)
@@ -310,7 +310,7 @@
                            1/3))
            10/3))
     (is (= (s/shift-score S0 10)
-           (s/upd S0 {:position (s/add 10)})))
+           (s/update-score S0 {:position (s/add 10)})))
     (is (let [s0 (s/mk (s/cat s/s0 s/s2 s/s4))
               s1 (s/fit-score s0 E0)
               s2 (s/normalise-score s0)]
@@ -357,18 +357,18 @@
   (testing "updates"
     (is (u/t? :score-update (s/sf_ _)))
     (is (s/score-update? (s/sfn [s] s)))
-    (is (= (s/upd S0 (s/sf_ _))
+    (is (= (s/update-score S0 (s/sf_ _))
            S0))
-    (is (= (s/upd S0 s/dur2)
+    (is (= (s/update-score S0 s/dur2)
            (s/mk s/dur2)))
-    (is (= (s/upd S0 [s/vel10 s/dur2])
+    (is (= (s/update-score S0 [s/vel10 s/dur2])
            (s/mk s/dur2 s/vel10)))
-    (is (= (s/upd S0 (g/one-of s/vel10))
+    (is (= (s/update-score S0 (g/one-of s/vel10))
            (s/mk s/vel10)))
-    (is (= (s/upd S0 #{s/vel5 s/d1})
+    (is (= (s/update-score S0 #{s/vel5 s/d1})
            (s/mk (s/par s/vel5 s/d1))
-           (into (s/upd S0 s/vel5)
-                 (s/upd S0 s/d1))))
+           (into (s/update-score S0 s/vel5)
+                 (s/update-score S0 s/d1))))
 
     (is (= (s/mk s/same)
            (s/mk s/_)
@@ -383,7 +383,7 @@
     (is (= (s/mk (s/lin s/chan2 s/vel2))
            (s/mk (s/lin (s/lin s/chan2) (s/lin s/vel2)))
            (s/mk [s/chan2 s/vel2])
-           (s/upd (s/upd S0 s/chan2)
+           (s/update-score (s/update-score S0 s/chan2)
                   s/vel2)))
 
     (is (= S0 (s/mk (s/lin))))

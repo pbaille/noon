@@ -137,14 +137,14 @@ Two utility functions:
              n (quot sdur resolution)]
          (assert (zero? (rem sdur resolution))
                  "fill: resolution should be a multiple of score length ")
-         (upd _ (tupn n f)))))
+         (update-score _ (tupn n f)))))
 
 (defn fill> [resolution f]
   (sf_ (let [sdur (score-duration _)
              n (quot sdur resolution)]
          (assert (zero? (rem sdur resolution))
                  "fill: resolution should be a multiple of score length ")
-         (upd _ (tupn> n f)))))
+         (update-score _ (tupn> n f)))))
 #+end_src
 
 first try:

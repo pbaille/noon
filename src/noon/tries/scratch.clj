@@ -62,7 +62,7 @@
                           n (quot sdur dur)]
                       (assert (zero? (rem sdur dur))
                               "fill: division length should be a multiple of score length ")
-                      (upd _ (tupn n f)))))
+                      (update-score _ (tupn n f)))))
 
              (defn fill> [dur f]
                (sf_ (let [sdur (score-duration _)
@@ -70,7 +70,7 @@
                       (assert (zero? (rem sdur dur))
                               "fill: division length should be a multiple of score length ")
                       (println n)
-                      (upd _ (tupn> n f))))))
+                      (update-score _ (tupn> n f))))))
 
          (do :roman-degrees-and-more
 
@@ -98,7 +98,7 @@
                            f]))
 
                  (defn line [len f]
-                   (sf_ (let [nxt (upd _ (append [(sf_ #{(assoc (last (sort-by :position _))
+                   (sf_ (let [nxt (update-score _ (append [(sf_ #{(assoc (last (sort-by :position _))
                                                                 :position 0)})
                                                   f]))]
                           (if (and (not-empty nxt) (<= (count nxt) len))
@@ -199,7 +199,7 @@
            (sf_ (let [sorted (sort-by :position _)]
                   (if (>= (count sorted) n)
                     (let [taken (take-last n sorted)]
-                      (set (upd (set taken) {:position (sub (:position (first taken)))})))))))
+                      (set (update-score (set taken) {:position (sub (:position (first taken)))})))))))
 
          (stop)
          (play
@@ -248,14 +248,14 @@
 
          (defn neibourhood [n]
            (let [s (hash-set n)]
-             {:up {:c (upd s c1)
-                   :d (upd s d1)
-                   :s (upd s s1)
-                   :t (upd s t1)}
-              :down {:c (upd s c1-)
-                     :d (upd s d1-)
-                     :s (upd s s1-)
-                     :t (upd s t1-)}}))
+             {:up {:c (update-score s c1)
+                   :d (update-score s d1)
+                   :s (update-score s s1)
+                   :t (update-score s t1)}
+              :down {:c (update-score s c1-)
+                     :d (update-score s d1-)
+                     :s (update-score s s1-)
+                     :t (update-score s t1-)}}))
 
          (play dorian
                (rep 4 s1)
@@ -343,7 +343,7 @@
                   d-suroundings (nh/diatonic-suroundings (:pitch target))
                   c-space (get d-suroundings (case side :up 1 :down 0))
                   step (case side :up 1 :down -1)]
-              (upd _
+              (update-score _
                    (if (= c-space 2)
                      (tup (d-step step) (c-step step) _)
                      (tup (d-step step) (case side :up c1- :down d1) _))))))
@@ -383,7 +383,7 @@
                                (partition 2 1 nil (sort-by :position _)))))))
 
          (defn interleaved [& xs]
-           (sf_ (let [scores (map (partial upd _) xs)
+           (sf_ (let [scores (map (partial update-score _) xs)
                       counts (map count scores)
                       durations (map score-duration scores)]
                   (assert (apply = counts)
@@ -451,7 +451,7 @@
                                (update :score conj (assoc n :position (:at state)))
                                (update :at + (:duration n))))
                          {:at 0 :score #{}}
-                         (apply rand-interleaving (map (fn [u] (sort-by :position (upd _ u))) xs))))))
+                         (apply rand-interleaving (map (fn [u] (sort-by :position (update-score _ u))) xs))))))
 
          (defn n-firsts [n]
            (sf_ (->> (group-by :position _)
