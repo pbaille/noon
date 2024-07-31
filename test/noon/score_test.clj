@@ -380,13 +380,13 @@
     (is (= (s/mk s/void)
            #{}))
 
-    (is (= (s/mk (s/lin s/chan2 s/vel2))
-           (s/mk (s/lin (s/lin s/chan2) (s/lin s/vel2)))
+    (is (= (s/mk (s/chain s/chan2 s/vel2))
+           (s/mk (s/chain (s/chain s/chan2) (s/chain s/vel2)))
            (s/mk [s/chan2 s/vel2])
            (s/update-score (s/update-score S0 s/chan2)
                   s/vel2)))
 
-    (is (= S0 (s/mk (s/lin))))
+    (is (= S0 (s/mk (s/chain))))
 
     (is (= (s/mk (s/par s/chan2 s/chan3))
            (s/mk (s/par s/chan2 s/chan3 s/chan3))

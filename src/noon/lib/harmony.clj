@@ -318,7 +318,7 @@
    All harmonies are applied accordingly to their position and duration."
   {:tags [:harmonic :zipping :grid]}
   [xs]
-  (harmonic-zip (n/k (n/lin* xs)) n/same))
+  (harmonic-zip (n/k (n/chain* xs)) n/same))
 
 (u/defn* grid-zipped
   "zip the current score (which should represent an harmonic grid)
@@ -326,7 +326,7 @@
   {:tags [:harmonic :zipping :grid]}
   [xs]
   (n/sf_ (->> (n/k (dissoc (first _) :position :duration :pitch)
-                   (n/lin* xs))
+                   (n/chain* xs))
               (harmonic-zip n/same)
               (n/update-score _))))
 

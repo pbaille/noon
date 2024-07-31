@@ -147,7 +147,7 @@
                  (pr/rand-nth (euclidean-tups resolution size))
                  (sum->tup (rand-sum resolution size durations)))]
          (if shifted
-           (n/lin t (rand-shift resolution))
+           (n/chain t (rand-shift resolution))
            t))))
 
     (do :bintup

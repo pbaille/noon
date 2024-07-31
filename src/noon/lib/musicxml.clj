@@ -44,7 +44,7 @@
       (if (empty? remaining)
         bars
         (recur (conj bars (n/update-score remaining (n/trim 0 len)))
-               (n/update-score remaining (n/lin (n/trim len duration) (n/start-from len))))))))
+               (n/update-score remaining (n/chain (n/trim len duration) (n/start-from len))))))))
 
 (defn note-type [_duration [_num den :as _time]]
   (assert (= 4 den)

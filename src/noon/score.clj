@@ -751,7 +751,7 @@
 
             "Casting various clojure's values to score-updates or event-updates."
 
-            (declare lin* par*)
+            (declare chain* par*)
 
             (defn ->upd
               "Turn 'x into a score-function."
@@ -760,7 +760,7 @@
                     (g/gen? x) (sf_ ((->upd (g/realise x)) _))
                     (event-update? x) (sf_ (ms/$ _ x))
                     (map? x) (->upd (map->efn x))
-                    (vector? x) (lin* x)
+                    (vector? x) (chain* x)
                     (set? x) (par* x)
                     :else (u/throw* "->upd/bad-argument: " x)))
 
@@ -790,7 +790,7 @@
     (defn mk*
       "Feed score0 into given updates."
       [xs]
-      (update-score score0 (lin* xs)))
+      (update-score score0 (chain* xs)))
 
     (defn mk [& xs]
       (mk* xs)))
@@ -819,7 +819,7 @@
       void
       (sf_ #{}))
 
-    (defn* lin
+    (defn* chain
       "Compose several updates together linearly."
       {:tags [:base]}
       [xs]
@@ -869,7 +869,7 @@
        In other words, turn any transformation into another one that do not change the duration of its input score."
       {:tags [:base]}
       [xs]
-      (sf_ (fit-score (update-score _ (lin* xs))
+      (sf_ (fit-score (update-score _ (chain* xs))
                       {:duration (score-duration _)})))
 
     (defn* tup
@@ -892,7 +892,7 @@
       "Accumulative 'append."
       {:tags [:linear :accumulative]}
       [xs]
-      (lin* (map append xs)))
+      (chain* (map append xs)))
 
     (defn* superpose
       "Like 'par but keep the current score."
@@ -904,7 +904,7 @@
       "Accumulative 'superpose."
       {:tags [:parallel :accumulative]}
       [xs]
-      (lin* (map superpose xs)))
+      (chain* (map superpose xs)))
 
     (defn rep
       "Iterates the given update n times over the input score and cat the results."
@@ -979,7 +979,7 @@
       "Tries given transformations in order until one passes the given test."
       {:tags [:base :selective]}
       [test fs]
-      (fst* (map (f_ (lin _ test))
+      (fst* (map (f_ (chain _ test))
                  fs)))
 
     (defn shrink
@@ -1004,7 +1004,7 @@
        on the score based on the index of the branch
        before applying corresponding update."
       [f xs]
-      (par* (map-indexed (fn [i x] (lin (f i) x))
+      (par* (map-indexed (fn [i x] (chain (f i) x))
                          xs)))
 
     (defn* chans
@@ -1082,13 +1082,13 @@
               "Build an update that keeps only events that are positioned between x and y positions."
               {:tags [:temporal :selective]}
               [x y]
-              (lin (from x) (until y)))
+              (chain (from x) (until y)))
 
             (defn start-from
               "Build an update that shifts the score to the given position, removing all anterior events."
               {:tags [:temporal :selective]}
               [x]
-              (lin (from x) {:position (sub x)}))
+              (chain (from x) {:position (sub x)}))
 
             (def ^{:doc "Shifting the score to last position erasing all anterior events."
                    :tags [:temporal :selective]}
@@ -1232,7 +1232,7 @@
         (defn* voices>
           "Like 'par> but keep track of voice number."
           [xs]
-          (par>* (map (fn [i x] (lin (voice+ i) x))
+          (par>* (map (fn [i x] (chain (voice+ i) x))
                       (range)
                       xs)))
 
@@ -1277,7 +1277,7 @@
            tries it on the score until the result of it passes 'test"
           [test u & {:keys [max] :or {max 100}}]
           (sf_ (loop [n 0]
-                 (or (update-score _ (lin u test))
+                 (or (update-score _ (chain u test))
                      (if (>= max n)
                        (recur (inc n)))))))))
 
