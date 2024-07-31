@@ -10,15 +10,15 @@
                   dur4
                   dorian
                   (chans [(patch :vibraphone) vel4 (par> d3 d3 d3)]
-                         [(patch :taiko-drum) (r/gen-tup 9 3 :durations [1 2 3]) ($ (one-of vel4 vel3) (maybe d3 d3-))]
+                         [(patch :taiko-drum) (r/gen-tup 9 3 :durations [1 2 3]) (each (one-of vel4 vel3) (maybe d3 d3-))]
                          [(patch :acoustic-bass) o1- (r/gen-bintup 9 5)
                           (parts {:bintup 0} _
-                                 {:bintup 1} ($ (one-of vel0 d3-)))]
+                                 {:bintup 1} (each (one-of vel0 d3-)))]
                          [(patch :ocarina)
                           (r/gen-bintup 27 11  :shifted :euclidean)
-                          ($ (one-of vel0 vel3 vel5 vel7))
-                          (parts {:bintup 0} ($ (one-of d2 d4 d6))
-                                 {:bintup 1} ($ (one-of d3 d5 d7)))])
+                          (each (one-of vel0 vel3 vel5 vel7))
+                          (parts {:bintup 0} (each (one-of d2 d4 d6))
+                                 {:bintup 1} (each (one-of d3 d5 d7)))])
                   (append [rev lydian (transpose c4)] [lydian+2 (transpose c4-)] melodic-minor)
                   (append lydian)
                   (dup 2)))
@@ -68,7 +68,7 @@
                 ;; rythmic permutations
                    [(patch :woodblock)
                     (r/sum->tup [2 1 1 1/2 1/2])
-                    ($ (maybe o1 o1-))
+                    (each (maybe o1 o1-))
                     (nlin 4 (r/permutation 5))]
                 ;; chords
                    [(patch :electric-piano-1)

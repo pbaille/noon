@@ -16,7 +16,7 @@
   [rev]
   [{:patch :ocarina}]
 
-  ($ (tup s1 s2-))
+  (each (tup s1 s2-))
   (mk (patch :vibraphone)
       (nlin 4 (shuftup d0 d3- (chans d3 [(patch :marimba) d6]) d4))
       (rep 6 (! (one-of d3 d3-

@@ -785,7 +785,7 @@ By default we are on track 0. So the second argument of tracks goes on track 1. 
 
 *** Mapping
 
-All the transformations we've seen so far are acting on a score to produce another score, but sometimes what we need is to apply a transformation on each event of a score, for this we are using the =$= function.
+All the transformations we've seen so far are acting on a score to produce another score, but sometimes what we need is to apply a transformation on each event of a score, for this we are using the =each= function.
 
 As an illustration, here those two fragments:
 
@@ -796,14 +796,14 @@ As an illustration, here those two fragments:
 
 #+begin_src clojure :proll
 (play (lin c0 c1 c2 c3)
-      ($ (tup c0 o1))) ; each event of the score is transformed using this `tup` transformation.
+      (each (tup c0 o1))) ; each event of the score is transformed using this `tup` transformation.
 #+end_src
 
 One important thing to be aware of is that events will be mapped in place, so if the given transformation expand the score, some superposition will occur.
 
 #+begin_src clojure :proll
 (play (lin c0 o1)
-      ($ [dur:4 (rep 8 c1-)]))
+      (each [dur:4 (rep 8 c1-)]))
 #+end_src
 
 Some others functions exists to transform only subparts of the score, if interested you can look at =$by= and/or =parts=.
@@ -1004,13 +1004,13 @@ As other steps corresponding vars are defined:
 #+end_src
 
 #+begin_src clojure :proll
-(play (rep 4 s1-) ($ (tup> s2 s2 s2 s1- s2- s1-)))
+(play (rep 4 s1-) (each (tup> s2 s2 s2 s1- s2- s1-)))
 #+end_src
 
 ******** Passing tones
 
 #+begin_src clojure :proll
-(play (scale :eolian) dur:2 o2 (rep 12 s1-) ($ (tup s0 c1- d1 s0)))
+(play (scale :eolian) dur:2 o2 (rep 12 s1-) (each (tup s0 c1- d1 s0)))
 #+end_src
 
 ****** Tonic
@@ -1048,7 +1048,7 @@ As other steps corresponding vars are defined:
 #+end_src
 
 #+begin_src clojure :proll
-(play (rep 3 t1) ($ (tup> s0 s1 s1 d1-)))
+(play (rep 3 t1) (each (tup> s0 s1 s1 d1-)))
 #+end_src
 
 **** Implementation
@@ -1174,7 +1174,7 @@ We can use the =origin= function to change this
 ****** Examples
 
 #+begin_src clojure :proll
-(play (lin (origin :C0) (origin :E0) (origin :G#0)) ($ (rup 6 s1)))
+(play (lin (origin :C0) (origin :E0) (origin :G#0)) (each (rup 6 s1)))
 #+end_src
 
 ***** root
@@ -1196,7 +1196,7 @@ For instance if the origin is on =C0=, =(root :B)= will put the origin on =B-1= 
 #+begin_src clojure :proll
 (play
  (lin* (map root [:C :E :G#]))
- ($ (chans (par d0 d3 d6 d9) [(rup 4 d3) (rup 3 d2)]))
+ (each (chans (par d0 d3 d6 d9) [(rup 4 d3) (rup 3 d2)]))
  (rep 4 s1))
 #+end_src
 
@@ -1247,7 +1247,7 @@ Move to the nth degree of the current scale (mode), negative indexes are allowed
 Roman numeral vars are also available to change degree.
 
 #+begin_src clojure :proll
-(play (patch :trumpet) (lin I IV V I) ($ (tup s0 s1 s2)))
+(play (patch :trumpet) (lin I IV V I) (each (tup s0 s1 s2)))
 #+end_src
 
 ** Composing
@@ -1356,7 +1356,7 @@ Find or pick an element within a sequence 's.
 Not only pure melodies can be rotated, if we feed chords into the =rotation= transformation it behaves as intended.
 
 #+begin_src clojure :proll
-(play (fit (rep 8 d1)) ($ (par d0 d3 d6)) (m/rotation 1/4))
+(play (fit (rep 8 d1)) (each (par d0 d3 d6)) (m/rotation 1/4))
 #+end_src
 
 **** Permutations
@@ -1442,7 +1442,7 @@ As we've seen, our melodies are built on different harmonic layers (chromatic, d
 As an example for this, please consider this kind of melody.
 
 #+begin_src clojure :proll
-(play dur2 (tup s0 s1 s2 s3) ($ (tup d1 d1- d0)))
+(play dur2 (tup s0 s1 s2 s3) (each (tup d1 d1- d0)))
 #+end_src
 
 We start with an ascension on the structural layer, then adding some diatonic ornementation on each structural degree. Those diatonic notes have meaning relatively to the structural degrees they are based upon. If we do a raw permutation on this melodic line we are losing those relations. With the :layer option we can permute only the structural layer keeping those diatonic ornementations untouched.
@@ -1451,7 +1451,7 @@ We start with an ascension on the structural layer, then adding some diatonic or
 (play
  dur2
  (tup s0 s1 s2 s3)
- ($ (tup d1 d1- d0))
+ (each (tup d1 d1- d0))
  (m/permutation 1 {:layer :s}))
 #+end_src
 
@@ -1474,7 +1474,7 @@ In the following example you can get a sense of the effect of deriving a melody 
   [(patch :ocarina)
    vel5
    (shuftup d1 d2 d3 d4 d5)
-   ($ (maybe (par d0 d3)))
+   (each (maybe (par d0 d3)))
    (rup
     16
     (probs
@@ -1747,7 +1747,7 @@ Let's try 12/8
  dur2
  (chans
   [(patch :tinkle-bell) (tup o1- o1)]
-  [(patch :woodblock) (r/gen-tup 12 6) ($ (maybe o1 o1-))])
+  [(patch :woodblock) (r/gen-tup 12 6) (each (maybe o1 o1-))])
  (dup 4))
 #+end_src
 
@@ -1758,7 +1758,7 @@ Using the =:shifted= keyword you can give your tup a chance to not start on beat
  dur2
  (chans
   [(patch :tinkle-bell) (tup o1- o1)]
-  [(patch :woodblock) (r/gen-tup 16 7 :shifted) ($ (maybe o1 o1-))])
+  [(patch :woodblock) (r/gen-tup 16 7 :shifted) (each (maybe o1 o1-))])
  (dup 4))
 #+end_src
 
@@ -1838,13 +1838,13 @@ Fancy variation:
  [rtup
   (!
    [(r/gen-tup 16 5 :euclidean :shifted)
-    ($ [(maybe o1 o2) (one-of vel4 vel6 vel8)])])]
+    (each [(maybe o1 o2) (one-of vel4 vel6 vel8)])])]
  (play
   mixolydian
   (patch :vibraphone)
   (lin same (transpose c4-))
   (h/align-contexts)
-  ($
+  (each
    (chans
     [(patch :tinkle-bell) o1-]
     [(patch :acoustic-bass) t1- (tup same s1-)]
@@ -1981,7 +1981,7 @@ fun:
   [(patch :taiko-drum) vel5 (dup 4)]
   [(patch :woodblock)
    (r/durtup 2 1 1 1/2 1/2)
-   ($ (maybe o1 o1-))
+   (each (maybe o1 o1-))
    (nlin 4 (r/permutation 5))]
   [(patch :electric-piano-1)
    o1-
@@ -2071,7 +2071,7 @@ Here some common drops:
   (patch :vibraphone)
   tetrad
   (lin closed drop2 drop3 drop23)
-  ($ dur:2)))
+  (each dur:2)))
 #+end_src
 
 ****** drop
@@ -2118,7 +2118,7 @@ Let's start with a very common chord progression.
 (play
  (patch :electric-piano-1)
  (lin I VI IV V)
- ($ (par s0 s1 s2))
+ (each (par s0 s1 s2))
  (dup 2))
 #+end_src
 
@@ -2128,7 +2128,7 @@ It do not sound bad but it can arguably be better.
 (play
  (patch :electric-piano-1)
  (lin I VI II V)
- ($ [(par s0 s1 s2) (h/drop -1)])
+ (each [(par s0 s1 s2) (h/drop -1)])
  h/voice-led
  (dup 2))
 #+end_src
@@ -2141,8 +2141,8 @@ It is a really smooth way to transition between voicings but it would be nice to
 (play
  (lin I VI II V)
  (chans
-  [(patch :acoustic-bass) C-2 ($ t-round)]
-  [(patch :electric-piano-1) ($ (par s0 s1 s2)) h/voice-led])
+  [(patch :acoustic-bass) C-2 (each t-round)]
+  [(patch :electric-piano-1) (each (par s0 s1 s2)) h/voice-led])
  (dup 2))
 #+end_src
 
@@ -2153,9 +2153,9 @@ It works on any voicings.
  (structure :tetrad)
  (lin I VI II V)
  (chans
-  [(patch :acoustic-bass) C-2 ($ [t-round (tup _ s2-)])]
+  [(patch :acoustic-bass) C-2 (each [t-round (tup _ s2-)])]
   [(patch :electric-piano-1)
-   ($ [(par s0 s1 s2 s3) (h/inversion -3) (h/drop 1/2)])
+   (each [(par s0 s1 s2 s3) (h/inversion -3) (h/drop 1/2)])
    h/voice-led])
  (dup 2))
 #+end_src
@@ -2177,7 +2177,7 @@ Let's start with a simple chord progression in minor.
  (patch :clarinet)
  (scale :harmonic-minor)
  (lin I IV VII I)
- ($ (tup s0 s1 s2)))
+ (each (tup s0 s1 s2)))
 #+end_src
 
 the tup is applied on each chord without any inversion.
@@ -2190,7 +2190,7 @@ With =noon.lib.harmony/align-contexts= we can connect contexts together with min
  (scale :harmonic-minor)
  (lin I IV VII I)
  (h/align-contexts :s)
- ($ (tup s0 s1 s2)))
+ (each (tup s0 s1 s2)))
 #+end_src
 
 The word 'context' may seem a bit confusing, what it really stands for is 'harmonic context', the harmonic context can be found under the =:pitch= key of any event.
@@ -2207,12 +2207,12 @@ A more elaborated example
  (chans
   [(patch :choir-aahs)
    vel4
-   ($ [(par s0 s1 s2) (maybe (tup s0 s1-) (tup s0 s1))])]
+   (each [(par s0 s1 s2) (maybe (tup s0 s1-) (tup s0 s1))])]
   [(patch :ocarina)
    vel6
-   ($
+   (each
     [(shuftup s0 s1 s2)
-     ($
+     (each
       (one-of
        (tup s0 (shuflin (one-of c1- s-) s+) s0)
        (tup s0 c1- s0 (one-of s2- s2))))])]

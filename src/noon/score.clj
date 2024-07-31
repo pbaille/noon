@@ -218,8 +218,6 @@
 
         (do :voice
 
-            " incubation "
-
             (defn voice [x]
               (ef_ (update _ :voice
                            (fn [v] (->4bits-natural (m/value-merge v x))))))
@@ -764,7 +762,7 @@
                     :else (u/throw* "->upd/bad-argument: " x)))
 
             (defn ->event-upd
-              "Turn 'x into an event-upd (used in '$)."
+              "Turn 'x into an event-upd (used in 'each)."
               [x]
               (cond (event-update? x) x
 
@@ -839,7 +837,7 @@
                (recur (conj segments (update-score (peek segments) x)) xs)
                (reduce into #{} (next segments))))))
 
-    (defn* $
+    (defn* each
       "Apply an update to each events of a score."
       {:tags [:base :iterative]}
       [xs]
@@ -942,7 +940,7 @@
       [n f] (tup* (repeat n f)))
 
     (defn nlin
-      "Duplicate n times the score resulting from applying 'f on the current score."
+      "Duplicate n times the result of 'f applied to the current score."
       {:tags [:base :linear :multiplicative]}
       [n f] (lin* (repeat n f)))
 
@@ -1019,7 +1017,7 @@
     (defn mirror
       "Mirrors all pitches around 'p."
       {:tags [:harmonic]}
-      [p] ($ {:pitch (h/mirror p)}))
+      [p] (each {:pitch (h/mirror p)}))
 
     (def ^{:doc "Reverse the given score."
            :tags [:temporal]}
@@ -1035,7 +1033,7 @@
                   (vector? x) x)]
         (sf_ (let [[min-in max-in] (mapv dim (score-bounds _ dim))
                    f #(u/scale-range % min-in max-in min-out max-out)]
-               (update-score _ ($ (f_ (update _ dim f))))))))
+               (update-score _ (each (f_ (update _ dim f))))))))
 
     (do :selection
 
@@ -1101,7 +1099,7 @@
                (triming overlapping durations)."
               {:tags [:temporal :selective]}
               [beg end]
-              ($ (efn {:as evt :keys [position duration]}
+              (each (efn {:as evt :keys [position duration]}
                       (let [end-pos (+ position duration)]
                         (cond (or (>= position end)
                                   (<= end-pos beg)) nil

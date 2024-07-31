@@ -72,7 +72,7 @@
       ([offset]
        (n/sf_ (let [duration (n/score-duration _)]
                 (n/update-score _
-                       [(n/$ {:position (fn [p] (mod (+ p offset) duration))})
+                       [(n/each {:position (fn [p] (mod (+ p offset) duration))})
                         (n/trim 0 duration)]))))
       ([k arg]
        (case k

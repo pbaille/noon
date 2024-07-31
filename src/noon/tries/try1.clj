@@ -25,8 +25,8 @@
            (play barry-harris
                  (lin d0 d3)
                  (rep 8 (one-of d1- d1))
-                 ($ [(chans [(patch :pad-1-new-age) o1- vel3 (par* chord-tones)]
-                            [(patch :ocarina) vel4 (shuftup* chord-tones) ($ (maybe (tup (one-of d1 d1-) d0)))]
+                 (each [(chans [(patch :pad-1-new-age) o1- vel3 (par* chord-tones)]
+                            [(patch :ocarina) vel4 (shuftup* chord-tones) (each (maybe (tup (one-of d1 d1-) d0)))]
                             [(patch :vibraphone) vel5 o1 (ntup 6 [(one-of* chord-tones) (maybe o1) (maybe (tup d1- d0))])])
                      (maybe rev)])))
 
@@ -35,7 +35,7 @@
          (play barry-harris2
                (lin I VI VII IV)
                (h/align-contexts :d)
-               ($ (chans [(patch :brass) (par s0 s1 s2 s3)]
+               (each (chans [(patch :brass) (par s0 s1 s2 s3)]
                          [(patch :acoustic-bass) o1- t-round]
                          [(patch :ethnic) o1 (shuftup s0 s1 s2 s3 s4 s5 s6)]))
                (rep 2 s1)
@@ -44,7 +44,7 @@
          (play barry-harris2
                (lin IV I)
                (h/align-contexts :d)
-               ($ (par s0 s1 s2 s3))
+               (each (par s0 s1 s2 s3))
                (rep 4 (transpose c3))
                h/voice-led))
 
@@ -55,10 +55,10 @@
                (lin {:section :a}
                     [{:section :b} (transpose c6)])
                (h/align-contexts :d)
-               (parts {:section :a} ($ (chans [(patch :vibraphone) (shuftup s0 s1 s2 s3 s4 s5)]
+               (parts {:section :a} (each (chans [(patch :vibraphone) (shuftup s0 s1 s2 s3 s4 s5)]
                                               [(patch :flute) o1 (shuftup s0 s1 s2 s3 s4 s5)]
                                               [(patch :acoustic-bass) o1- t-round]))
-                      {:section :b} ($ (chans [(patch :choir-aahs) vel4 (par s0 s1 s2)]
+                      {:section :b} (each (chans [(patch :choir-aahs) vel4 (par s0 s1 s2)]
                                               [(patch :ocarina) vel4 s2- (shuftup s0 s2 s4)]
                                               [(patch :music-box) vel6 o1 (shuftup s0 s1 s2 s3 s4 s5 s6 s7 s8)]
                                               [(patch :acoustic-bass) o1- t-round])))
@@ -88,16 +88,16 @@
                      above-step (one-of d1 d3 d4)
                      rand-line (rup 4 (one-of below-step above-step))
                      rand-vel (fn [min max] {:velocity (fn [_] (+ min (rand-int (- max min))))})]
-                 ($ (chans [(patch :choir-aahs) vel4 (par s0 s1 s2 s3)
+                 (each (chans [(patch :choir-aahs) vel4 (par s0 s1 s2 s3)
                             (h/drop 1)]
                            [(patch :acoustic-bass) t-round o1-]
                            [(shuftup s0 s1 s2 s3)
-                            ($ (one-of rand-passing rand-line))
-                            (chans [(patch :vibraphone) ($ (rand-vel 40 70)) ($ (maybe vel0))]
+                            (each (one-of rand-passing rand-line))
+                            (chans [(patch :vibraphone) (each (rand-vel 40 70)) (each (maybe vel0))]
                                    [(patch :flute)
-                                    ($ (rand-vel 60 80))
+                                    (each (rand-vel 60 80))
                                     o1
-                                    ($ (maybe vel0 [(chan inc) (patch :glockenspiel) vel4]))])])))))
+                                    (each (maybe vel0 [(chan inc) (patch :glockenspiel) vel4]))])])))))
 
 (comment :symetric-modes
          (def symetric-modes {:half-whole (scale [0 1 3 4 6 7 9 10])
@@ -116,8 +116,8 @@
                       :two (shuftup d1 d2 d3 d4 d5 d6 d7)})
 
                (patch :electric-piano-1)
-               (rep 32 (one-of ($ d3)
-                               ($ d3-)
+               (rep 32 (one-of (each d3)
+                               (each d3-)
                                (m/rotation 1/2)
                                (m/permutation :rand {:grade 2})
                                (m/contour :similar {:delta 0 :layer :d}))))
@@ -140,8 +140,8 @@
          (play (symetric-modes :half-whole)
                (rand-structure 3)
                (rep 3 rand-degree)
-               ($ (chans [vel4 h/simple-chord]
-                         [(patch :music-box) o1 (rand-tup 7) ($ (one-of vel0 vel4 vel6 vel7))]))
+               (each (chans [vel4 h/simple-chord]
+                         [(patch :music-box) o1 (rand-tup 7) (each (one-of vel0 vel4 vel6 vel7))]))
                (append [rev s2])
                (append (transpose c5))
                (append (between 0 1/3))))
@@ -152,7 +152,7 @@
                (scale :lydian)
                (patch :music-box)
                (par s0 s2 s4)
-               (rep 3 ($ [{:mark (rand)} s1 {:velocity (div 1.1) :duration (mul 1.3)} (shuftup s2- s0 s2)])
+               (rep 3 (each [{:mark (rand)} s1 {:velocity (div 1.1) :duration (mul 1.3)} (shuftup s2- s0 s2)])
                     :skip-first)
                (lin I [rev III] [o1- V] [rev o1- VII])
                (append [rev (transpose c3)])))
@@ -183,7 +183,7 @@
                                   (map m-line (shuffle (rand-nth (u/sums 12 4 [2 3 4 5]))))))]
            (play lydianb7
                  (lin* base)
-                 ($ (chans [(patch :piccolo) vel6 o1]
+                 (each (chans [(patch :piccolo) vel6 o1]
                            [(patch :flute) vel3 o1 d5-]
                            [(patch :accordion) vel4 d0]
                            [(patch :choir-aahs) s-floor humanize]
@@ -201,8 +201,8 @@
                (patch :violin)
                (lin I IV V I)
                (h/align-contexts :s)
-               ($ (ntup 2 (tup s0 s2 s4 s4 s2 s0)))
-               ($ (! (vel (mul (+ 0.9 (* (rand) 0.2))))))
+               (each (ntup 2 (tup s0 s2 s4 s4 s2 s0)))
+               (each (! (vel (mul (+ 0.9 (* (rand) 0.2))))))
                (append s1-)))
 
 (comment :elements
@@ -214,7 +214,7 @@
            (play dur2
                  (h :a)
                  (h/align-contexts :d)
-                 ($ (chans [(patch :taiko-drum) o1-]
+                 (each (chans [(patch :taiko-drum) o1-]
                            [(patch :woodblock) vel3 C2 (r :a) (maybe (m/rotation :rand))]
                            [(patch :acoustic-bas) o1- t-round]
                            [(patch :vibraphone) vel3 closed-chord]
@@ -293,7 +293,7 @@
          (stop)
          (play dur3
                (nlin> 48 (one-of d1 d1-))
-               ($ (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
+               (each (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
                          [(patch :ocarina) (shuftup s0 s2 s4 s6) (shuftup d0 d3 d6) (tup _ rev)]
                          [(patch :acoustic-bass) t2-]))
                (h/grid dur3 tetrad
@@ -306,7 +306,7 @@
                        (h/align-contexts :d :static)))
 
          (play (ntup> 24 (one-of d1 d1-))
-               ($ (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
+               (each (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
                          [(patch :ocarina)
                           (one-of (mixtup s0 s2 s4 s6)
                                   (mixtup s0 s2 s4 s6))
@@ -320,7 +320,7 @@
                             [IIb dorian]
                             [V mixolydian]
                             [Vb melodic-minor])
-                       ($ (h/modal-structure 4))
+                       (each (h/modal-structure 4))
                        (rup 4 (transpose c2-))
                        (dupt 2)
                        (h/align-contexts :d :static))
@@ -337,14 +337,14 @@
                        (h/align-contexts :d :static)
                        (adjust 1))
                (parts (patch :acoustic-bass)
-                      ($ (tup (maybe o1) (one-of d4 d3-))))
+                      (each (tup (maybe o1) (one-of d4 d3-))))
                (adjust 32))
 
          (play (chans [(patch :aahs)
                        vel6
                        (rup 24 (any-that (within-pitch-bounds? :G-1 :G1)
                                          s2 s2- s3 s3-))
-                       ($ (par s0 s1 s2 s3))]
+                       (each (par s0 s1 s2 s3))]
                       [(patch :acoustic-bass) t2-])
                (h/grid tetrad
                        (lin [I lydian (structure [2 3 5 6])]
@@ -356,7 +356,7 @@
                        (h/align-contexts :d :static)
                        (adjust 1))
                (parts (patch :acoustic-bass)
-                      ($ (tup (maybe o1) (one-of d4 d3-))))
+                      (each (tup (maybe o1) (one-of d4 d3-))))
                (adjust 32)))
 
 (comment :zip-rythmn
@@ -374,7 +374,7 @@
                                   (sort-by :position _)))))]
                 [(patch :woodblock) (r/gen-tup 12 5 :euclidean) (dup 4)]
                 [(patch :tinkle-bell) (dup 4)]
-                [(patch :metallic) (shuflin s0 s1 s2 s3) ($ (par s0 s1 s2))]
+                [(patch :metallic) (shuflin s0 s1 s2 s3) (each (par s0 s1 s2))]
                 [(patch :acoustic-bass) t2- (dup 4)])
                (adjust 8)
                (append [(transpose c3-) s1 rev] _)))
@@ -584,7 +584,7 @@
                                          (let [])))]
                       (play (lin* (shuffle available-triads))
                             (h/align-contexts :s)
-                            ($ (tup s0 s1 s2))))]
+                            (each (tup s0 s1 s2))))]
 
          "We will no longer contrained available triads to ones that contains one note of the main triad."
          "We will only pick a random note of the current triad, move it 1 semitone up or down and pick another that contain this note."
@@ -634,18 +634,18 @@
                ($lin (lin I IV I V))
                (h/align-contexts :s)
                (lin _ s1)
-               ($ (chans (tup s2 [s1 (lin _ d1- _)] s0 [s1 (lin _ d1- _)])
+               (each (chans (tup s2 [s1 (lin _ d1- _)] s0 [s1 (lin _ d1- _)])
                          (tup s3- [s2- (lin _ d1 _)] s1- [s2- (lin _ d1 _)])))
                (lin _ [(transpose c3) rev])
                (dup 2))
 
          (play harmonic-minor
-               ($lin (lin I IV I V))
+               (eachlin (lin I IV I V))
                (h/align-contexts :s)
                (lin _ s1)
                (let [pat1 (tup s2 [s1 (lin _ d1- _)] s0 [s1 (lin _ d1- _)])
                      pat2 [pat1 (m/contour :mirror {:layer :s})]]
-                 ($ (chans [o1 pat1]
+                 (each (chans [o1 pat1]
                            [s1- pat2]))))
 
          (play harmonic-minor
@@ -660,7 +660,7 @@
                                   (tup [s1 br] s0 [s1 br] s2))
                      pat2 (one-of (tup s3- [s2- br] s1- [s2- br])
                                   (tup s1- [s2- br] s3- [s2- br]))]
-                 ($ (chans [o1 (patch :ocarina) vel8 pat1]
+                 (each (chans [o1 (patch :ocarina) vel8 pat1]
                            [(patch :vibraphone) pat2])))
                (dup 2)))
 
@@ -676,7 +676,7 @@
                     (tup I [III seventh phrygian3])
                     [IV])
                (h/align-contexts :d)
-               ($ (chans [(patch :acoustic-bass) o1- t-round]
+               (each (chans [(patch :acoustic-bass) o1- t-round]
                          h/simple-chord)))
 
          (play (chans [(patch :electric-piano-1) (tup (shuftup s0 s1 s2 s3) (shuftup s2 s3 s4 s5))]
@@ -703,8 +703,8 @@
                M (transpose c6)]
            (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)])
                  (h/align-contexts :d)
-                 (chans [(patch :aahs) ($ (par s0 s1 s2))]
-                        [(patch :ocarina) o1 ($ (shuftup s2- s1- s0 s1 s2 s3))]
+                 (chans [(patch :aahs) (each (par s0 s1 s2))]
+                        [(patch :ocarina) o1 (each (shuftup s2- s1- s0 s1 s2 s3))]
                         [(patch :acoustic-bass) o1-
                          t-round
                          (maybe s1 s1-)])
@@ -735,9 +735,9 @@
                          (maybe dur2 dur:2)])
                  (h/align-contexts :d)
                  (chans [(patch :aahs)
-                         ($ [add2 (par s0 s1 s2 s3)])
+                         (each [add2 (par s0 s1 s2 s3)])
                          connect-repetitions]
-                        [(patch :ocarina) o1 add2 ($ [(one-of tup1 tup2) (maybe rev)])]
+                        [(patch :ocarina) o1 add2 (each [(one-of tup1 tup2) (maybe rev)])]
                         [(patch :acoustic-bass) o1-
                          t-round
                          (maybe s1 s1-)])
@@ -758,9 +758,9 @@
                  (lin _ M rev)
                  (h/align-contexts :d)
                  (chans [(patch :aahs)
-                         ($ [add2 (par s0 s1 s2 s3)])
+                         (each [add2 (par s0 s1 s2 s3)])
                          connect-repetitions]
-                        [(patch :ocarina) o1 add2 ($ [(one-of tup1 tup2) (maybe rev)])]
+                        [(patch :ocarina) o1 add2 (each [(one-of tup1 tup2) (maybe rev)])]
                         [(patch :acoustic-bass) o1-
                          t-round
                          (maybe s1 s1-)])
@@ -778,10 +778,10 @@
                  (lin _ [rev left])
                  (lin _ [right right])
                  (h/align-contexts :d)
-                 (chans [(patch :aahs) (structure [1 2 5 6]) ($ (par s0 s1 s2 s3))]
+                 (chans [(patch :aahs) (structure [1 2 5 6]) (each (par s0 s1 s2 s3))]
                         (let [tup1 (mixtup s2- s1- s0 s1 s2 s3)
                               tup2 (mixtup s2- s1- s0 s1 s2 s3)]
-                          [(patch :ocarina) o1 add2 ($ [(one-of tup1 tup2) (maybe rev)])])
+                          [(patch :ocarina) o1 add2 (each [(one-of tup1 tup2) (maybe rev)])])
                         [(patch :acoustic-bass) o1-
                          t-round
                          (maybe s1 s1- s2-)])
@@ -796,20 +796,20 @@
            (play ;; grid
             [initial
              (lin> _ up left down)
-             ($ (maybe (degree 2) (degree -2)))
+             (each (maybe (degree 2) (degree -2)))
              (lin _ up)
              (lin _ [rev left])
              (lin _ [right right])
              (h/align-contexts :d)]
                  ;; voices
-            (chans [(patch :aahs) ($ (par s0 s1 s2 s3))]
-                   #_[(patch :aahs) t-round ($ (par d0 d3 d6 d9)) #_h/voice-led]
+            (chans [(patch :aahs) (each (par s0 s1 s2 s3))]
+                   #_[(patch :aahs) t-round (each (par d0 d3 d6 d9)) #_h/voice-led]
                    (let [tup1 [(structure [2 3 4 6]) (mixtup s3- s2- s1- s0 s1 s2 s3 s4)]
                          tup2 (mixtup d3- d2- d1- d0 d1 d2 d3 d4)]
-                     [(patch :ocarina) o1 ($ [(one-of tup1 tup2) (maybe rev)])])
+                     [(patch :ocarina) o1 (each [(one-of tup1 tup2) (maybe rev)])])
                    [(patch :acoustic-bass) o2-
                     t-round
-                    ($ (probs {_ 3
+                    (each (probs {_ 3
                                (one-of s1- s2) 3
                                (tup _ (one-of s1- s2)) 1
                                (tup (one-of s1- s2) _) 1}))])
@@ -829,10 +829,10 @@
                                     (h/modal-structure 4)]))]
            (play dur2
                  (lin* (map (comp transpose c-step) (shuffle (range 12))))
-                 ($ (! (rand-color)))
+                 (each (! (rand-color)))
                  (h/align-contexts :d :static)
-                 (chans [(patch :aahs) ($ (par s0 s2 s3 s5)) #_h/voice-led]
-                        [(patch :vibraphone) o1 ($ (par s0 s2 s3) (shuftup s0 s3) (tup s0 s1 s1-))
+                 (chans [(patch :aahs) (each (par s0 s2 s3 s5)) #_h/voice-led]
+                        [(patch :vibraphone) o1 (each (par s0 s2 s3) (shuftup s0 s3) (tup s0 s1 s1-))
                          ($by :position (probs {vel0 2
                                                 (one-of vel3 vel5 vel7) 8
                                                 [vel3 (ntup> 4 [s1 (vel+ 15)])] 1}))]
@@ -871,7 +871,7 @@
                                       (patch :ocarina)
                                       (mixtup s0 s1- s2- s3- s4- s5-)
                                       (tup _ s2- s1)
-                                      #_($ (probs {_ 4 (tup _ [vel4 (maybe s2- s3-)]) 1}))]))
+                                      #_(each (probs {_ 4 (tup _ [vel4 (maybe s2- s3-)]) 1}))]))
                (lin _ [rev c3])
                (lin _ [rev c3-])
                (options :bpm 30 :xml true :preview true)))
@@ -929,13 +929,13 @@
                 :play true}
                (mk (rup 128 (any-that (within-pitch-bounds? :C1 :C3)
                                       s1 s2 s3 s1- s2- s3-))
-                   (chans ($ (probs {_ 2
+                   (chans (each (probs {_ 2
                                      vel0 1
                                      (shuftup s1- s0 s1 s2) 1}))
-                          ($ s1- (probs {_ 2
+                          (each s1- (probs {_ 2
                                          vel0 1
                                          (shuftup s1- s0 s1) 1}))
-                          ($ [s2- o1- (probs {_ 2
+                          (each [s2- o1- (probs {_ 2
                                               (shuftup s0 s2) 1})]))
                    (h/grid harmonic-minor
                            (tup I IV VII I [IV melodic-minor VII] IV [V harmonic-minor VII] VII)
@@ -1007,7 +1007,7 @@
             (nlin> 3 (transpose c3))
             (h/align-contexts :s)
             (dup 2)
-            ($ (ntup> 6 s1))
+            (each (ntup> 6 s1))
             (connect-with d1))
 
          "With parts and vsl"
@@ -1025,7 +1025,7 @@
                      ;; flute melody
                      [(vsl :flute-1 :staccato)
                       o1 vel4
-                      ($ (shuftup s0 s2 s4))
+                      (each (shuftup s0 s2 s4))
                       (connect-with (one-of d1- d1))]
                      ;; bass
                      [(vsl :solo-double-bass :pizzicato)
@@ -1033,7 +1033,7 @@
                      ;; viola comping
                      [(vsl :chamber-violas :pizzicato)
                       vel5
-                      ($ (one-of (tup s1 (par s2 s3) vel0)
+                      (each (one-of (tup s1 (par s2 s3) vel0)
                                  (tup vel0 s1 (par s2 s3))))])))
 
          (stop)
@@ -1077,12 +1077,12 @@
             (lin I I VII I VII I VII VII)
 
             (mixlin s0 s2)
-            ($ (chans [(patch :acoustic-bass) o2- (maybe t-round)]
+            (each (chans [(patch :acoustic-bass) o2- (maybe t-round)]
                       [(patch :ocarina) s2 (shuftup s0 s2 s4)]))
             (lin _ [rev (transpose c3-)])
             (parts (chan 1) (connect-with (one-of (one-of d1 d1-)
                                                   (shuflin (one-of s1 s1-) (one-of d1 d1-))))
-                   (chan 0) ($ (probs {(tup (one-of s1 s1-) _) 1
+                   (chan 0) (each (probs {(tup (one-of s1 s1-) _) 1
                                        _ 4}))))
 
          "Let's start simple"
@@ -1092,13 +1092,13 @@
                _dup (fn [x] (vec (concat x x)))
                cat (fn [& xs] (fn [x] (vec (mapcat (fn [f] (f x)) xs))))
                acc (fn [n f] (apply comp (repeat n f)))
-               $ (fn [f] (fn [x] (vec (mapcat (comp f vector) x))))
+               each (fn [f] (fn [x] (vec (mapcat (comp f vector) x))))
                _scan (fn [size step f] (fn [x] (vec (mapcat f (partition size step x)))))
                >> (fn [& xs] (fn [x] (reduce #(%2 %1) x xs)))
                upd (fn [x f] (f x))]
            (upd [1]
                 (>> (acc 3 (cat id rev))
-                    ($ (cat id rev id))
+                    (each (cat id rev id))
 
                     ))))
 
@@ -1114,12 +1114,12 @@
                (mk dorian
                    dur4 o1 (lin _ (nlin> 3 s1-))
                    [(patch :ocarina) (connect-with (degree 1))]
-                   ($ (tup s0 s2))
+                   (each (tup s0 s2))
                    (connect-with (degree 1))))
 
          (let [pol+ {:polarity 0}
                pol- {:polarity 1}
-               invert-pol ($ {:polarity (fn [x] (case x 0 1 1 0))})]
+               invert-pol (each {:polarity (fn [x] (case x 0 1 1 0))})]
            (p lydianb7
               dur2
               (lin pol+ pol-)
@@ -1129,19 +1129,19 @@
               (h/align-contexts :s)
               (dup 2)
               (parts pol+ _
-                     pol- ($ (one-of (degree -1) (degree 1))))
-              (chans [(patch :ocarina) ($ [(one-of s0 s1) (shuftup s0 s1 s2 s3)]) (connect-with (one-of d1 d1-))]
-                     [(patch :acoustic-bass) o1- ($ (one-of s0 s1- s2-))])))
+                     pol- (each (one-of (degree -1) (degree 1))))
+              (chans [(patch :ocarina) (each [(one-of s0 s1) (shuftup s0 s1 s2 s3)]) (connect-with (one-of d1 d1-))]
+                     [(patch :acoustic-bass) o1- (each (one-of s0 s1- s2-))])))
 
          (let [pol+ {:polarity 0}
                pol- {:polarity 1}
-               invert-pol ($ {:polarity (fn [x] (case x 0 1 1 0))})]
+               invert-pol (each {:polarity (fn [x] (case x 0 1 1 0))})]
            (p (chans [(patch :ocarina)
                       s2- (ntup> 7 s1)
                       (shuftup [_ (connect-with d1)]
                                [rev s1- (connect-with d1-)])
                       (dupt 16)]
-                     [(patch :acoustic-bass) (dupt 64) o2- t-round ($ (maybe s2- s2))])
+                     [(patch :acoustic-bass) (dupt 64) o2- t-round (each (maybe s2- s2))])
               (h/grid [phrygian3
                        (tup pol+ pol-)
                        (tup _ invert-pol)
@@ -1150,7 +1150,7 @@
                        (h/align-contexts :s)
                        (dupt 2)
                        (parts pol+ _
-                              pol- ($ (degree -1)))])
+                              pol- (each (degree -1)))])
               (adjust {:duration 64})))
 
          (first @history*))
@@ -1284,7 +1284,7 @@
                (lin _ [(degree 3) s1-])
                (lin _ [s1 (transpose c3-)])]
               (patch :electric-piano-1)
-              ($ (! (let [[v1 v2 v3] (shuffle [v1 v2 v3])]
+              (each (! (let [[v1 v2 v3] (shuffle [v1 v2 v3])]
                       (chans (tup* (map s-step v1))
                              [o1- (tup* (map s-step v2))]
                              [o1 (tup* (map s-step v3))]))))
@@ -1311,7 +1311,7 @@
                           (lin _ s1)
                           (lin _ [(degree 3) s1-])
                           (lin _ [s1 (transpose c3-)])]
-                         ($ (! (let [[a b c] (shuffle [(f r1 l1) (f r2 l2) (f r3 l3)])]
+                         (each (! (let [[a b c] (shuffle [(f r1 l1) (f r2 l2) (f r3 l3)])]
                                  (chans
                                   ;[(vsl :flute-1 :staccato) vel3 o1 (s-shift 1) c]
                                   [(vsl :solo-violin-1 :pizzicato) o1 b]
@@ -1385,7 +1385,7 @@
                lines (map (fn [offset]
                             [(get-in choices [:instruments offset])
                              (lin* degrees)
-                             ($ (tup* (map (fn [d a c p]
+                             (each (tup* (map (fn [d a c p]
                                              [d (tup* (map (fn [step orn p] [(one-of vel3 vel6 vel9) (get-in choices [:articulations p]) (get-in choices [:arpegio step]) {:connection orn}]) a c p))])
                                            degrees
                                            (drop offset (cycle arpegios))
@@ -1408,7 +1408,7 @@
          (noon (mk (patch :electric-piano-1)
                    dur2 eolian
                    (nlin> 4 s1)
-                   ($ (tup _ [s2 c1-] c1- _ s2 [s1 d1]))))
+                   (each (tup _ [s2 c1-] c1- _ s2 [s1 d1]))))
 
          "it could make sense to have some sort of scan/partition mapping operator"
 
@@ -1431,7 +1431,7 @@
          (p (patch :electric-piano-1)
             eolian
             (nlin> 6 s1)
-            ($ (tup _ c1- [s1 c1-] _)))
+            (each (tup _ c1- [s1 c1-] _)))
 
          "another approach"
 

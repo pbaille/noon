@@ -67,7 +67,7 @@
            (->piano-roll
             (mk (lin s0 s2 s1 s3)
                 (lin s0 s2)
-                ($ (chans o1-
+                (each (chans o1-
                           (tup _ d1 c1- _))))))))
 
   (spit "src/noon/doc/sample-pr.el"
@@ -78,7 +78,7 @@
                 dur2
                 (lin I V IV I)
                 (lh/align-contexts :d)
-                ($ (chans [o1 (shuftup s0 s1 s2 s4)]
+                (each (chans [o1 (shuftup s0 s1 s2 s4)]
                           (par s0 s1 s2)))))))))
 
 (comment :org-guide

@@ -20,12 +20,12 @@
 
   (play vel2 dur2
         (lin* (map reroot [:C :Eb :F# :A]))
-        ($ (tup (rebase V (structure :sus47))
+        (each (tup (rebase V (structure :sus47))
                 (rebase (scale :lydian) (structure [0 2 3 6]))))
         (chans
-         [($ (par s0 s1 s2 s3)) h/voice-led]
-         ($ [vel0 o1 (ntup> 8 (one-of d1 d1- d3 d3-))])
-         ($ [(repitch :C-1) t-round]))
+         [(each (par s0 s1 s2 s3)) h/voice-led]
+         (each [vel0 o1 (ntup> 8 (one-of d1 d1- d3 d3-))])
+         (each [(repitch :C-1) t-round]))
 
         (rep 4 s1))
 
@@ -46,9 +46,9 @@
                    (lin I VII I IV I [IIb lydian] V I)
                    (h/align-contexts)
                    (append (transpose c3) (transpose c1-) same)
-                   ($ (m/gen-tup {:layer :s :length 6 :delta 2 :steps [-2 -1 1 2]}))
-                   ($ (maybe (par s0 [vel3 s1] [vel3 s2])))
-                   ($ (superpose [(chan 2) o1 (patch :ocarina)
+                   (each (m/gen-tup {:layer :s :length 6 :delta 2 :steps [-2 -1 1 2]}))
+                   (each (maybe (par s0 [vel3 s1] [vel3 s2])))
+                   (each (superpose [(chan 2) o1 (patch :ocarina)
                                   (m/gen-tup {:layer :s :length 4 :delta 1 :steps [-1 1 -2 2]})
                                   (maybe rev)
                                   (vel-humanize 1/2 [0.1 0.5])])))))
@@ -77,15 +77,15 @@
              (play (scale :harmonic-minor)
                    (lin I IV VII I)
                    (h/align-contexts :s)
-                   ($ (tup s0 s1 s2)))
+                   (each (tup s0 s1 s2)))
 
              (play dur:2
                    (scale :harmonic-minor)
                    (lin I IV VII I)
                    (h/align-contexts :s)
                    (lin s0 s1 s2-)
-                   ($ [(tup s0 s2)
-                       ($ (tup s0 c1- s+ s0))])
+                   (each [(tup s0 s2)
+                       (each (tup s0 c1- s+ s0))])
                    (lin same rev))
 
              (swap! options* assoc :tracks {0 :chorium}))
@@ -114,7 +114,7 @@
                    lydian+
                    dur8
                    (lin* (map root [:C :Eb :F# :A]))
-                   ($ (fit [(linm 16
+                   (each (fit [(linm 16
                                   (any-that (within-pitch-bounds? :C-2 :C2)
                                             (lin s0 c1- s0)
                                             (lin s0 d1 d1- s0)
@@ -131,11 +131,11 @@
                    lydian+2
                    (lin C0 Eb0 F#0 A0)
                    (rep 4 s1)
-                   ($ (tup s0 [s1 d1] s1 s2 [s2 d1-])))
+                   (each (tup s0 [s1 d1] s1 s2 [s2 d1-])))
 
              (play [lydian+2 sus47]
                    [dur:2 (lin C0 Eb0 F#0 A0)]
-                   ($ (chans
+                   (each (chans
                        s0
                        (shuftup s0 s1 s2 s3)))
                    (rep 8
@@ -148,14 +148,14 @@
                    ;; a melodic pattern
                    [(patch :electric-piano-1)
                     (ntup 4 (tup s0 s1 s2))
-                    ($ (tup s0 [s2 (superpose o1)] s4))]
+                    (each (tup s0 [s2 (superpose o1)] s4))]
                    ;; simplistic grid
                    (h/grid harmonic-minor
                            (tup* (map root [:C :Eb :Gb :A]))
                            (h/align-contexts :s))
                    ;; adjust and repeat
                    (adjust 2)
-                   (rep 4 ($ c1-)))
+                   (rep 4 (each c1-)))
 
              (play vel3
                    (h/harmonic-zip
@@ -163,7 +163,7 @@
                     [;; 4 tonalities
                      (tup* (map root [:C :Eb :F# :A]))
                      ;; V I on each
-                     ($ (tup [V sus47] [lydian+ tetrad]))
+                     (each (tup [V sus47] [lydian+ tetrad]))
                      ;; align structurally
                      (h/align-contexts :s)]
 
@@ -182,7 +182,7 @@
   (play (lin [I melodic-minor] [VI superlocrian] [VIb lydianb7] [IIb mixolydian])
         (h/align-contexts :s)
         (dup 2)
-        ($ (chans [(patch :vibraphone) vel6 t0 (par> d0 d3 d3 d3 d3)]
+        (each (chans [(patch :vibraphone) vel6 t0 (par> d0 d3 d3 d3 d3)]
                   [(patch :acoustic-bass) vel6 t2-]
                   [(patch :taiko-drum) (tup vel3 vel5 vel0)]
                   [(ntup> 9 (any-that (within-pitch-bounds? :G-1 :C2)
@@ -213,7 +213,7 @@
                        [(take-lst 4) rev]
                        [(take-lst 4) (m/contour :similar {:extent [-2 2] :layer :d})]))
             (trim 0 8))
-          ($
+          (each
            (probs {(one-of vel3 vel5 vel7 vel9) 6
                    (superpose [(chan 2) (patch :vibraphone) vel8 (one-of d3 d4)]) 1
                    (superpose [(chan 7) (patch :flute) vel8 o1]) 5
@@ -221,7 +221,7 @@
                    }))
           (superpose (k (nlin 4 [(chan 5) (patch :acoustic-bass) t2- vel8 dur2])))
 
-          #_($ (d-shift 2))
+          #_(each (d-shift 2))
           (rep 4 (one-of [(d-shift -2) (transpose c3)]
                          [(d-shift 2) (transpose c3-)]
                          [(d-shift 1) (transpose c1-)]
@@ -259,47 +259,47 @@
 
          (play dorian
                (rep 4 s1)
-               ($ (tup c1- s2 s1 s0))
+               (each (tup c1- s2 s1 s0))
                (tup _ rev)
                (rep 4 (transpose c3))
                (append rev))
 
          (play dorian
                (rep 4 s1)
-               ($ (tup _ s2))
-               ($ (tup c1- d2 d1 d0)))
+               (each (tup _ s2))
+               (each (tup c1- d2 d1 d0)))
 
          (play melodic-minor
                dur4
                (append (transpose c3) (transpose c6) (transpose c3))
                (dup 2)
-               ($ (shuftup s0 s1 s2 s3 s4))
-               ($ (tup _ (one-of s1 s2 s1- s2- s3 s3-)))
-               ($ (one-of (tup c1- d2 d1 d0)
+               (each (shuftup s0 s1 s2 s3 s4))
+               (each (tup _ (one-of s1 s2 s1- s2- s3 s3-)))
+               (each (one-of (tup c1- d2 d1 d0)
                           (tup c1- s1- s0 s2))))
 
          (stop)
          (play dur4
                (append (transpose c3) (transpose c6) (transpose c3))
-               ($ (one-of phrygian6 lydian melodic-minor))
+               (each (one-of phrygian6 lydian melodic-minor))
                (dup 2)
-               ($ (chans [(patch :acoustic-bass) t2- (tup _ s2 s1- _)]
+               (each (chans [(patch :acoustic-bass) t2- (tup _ s2 s1- _)]
                          [(patch :flute) vel8]
                          [(patch :vibraphone) vel4 (par s0 d4 d6 d8 d10 d12)]
                          [(patch :taiko-drum)
                           (r/gen-tup 10 4 :euclidean)
-                          ($ [(one-of s0 s1 s1-) (one-of vel1 vel3 vel5)])]))
+                          (each [(one-of s0 s1 s1-) (one-of vel1 vel3 vel5)])]))
                (parts (chan 1)
-                      [($ (shuftup s0 s1 s2 s3 s4))
-                       ($ (tup _ (one-of s1 s2 s1- s2- s3 s3-)))
-                       ($ (one-of (tup c1- d2 d1 d0)
+                      [(each (shuftup s0 s1 s2 s3 s4))
+                       (each (tup _ (one-of s1 s2 s1- s2- s3 s3-)))
+                       (each (one-of (tup c1- d2 d1 d0)
                                   (tup c1- s1- s0 s2)
                                   (tup c1- s1- s2- s0)))
-                       ($ (one-of vel5 vel6 vel7 vel9))]))
+                       (each (one-of vel5 vel6 vel7 vel9))]))
 
          (play melodic-minor
                (shuflin s0 s1 s2 s3)
-               ($ (let [step (one-of s1 s2 s3 s1- s2- s3-)
+               (each (let [step (one-of s1 s2 s3 s1- s2- s3-)
                         ap (lin c1- d1 s1-)]
                     (tup [_ ap] [step ap] _ step)))
                (append c2- c2-))
@@ -307,7 +307,7 @@
          (play melodic-minor
                (lin (shuflin s0 s1 s2 s3)
                     [{:passing true} (shuflin s0 s1 s2 s3)])
-               ($ (let [step (one-of s1 s2 s3 s1- s2- s3-)
+               (each (let [step (one-of s1 s2 s3 s1- s2- s3-)
                         ap (lin c1- d1)]
                     (tup [_ ap] [step ap] _ step (par s2- s2))))
                (append c4-)
@@ -316,7 +316,7 @@
          (play melodic-minor
                dur:3
                (shuflin s0 s2 s4)
-               ($ (one-of (shuftup _ c1- d1)
+               (each (one-of (shuftup _ c1- d1)
                           (shuftup _ d1 d1-)))
                (m/permutation :rand)
                (rep 3 (one-of (s-shift 1) (s-shift -1)))
@@ -350,7 +350,7 @@
 
          (play dur4
                (rup 6 (one-of d4 d3-))
-               ($ (tup (chromatic-double-passing :down) [d6 (chromatic-double-passing :up)])))
+               (each (tup (chromatic-double-passing :down) [d6 (chromatic-double-passing :up)])))
 
          (def diatonic?
            (sf_ (if (every? (comp nh/diatonic? nh/normalise :pitch)
@@ -367,15 +367,15 @@
                (lin I IV V I)
                (append (transpose c3) (transpose c6))
                (h/align-contexts :s)
-               ($ (chans [(patch :string-ensemble-1) vel4 (par s2- s0 s2)]
-                         [(patch :ocarina) (shuftup s0 s1 s2) ($ (tup c1- [s2- (lin d1 _)] d1 _ s1 s2))])))
+               (each (chans [(patch :string-ensemble-1) vel4 (par s2- s0 s2)]
+                         [(patch :ocarina) (shuftup s0 s1 s2) (each (tup c1- [s2- (lin d1 _)] d1 _ s1 s2))])))
 
          (let [c-d+ (efn e (if-let [p- (get-in (nh/neibourhood (:pitch e)) [:down :c])]
                              (assoc e :pitch p-)
                              (d1 e)))]
            (play dur:4
                  (rep 14 d1)
-                 ($ (tup c-d+ _))))
+                 (each (tup c-d+ _))))
 
          (defn interpose-with [f]
            (sf_ (if (line? _)
@@ -417,8 +417,8 @@
            (play harmonic-minor
                  dur4
                  (interleaved
-                  [(nlin 4 (shuftup s0 s1 s2 s3)) ($ rand-double-passing)]
-                  [(nlin 4 (shuftup s0 s1 s2 s3)) s2 ($ rand-double-passing)])))
+                  [(nlin 4 (shuftup s0 s1 s2 s3)) (each rand-double-passing)]
+                  [(nlin 4 (shuftup s0 s1 s2 s3)) s2 (each rand-double-passing)])))
 
          (defn interleaving [polarities a b]
            (loop [s [] ps polarities a a b b]
@@ -472,6 +472,6 @@
            (play harmonic-minor
                  dur2
                  (randomly-interleaved
-                  [(chan 1) (nlin 4 (shuftup s0 s1 s2 s3)) ($ rand-double-passing)]
-                  [(chan 2) (nlin 4 (shuftup s0 s1 s2 s3)) s4- ($ rand-double-passing)]
-                  [(chan 3) (nlin 4 (shuftup s0 s1 s2 s3)) s4 ($ rand-double-passing)]))))
+                  [(chan 1) (nlin 4 (shuftup s0 s1 s2 s3)) (each rand-double-passing)]
+                  [(chan 2) (nlin 4 (shuftup s0 s1 s2 s3)) s4- (each rand-double-passing)]
+                  [(chan 3) (nlin 4 (shuftup s0 s1 s2 s3)) s4 (each rand-double-passing)]))))
