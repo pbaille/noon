@@ -118,7 +118,7 @@ Ocarina runs over simplistic bass and piano comping.
          ($ (parts {:degree :II} (structure [0 3 4 6])
                    {:degree :V} (structure [1 2 5 6])
                    {:degree :I} (structure :tetrad)))
-         (tupn 32 [(one-of o1 o2)
+         (ntup 32 [(one-of o1 o2)
                    (! (rup (rand-nth [5 6 7]) s1))
                    (tup (maybe (m/permutation 1/4))
                         [(maybe rev) (one-of s1 s2 s2- s1-)])])]))
@@ -137,14 +137,14 @@ Two utility functions:
              n (quot sdur resolution)]
          (assert (zero? (rem sdur resolution))
                  "fill: resolution should be a multiple of score length ")
-         (update-score _ (tupn n f)))))
+         (update-score _ (ntup n f)))))
 
 (defn fill> [resolution f]
   (sf_ (let [sdur (score-duration _)
              n (quot sdur resolution)]
          (assert (zero? (rem sdur resolution))
                  "fill: resolution should be a multiple of score length ")
-         (update-score _ (tupn> n f)))))
+         (update-score _ (ntup> n f)))))
 #+end_src
 
 first try:
@@ -233,7 +233,7 @@ full grid:
           (h/align-contexts :s)]
 
          (par [(chan 1) (patch :choir-aahs) vel3
-               (tupn 8 (par s0 s1 s2))]
+               (ntup 8 (par s0 s1 s2))]
 
               [vel4
                (m/simple-tupline (* 16 16)
@@ -247,15 +247,15 @@ full grid:
                     [(chan 3) vel5 o2 (patch :flute)])]
 
               [(chan 4) (patch :taiko-drum)
-               vel2 (tupn 16 (lin dur3 [o1 vel4 dur2] dur3))]
+               vel2 (ntup 16 (lin dur3 [o1 vel4 dur2] dur3))]
 
               [(chan 5) (patch :acoustic-bass)
-               o2- (tupn 32 t0)]))
+               o2- (ntup 32 t0)]))
 
         #_(sub {:channel 5} ($ tonic-round))
 
         (adjust 32)
-        (linn 4 (s-shift -1))))
+        (nlin 4 (s-shift -1))))
 #+end_src
 
 ** Tritonal experiment
@@ -296,7 +296,7 @@ A rich harmonic sequence using V I progressions over tritonal modulation cycle (
           [vel6
            (h/grid-zipped
             [(chans (patch :flute) [o1 (patch :piccolo)])
-             (tupn> (* 32 10)
+             (ntup> (* 32 10)
                     (any-that (within-pitch-bounds? :C-2 :C2)
                               s1 s2 s1- s2- s3 s3-))]
             ($ (probs {vel0 1
@@ -322,7 +322,7 @@ Simple experiment on the first part of autumn leavs grid:
        (dup 2)]
 
       (h/grid-zipped
-       (linn 16 (chans [(patch :acoustic-bass)
+       (nlin 16 (chans [(patch :acoustic-bass)
                         o1- t-round]
 
                        [(patch :vibraphone)
@@ -361,7 +361,7 @@ One more shredding experiment
 
       ;; alternate leads
 
-      lead1 (tupn> (* n-bars 12)
+      lead1 (ntup> (* n-bars 12)
                    (any-that (within-pitch-bounds? :C0 :C3)
                              d1 d1- d3 d3- d4 d4-))
 
@@ -403,7 +403,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
 
        [(patch :vibraphone)
         vel3
-        (tupn 4 [(one-of IV II VI) tetrad (par [t2- vel5] s0 s1 s2 s3)])]
+        (ntup 4 [(one-of IV II VI) tetrad (par [t2- vel5] s0 s1 s2 s3)])]
 
        [(patch :ocarina)
         vel5

@@ -1,6 +1,5 @@
 (ns noon.tries.try1
   (:use noon.score)
-  (:refer-clojure :exclude [cat])
   (:require [noon.lib.melody :as m]
             [noon.lib.harmony :as h]
             [noon.lib.rythmn :as r]
@@ -28,7 +27,7 @@
                  (rep 8 (one-of d1- d1))
                  ($ [(chans [(patch :pad-1-new-age) o1- vel3 (par* chord-tones)]
                             [(patch :ocarina) vel4 (shuftup* chord-tones) ($ (maybe (tup (one-of d1 d1-) d0)))]
-                            [(patch :vibraphone) vel5 o1 (tupn 6 [(one-of* chord-tones) (maybe o1) (maybe (tup d1- d0))])])
+                            [(patch :vibraphone) vel5 o1 (ntup 6 [(one-of* chord-tones) (maybe o1) (maybe (tup d1- d0))])])
                      (maybe rev)])))
 
          (def barry-harris2 [barry-harris (structure [0 2 4 7])])
@@ -202,7 +201,7 @@
                (patch :violin)
                (lin I IV V I)
                (h/align-contexts :s)
-               ($ (tupn 2 (tup s0 s2 s4 s4 s2 s0)))
+               ($ (ntup 2 (tup s0 s2 s4 s4 s2 s0)))
                ($ (! (vel (mul (+ 0.9 (* (rand) 0.2))))))
                (append s1-)))
 
@@ -245,10 +244,10 @@
                                    (rep 3 d2 :skip-first)
                                    (rep 3 d2- :skip-first))]
            (play (h/harmonic-zip
-                  [(tup (lin (linn 4 [(root :F#) locrian2])
-                             (linn 4 [(root :F) lydian])
-                             (linn 4 [(root :Eb) lydian])
-                             (linn 4 [(root :Db) lydian]))
+                  [(tup (lin (nlin 4 [(root :F#) locrian2])
+                             (nlin 4 [(root :F) lydian])
+                             (nlin 4 [(root :Eb) lydian])
+                             (nlin 4 [(root :Db) lydian]))
                         [lydian
                          (lin* (map root [:E :Db :D :B :C :A :Bb :G]))])
                    (h/align-contexts :s)
@@ -282,7 +281,7 @@
                                        (trim 0 1))
                                (vel-humanize 5 [40 80])])
                        (chans [choir
-                               (tupn (/ n-bars 2) same)
+                               (ntup (/ n-bars 2) same)
                                ($by :position [(! (one-of (r/gen-tup 8 3 :euclidean)
                                                           (r/gen-tup 8 3 :durations [2 3 4 5])))
                                                (sf_ (let [xs (-> (group-by :position _) seq sort vals)]
@@ -293,7 +292,7 @@
 (comment :grid
          (stop)
          (play dur3
-               (linn> 48 (one-of d1 d1-))
+               (nlin> 48 (one-of d1 d1-))
                ($ (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
                          [(patch :ocarina) (shuftup s0 s2 s4 s6) (shuftup d0 d3 d6) (tup _ rev)]
                          [(patch :acoustic-bass) t2-]))
@@ -306,7 +305,7 @@
                        (dup 2)
                        (h/align-contexts :d :static)))
 
-         (play (tupn> 24 (one-of d1 d1-))
+         (play (ntup> 24 (one-of d1 d1-))
                ($ (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
                          [(patch :ocarina)
                           (one-of (mixtup s0 s2 s4 s6)
@@ -367,8 +366,8 @@
                (chans
                 [(patch :vibraphone)
                  (shuflin s0 s1 s2 s3 s4)
-                 (linn 4 (one-of s1 s2 s1- s2-))
-                 (sf_ (let [rythmn (mk (linn 2 (! (r/gen-tup 12 5 :shifted))) (append rev))]
+                 (nlin 4 (one-of s1 s2 s1- s2-))
+                 (sf_ (let [rythmn (mk (nlin 2 (! (r/gen-tup 12 5 :shifted))) (append rev))]
                         (set (map (fn [r n]
                                     (merge n (select-keys r [:position :duration])))
                                   (sort-by :position rythmn)
@@ -544,7 +543,7 @@
                        [(root :C#) min]]]
            (play
             (chans [(patch :aahs) (par s0 s1 s2)]
-                   [(tupn> (* (count triads) 3)
+                   [(ntup> (* (count triads) 3)
                            (any-that (within-pitch-bounds? :C-1 :C1)
                                      s1 s1-))
                     (h/grid [(tup* (shuffle triads))
@@ -836,7 +835,7 @@
                         [(patch :vibraphone) o1 ($ (par s0 s2 s3) (shuftup s0 s3) (tup s0 s1 s1-))
                          ($by :position (probs {vel0 2
                                                 (one-of vel3 vel5 vel7) 8
-                                                [vel3 (tupn> 4 [s1 (vel+ 15)])] 1}))]
+                                                [vel3 (ntup> 4 [s1 (vel+ 15)])] 1}))]
                         [(patch :acoustic-bass) o1- t-round])))
 
          (defn possible-modes
@@ -1005,10 +1004,10 @@
 
          (p harmonic-minor
             (lin I VII)
-            (linn> 3 (transpose c3))
+            (nlin> 3 (transpose c3))
             (h/align-contexts :s)
             (dup 2)
-            ($ (tupn> 6 s1))
+            ($ (ntup> 6 s1))
             (connect-with d1))
 
          "With parts and vsl"
@@ -1018,7 +1017,7 @@
                     ;; grid
                     [harmonic-minor
                      (lin I VII)
-                     (linn> 3 (transpose c3))
+                     (nlin> 3 (transpose c3))
                      (h/align-contexts :s)
                      (dup 4)]
                     ;; parts
@@ -1106,14 +1105,14 @@
 (comment "degree moves"
          "It seems that the degree that is under the current one can serve as kind of a dominant."
          (p dorian
-            (linn> 8 s1)
+            (nlin> 8 s1)
             [(patch :ocarina) (connect-with (degree -1))])
 
          (noon {:play true
                 :tracks {0 :chorium}
                 :pdf true}
                (mk dorian
-                   dur4 o1 (lin _ (linn> 3 s1-))
+                   dur4 o1 (lin _ (nlin> 3 s1-))
                    [(patch :ocarina) (connect-with (degree 1))]
                    ($ (tup s0 s2))
                    (connect-with (degree 1))))
@@ -1138,7 +1137,7 @@
                pol- {:polarity 1}
                invert-pol ($ {:polarity (fn [x] (case x 0 1 1 0))})]
            (p (chans [(patch :ocarina)
-                      s2- (tupn> 7 s1)
+                      s2- (ntup> 7 s1)
                       (shuftup [_ (connect-with d1)]
                                [rev s1- (connect-with d1-)])
                       (dupt 16)]
@@ -1408,7 +1407,7 @@
          (reset! options* {:bpm 60 :tracks {0 :chorium} :pdf true :play true})
          (noon (mk (patch :electric-piano-1)
                    dur2 eolian
-                   (linn> 4 s1)
+                   (nlin> 4 s1)
                    ($ (tup _ [s2 c1-] c1- _ s2 [s1 d1]))))
 
          "it could make sense to have some sort of scan/partition mapping operator"
@@ -1419,19 +1418,19 @@
 
          (noon (mk (patch :electric-piano-1)
                    dur2 eolian
-                   (linn> 4 s3)
+                   (nlin> 4 s3)
                    (scan :position 2 1 (fn [[a b]]
                                          ((efit (tup _ [s2 c1-] c1- _ s2 [(efn e (assoc e :pitch (:pitch b))) d1]))
                                           a)))))
 
          (noon (mk (patch :electric-piano-1)
                    eolian
-                   (linn> 8 [(degree 4) s1-])
+                   (nlin> 8 [(degree 4) s1-])
                    (scan :position 2 1 (fn [[a b]]
                                          (upd-in-place a (tup _ [s2 c1-] c1- _ s2 [(efn e (assoc e :pitch (:pitch b))) d1]))))))
          (p (patch :electric-piano-1)
             eolian
-            (linn> 6 s1)
+            (nlin> 6 s1)
             ($ (tup _ c1- [s1 c1-] _)))
 
          "another approach"
@@ -1442,7 +1441,7 @@
                                  s'
                                  (update-score s (trim to (score-duration s))))))))
 
-         (noon (mk (linn> 8 d1)
+         (noon (mk (nlin> 8 d1)
                    (swap-between 4 6 o1)))
 
          (defn scan2
@@ -1453,13 +1452,13 @@
                              (update-score s (swap-between from (+ from size) f)))
                            s (range 0 (score-duration s) step)))))
 
-         (noon (mk (linn> 8 d1)
+         (noon (mk (nlin> 8 d1)
                    (scan2 4 3 (tup _ d1 d1-)))))
 
 (comment (noon {:pdf true
                 :play true
                 :tracks {0 :chorium}}
-               (mk (linn 2 (one-of d2 d4 d3- d1-))
+               (mk (nlin 2 (one-of d2 d4 d3- d1-))
                    (rep 4 d1-)
                    (chans [(patch :ocarina) o1 _]
                           [(patch :acoustic-bass) _

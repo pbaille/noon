@@ -453,10 +453,10 @@
     (is (= (s/mk (s/dupt 3))
            (s/mk (s/tup s/same s/same s/same))))
 
-    (is (= (s/mk (s/tupn 3 s/d1))
+    (is (= (s/mk (s/ntup 3 s/d1))
            (s/mk (s/tup s/d1 s/d1 s/d1))))
 
-    (is (= (s/mk (s/linn 3 s/d1))
+    (is (= (s/mk (s/nlin 3 s/d1))
            (s/mk (s/lin s/d1 s/d1 s/d1))))
 
     (is (= (s/mk (s/par s/chan1 s/chan2)

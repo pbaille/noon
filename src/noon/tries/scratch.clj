@@ -24,7 +24,7 @@
                 (rebase (scale :lydian) (structure [0 2 3 6]))))
         (chans
          [($ (par s0 s1 s2 s3)) h/voice-led]
-         ($ [vel0 o1 (tupn> 8 (one-of d1 d1- d3 d3-))])
+         ($ [vel0 o1 (ntup> 8 (one-of d1 d1- d3 d3-))])
          ($ [(repitch :C-1) t-round]))
 
         (rep 4 s1))
@@ -36,7 +36,7 @@
 
 (comment ::m/gen-tup
          (play (scale :melodic-minor)
-               (linn 8 (! (m/gen-tup {:layer :d :length 10 :delta 2 :steps [-3 -1 1 3]}))))
+               (nlin 8 (! (m/gen-tup {:layer :d :length 10 :delta 2 :steps [-3 -1 1 3]}))))
          (noon {:play true
                 :tracks {0 :chorium}
                 :filename "./test/data/scratch/1"}
@@ -62,7 +62,7 @@
                           n (quot sdur dur)]
                       (assert (zero? (rem sdur dur))
                               "fill: division length should be a multiple of score length ")
-                      (update-score _ (tupn n f)))))
+                      (update-score _ (ntup n f)))))
 
              (defn fill> [dur f]
                (sf_ (let [sdur (score-duration _)
@@ -70,7 +70,7 @@
                       (assert (zero? (rem sdur dur))
                               "fill: division length should be a multiple of score length ")
                       (println n)
-                      (update-score _ (tupn> n f))))))
+                      (update-score _ (ntup> n f))))))
 
          (do :roman-degrees-and-more
 
@@ -147,7 +147,7 @@
              (play {:description "grid zipping demo 2"}
                    ;; a melodic pattern
                    [(patch :electric-piano-1)
-                    (tupn 4 (tup s0 s1 s2))
+                    (ntup 4 (tup s0 s1 s2))
                     ($ (tup s0 [s2 (superpose o1)] s4))]
                    ;; simplistic grid
                    (h/grid harmonic-minor
@@ -168,7 +168,7 @@
                      (h/align-contexts :s)]
 
                     ;; content
-                    (tupn 4
+                    (ntup 4
                           (par
                            ;; simple arpegio
                            [o1 (tup (rup 6 s1) [s6 (rup 6 s1-)])]
@@ -185,7 +185,7 @@
         ($ (chans [(patch :vibraphone) vel6 t0 (par> d0 d3 d3 d3 d3)]
                   [(patch :acoustic-bass) vel6 t2-]
                   [(patch :taiko-drum) (tup vel3 vel5 vel0)]
-                  [(tupn> 9 (any-that (within-pitch-bounds? :G-1 :C2)
+                  [(ntup> 9 (any-that (within-pitch-bounds? :G-1 :C2)
                                        d1- d1 d3 d3- d4 d4-))
                    vel9
                    (chans (patch :flute)
@@ -219,14 +219,14 @@
                    (superpose [(chan 7) (patch :flute) vel8 o1]) 5
                    ;vel0 1
                    }))
-          (superpose (k (linn 4 [(chan 5) (patch :acoustic-bass) t2- vel8 dur2])))
+          (superpose (k (nlin 4 [(chan 5) (patch :acoustic-bass) t2- vel8 dur2])))
 
           #_($ (d-shift 2))
           (rep 4 (one-of [(d-shift -2) (transpose c3)]
                          [(d-shift 2) (transpose c3-)]
                          [(d-shift 1) (transpose c1-)]
                          [(d-shift -3) (transpose c6)]))
-          (append (superpose (k (linn 4 [(patch :taiko-drum) (chan 3) (! [vel4 (maybe o1- d1) (r/gen-tup 7 3)])])
+          (append (superpose (k (nlin 4 [(patch :taiko-drum) (chan 3) (! [vel4 (maybe o1- d1) (r/gen-tup 7 3)])])
                                 (dup 8))))
           #_(start-from 16))
 
@@ -417,8 +417,8 @@
            (play harmonic-minor
                  dur4
                  (interleaved
-                  [(linn 4 (shuftup s0 s1 s2 s3)) ($ rand-double-passing)]
-                  [(linn 4 (shuftup s0 s1 s2 s3)) s2 ($ rand-double-passing)])))
+                  [(nlin 4 (shuftup s0 s1 s2 s3)) ($ rand-double-passing)]
+                  [(nlin 4 (shuftup s0 s1 s2 s3)) s2 ($ rand-double-passing)])))
 
          (defn interleaving [polarities a b]
            (loop [s [] ps polarities a a b b]
@@ -472,6 +472,6 @@
            (play harmonic-minor
                  dur2
                  (randomly-interleaved
-                  [(chan 1) (linn 4 (shuftup s0 s1 s2 s3)) ($ rand-double-passing)]
-                  [(chan 2) (linn 4 (shuftup s0 s1 s2 s3)) s4- ($ rand-double-passing)]
-                  [(chan 3) (linn 4 (shuftup s0 s1 s2 s3)) s4 ($ rand-double-passing)]))))
+                  [(chan 1) (nlin 4 (shuftup s0 s1 s2 s3)) ($ rand-double-passing)]
+                  [(chan 2) (nlin 4 (shuftup s0 s1 s2 s3)) s4- ($ rand-double-passing)]
+                  [(chan 3) (nlin 4 (shuftup s0 s1 s2 s3)) s4 ($ rand-double-passing)]))))

@@ -639,12 +639,12 @@ A fitted version of =dup= also exists under the name =dupt=
 (play (tup d0 d3 d6 d7) (dupt 3))
 #+end_src
 
-**** linn
+**** nlin
 
 concat the results of the given transformation n times
 
 #+begin_src clojure :proll
-(play (linn 4 (tup d0 d1 d2 d3)))
+(play (nlin 4 (tup d0 d1 d2 d3)))
 #+end_src
 
 it is the same thing as:
@@ -653,12 +653,12 @@ it is the same thing as:
 (play (tup d0 d1 d2 d3) (dup 4))
 #+end_src
 
-**** tupn
+**** ntup
 
-the fitted version of =linn=
+the fitted version of =nlin=
 
 #+begin_src clojure :proll
-(play (tupn 4 (tup d0 d1 d2 d3)))
+(play (ntup 4 (tup d0 d1 d2 d3)))
 #+end_src
 
 **** lin>
@@ -932,11 +932,11 @@ Takes a non deterministic expression resulting in a score transformation. return
 #+end_quote
 
 #+begin_src clojure :proll
-(play (linn 4 (! (tup* (shuffle [d0 d2 d4 d6])))))
+(play (nlin 4 (! (tup* (shuffle [d0 d2 d4 d6])))))
 #+end_src
 
 #+begin_src clojure :proll
-(play (linn 4 (tup* (shuffle [d0 d2 d4 d6])))) ; without the bang the shuffle expression is executed only one time.
+(play (nlin 4 (tup* (shuffle [d0 d2 d4 d6])))) ; without the bang the shuffle expression is executed only one time.
 #+end_src
 
 **** Shuffling
@@ -1470,7 +1470,7 @@ In the following example you can get a sense of the effect of deriving a melody 
  (chans
   [(patch :vibraphone)
    vel3
-   (tupn 4 [(one-of IV II VI) tetrad (par [t2- vel5] s0 s1 s2 s3)])]
+   (ntup 4 [(one-of IV II VI) tetrad (par [t2- vel5] s0 s1 s2 s3)])]
   [(patch :ocarina)
    vel5
    (shuftup d1 d2 d3 d4 d5)
@@ -1622,10 +1622,10 @@ There are several ways to do this:
  (m/simple-line
   32
   (one-of
-   (linn> 4 (one-of d1- d1))
+   (nlin> 4 (one-of d1- d1))
    (tup d1 d1- s0)
    (lin s2 s1 s1-)
-   (linn> 4 (one-of s1- s1)))))
+   (nlin> 4 (one-of s1- s1)))))
 #+end_src
 
 The =simple-line= function is built on top of the more general function =noon.lib.melody/line=
@@ -1826,7 +1826,7 @@ The =:euclidean= flag let you generate euclidean rythmns: https://blog.landr.com
  [rtup (! (r/gen-tup 16 5 :euclidean :shifted))]
  (play
   (patch :tinkle-bell)
-  (chans (tupn 2 o1-) rtup [o1 rtup] [o2 rtup] [o3 rtup])
+  (chans (ntup 2 o1-) rtup [o1 rtup] [o2 rtup] [o3 rtup])
   (dup 4)
   (adjust {:duration 8})))
 #+end_src
@@ -1982,7 +1982,7 @@ fun:
   [(patch :woodblock)
    (r/durtup 2 1 1 1/2 1/2)
    ($ (maybe o1 o1-))
-   (linn 4 (r/permutation 5))]
+   (nlin 4 (r/permutation 5))]
   [(patch :electric-piano-1)
    o1-
    vel4

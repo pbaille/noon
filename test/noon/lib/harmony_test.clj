@@ -1,6 +1,5 @@
 (ns noon.lib.harmony-test
   (:use noon.score)
-  (:refer-clojure :exclude [cat])
   (:require [noon.lib.harmony :as h]
             [clojure.test :refer [testing deftest is]]
             [noon.score :as n]
@@ -140,19 +139,19 @@
 
   (testing "align-contexts"
     (is (t/frozen :align-contexts-diatonic-incremental
-                  (linn> 4 (transpose c4))
+                  (nlin> 4 (transpose c4))
                   (h/align-contexts :diatonic :incremental)
                   ($ h/simple-chord)))
     (is (t/frozen :align-contexts-diatonic-static
-                  (linn> 4 (transpose c4))
+                  (nlin> 4 (transpose c4))
                   (h/align-contexts :diatonic :static)
                   ($ h/simple-chord)))
     (is (t/frozen :align-contexts-structural-static
-                  (linn> 12 (transpose c1))
+                  (nlin> 12 (transpose c1))
                   (h/align-contexts :structural :static)
                   ($ tetrad h/simple-chord)))
     (is (t/frozen :align-contexts-structural-incremental
-                  (linn> 12 (transpose c1))
+                  (nlin> 12 (transpose c1))
                   (h/align-contexts :structural :incremental)
                   ($ tetrad h/simple-chord)))))
 
@@ -180,7 +179,7 @@
 
              (chans [(patch :acoustic-bass) C-2 t-round]
                     [(patch :electric-piano-1) vel5 (par s0 s1 s2 s3)]
-                    [(patch :ocarina) o1 (tupn 14 (tup s0 s1 s2 s3))]))
+                    [(patch :ocarina) o1 (ntup 14 (tup s0 s1 s2 s3))]))
             (adjust 16)))
 
   (stop)

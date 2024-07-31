@@ -1,6 +1,5 @@
 (ns noon.score
   "build, transform, play and write midi scores"
-  (:refer-clojure :exclude [cat])
   (:require [clojure.core :as c]
             [clojure.pprint :refer [pprint]]
             [noon.midi :as midi]
@@ -937,12 +936,12 @@
       [n]
       (fit (dup n)))
 
-    (defn tupn
+    (defn ntup
       "Creates a tup of size n using the 'f update."
       {:tags [:base :linear :multiplicative]}
       [n f] (tup* (repeat n f)))
 
-    (defn linn
+    (defn nlin
       "Duplicate n times the score resulting from applying 'f on the current score."
       {:tags [:base :linear :multiplicative]}
       [n f] (lin* (repeat n f)))
@@ -1236,11 +1235,11 @@
                       (range)
                       xs)))
 
-        (defn linn>
+        (defn nlin>
           "Creates a 'lin> of size n using the 'f update."
           [n f] (lin>* (repeat n f)))
 
-        (defn tupn>
+        (defn ntup>
           "Creates a 'tup> of size n using the 'f update."
           [n f] (tup>* (repeat n f)))
 
@@ -1398,7 +1397,7 @@
       (midi/show-sequencer @sequencer*)
       (midi/display-sequence-details @sequencer*)
       (.start @sequencer*)
-      (play (tupn> 7 d2))
+      (play (ntup> 7 d2))
       (show
        (mk (patch :vibraphone)
            (tup d0 d1 d2)

@@ -1,6 +1,5 @@
 (ns noon.lib.melody-test
   (:use noon.score)
-  (:refer-clojure :exclude [cat])
   (:require [noon.lib.melody :as m]
             [noon.test :as t]
             [clojure.test :refer [deftest testing is]]
@@ -77,10 +76,10 @@
     (is (t/frozen :gen3
                   dur:4
                   (m/simple-line 64
-                                 (one-of (linn> 4 (one-of d1- d1))
+                                 (one-of (nlin> 4 (one-of d1- d1))
                                          (tup d1 d1- s0)
                                          (lin s2 s1 s1-)
-                                         (linn> 4 (one-of s1- s1))))
+                                         (nlin> 4 (one-of s1- s1))))
                   (chans (patch :electric-piano-1)
                          [(patch :ocarina) o1 ($ d3)])))
 
@@ -110,5 +109,5 @@
 
     (is (t/frozen :gen6
                   dur:2
-                  (linn 100 (! (m/gen-tup :c 6 6 {:bounds [-12 12]
+                  (nlin 100 (! (m/gen-tup :c 6 6 {:bounds [-12 12]
                                                   :step-range [-7 7]})))))))

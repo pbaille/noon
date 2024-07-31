@@ -1,6 +1,5 @@
 (ns noon.lib.rythmn-test
   (:use noon.score)
-  (:refer-clojure :exclude [while cat])
   (:require [noon.test :as t]
             [noon.lib.rythmn :as r]
             [clojure.test :refer [deftest testing is]]))
@@ -70,7 +69,7 @@
                    [(patch :woodblock)
                     (r/sum->tup [2 1 1 1/2 1/2])
                     ($ (maybe o1 o1-))
-                    (linn 4 (r/permutation 5))]
+                    (nlin 4 (r/permutation 5))]
                 ;; chords
                    [(patch :electric-piano-1)
                     o1- vel4 lydian
@@ -90,7 +89,7 @@
 
     (is (t/frozen (patch :tinkle-bell)
                   (let [rtup (! (r/gen-tup 16 5 :euclidean :shifted))]
-                    (chans (tupn 2 o1-)
+                    (chans (ntup 2 o1-)
                            rtup
                            [o1 rtup]
                            [o2 rtup]

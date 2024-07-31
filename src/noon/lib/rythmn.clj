@@ -1,5 +1,4 @@
 (ns noon.lib.rythmn
-  (:refer-clojure :exclude [cat])
   (:require [noon.score :as n]
             [noon.utils.euclidean-sums :as eucl]
             [noon.utils.sequences :as s]

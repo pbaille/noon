@@ -18,7 +18,7 @@
 
   ($ (tup s1 s2-))
   (mk (patch :vibraphone)
-      (linn 4 (shuftup d0 d3- (chans d3 [(patch :marimba) d6]) d4))
+      (nlin 4 (shuftup d0 d3- (chans d3 [(patch :marimba) d6]) d4))
       (rep 6 (! (one-of d3 d3-
                         (transpose c3)
                         (transpose c1-))))))
