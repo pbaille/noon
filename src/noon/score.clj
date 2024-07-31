@@ -1,6 +1,6 @@
 (ns noon.score
   "build, transform, play and write midi scores"
-  (:refer-clojure :exclude [cat while struct])
+  (:refer-clojure :exclude [cat])
   (:require [clojure.core :as c]
             [clojure.pprint :refer [pprint]]
             [noon.midi :as midi]
@@ -356,8 +356,8 @@
              layer-step layer-shift
 
              ;; context tweaks
-             origin scale struct degree root inversion
-             repitch rescale restruct reorigin reroot redegree)
+             origin scale structure degree root inversion
+             repitch rescale restructure reorigin reroot redegree)
 
             (import-wrap-harmony-updates
              t-round t-ceil t-floor
@@ -392,7 +392,7 @@
                                        :doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))})
                                     (list wrapper v)))))
 
-                (-def-wrapped struct noon.constants/structs)
+                (-def-wrapped structure noon.constants/structures)
 
                 (-def-wrapped scale noon.constants/modes)
 
@@ -956,10 +956,10 @@
                      (partial-upd2 s filt upd))
                    _ (partition 2 xs))))
 
-    (defn while
+    (defn repeat-while
       "Iterate the given transformation 'f while 'test is passing."
       {:tags [:base :iterative]}
-      ([test f] (while test f same))
+      ([test f] (repeat-while test f same))
       ([test f after]
        (sf_ (let [nxt (upd _ f)]
               (if (not-empty (upd nxt test))

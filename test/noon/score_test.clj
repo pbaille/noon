@@ -213,36 +213,36 @@
 
     (is (= (E0> s/t3 :pitch)
            (E0> s/s1 s/t3 :pitch)
-           {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 3}}))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 3}}))
 
     (is (= (E0> s/t3- :pitch)
-           {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t -3}}))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t -3}}))
 
     (is (= (E0> s/s2 :pitch)
            (E0> s/d1 s/c1 s/s2 :pitch)
-           {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2}}))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2}}))
 
     (is (= (E0> s/s2- :pitch)
-           {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s -2}}))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s -2}}))
 
     (is (= (E0> s/d1 :pitch)
            (E0> s/c1 s/d1 :pitch)
-           {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1}}))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1}}))
 
     (is (= (E0> s/d1- :pitch)
-           {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d -1}}))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d -1}}))
 
     (is (= (E0> s/c1 :pitch)
-           {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 1}}))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 1}}))
 
     (is (= (E0> s/c1- :pitch)
-           {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c -1}}))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c -1}}))
 
     (is (= (E0> s/c1- s/o1 :pitch)
-           {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d 0, :c -1}}))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d 0, :c -1}}))
 
     (is (= (E0> s/s1- s/d2 s/o2- :pitch)
-           {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t -2, :s -1, :d 2}}))))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t -2, :s -1, :d 2}}))))
 
 (deftest score
 
@@ -278,12 +278,12 @@
            2))
 
     (is (= (s/score-bounds S0 :position)
-           [{:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}
-            {:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}]))
+           [{:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}
+            {:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}]))
 
     (is (= (s/score-bounds (s/mk (s/cat s/s0 s/s2 s/s4)) :position)
-           [{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
-            {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 4}}, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}]))
+           [{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
+            {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 4}}, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}]))
 
     (is (= (s/score-origin S0)
            0))
@@ -404,14 +404,14 @@
            (s/mk (s/cat [s/s0 s/d1 s/c1]
                         [s/s1 s/d1 s/c1]
                         [s/s2 s/d1 s/c1]))
-           #{{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1, :c 1}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
-             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 1, :c 1}}, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}
-             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 1, :c 1}}, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}}))
+           #{{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1, :c 1}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
+             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 1, :c 1}}, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}
+             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 1, :c 1}}, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}}))
 
     (is (= (s/mk (s/cat s/s1 [s/chan2 s/s3]))
            (s/concat-score (s/mk s/s1) (s/mk s/chan2 s/s3))
-           #{{:patch [0 4], :channel 2, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 3}}, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}
-             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}}))
+           #{{:patch [0 4], :channel 2, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 3}}, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}
+             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}}))
 
     (is (= (s/mk (s/cat> s/d1 s/d1 s/d1))
            (s/mk (s/cat s/d1 s/d2 s/d3))))

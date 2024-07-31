@@ -79,7 +79,7 @@ A score is a collection of events, represented using a clojure set.
    :duration 1,
    :pitch
    {:scale [0 2 4 5 7 9 11],
-    :struct [0 2 4],
+    :structure [0 2 4],
     :origin {:d 35, :c 60},
     :position {:t 0, :s 0, :d 0, :c 0}},
    :velocity 80,
@@ -1072,7 +1072,7 @@ The harmonic context can be found under the :pitch key of any event.
 (=
  (:pitch DEFAULT_EVENT)
  {:scale [0 2 4 5 7 9 11],
-  :struct [0 2 4],
+  :structure [0 2 4],
   :origin {:d 35, :c 60},
   :position {:t 0, :s 0, :d 0, :c 0}})
 #+end_src
@@ -1143,16 +1143,16 @@ noon.constants/modes ; modes full list
 (mk harmonic-minor) ; sets scale to harmonic-minor
 #+end_src
 
-***** struct
+***** structure
 
 By default we use the triad structure (tonic, third, fifth), but it can be changed. Some common structures are predefined and available by name.
 
 #+begin_src clojure :pp
-noon.constants/structs ; full struct list
+noon.constants/structures ; full structure list
 #+end_src
 
 #+begin_src clojure :pp
-(mk (struct :tetrad)) ; sets structure to tetrad
+(mk (structure :tetrad)) ; sets structure to tetrad
 #+end_src
 
 #+begin_src clojure :pp
@@ -1635,7 +1635,7 @@ The =simple-line= function is built on top of the more general function =noon.li
  {:description
   "another way to build a melodic line from a bunch of randomly chosen transformations."}
  (patch :acoustic-guitar-nylon)
- (while
+ (repeat-while
   (within-time-bounds? 0 24)
   (append
    [start-from-last
@@ -2150,7 +2150,7 @@ It works on any voicings.
 
 #+begin_src clojure :proll
 (play
- (struct :tetrad)
+ (structure :tetrad)
  (cat I VI II V)
  (chans
   [(patch :acoustic-bass) C-2 ($ [t-round (tup _ s2-)])]

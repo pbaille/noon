@@ -115,9 +115,9 @@ Ocarina runs over simplistic bass and piano comping.
         [(patch :electric-piano-1) ($ (par s0 s1 s2 s3))]
         [(patch :ocarina)
          vel5
-         ($ (parts {:degree :II} (struct [0 3 4 6])
-                   {:degree :V} (struct [1 2 5 6])
-                   {:degree :I} (struct :tetrad)))
+         ($ (parts {:degree :II} (structure [0 3 4 6])
+                   {:degree :V} (structure [1 2 5 6])
+                   {:degree :I} (structure :tetrad)))
          (tupn 32 [(one-of o1 o2)
                    (! (rup (rand-nth [5 6 7]) s1))
                    (tup (maybe (m/permutation 1/4))
@@ -265,8 +265,8 @@ A rich harmonic sequence using V I progressions over tritonal modulation cycle (
 #+begin_src clojure :pp
 (play {:description "tritonal chord sequence shifts by minor thirds"}
 
-      (let [I (one-of [lydian+ (struct [2 3 4 5 6])] [melodic-minor (struct [1 2 4 5 6])])
-            V (one-of [V mixolydian (struct [1 3 4 5 6])] [V phrygian6 (struct [0 1 3 5 6])])
+      (let [I (one-of [lydian+ (structure [2 3 4 5 6])] [melodic-minor (structure [1 2 4 5 6])])
+            V (one-of [V mixolydian (structure [1 3 4 5 6])] [V phrygian6 (structure [0 1 3 5 6])])
             [B G Eb] (map root [:B :G :Eb])]
 
         [(tup [B V] [B I] [G V] [G I] [Eb V dur2] [Eb I dur2])
@@ -343,7 +343,7 @@ One more shredding experiment
 (def CYCLIC_EPISODE
   (let [a1 [dorian (rep 4 (transpose c3))]
         a2 [dorian (rep 4 (transpose c3-))]
-        b (cat [IV dorian] [V superlocrian (struct [2 3 5 6])])
+        b (cat [IV dorian] [V superlocrian (structure [2 3 5 6])])
         c (cat [V mixolydian sus47] [V phrygian sus27])
         d [dorian (append (transpose c3))]]
     [tetrad
@@ -365,7 +365,7 @@ One more shredding experiment
                    (any-that (within-pitch-bounds? :C0 :C3)
                              d1 d1- d3 d3- d4 d4-))
 
-      lead2 [(noon.score/while (within-time-bounds? 0 (* n-bars 10))
+      lead2 [(repeat-while (within-time-bounds? 0 (* n-bars 10))
                (append [start-from-last
                         (any-that (within-pitch-bounds? :C-1 :C2)
                                   (rep 3 d3 :skip-first)

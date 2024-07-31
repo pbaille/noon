@@ -61,7 +61,7 @@
 
     (is (= (h/hc)
            {:scale [0 2 4 5 7 9 11],
-            :struct [0 2 4],
+            :structure [0 2 4],
             :origin {:d 35, :c 60},
             :position {:t 0, :s 0, :d 0, :c 0}})))
 
@@ -75,7 +75,7 @@
     (is (= ((h/position 0 0 3)
             (h/hc))
            {:scale [0 2 4 5 7 9 11],
-            :struct [0 2 4],
+            :structure [0 2 4],
             :origin {:d 35, :c 60},
             :position {:t 0, :s 0, :d 3}}))
     (is (h/diatonic? ((h/position 0 0 3) (h/hc))))
@@ -84,7 +84,7 @@
     (is (= ((h/position 0 1)
             (h/hc))
            {:scale [0 2 4 5 7 9 11],
-            :struct [0 2 4],
+            :structure [0 2 4],
             :origin {:d 35, :c 60},
             :position {:t 0, :s 1}}))
     (is (h/structural? ((h/position 0 1) (h/hc))))
@@ -94,45 +94,45 @@
 
     (testing "chromatic"
       (is (= (h/c->d ((h/position 0 0 0 3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1, :c 1}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1, :c 1}}))
       (is (= (h/c->d ((h/position 0 0 0 -3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d -2, :c 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d -2, :c 0}}))
       (is (= (h/c->s ((h/position 0 0 0 7) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 0, :c 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 0, :c 0}}))
       (is (= (h/c->s ((h/position 0 0 0 6) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 1, :c 1}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 1, :c 1}}))
       (is (= (h/c->t ((h/position 0 0 0 13) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d 0, :c 1}})))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d 0, :c 1}})))
 
     (testing "diatonic"
       (is (= (h/d->s ((h/position 0 0 3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 1}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 1}}))
       (is (= (h/d->t ((h/position 0 0 8) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d 1}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d 1}}))
       (is (= (h/d->c ((h/position 0 0 -3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0 :c -5}})))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0 :c -5}})))
 
     (testing "structural"
       (is (= (h/s->c ((h/position 0 3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0 :d 0 :c 12}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0 :d 0 :c 12}}))
       (is (= (h/s->d ((h/position 0 3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0 :d 7}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0 :d 7}}))
       (is (= (h/s->t ((h/position 0 3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0}})))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0}})))
 
     (testing "tonic"
       (is (= (h/t->s ((h/position 1) (h/hc)))
              (h/down-to-layer :s ((h/position 1) (h/hc)))
              (h/down-to-layer :structural ((h/position 1) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0 :s 3}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0 :s 3}}))
       (is (= (h/t->d ((h/position 1) (h/hc)))
              (h/down-to-layer :d ((h/position 1) (h/hc)))
              (h/down-to-layer :diatonic ((h/position 1) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0 :s 0 :d 7}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0 :s 0 :d 7}}))
       (is (= (h/t->c ((h/position 1) (h/hc)))
              (h/down-to-layer :c ((h/position 1) (h/hc)))
              (h/down-to-layer :chromatic ((h/position 1) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0 :s 0 :d 0 :c 12}})))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0 :s 0 :d 0 :c 12}})))
 
     (testing "layer idx"
       (is (= (h/layer-idx :s (h/upd (h/hc) (h/position 3 2 1 0)))
@@ -170,61 +170,61 @@
 
       (is (= (h/upd (h/hc)
                     (h/pitch->position (h/hc) (h/hc->pitch ((h/position 0 0 1 1) (h/hc)))))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1, :c 1}})))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1, :c 1}})))
 
     (testing "intervals"
       (is (= (h/t-trim ((h/position 0 0 1 12) (h/hc)))
              (h/t-trim ((h/position 1 1 1 1) (h/hc)))
              (h/t-trim ((h/position 0 3 1 1) (h/hc)))
              (h/t-trim ((h/position 0 0 6 1) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 1}}))
       (is (= (h/s-trim ((h/position 0 0 1 7) (h/hc)))
              (h/s-trim ((h/position 0 0 2 6) (h/hc)))
              (h/s-trim ((h/position 0 1 1 3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2}}))
       (is (= (h/d-trim ((h/position 0 0 0 7) (h/hc)))
              (h/d-trim ((h/position 0 0 1 6) (h/hc)))
              (h/d-trim ((h/position 0 0 2 3) (h/hc)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 4}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 4}}))
       (is (= (h/upd (h/hc)
                     (h/t-step 3))
              (h/upd ((h/position 0 2 1 1) (h/hc))
                     (h/t-step 3))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 3}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 3}}))
       (is (= (h/upd ((h/position 0 2 1 1) (h/hc))
                     (h/t-shift 3))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 3, :s 2, :d 1, :c 1}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 3, :s 2, :d 1, :c 1}}))
       (is (= (h/upd ((h/position 0 2 1 1) (h/hc))
                     (h/t-shift 3))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 3, :s 2, :d 1, :c 1}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 3, :s 2, :d 1, :c 1}}))
       (is (= (h/upd (h/hc)
                     (h/s-step 3))
              (h/upd ((h/position 0 0 1 1) (h/hc))
                     (h/s-step 3))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 3}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 3}}))
       (is (= (h/upd ((h/position 0 2 1 1) (h/hc))
                     (h/s-shift 3))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 5, :d 1, :c 1}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 5, :d 1, :c 1}}))
       (is (= (h/upd ((h/position 0) (h/hc))
                     (h/s-shift 3))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0}}))
       (is (= (h/upd ((h/position 0) (h/hc))
                     (h/s-shift 3 :forced))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 3}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 3}}))
       (is (= (h/upd (h/hc)
                     (h/d-step 3))
              (h/upd ((h/position 0 0 0 1) (h/hc))
                     (h/d-step 3))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 3}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 3}}))
       (is (= (h/upd ((h/position 0 2 1 1) (h/hc))
                     (h/d-shift 3))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 4, :c 1}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 4, :c 1}}))
       (is (= (h/upd ((h/position 0) (h/hc))
                     (h/d-shift 3))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0}}))
       (is (= (h/upd ((h/position 0) (h/hc))
                     (h/d-shift 3 :forced))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :d 3}})))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :d 3}})))
 
     (testing "position rounding"
 
@@ -266,12 +266,12 @@
       (is (= (h/upd (h/hc)
                     (h/d-position 10)
                     h/normalise)
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 1, :d 1, :c 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 1, :d 1, :c 0}}))
 
       (is (= (h/upd (h/hc)
                     (h/position 1 4 3 -2)
                     h/normalise)
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 3, :s -1, :d 0, :c 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 3, :s -1, :d 0, :c 0}}))
 
       (is (= (h/hc->chromatic-value
               (h/upd (h/hc)
@@ -295,7 +295,7 @@
                     (h/origin 64))
              (h/upd (h/hc)
                     (h/origin {:c 64 :d 37}))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
       (is (thrown? Exception (h/upd (h/hc)
                                     (h/origin "pouet"))))
@@ -305,7 +305,7 @@
                     (h/scale 'dorian))
              (h/upd (h/hc)
                     (h/scale "dorian"))
-             {:scale [0 2 3 5 7 9 10], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}))
+             {:scale [0 2 3 5 7 9 10], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
       (is (thrown? Exception (h/upd (h/hc)
                                     (h/scale "durian"))))
@@ -316,19 +316,19 @@
                     (h/scale 'dorian))
              (h/upd (h/hc)
                     (h/scale "dorian"))
-             {:scale [0 2 3 5 7 9 10], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}))
+             {:scale [0 2 3 5 7 9 10], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
       (is (= (h/upd (h/hc)
-                    (h/struct :tetrad))
+                    (h/structure :tetrad))
              (h/upd (h/hc)
-                    (h/struct "tetrad"))
+                    (h/structure "tetrad"))
              (h/upd (h/hc)
-                    (h/struct 'tetrad))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4 6], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}))
+                    (h/structure 'tetrad))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4 6], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
       (is (= (h/upd (h/hc)
                     (h/repitch :E0))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 0, :c 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 0, :c 0}}))
 
       (is (= (h/upd (h/hc)
                     (h/position 0 1)
@@ -336,21 +336,21 @@
              (h/upd (h/hc)
                     (h/position 0 1)
                     (h/rescale :dorian))
-             {:scale [0 2 3 5 7 9 10], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 0, :c 1}})))
+             {:scale [0 2 3 5 7 9 10], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 0, :c 1}})))
 
     (testing "update"
 
       (is (= (h/upd (h/hc)
                     (fn [ctx] (assoc ctx :what :ever)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}, :what :ever}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}, :what :ever}))
 
       (is (= (h/upd (h/hc)
                     (h/scale :phrygian))
-             {:scale [0 1 3 5 7 8 10], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}))
+             {:scale [0 1 3 5 7 8 10], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
       (is (= (h/upd ((h/position 0 2 1 0) (h/hc))
                     (h/hc))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s -1, :d 1, :c 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s -1, :d 1, :c 0}}))
 
       (is (= (h/upd (h/hc) nil) (h/hc)))
 
@@ -369,23 +369,23 @@
                     (h/root 4))
              (h/upd (h/hc)
                     (h/root {:c 4 :d 2}))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
       (is (= (h/upd (h/hc)
                     (h/degree 1))
-             {:scale [0 2 3 5 7 9 10], :struct [0 2 4], :origin {:d 36, :c 62}, :position {:t 0, :s 0, :d 0, :c 0}}))
+             {:scale [0 2 3 5 7 9 10], :structure [0 2 4], :origin {:d 36, :c 62}, :position {:t 0, :s 0, :d 0, :c 0}}))
       (is (= (h/upd (h/hc)
                     (h/degree -1))
-             {:scale [0 1 3 5 6 8 10], :struct [0 2 4], :origin {:d 34, :c 59}, :position {:t 0, :s 0, :d 0, :c 0}}))
+             {:scale [0 1 3 5 6 8 10], :structure [0 2 4], :origin {:d 34, :c 59}, :position {:t 0, :s 0, :d 0, :c 0}}))
       (is (= (h/upd (h/hc)
                     (h/inversion -1))
-             {:scale [0 2 4 5 7 9 10], :struct [0 3 5], :origin {:d 32, :c 55}, :position {:t 0, :s 0, :d 0, :c 0}}))
+             {:scale [0 2 4 5 7 9 10], :structure [0 3 5], :origin {:d 32, :c 55}, :position {:t 0, :s 0, :d 0, :c 0}}))
       (is (= (h/upd (h/hc)
                     (h/inversion 1))
-             {:scale [0 1 3 5 7 8 10], :struct [0 2 5], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
+             {:scale [0 1 3 5 7 8 10], :structure [0 2 5], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
       (is (= (h/upd (h/hc)
                     (h/redegree 2))
-             {:scale [0 1 3 5 7 8 10], :struct [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s -1, :d 1, :c 0}}))
+             {:scale [0 1 3 5 7 8 10], :structure [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s -1, :d 1, :c 0}}))
       (is (= (h/hc->pitch (h/upd (h/hc)
                                  (h/redegree 2)))
              (h/hc->pitch (h/hc))))
@@ -395,7 +395,7 @@
                (h/hc->pitch hc))))
       (is (= (h/upd (h/hc)
                     (h/transpose (h/inversion 1)))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
       (is (= (h/upd (h/hc)
                     (h/position 0 1 1 0)
                     (h/hc+ ((h/position 0 1 1 0) (h/hc))))
@@ -403,21 +403,21 @@
                     (h/position 0 1 1 0)
                     (h/scale :dorian)
                     (h/hc+ ((h/position 0 1 1 0) (h/hc))))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d -1, :c 0}}))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d -1, :c 0}}))
 
       (is (= (h/align :diatonic
                       (h/upd (h/hc) (h/scale :lydian) (h/root :E))
                       (h/upd (h/hc) (h/scale :dorian) (h/root :D)))
-             {:scale [0 2 3 5 7 9 10], :struct [0 2 4], :origin {:d 36, :c 62}, :position {:t 0, :s 1, :d -1}}))
+             {:scale [0 2 3 5 7 9 10], :structure [0 2 4], :origin {:d 36, :c 62}, :position {:t 0, :s 1, :d -1}}))
 
       (is (= (h/align :diatonic
                       (h/upd (h/hc) (h/scale :dorian) (h/root :D))
                       (h/upd (h/hc) (h/scale :lydian) (h/root :E)))
-             {:scale [0 2 4 6 7 9 11], :struct [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d -1}}))
+             {:scale [0 2 4 6 7 9 11], :structure [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d -1}}))
 
       (is (= (h/upd (h/hc)
                     (h/mirror :G0))
-             {:scale [0 2 4 5 7 9 11], :struct [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d 1, :c 0}})))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 1, :s 0, :d 1, :c 0}})))
 
     #_(deftest "passing TODO")
 

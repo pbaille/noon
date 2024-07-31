@@ -1,6 +1,6 @@
 (ns noon.tries.try1
   (:use noon.score)
-  (:refer-clojure :exclude [cat struct])
+  (:refer-clojure :exclude [cat])
   (:require [noon.lib.melody :as m]
             [noon.lib.harmony :as h]
             [noon.lib.rythmn :as r]
@@ -31,7 +31,7 @@
                             [(patch :vibraphone) vel5 o1 (tupn 6 [(one-of* chord-tones) (maybe o1) (maybe (tup d1- d0))])])
                      (maybe rev)])))
 
-         (def barry-harris2 [barry-harris (struct [0 2 4 7])])
+         (def barry-harris2 [barry-harris (structure [0 2 4 7])])
 
          (play barry-harris2
                (cat I VI VII IV)
@@ -67,12 +67,12 @@
 
 (comment :one-five
          (play dur3
-               (cat [I (scale :melm) (struct :tetrad)]
-                    [V (scale :alt) (struct :sus47)])
+               (cat [I (scale :melm) (structure :tetrad)]
+                    [V (scale :alt) (structure :sus47)])
                (append s1-)
                (append [(transpose c4-)
                         (parts (scale :melm) (scale :lydian)
-                               (scale :alt) [(scale :mixolydianb2) (struct [1 5 9 10])])])
+                               (scale :alt) [(scale :mixolydianb2) (structure [1 5 9 10])])])
                (dup 2)
                (h/align-contexts :s)
                (let [below (one-of d1- s1-)
@@ -123,10 +123,10 @@
                                (m/permutation :rand {:grade 2})
                                (m/contour :similar {:delta 0 :layer :d}))))
 
-         (defn rand-struct [size]
+         (defn rand-structure [size]
            (ef_ (let [degree-count (-> _ :pitch :scale count)
                       degrees (first (mv/consume size (mv/mix* (range degree-count))))]
-                  (upd #{_} (struct (vec (sort degrees)))))))
+                  (upd #{_} (structure (vec (sort degrees)))))))
 
          (def rand-degree
            (ef_ (let [scale-size (-> _ :pitch :scale count)
@@ -139,7 +139,7 @@
                   (upd #{_} (tup* (mapv d-step degrees))))))
 
          (play (symetric-modes :half-whole)
-               (rand-struct 3)
+               (rand-structure 3)
                (rep 3 rand-degree)
                ($ (chans [vel4 h/simple-chord]
                          [(patch :music-box) o1 (rand-tup 7) ($ (one-of vel0 vel4 vel6 vel7))]))
@@ -211,7 +211,7 @@
                   :b (r/gen-tup 8 3)
                   :c (r/gen-tup 12 5)}
                m {:a (m/gen-tup :size 8)}
-               h {:a [(scale :melm) (struct :tetrad) (cat I [IV dorian] [V (scale :alt) (struct :sus47)] I)]}]
+               h {:a [(scale :melm) (structure :tetrad) (cat I [IV dorian] [V (scale :alt) (structure :sus47)] I)]}]
            (play dur2
                  (h :a)
                  (h/align-contexts :d)
@@ -298,10 +298,10 @@
                          [(patch :ocarina) (shuftup s0 s2 s4 s6) (shuftup d0 d3 d6) (tup _ rev)]
                          [(patch :acoustic-bass) t2-]))
                (h/grid dur3 tetrad
-                       (cat [I lydian (struct [2 3 5 6])]
-                            [IIb dorian (struct [1 2 3 6])]
-                            [V mixolydian (struct [2 3 5 6])]
-                            [Vb melodic-minor (struct [1 2 5 6])])
+                       (cat [I lydian (structure [2 3 5 6])]
+                            [IIb dorian (structure [1 2 3 6])]
+                            [V mixolydian (structure [2 3 5 6])]
+                            [Vb melodic-minor (structure [1 2 5 6])])
                        (rep 6 (transpose c2-))
                        (dup 2)
                        (h/align-contexts :d :static)))
@@ -321,7 +321,7 @@
                             [IIb dorian]
                             [V mixolydian]
                             [Vb melodic-minor])
-                       ($ (h/modal-struct 4))
+                       ($ (h/modal-structure 4))
                        (rup 4 (transpose c2-))
                        (dupt 2)
                        (h/align-contexts :d :static))
@@ -329,10 +329,10 @@
 
          (play (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
                       [(patch :acoustic-bass) t2-])
-               (h/grid (cat [I lydian (struct [2 3 5 6])]
-                            [IIb dorian (struct [1 2 3 6])]
-                            [V mixolydian (struct [2 3 5 6])]
-                            [Vb melodic-minor (struct [1 2 5 6])])
+               (h/grid (cat [I lydian (structure [2 3 5 6])]
+                            [IIb dorian (structure [1 2 3 6])]
+                            [V mixolydian (structure [2 3 5 6])]
+                            [Vb melodic-minor (structure [1 2 5 6])])
                        (rep 2 (transpose c2-))
                        (dup 2)
                        (h/align-contexts :d :static)
@@ -348,10 +348,10 @@
                        ($ (par s0 s1 s2 s3))]
                       [(patch :acoustic-bass) t2-])
                (h/grid tetrad
-                       (cat [I lydian (struct [2 3 5 6])]
-                            [IIb dorian (struct [1 2 3 6])]
-                            [V mixolydian (struct [2 3 5 6])]
-                            [Vb melodic-minor (struct [1 2 5 6])])
+                       (cat [I lydian (structure [2 3 5 6])]
+                            [IIb dorian (structure [1 2 3 6])]
+                            [V mixolydian (structure [2 3 5 6])]
+                            [Vb melodic-minor (structure [1 2 5 6])])
                        (rep 2 (transpose c2-))
                        (dup 2)
                        (h/align-contexts :d :static)
@@ -363,7 +363,7 @@
 (comment :zip-rythmn
 
          (play lydianb7
-               (h/modal-struct 5)
+               (h/modal-structure 5)
                (chans
                 [(patch :vibraphone)
                  (shufcat s0 s1 s2 s3 s4)
@@ -779,7 +779,7 @@
                  (cat _ [rev left])
                  (cat _ [right right])
                  (h/align-contexts :d)
-                 (chans [(patch :aahs) (struct [1 2 5 6]) ($ (par s0 s1 s2 s3))]
+                 (chans [(patch :aahs) (structure [1 2 5 6]) ($ (par s0 s1 s2 s3))]
                         (let [tup1 (mixtup s2- s1- s0 s1 s2 s3)
                               tup2 (mixtup s2- s1- s0 s1 s2 s3)]
                           [(patch :ocarina) o1 add2 ($ [(one-of tup1 tup2) (maybe rev)])])
@@ -805,7 +805,7 @@
                  ;; voices
             (chans [(patch :aahs) ($ (par s0 s1 s2 s3))]
                    #_[(patch :aahs) t-round ($ (par d0 d3 d6 d9)) #_h/voice-led]
-                   (let [tup1 [(struct [2 3 4 6]) (mixtup s3- s2- s1- s0 s1 s2 s3 s4)]
+                   (let [tup1 [(structure [2 3 4 6]) (mixtup s3- s2- s1- s0 s1 s2 s3 s4)]
                          tup2 (mixtup d3- d2- d1- d0 d1 d2 d3 d4)]
                      [(patch :ocarina) o1 ($ [(one-of tup1 tup2) (maybe rev)])])
                    [(patch :acoustic-bass) o2-
@@ -827,7 +827,7 @@
          (stop)
          (let [rand-color (fn [] (let [k (rand-nth [:lydian+ :lydian :ionian :dorian :melodic-minor :mixolydian :phrygian6])]
                                    [(scale k)
-                                    (h/modal-struct 4)]))]
+                                    (h/modal-structure 4)]))]
            (play dur2
                  (cat* (map (comp transpose c-step) (shuffle (range 12))))
                  ($ (! (rand-color)))
@@ -862,8 +862,8 @@
                                                interval (mod (- max-pitch-val min-pitch-val) 12)
                                                [mode-kw prio] (rand-nth (possible-modes interval modal-lvl (dec chord-size)))
                                                partial-scale (cons 0 (take (dec chord-size) prio))
-                                               struct' (nc/partial-scale->struct mode-kw partial-scale)
-                                               closed (mk (dissoc (first score) :pitch) (origin min-pitch-val) (scale mode-kw) (struct struct') (par* (map s-step (range chord-size))))
+                                               structure' (nc/partial-scale->structure mode-kw partial-scale)
+                                               closed (mk (dissoc (first score) :pitch) (origin min-pitch-val) (scale mode-kw) (structure structure') (par* (map s-step (range chord-size))))
                                                drops (filter (fn [drop] (= max-pitch-val (last (h/pitch-values drop)))) (h/drops closed))]
                                            (rand-nth drops))))
                ($by :position (chans _
@@ -1043,12 +1043,12 @@
 
          (defn connect-with2 [f]
            (m/$connect (fn [from to]
-                         (let [{:keys [scale struct origin]} (:pitch from)
+                         (let [{:keys [scale structure origin]} (:pitch from)
                                target-pitch (:pitch to)]
                            (upd #{(assoc from :position 0)}
                                 [(cat _ [(ef_ (assoc _ :pitch target-pitch))
                                          (rescale scale)
-                                         (restruct struct)
+                                         (restructure structure)
                                          (reorigin origin)
                                          f])
                                  (adjust from)])))))
@@ -1236,22 +1236,22 @@
 
          (defn complementarity-tree
 
-           ([struct-size sequence-size]
-            (let [elements (range struct-size)
-                  q (quot sequence-size struct-size)
-                  r (rem sequence-size struct-size)
+           ([structure-size sequence-size]
+            (let [elements (range structure-size)
+                  q (quot sequence-size structure-size)
+                  r (rem sequence-size structure-size)
                   base (apply concat (repeat q elements))
                   partials (filter (fn [s] (= r (count s))) (comb/subsets elements))
                   permutations (mapcat (fn [p] (comb/permutations (concat base p))) partials)]
-              (complementarity-tree [] struct-size (set permutations))))
+              (complementarity-tree [] structure-size (set permutations))))
 
-           ([at struct-size perms]
+           ([at structure-size perms]
             (if-let [perms
                      (some-> (if (seq at)
                                (filter (fn [p']
                                          (every? (fn [xs]
                                                    (apply distinct?
-                                                          (map #(mod % struct-size) xs)))
+                                                          (map #(mod % structure-size) xs)))
                                                  (apply map vector p' at)))
                                        perms)
                                perms)
@@ -1262,7 +1262,7 @@
                           [child
                            (complementarity-tree
                             (conj at child)
-                            struct-size
+                            structure-size
                             (disj perms child))]))
                    (into {})))))
 

@@ -20,8 +20,8 @@
 
   (play vel2 dur2
         (cat* (map reroot [:C :Eb :F# :A]))
-        ($ (tup (rebase V (struct :sus47))
-                (rebase (scale :lydian) (struct [0 2 3 6]))))
+        ($ (tup (rebase V (structure :sus47))
+                (rebase (scale :lydian) (structure [0 2 3 6]))))
         (chans
          [($ (par s0 s1 s2 s3)) h/voice-led]
          ($ [vel0 o1 (tupn> 8 (one-of d1 d1- d3 d3-))])
@@ -205,7 +205,7 @@
          (play
           dorian
           dur:7
-          (while (within-time-bounds? 0 8)
+          (repeat-while (within-time-bounds? 0 8)
             (append
              (any-that (within-pitch-bounds? :C0 :C3)
                        [(take-lst 1) (one-of d1- d1)]

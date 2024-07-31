@@ -235,42 +235,42 @@
                first
                key))
 
-    (defn partial-scale->struct [mode-kw partial-scale]
+    (defn partial-scale->structure [mode-kw partial-scale]
       (vec (sort (map (fn [sd] (u/index-of (modes mode-kw) sd))
                       partial-scale)))))
 
-(def structs {:triad [0 2 4]
-              :sus2 [0 1 4]
-              :sus4 [0 3 4]
-              :sus6 [0 4 5]
-              :sus7 [0 4 6]
-              :tetrad [0 2 4 6]
-              :seventh [0 2 4 6]
-              :add2 [0 1 2 4]
-              :add4 [0 2 3 4]
-              :sixth [0 2 4 5]
-              :sus27 [0 1 4 6]
-              :sus47 [0 3 4 6]
-              :sus67 [0 4 5 6]})
+(def structures {:triad [0 2 4]
+                 :sus2 [0 1 4]
+                 :sus4 [0 3 4]
+                 :sus6 [0 4 5]
+                 :sus7 [0 4 6]
+                 :tetrad [0 2 4 6]
+                 :seventh [0 2 4 6]
+                 :add2 [0 1 2 4]
+                 :add4 [0 2 3 4]
+                 :sixth [0 2 4 5]
+                 :sus27 [0 1 4 6]
+                 :sus47 [0 3 4 6]
+                 :sus67 [0 4 5 6]})
 
-(defn struct-inversions [scale struct]
+(defn structure-inversions [scale structure]
   (mapv
    (fn [idx]
-     (let [head (get struct idx)
-           based (map #(- % head) struct)]
+     (let [head (get structure idx)
+           based (map #(- % head) structure)]
        (vec (sort (map #(if (> 0 %) (+ (count scale) %) %) based)))))
-   (range (count struct))))
+   (range (count structure))))
 
-(defn get-struct
+(defn get-structure
   ([x]
-   (cond (keyword? x) (get structs x)
-         (or (symbol? x) (string? x)) (get-struct (keyword (name x)))
+   (cond (keyword? x) (get structures x)
+         (or (symbol? x) (string? x)) (get-structure (keyword (name x)))
          (sequential? x) (let [x (vec x)] (if (mode? x) x))))
   ([x scale]
-   (if-let [s (get-struct x)]
+   (if-let [s (get-structure x)]
      (if (< (last s) (count scale))
        s
-       (u/throw* "struct: " s "do not fit in scale: " scale)))))
+       (u/throw* "structure: " s "do not fit in scale: " scale)))))
 
 (defn d->c [v]
   (nth (reductions + 0 (cycle major-scale-steps))
@@ -304,18 +304,18 @@
                            (merge major-modes melodic-minor-modes)
                            (merge major-modes melodic-minor-modes harmonic-minor-modes)])
 
-    (letfn [(struct-map [modes]
+    (letfn [(structure-map [modes]
               (->> modes
                    (reduce (fn [ret [k s]]
-                             (reduce (fn [ret struct] (update ret struct (fnil conj []) k))
+                             (reduce (fn [ret structure] (update ret structure (fnil conj []) k))
                                      ret (mapcat (partial comb/combinations s) (range 1 7))))
                            {})))]
       (def lvl->partial-scale->modes
-        (mapv struct-map lvl->mode->scale)))
+        (mapv structure-map lvl->mode->scale)))
 
-    #_(lvl->struct->modes 0)
+    #_(lvl->structure->modes 0)
 
-    (defn shortest-non-ambiguous-structs
+    (defn shortest-non-ambiguous-structures
       [mode lvl]
       (->> (get lvl->partial-scale->modes lvl)
            (filter (fn [[_ ms]] (= ms [mode])))
@@ -326,36 +326,36 @@
            first
            val))
 
-    #_(shortest-non-ambiguous-structs :lydian 1)
+    #_(shortest-non-ambiguous-structures :lydian 1)
 
     (defn sort-partial-scale-by-degree-priority
       [s lvl]
       (if (= 1 (count s))
         (vec s)
-        (let [substructs
+        (let [substructures
               (->> (sort-by (fn [d] (count ((lvl->partial-scale->modes lvl) (list d)))) s)
                    (map (fn [d] (sort (seq (disj (set s) d)))))
                    (reverse))
 
-              less-ambiguous-substructs
-              (->> (map (partial find (lvl->partial-scale->modes lvl)) substructs)
+              less-ambiguous-substructures
+              (->> (map (partial find (lvl->partial-scale->modes lvl)) substructures)
                    (group-by (fn [[_ ms]] (count ms)))
                    (seq)
                    (sort-by key)
                    (first)
                    (val))
 
-              substruct
-              (key (first less-ambiguous-substructs))]
+              substructure
+              (key (first less-ambiguous-substructures))]
 
-          (conj (sort-partial-scale-by-degree-priority substruct lvl)
-                (first (remove (set substruct) s))))))
+          (conj (sort-partial-scale-by-degree-priority substructure lvl)
+                (first (remove (set substructure) s))))))
 
     #_(sort-partial-scale-by-degree-priority (modes :lydian) 0)
 
     (def lvl->mode->degree-priority
       (vec (map-indexed (fn [lvl modes]
-                          (map (fn [[m struct]] [m (sort-partial-scale-by-degree-priority struct lvl)])
+                          (map (fn [[m structure]] [m (sort-partial-scale-by-degree-priority structure lvl)])
                                modes))
                         lvl->mode->scale)))
 

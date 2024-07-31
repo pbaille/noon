@@ -330,20 +330,20 @@
               (harmonic-zip n/same)
               (n/upd _))))
 
-(defn modal-struct
-  "Build an event update that change the harmonic struct of the received event to its N (`size`) most characteristic degrees.
+(defn modal-structure
+  "Build an event update that change the harmonic structure of the received event to its N (`size`) most characteristic degrees.
    The table of degree priority for known modes is available as `noon.constants/degree-priority`."
   {:tags [:harmonic :chord]}
   [size]
   (n/ef_ (if-let [s (some-> _ :pitch :scale nc/scale->mode-keyword nc/degree-priority)]
-           (update _ :pitch  h/upd (h/struct (vec (sort (take size s)))))
+           (update _ :pitch  h/upd (h/structure (vec (sort (take size s)))))
            _)))
 
 (def ^{:doc "Build a structural chord on top of received event."
        :tags [:event-update :chord :harmonic]}
   simple-chord
-  (n/ef_ (let [struct-size (-> _ :pitch :struct count)]
-           (n/upd #{_} (n/par* (mapv n/s-step (range struct-size)))))))
+  (n/ef_ (let [structure-size (-> _ :pitch :structure count)]
+           (n/upd #{_} (n/par* (mapv n/s-step (range structure-size)))))))
 
 (comment :tries
 

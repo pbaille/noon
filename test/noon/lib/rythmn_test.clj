@@ -7,7 +7,8 @@
 
 (deftest main
   (testing "various"
-    (is (t/frozen dur4
+    (is (t/frozen :example1
+                  dur4
                   dorian
                   (chans [(patch :vibraphone) vel4 (par> d3 d3 d3)]
                          [(patch :taiko-drum) (r/gen-tup 9 3 :durations [1 2 3]) ($ (one-of vel4 vel3) (maybe d3 d3-))]
@@ -61,7 +62,7 @@
                     (r/rotation :rand-sub 5)])
                   (dup 4)))
 
-    (is (t/frozen {:description "rythmic permutation demo"}
+    (is (t/frozen :rythmic-permutation-demo
                   (chans
                 ;; beat
                    [(patch :taiko-drum) vel5 (dup 4)]

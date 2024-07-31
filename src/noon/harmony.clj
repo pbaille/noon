@@ -1,5 +1,4 @@
 (ns noon.harmony
-  (:refer-clojure :exclude [struct])
   (:require [noon.utils.misc :as u :refer [t t?]]
             [noon.constants :as constants]))
 
@@ -82,7 +81,7 @@
 
     (def DEFAULT_HARMONIC_CONTEXT
       {:scale [0 2 4 5 7 9 11]
-       :struct [0 2 4]
+       :structure [0 2 4]
        :origin {:d 35 :c 60}
        :position POSITION_ZERO})
 
@@ -104,10 +103,10 @@
 
     (defn hc-seqs
       "Build bidirectional seqs based on the given given harmonic context,
-       based on its `:scale` and `:struct` values."
-      [{:keys [scale struct]}]
+       based on its `:scale` and `:structure` values."
+      [{:keys [scale structure]}]
       {:scale (bds scale 12)
-       :struct (bds struct (count scale))})
+       :structure (bds structure (count scale))})
 
     (do :position
 
@@ -170,8 +169,8 @@
               (if-not c
                 ctx
                 (let [d (or d 0)
-                      {:keys [struct scale]} (hc-seqs ctx)
-                      ds (if s (bds-shift scale (bds-get struct s)) scale)
+                      {:keys [structure scale]} (hc-seqs ctx)
+                      ds (if s (bds-shift scale (bds-get structure s)) scale)
                       dv (bds-get ds d)
                       [d c] (bds-idx ds (+ dv c))]
                   (update ctx :position merge {:d d :c c}))))
@@ -182,9 +181,9 @@
               (if-not d
                 ctx
                 (let [s (or s 0)
-                      {:keys [struct]} (hc-seqs ctx)
-                      sv (bds-get struct s)
-                      [s d] (bds-idx struct (+ sv d))]
+                      {:keys [structure]} (hc-seqs ctx)
+                      sv (bds-get structure s)
+                      [s d] (bds-idx structure (+ sv d))]
                   (update ctx :position merge {:s s :d d}))))
 
             (defn s->t
@@ -192,9 +191,9 @@
               [{{:keys [t s]} :position :as ctx}]
               (if-not s
                 ctx
-                (let [struct-size (count (:struct ctx))
-                      tonic-delta (quot s struct-size)]
-                  (update ctx :position merge {:t (+ (or t 0) tonic-delta) :s (rem s struct-size)}))))
+                (let [structure-size (count (:structure ctx))
+                      tonic-delta (quot s structure-size)]
+                  (update ctx :position merge {:t (+ (or t 0) tonic-delta) :s (rem s structure-size)}))))
 
             (defn d->t
               "Feed as much as possible of the d value into the upward layers."
@@ -223,29 +222,29 @@
               [{:as ctx {:keys [t]} :position}]
               (if-not t
                 ctx
-                (let [struct (:struct ctx)
-                      struct-size (count struct)
-                      contains-tonic? (zero? (first struct))]
+                (let [structure (:structure ctx)
+                      structure-size (count structure)
+                      contains-tonic? (zero? (first structure))]
                   (update ctx :position
                           (fn [{:as p :keys [t]}]
 
                             (if contains-tonic?
                               (-> (assoc p :t 0)
-                                  (update :s safe-add (* struct-size t)))
+                                  (update :s safe-add (* structure-size t)))
                               (-> (assoc p :t 0)
-                                  (update :s safe-add (* struct-size t))
-                                  (update :d safe-add (- (first struct))))))))))
+                                  (update :s safe-add (* structure-size t))
+                                  (update :d safe-add (- (first structure))))))))))
 
             (defn s->d
               "Push structural offset into diatonic layer."
               [{:as ctx {:keys [s]} :position}]
               (if-not s
                 ctx
-                (let [{:keys [struct]} (hc-seqs ctx)]
+                (let [{:keys [structure]} (hc-seqs ctx)]
                   (update ctx :position
                           (fn [p]
                             (-> (assoc p :s 0)
-                                (update :d safe-add (bds-get struct s))))))))
+                                (update :d safe-add (bds-get structure s))))))))
 
             (defn d->c
               "Push diatonic offset into chromatic layer."
@@ -340,13 +339,13 @@
         (defn pitch->position
           "Turn a pitch `p` into a position according to context `ctx`."
           [ctx p]
-          (let [struct-size (count (:struct ctx))
+          (let [structure-size (count (:structure ctx))
                 {:keys [c d]} (merge-with - p (:origin ctx))
-                {:keys [struct scale]} (hc-seqs ctx)
-                [s* d*] (bds-idx struct d)
+                {:keys [structure scale]} (hc-seqs ctx)
+                [s* d*] (bds-idx structure d)
                 c* (- c (bds-get scale d))
-                t* (quot s* struct-size)
-                s** (rem s* struct-size)]
+                t* (quot s* structure-size)
+                s** (rem s* structure-size)]
             (position t* s** d* c*))))
 
     (do :intervals
@@ -558,16 +557,16 @@
             (fn [ctx] (assoc ctx :scale m))
             (u/throw* "cannot make a scale from: " x)))
 
-        (defn struct
-          "Build an update that resets the `:struct` of the received context to `x`.
+        (defn structure
+          "Build an update that resets the `:structure` of the received context to `x`.
            `x` can be either:
-           - a known struct keyword, symbol or string (e.g :triad, 'tetrad, \"sus4\" ...)
-             refer to `noon.constants/structs` for complete list.
-           - a struct vector like [0 2 4 6] (for :tetrad)"
+           - a known structure keyword, symbol or string (e.g :triad, 'tetrad, \"sus4\" ...)
+             refer to `noon.constants/structures` for complete list.
+           - a structure vector like [0 2 4 6] (for :tetrad)"
           [x]
-          (if-let [s (constants/get-struct x)]
-            (fn [ctx] (assoc ctx :struct s))
-            (u/throw* "cannot make a struct from: " x)))
+          (if-let [s (constants/get-structure x)]
+            (fn [ctx] (assoc ctx :structure s))
+            (u/throw* "cannot make a structure from: " x)))
 
         (declare upd)
 
@@ -586,8 +585,8 @@
 
         (def ^{:doc "Build an update that change the scale of the received context without changing its pitch. see `noon.harmony/scale`"}
           rescale (comp rebase scale))
-        (def ^{:doc "Build an update that change the struct of the received context without changing its pitch. see `noon.harmony/scale`"}
-          restruct (comp rebase struct))
+        (def ^{:doc "Build an update that change the structure of the received context without changing its pitch. see `noon.harmony/scale`"}
+          restructure (comp rebase structure))
         (def ^{:doc "Build an update that change the origin of the received context without changing its pitch. see `noon.harmony/scale`"}
           reorigin (comp rebase origin)))
 
@@ -642,19 +641,19 @@
     (defn inversion
       "Build an update that go to inversion `n` (potentially negative) of the received context preserving its position."
       [n]
-      (fn [{:as ctx sc :scale st :struct}]
+      (fn [{:as ctx sc :scale st :structure}]
         (let [new-origin (upd ctx (s-position n))
               new-scale (get (constants/scale-modes sc)
                              (mod (-> (s->d new-origin) :position :d) (count sc)))
-              new-struct (get (constants/struct-inversions sc st)
+              new-structure (get (constants/structure-inversions sc st)
                               (mod n (count st)))]
           (upd ctx
                (scale new-scale)
-               (struct new-struct)
+               (structure new-structure)
                (origin (hc->pitch new-origin))))))
 
     (comment
-      (constants/struct-inversions [0 2 4 5 7 9 11] [0 1 2 4])
+      (constants/structure-inversions [0 2 4 5 7 9 11] [0 1 2 4])
       (upd hc0 (inversion 2)))
 
     (def ^{:doc "Build an update that changes the root of the received context, without changing its pitch. see `noon.harmony/root`."}
@@ -682,7 +681,7 @@
 
     (defn hc+
       "Build an update that merge `ctx1` into received context.
-       :scale, :struct and :origin will be replaced, :position will be shifted by `ctx1`'s :position."
+       :scale, :structure and :origin will be replaced, :position will be shifted by `ctx1`'s :position."
       [ctx1]
       (fn [ctx2]
         (normalise
@@ -923,7 +922,7 @@
                           {:doc (str "Change the :" wrapper " of received context to " k ".")})
                         (list wrapper v)))))
 
-    (-def-wrapped struct constants/structs)
+    (-def-wrapped structure constants/structures)
 
     (-def-wrapped scale constants/modes)
 
