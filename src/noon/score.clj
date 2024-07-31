@@ -698,7 +698,7 @@
 
           (show
            (mk (chans [(patch :piano) (tup s0 s1 s2)]
-                      [(patch :vibraphone) (cat s0 s1 (par d0 d1 d2))]))))
+                      [(patch :vibraphone) (lin s0 s1 (par d0 d1 d2))]))))
 
         (defn qshow
           "Raw scores are hard to parse for a human,
@@ -847,7 +847,7 @@
       (sf_ (?reduce (fn [s x] (ms/$ s (->event-upd x)))
                     _ xs)))
 
-    (defn* cat
+    (defn* lin
       "Feed each transformations with the current score and concatenate the results."
       {:tags [:base :linear]}
       [xs]
@@ -855,8 +855,8 @@
            (concat-scores
             (map (f_ (update-score score _)) xs))))
 
-    (defn* cat>
-      "Accumulative 'cat."
+    (defn* lin>
+      "Accumulative 'lin."
       {:tags [:base :linear :accumulative]}
       [xs]
       (sf_ (loop [segments [_] xs xs]
@@ -873,20 +873,20 @@
                       {:duration (score-duration _)})))
 
     (defn* tup
-      "Like 'cat but preserve the length of the input score"
+      "Like 'lin but preserve the length of the input score"
       {:tags [:base :linear]}
-      [xs] (fit (cat* xs)))
+      [xs] (fit (lin* xs)))
 
     (defn* tup>
       "Accumulative 'tup."
       {:tags [:accumulative :linear]}
-      [xs] (fit (cat>* xs)))
+      [xs] (fit (lin>* xs)))
 
     (defn* append
-      "Like 'cat but insert the current score before."
+      "Like 'lin but insert the current score before."
       {:tags [:base :linear]}
       [xs]
-      (cat* (cons same xs)))
+      (lin* (cons same xs)))
 
     (defn* append>
       "Accumulative 'append."
@@ -907,7 +907,7 @@
       (chain* (map superpose xs)))
 
     (defn rep
-      "Iterates the given update n times over the input score and cat the results."
+      "Iterates the given update n times over the input score and lin the results."
       {:tags [:base :linear :accumulative]}
       ([n x]
        (rep n x false))
@@ -942,10 +942,10 @@
       {:tags [:base :linear :multiplicative]}
       [n f] (tup* (repeat n f)))
 
-    (defn catn
+    (defn linn
       "Duplicate n times the score resulting from applying 'f on the current score."
       {:tags [:base :linear :multiplicative]}
-      [n f] (cat* (repeat n f)))
+      [n f] (lin* (repeat n f)))
 
     (defn* parts
       "Apply updates to subscores
@@ -1198,17 +1198,17 @@
           [xs]
           (! (mixtup* xs)))
 
-        (defn* mixcat
-          "A cat that mix its elements."
+        (defn* mixlin
+          "A lin that mix its elements."
           {:tags [:linear :non-deterministic]}
           [xs]
-          (cat* (pr/shuffle xs)))
+          (lin* (pr/shuffle xs)))
 
-        (defn* shufcat
-          "A cat that shuffles its elements everytime it is used."
+        (defn* shuflin
+          "A lin that shuffles its elements everytime it is used."
           {:tags [:linear :non-deterministic]}
           [xs]
-          (! (mixcat* xs)))
+          (! (mixlin* xs)))
 
         (defn* shuf
           "Shuffles the values of the given dimensions."
@@ -1236,9 +1236,9 @@
                       (range)
                       xs)))
 
-        (defn catn>
-          "Creates a 'cat> of size n using the 'f update."
-          [n f] (cat>* (repeat n f)))
+        (defn linn>
+          "Creates a 'lin> of size n using the 'f update."
+          [n f] (lin>* (repeat n f)))
 
         (defn tupn>
           "Creates a 'tup> of size n using the 'f update."

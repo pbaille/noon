@@ -44,5 +44,5 @@
            '(use 'noon.score)
            (play dur2
                  [o1- (rup 7 d1)
-                  (cat same (k (par s0 s2 s4)))]
-                 (cat* (map patch (map (partial + 56) (range 24)))))))
+                  (lin same (k (par s0 s2 s4)))]
+                 (lin* (map patch (map (partial + 56) (range 24)))))))

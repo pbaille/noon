@@ -269,7 +269,7 @@
            1))
     (is (= (s/score-duration (s/update-score S0 s/dur2))
            2))
-    (is (= (s/score-duration (s/mk (s/cat s/s0 s/s2 s/s4)))
+    (is (= (s/score-duration (s/mk (s/lin s/s0 s/s2 s/s4)))
            3))
 
     (is (= (s/score-track-count S0)
@@ -281,7 +281,7 @@
            [{:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}
             {:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}]))
 
-    (is (= (s/score-bounds (s/mk (s/cat s/s0 s/s2 s/s4)) :position)
+    (is (= (s/score-bounds (s/mk (s/lin s/s0 s/s2 s/s4)) :position)
            [{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 4}}, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}]))
 
@@ -292,13 +292,13 @@
 
     (is (= (s/pitch-value-bounds S0)
            [60 60]))
-    (is (= (s/pitch-value-bounds (s/mk (s/cat s/s0 s/s2 s/s4)))
+    (is (= (s/pitch-value-bounds (s/mk (s/lin s/s0 s/s2 s/s4)))
            [60 76])))
 
   (testing "transformations"
 
     (is (= (s/score-duration
-            (s/scale-score (s/mk (s/cat s/s0 s/s2 s/s4))
+            (s/scale-score (s/mk (s/lin s/s0 s/s2 s/s4))
                            1/3))
            1))
     (is (= (s/score-duration
@@ -311,13 +311,13 @@
            10/3))
     (is (= (s/shift-score S0 10)
            (s/update-score S0 {:position (s/add 10)})))
-    (is (let [s0 (s/mk (s/cat s/s0 s/s2 s/s4))
+    (is (let [s0 (s/mk (s/lin s/s0 s/s2 s/s4))
               s1 (s/fit-score s0 E0)
               s2 (s/normalise-score s0)]
           (and (= s1 s2)
                (= 1 (s/score-duration s1))
                (= 0 (s/score-origin s2)))))
-    (is (let [s (s/fit-score (s/mk (s/cat s/s0 s/s2 s/s4))
+    (is (let [s (s/fit-score (s/mk (s/lin s/s0 s/s2 s/s4))
                              {:position 3 :duration 2})]
           (and (= 5 (s/score-duration s))
                (= 3 (s/score-origin s)))))
@@ -332,23 +332,23 @@
           (and (= 6 (s/score-duration s))
                (= 0 (s/score-origin s)))))
 
-    (is (= (s/reverse-score (s/mk (s/cat s/s0 s/s2 s/s4)))
-           (s/mk (s/cat s/s4 s/s2 s/s0))))
+    (is (= (s/reverse-score (s/mk (s/lin s/s0 s/s2 s/s4)))
+           (s/mk (s/lin s/s4 s/s2 s/s0))))
 
-    (is (= (s/numerify-pitches (s/mk (s/cat s/s0 s/s2 s/s4)))
+    (is (= (s/numerify-pitches (s/mk (s/lin s/s0 s/s2 s/s4)))
            #{{:patch [0 4], :channel 0, :pitch 60, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
              {:patch [0 4], :channel 0, :pitch 67, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}
              {:patch [0 4], :channel 0, :pitch 76, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}}))
 
-    (is (= (->> (s/dedupe-patches-and-control-changes (s/mk (s/cat s/s0 s/s2 s/s4)))
+    (is (= (->> (s/dedupe-patches-and-control-changes (s/mk (s/lin s/s0 s/s2 s/s4)))
                 (s/sort-score)
                 (map (juxt :position :patch :cc)))
            (list [0 [0 4] nil] [1 nil nil] [2 nil nil])))
 
-    (is (= (->> (s/mk (s/cat s/s0
+    (is (= (->> (s/mk (s/lin s/s0
                              [(s/patch :vibraphone)
                               (s/cc :volume 70)
-                              (s/cat s/s2 s/s4)]))
+                              (s/lin s/s2 s/s4)]))
                 (s/dedupe-patches-and-control-changes)
                 (s/sort-score)
                 (map (juxt :position :patch :cc)))
@@ -396,30 +396,30 @@
     (is (= (s/mk (s/par> s/d1 s/d1))
            (s/mk (s/par s/d1 s/d2))))
 
-    (is (= (s/mk (s/cat s/s0 s/s1 s/s2)
+    (is (= (s/mk (s/lin s/s0 s/s1 s/s2)
                  (s/$ s/d1))
-           (s/mk (s/cat [s/s0 s/d1] [s/s1 s/d1] [s/s2 s/d1]))))
-    (is (= (s/mk (s/cat s/s0 s/s1 s/s2)
+           (s/mk (s/lin [s/s0 s/d1] [s/s1 s/d1] [s/s2 s/d1]))))
+    (is (= (s/mk (s/lin s/s0 s/s1 s/s2)
                  (s/$ s/d1 s/c1))
-           (s/mk (s/cat [s/s0 s/d1 s/c1]
+           (s/mk (s/lin [s/s0 s/d1 s/c1]
                         [s/s1 s/d1 s/c1]
                         [s/s2 s/d1 s/c1]))
            #{{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1, :c 1}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
              {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 1, :c 1}}, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}
              {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 1, :c 1}}, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}}))
 
-    (is (= (s/mk (s/cat s/s1 [s/chan2 s/s3]))
+    (is (= (s/mk (s/lin s/s1 [s/chan2 s/s3]))
            (s/concat-score (s/mk s/s1) (s/mk s/chan2 s/s3))
            #{{:patch [0 4], :channel 2, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 3}}, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}
              {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}}))
 
-    (is (= (s/mk (s/cat> s/d1 s/d1 s/d1))
-           (s/mk (s/cat s/d1 s/d2 s/d3))))
+    (is (= (s/mk (s/lin> s/d1 s/d1 s/d1))
+           (s/mk (s/lin s/d1 s/d2 s/d3))))
 
     (is (= (s/mk (s/fit s/dur2))
            S0))
 
-    (is (= (s/mk (s/fit (s/cat s/d1 s/d2 s/d3)))
+    (is (= (s/mk (s/fit (s/lin s/d1 s/d2 s/d3)))
            (s/mk (s/tup s/d1 s/d2 s/d3))))
 
     (is (= (s/score-duration
@@ -430,16 +430,16 @@
            (s/mk (s/tup s/d1 s/d2 s/d3))))
 
     (is (= (s/mk (s/append s/d1))
-           (s/mk (s/cat s/same s/d1))))
+           (s/mk (s/lin s/same s/d1))))
 
     (is (= (s/mk (s/superpose s/d1))
            (s/mk (s/par s/same s/d1))))
 
     (is (= (s/mk (s/rep 3 s/d1))
-           (s/mk (s/cat s/same s/d1 s/d2))))
+           (s/mk (s/lin s/same s/d1 s/d2))))
 
     (is (= (s/mk (s/rep 3 s/d1 :skip-first))
-           (s/mk (s/cat s/d1 s/d2 s/d3))))
+           (s/mk (s/lin s/d1 s/d2 s/d3))))
 
     (is (= (s/mk (s/rup 3 s/d1))
            (s/mk (s/tup s/same s/d1 s/d2))))
@@ -448,7 +448,7 @@
            (s/mk (s/tup s/d1 s/d2 s/d3))))
 
     (is (= (s/mk (s/dup 3))
-           (s/mk (s/cat s/same s/same s/same))))
+           (s/mk (s/lin s/same s/same s/same))))
 
     (is (= (s/mk (s/dupt 3))
            (s/mk (s/tup s/same s/same s/same))))
@@ -456,11 +456,11 @@
     (is (= (s/mk (s/tupn 3 s/d1))
            (s/mk (s/tup s/d1 s/d1 s/d1))))
 
-    (is (= (s/mk (s/catn 3 s/d1))
-           (s/mk (s/cat s/d1 s/d1 s/d1))))
+    (is (= (s/mk (s/linn 3 s/d1))
+           (s/mk (s/lin s/d1 s/d1 s/d1))))
 
     (is (= (s/mk (s/par s/chan1 s/chan2)
                  (s/parts s/chan1 s/d1))
            (s/mk (s/par [s/chan1 s/d1] s/chan2))))
 
-    (is (tu/frozen (s/cat s/d1 s/d2 s/d3)))))
+    (is (tu/frozen (s/lin s/d1 s/d2 s/d3)))))

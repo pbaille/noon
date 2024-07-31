@@ -351,11 +351,11 @@
                                    (into score (map #(assoc % :duration (- p2 p1)) xs)))
                                  #{})))))
 
-    (u/defn* $cat
+    (u/defn* $lin
       "'mapcat for score, works only on lines."
       [xs]
       (n/sf_ (if (line? _)
                (n/concat-scores
                 (map (fn [e]
-                       ((n/cat* xs) #{(assoc e :position 0)}))
+                       ((n/lin* xs) #{(assoc e :position 0)}))
                      (n/sort-score :position _)))))))

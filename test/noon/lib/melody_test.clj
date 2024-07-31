@@ -39,9 +39,9 @@
 
     (is (t/frozen :contour2
                   dur:2
-                  (shufcat s0 s1 s2 s4)
+                  (shuflin s0 s1 s2 s4)
                   ($ (tup d0 c1- d1 d0))
-                  (cat same
+                  (lin same
                        [dur:4 vel0]
                        (m/contour :mirror {:layer :s})
                        [dur:4 vel0]
@@ -51,16 +51,16 @@
 
     (is (t/frozen :contour3
                   dur:2
-                  (cat s0 s1 s2 s3)
-                  (cat* (map (fn [i] (cat [dur:4 vel0]
+                  (lin s0 s1 s2 s3)
+                  (lin* (map (fn [i] (lin [dur:4 vel0]
                                           (m/contour :rotation {:extend [0 0] :layer :s :pick i})))
                              (range 4)))))
 
     (is (t/frozen :contour4
                   dur:2
-                  (cat s0 s1 s2 s4)
+                  (lin s0 s1 s2 s4)
                   ($ (tup d0 d3- d6-))
-                  (cat* (map (fn [i] (cat [dur:4 vel0]
+                  (lin* (map (fn [i] (lin [dur:4 vel0]
                                           (m/contour :rotation {:extend [0 0] :layer :s :pick i})))
                              (range 5))))))
 
@@ -77,10 +77,10 @@
     (is (t/frozen :gen3
                   dur:4
                   (m/simple-line 64
-                                 (one-of (catn> 4 (one-of d1- d1))
+                                 (one-of (linn> 4 (one-of d1- d1))
                                          (tup d1 d1- s0)
-                                         (cat s2 s1 s1-)
-                                         (catn> 4 (one-of s1- s1))))
+                                         (lin s2 s1 s1-)
+                                         (linn> 4 (one-of s1- s1))))
                   (chans (patch :electric-piano-1)
                          [(patch :ocarina) o1 ($ d3)])))
 
@@ -110,5 +110,5 @@
 
     (is (t/frozen :gen6
                   dur:2
-                  (catn 100 (! (m/gen-tup :c 6 6 {:bounds [-12 12]
+                  (linn 100 (! (m/gen-tup :c 6 6 {:bounds [-12 12]
                                                   :step-range [-7 7]})))))))

@@ -70,12 +70,12 @@
                    [(patch :woodblock)
                     (r/sum->tup [2 1 1 1/2 1/2])
                     ($ (maybe o1 o1-))
-                    (catn 4 (r/permutation 5))]
+                    (linn 4 (r/permutation 5))]
                 ;; chords
                    [(patch :electric-piano-1)
                     o1- vel4 lydian
                     (par> d0 d3 d3 d3 d3)
-                    (cat (root :C) (root :Eb) (root :Ab) (root :Db))])
+                    (lin (root :C) (root :Eb) (root :Ab) (root :Db))])
                ;; loop 4
                   (dup 4)))
 

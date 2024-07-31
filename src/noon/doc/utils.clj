@@ -65,8 +65,8 @@
         (with-out-str
           (clojure.pprint/pprint
            (->piano-roll
-            (mk (cat s0 s2 s1 s3)
-                (cat s0 s2)
+            (mk (lin s0 s2 s1 s3)
+                (lin s0 s2)
                 ($ (chans o1-
                           (tup _ d1 c1- _))))))))
 
@@ -76,7 +76,7 @@
            (->piano-roll
             (mk harmonic-minor
                 dur2
-                (cat I V IV I)
+                (lin I V IV I)
                 (lh/align-contexts :d)
                 ($ (chans [o1 (shuftup s0 s1 s2 s4)]
                           (par s0 s1 s2)))))))))

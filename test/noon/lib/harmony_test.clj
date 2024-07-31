@@ -134,25 +134,25 @@
 
   (testing "voice-led"
     (is (t/frozen :voice-leading1
-                  (cat I VI II V)
+                  (lin I VI II V)
                   ($ tetrad h/simple-chord)
                   h/voice-led)))
 
   (testing "align-contexts"
     (is (t/frozen :align-contexts-diatonic-incremental
-                  (catn> 4 (transpose c4))
+                  (linn> 4 (transpose c4))
                   (h/align-contexts :diatonic :incremental)
                   ($ h/simple-chord)))
     (is (t/frozen :align-contexts-diatonic-static
-                  (catn> 4 (transpose c4))
+                  (linn> 4 (transpose c4))
                   (h/align-contexts :diatonic :static)
                   ($ h/simple-chord)))
     (is (t/frozen :align-contexts-structural-static
-                  (catn> 12 (transpose c1))
+                  (linn> 12 (transpose c1))
                   (h/align-contexts :structural :static)
                   ($ tetrad h/simple-chord)))
     (is (t/frozen :align-contexts-structural-incremental
-                  (catn> 12 (transpose c1))
+                  (linn> 12 (transpose c1))
                   (h/align-contexts :structural :incremental)
                   ($ tetrad h/simple-chord)))))
 

@@ -42,5 +42,5 @@
     `(frozen? ~(str dir "/" id-prefix (hash updates))
               (pr/with-rand 0 (noon.score/mk ~@updates)))))
 
-(comment (macroexpand '(freezm (s/cat s/d0 s/d1)))
-         (freezm (s/cat s/d0 s/d1)))
+(comment (macroexpand '(freezm (s/lin s/d0 s/d1)))
+         (freezm (s/lin s/d0 s/d1)))
