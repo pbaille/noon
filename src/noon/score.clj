@@ -597,57 +597,59 @@
           ([f score] (sort-by f score))
           ([f comp score] (sort-by f comp score)))
 
-        (defn numerify-pitches
-          "Replace the pitch entry value of each event by its MIDI pitch value (7bits natural)."
-          [score]
-          (ms/$ score (fn [e] (update e :pitch h/hc->chromatic-value))))
+        (do :midi-prepare
 
-        (defn dedupe-patches-and-control-changes
-          "Remove redondant :patch and :cc event entries from `score`"
-          [score]
-          (->> (group-by (juxt :track :channel) score)
-               (map (fn [[_ xs]]
-                      (loop [ret #{}
-                             current-patch nil
-                             current-control-changes nil
-                             todo (sort-by :position xs)]
-                        (if-let [[x & todo] (seq todo)]
-                          (let [same-patch (= current-patch (:patch x))
-                                same-control-changes (= current-control-changes (:cc x))]
-                            (cond (and same-patch same-control-changes)
-                                  (recur (conj ret (dissoc x :cc :patch))
-                                         current-patch
-                                         current-control-changes
-                                         todo)
-                                  same-patch
-                                  (recur (conj ret (dissoc x :patch))
-                                         current-patch
-                                         (:cc x)
-                                         todo)
-                                  same-control-changes
-                                  (recur (conj ret (dissoc x :cc))
-                                         (:patch x)
-                                         current-control-changes
-                                         todo)
-                                  :else
-                                  (recur (conj ret x)
-                                         (:patch x)
-                                         (:cc x)
-                                         todo)))
-                          ret))))
-               (reduce into #{})))
+            (defn numerify-pitches
+              "Replace the pitch entry value of each event by its MIDI pitch value (7bits natural)."
+              [score]
+              (ms/$ score (fn [e] (update e :pitch h/hc->chromatic-value))))
 
-        (defn dedup-tempo-messages
-          "NOT USED YET, TO VERIFY"
-          [score]
-          (->> (group-by :position score)
-               (sort-by key)
-               (map (fn [[_ xs]]
-                      (assert (apply = (map :bpm xs))
-                              "all events at a given position must have same bpm")
-                      (let [[x & xs] (sort-by (juxt :track :channel) xs)]
-                        (cons x (map (fn [e] (dissoc e :bpm)) xs)))))
-               (reduce into #{}))))
+            (defn dedupe-patches-and-control-changes
+              "Remove redondant :patch and :cc event entries from `score`"
+              [score]
+              (->> (group-by (juxt :track :channel) score)
+                   (map (fn [[_ xs]]
+                          (loop [ret #{}
+                                 current-patch nil
+                                 current-control-changes nil
+                                 todo (sort-by :position xs)]
+                            (if-let [[x & todo] (seq todo)]
+                              (let [same-patch (= current-patch (:patch x))
+                                    same-control-changes (= current-control-changes (:cc x))]
+                                (cond (and same-patch same-control-changes)
+                                      (recur (conj ret (dissoc x :cc :patch))
+                                             current-patch
+                                             current-control-changes
+                                             todo)
+                                      same-patch
+                                      (recur (conj ret (dissoc x :patch))
+                                             current-patch
+                                             (:cc x)
+                                             todo)
+                                      same-control-changes
+                                      (recur (conj ret (dissoc x :cc))
+                                             (:patch x)
+                                             current-control-changes
+                                             todo)
+                                      :else
+                                      (recur (conj ret x)
+                                             (:patch x)
+                                             (:cc x)
+                                             todo)))
+                              ret))))
+                   (reduce into #{})))
+
+            (defn dedup-tempo-messages
+              "NOT USED YET, TO VERIFY"
+              [score]
+              (->> (group-by :position score)
+                   (sort-by key)
+                   (map (fn [[_ xs]]
+                          (assert (apply = (map :bpm xs))
+                                  "all events at a given position must have same bpm")
+                          (let [[x & xs] (sort-by (juxt :track :channel) xs)]
+                            (cons x (map (fn [e] (dissoc e :bpm)) xs)))))
+                   (reduce into #{})))))
 
     (do :show
 
