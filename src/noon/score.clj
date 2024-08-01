@@ -1100,18 +1100,18 @@
               {:tags [:temporal :selective]}
               [beg end]
               (each (efn {:as evt :keys [position duration]}
-                      (let [end-pos (+ position duration)]
-                        (cond (or (>= position end)
-                                  (<= end-pos beg)) nil
-                              (and (>= position beg) (<= end-pos end)) evt
-                              :else (cond-> evt
-                                      (> end-pos end)
-                                      (-> (update :duration - (- end-pos end))
-                                          (assoc :trimed-fw true))
-                                      (< position beg)
-                                      (-> (update :position + (- beg position))
-                                          (update :duration - (- beg position))
-                                          (assoc :trimed-bw true))))))))))
+                         (let [end-pos (+ position duration)]
+                           (cond (or (>= position end)
+                                     (<= end-pos beg)) nil
+                                 (and (>= position beg) (<= end-pos end)) evt
+                                 :else (cond-> evt
+                                         (> end-pos end)
+                                         (-> (update :duration - (- end-pos end))
+                                             (assoc :trimed-fw true))
+                                         (< position beg)
+                                         (-> (update :position + (- beg position))
+                                             (update :duration - (- beg position))
+                                             (assoc :trimed-bw true))))))))))
 
     (do :checks
 
@@ -1276,7 +1276,32 @@
           (sf_ (loop [n 0]
                  (or (update-score _ (chain u test))
                      (if (>= max n)
-                       (recur (inc n)))))))))
+                       (recur (inc n)))))))
+
+        (defn newrep
+          "INCUB: simple rep"
+          ([n] (newrep n same))
+          ([n & xs]
+           (let [[update flags] (if (keyword? (first xs)) [same xs] [(first xs) (rest xs)])
+                 flags (zipmap flags (repeat true))
+                 updates (repeat n update)]
+             (cond (:par flags) (par* updates)
+                   (:fit flags) (tup* updates)
+                   :else (lin* updates)))))
+
+        (defn iter
+          "INCUB: accumulative rep"
+          [x & xs]
+          (let [[n [f & {:as options}]] (if (number? x) [x xs] [nil (cons x xs)])]
+            (println n f options)
+            (sf_ (let [u (->upd f)
+                       seed (if (:next options) (update-score _ u) _)
+                       scores (->> (iterate u seed)
+                                   (drop (:drop options 0))
+                                   (take (:take options n)))]
+                   (cond (:par options) (reduce into #{} scores)
+                         (:fit options) (fit-score (concat-scores scores) {:duration (score-duration _)})
+                         :else (concat-scores scores))))))))
 
 (do :midi
 

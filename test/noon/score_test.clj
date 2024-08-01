@@ -464,3 +464,20 @@
            (mk (par [chan1 d1] chan2))))
 
     (is (tu/frozen (lin d1 d2 d3)))))
+
+
+(deftest new-rep
+  (testing "new rep"
+    (play (newrep 5))
+    (play (newrep 5 (one-of d1 d2 d3 d4) :fit))
+    (play (newrep 5 (one-of s0 s1 s2 s3 s4) :par))
+
+    (play (iter 7 d1 :fit true))
+    (play (iter d1 :take 7 :fit true))
+    (play (iter d1 :drop 1 :take 7 :fit true))
+    (play (iter d1 :next true :take 7 :fit true))
+    (play (iter 7 d1 :fit :append))
+    (play (iter 4 d1 :next true))
+    (play (iter 4 d3 :par true)
+          (iter 4 (one-of d1- d2))
+          (iter 4 (transpose c3-)))))
