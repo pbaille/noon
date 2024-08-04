@@ -207,7 +207,10 @@
 
     (defn get-all [g]
       (if-let [[u k] (step g)]
-        (cons u (get-all k)))))
+        (cons u (get-all k))))
+
+    (defn empty? [g]
+      (nil? (step g))))
 
 (do :print
 
