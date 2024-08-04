@@ -1,5 +1,5 @@
 (ns noon.utils.multi-val
-  (:refer-clojure :exclude [compile cat])
+  (:refer-clojure :exclude [empty? compile cat])
   (:require [clojure.core :as c]
             [clojure.string :as str]
             [clojure.walk :as walk]
@@ -262,7 +262,7 @@
    returns a multi-val that has 3/4 chances to return \"youpi\"
    and 1/4 chance to return either true or false "
       [m]
-      (if (empty? m)
+      (if (c/empty? m)
         none
         (multi-val
          (let [steps (next (reductions + 0 (vals m)))
