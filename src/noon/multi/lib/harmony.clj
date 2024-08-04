@@ -9,7 +9,8 @@
             [noon.utils.sequences :as s]
             [clojure.core :as c]
             [clojure.math.combinatorics :as comb]
-            [noon.utils.maps :as m]))
+            [noon.utils.maps :as m]
+            [noon.utils.multi-val :as mv]))
 
 (do :help
 
@@ -301,14 +302,16 @@
    accordingly to their position and duration."
   {:tags [:harmonic :zipping :grid]}
   [grid content]
-  (n/sf_ (let [g (n/update-score _ grid)
-               c (n/update-score _ content)]
-           (->> (map (fn [[position [{:keys [duration pitch]}]]]
-                       (n/update-score c
-                              [(n/trim position (+ position duration))
-                               {:pitch (h/hc+ pitch)}]))
-                     (sort-by key (group-by :position g)))
-                (connect-trimmed-chunks)))))
+  (n/mf_ (let [g (n/update-multiscore _ grid)
+               c (n/update-multiscore _ content)]
+           (mv/bind g (fn [score]
+                        (-> (map (fn [[position [{:keys [duration pitch]}]]]
+                                   (n/update-multiscore c
+                                                        [(n/trim position (+ position duration))
+                                                         {:pitch (h/hc+ pitch)}]))
+                                 (sort-by key (group-by :position score)))
+                            (mv/tup*)
+                            (mv/fmap connect-trimmed-chunks)))))))
 
 (u/defn* grid
   "Build an update that applies an harmonic grid to the received score.
@@ -325,10 +328,11 @@
    to the resulting of applying 'xs updates to a fresh score."
   {:tags [:harmonic :zipping :grid]}
   [xs]
-  (n/sf_ (->> (n/k (dissoc (first _) :position :duration :pitch)
-                   (n/chain* xs))
-              (harmonic-zip n/same)
-              (n/update-score _))))
+  (n/score->multiscore-update score
+                              (->> (n/k (dissoc (first score) :position :duration :pitch)
+                                        (n/chain* xs))
+                                   (harmonic-zip n/same)
+                                   (n/update-multiscore (mv/once score)))))
 
 (defn modal-structure
   "Build an event update that change the harmonic structure of the received event to its N (`size`) most characteristic degrees.
@@ -342,8 +346,11 @@
 (def ^{:doc "Build a structural chord on top of received event."
        :tags [:event-update :chord :harmonic]}
   simple-chord
-  (n/ef_ (let [structure-size (-> _ :pitch :structure count)]
-           (n/update-score #{_} (n/par* (mapv n/s-step (range structure-size)))))))
+  (n/score-update score
+                  (->> score
+                       (map (fn [e] (let [structure-size (-> e :pitch :structure count)]
+                                      (set (mapv (fn [offset] ((n/s-step offset) e)) (range structure-size))))))
+                       (n/merge-scores))))
 
 (comment :tries
 
