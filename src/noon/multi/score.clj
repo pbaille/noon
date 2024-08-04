@@ -1,13 +1,11 @@
-(ns noon.lab.multi
+(ns noon.multi.score
   "build, transform, play and write midi scores"
   (:require [clojure.core :as c]
-            [clojure.pprint :refer [pprint]]
             [noon.midi :as midi]
             [noon.harmony :as h]
             [noon.vst.index :as vst]
             [noon.constants :as constants]
             [noon.utils.misc :as u :refer [t t? f_ defn*]]
-            #_[noon.utils.mapsets :as ms]
             [noon.utils.maps :as m]
             [noon.utils.chance :as g]
             [noon.utils.pseudo-random :as pr]
@@ -529,28 +527,6 @@
           (let [ps (map pitch-value x)]
             [(apply min ps) (apply max ps)])))
 
-    (do :composition
-
-        (defn concat-score
-          "Concat 2 scores temporally."
-          [a b]
-          (->> (score-duration a)
-               (shift-score b)
-               (into a)))
-
-        (defn concat-scores
-          "Concat several scores temporally."
-          [xs]
-          (case (count xs)
-            0 #{}
-            1 (first xs)
-            (reduce concat-score xs)))
-
-        (defn merge-scores
-          "merge several scores together."
-          [xs]
-          (reduce into #{} xs)))
-
     (do :transformations
 
         "Some score transformation helpers, low level building blocks used in score-updates definitions."
@@ -607,6 +583,28 @@
           ([f score] (sort-by f score))
           ([f comp score] (sort-by f comp score)))
 
+        (defn filter-score [score f]
+          (set (filter f score)))
+
+        (defn trim-score
+          "Removes everything before `beg` and after `end` from `score`.
+           (triming overlapping durations)."
+          [score beg end]
+          (map-event-update score
+                            (fn [{:as evt :keys [position duration]}]
+                              (let [end-pos (+ position duration)]
+                                (cond (or (>= position end)
+                                          (<= end-pos beg)) nil
+                                      (and (>= position beg) (<= end-pos end)) evt
+                                      :else (cond-> evt
+                                              (> end-pos end)
+                                              (-> (update :duration - (- end-pos end))
+                                                  (assoc :trimed-fw true))
+                                              (< position beg)
+                                              (-> (update :position + (- beg position))
+                                                  (update :duration - (- beg position))
+                                                  (assoc :trimed-bw true))))))))
+
         (do :midi-prepare
 
             (defn numerify-pitches
@@ -660,6 +658,28 @@
                           (let [[x & xs] (sort-by (juxt :track :channel) xs)]
                             (cons x (map (fn [e] (dissoc e :bpm)) xs)))))
                    (reduce into #{})))))
+
+    (do :composition
+
+        (defn concat-score
+          "Concat 2 scores temporally."
+          [a b]
+          (->> (score-duration a)
+               (shift-score b)
+               (into a)))
+
+        (defn concat-scores
+          "Concat several scores temporally."
+          [xs]
+          (case (count xs)
+            0 #{}
+            1 (first xs)
+            (reduce concat-score xs)))
+
+        (defn merge-scores
+          "merge several scores together."
+          [xs]
+          (reduce into #{} xs)))
 
     (do :show
 
@@ -742,6 +762,9 @@
                                 (sf_ (reduce #(%2 %1) _ updates)))
                   (g/gen? x) (if (->score-update (g/realise x))
                                (sf_ ((->score-update (g/realise x)) _))))))
+
+        (defn update-score [score update]
+          ((->score-update update) score))
 
         (defn map-score-update
           "map `score-update` over `score`.
@@ -1061,7 +1084,7 @@
       "Shrink a score using 'f on each events to determine if it is kept or not."
       {:tags [:base :temporal]}
       [f]
-      (sf_ (set (filter f _))))
+      (sf_ (filter-score _ f)))
 
     (defn adjust
       "Time stretching/shifting operation
@@ -1177,19 +1200,7 @@
                (triming overlapping durations)."
               {:tags [:temporal :selective]}
               [beg end]
-              (each (event-update {:as evt :keys [position duration]}
-                                  (let [end-pos (+ position duration)]
-                                    (cond (or (>= position end)
-                                              (<= end-pos beg)) nil
-                                          (and (>= position beg) (<= end-pos end)) evt
-                                          :else (cond-> evt
-                                                  (> end-pos end)
-                                                  (-> (update :duration - (- end-pos end))
-                                                      (assoc :trimed-fw true))
-                                                  (< position beg)
-                                                  (-> (update :position + (- beg position))
-                                                      (update :duration - (- beg position))
-                                                      (assoc :trimed-bw true))))))))))
+              (sf_ (trim-score _ beg end)))))
 
     (do :checks
 
