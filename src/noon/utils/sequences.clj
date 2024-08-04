@@ -185,6 +185,9 @@
     {}
     (permutation-grades s))))
 
+(defn permutations [s]
+  (mapcat val (sort-by key (gradual-permutations s))))
+
 (defn permutation
   ([s]
    (pr/shuffle s))
