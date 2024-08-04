@@ -1,4 +1,4 @@
-(ns noon.score
+(ns noon.multi.score
   (:require noon.constants))
 
 (defmacro lambda
@@ -7,6 +7,22 @@
 
 (defmacro lambda_ [& body]
   `(fn [~'_] ~@body))
+
+(defmacro efn
+  "just a tagged lambda that represents an event update function"
+  [arg & body]
+  `(fn [~arg] ~@body))
+
+(defmacro ef_ [& body]
+  `(efn ~'_ ~@body))
+
+(defmacro sfn
+  "just a tagged lambda that represents a score update function"
+  [arg & body]
+  `(fn [~arg] ~@body))
+
+(defmacro sf_ [& body]
+  `(sfn ~'_ ~@body))
 
 (defmacro import-wrap-harmony-update-constructors [& xs]
   `(do ~@(mapv (fn [x]
@@ -25,17 +41,17 @@
                         (list 'def (with-meta (symbol (str "dur" i))
                                      {:doc (str "Multiply event duration by " i)
                                       :tags [:event-update :alias :temporal]})
-                              `(noon.score/dur (mul ~i)))
+                              `(noon.multi.score/dur (mul ~i)))
                         (list 'def (with-meta (symbol (str "dur:" i))
                                      {:doc (str "Divide event duration by " i)
                                       :tags [:event-update :alias :temporal]})
-                              `(noon.score/dur (div ~i)))))
+                              `(noon.multi.score/dur (div ~i)))))
                 (for [n (range 2 12)
                       d (range 2 12)]
                   (list 'def (with-meta (symbol (str "dur" n ":" d))
                                {:doc (str "Multiply event duration by " n "/" d)
                                 :tags [:event-update :alias :temporal]})
-                        `(noon.score/dur (mul (/ ~n ~d))))))))
+                        `(noon.multi.score/dur (mul (/ ~n ~d))))))))
 
 (defmacro -def-velocities []
   (cons 'do
@@ -44,7 +60,7 @@
             (list 'def (with-meta (symbol (str "vel" i))
                          {:doc (str "Set event velocity to " v)
                           :tags [:event-update :alias]})
-                  `(noon.score/vel ~v))))))
+                  `(noon.multi.score/vel ~v))))))
 
 (defmacro -def-channels []
   (cons 'do
@@ -52,7 +68,7 @@
           (list 'def (with-meta (symbol (str "chan" i))
                        {:doc (str "Set event midi channel to " i)
                         :tags [:event-update :alias]})
-                `(noon.score/chan ~i)))))
+                `(noon.multi.score/chan ~i)))))
 
 (defmacro -def-tracks []
   (cons 'do
@@ -60,14 +76,14 @@
           (list 'def (with-meta (symbol (str "track" i))
                        {:doc (str "Set event midi channel to " i)
                         :tags [:event-update :alias]})
-                `(noon.score/track ~i)))))
+                `(noon.multi.score/track ~i)))))
 
 (defmacro -def-wrapped [wrapper m]
   (cons 'do (for [[k v] (eval m)]
               (list 'def
                     (with-meta (symbol (name k))
                       {:tags [:event-update :alias :harmonic]
-                       :doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))})
+                       :doc (str "Alias for " (list (symbol "noon.multi.score" (name wrapper)) v))})
                     (list wrapper v)))))
 
 (defmacro -def-steps [name prefix max f]
@@ -106,9 +122,9 @@
                   (list 'def (with-meta n
                                {:doc (str "Go to degree " n)
                                 :tags [:event-update :harmonic]})
-                        (list 'noon.score/degree v)))
+                        (list 'noon.multi.score/degree v)))
                 (for [[degree-sym degree-val] (map vector '[I II III IV V VI VII] (range))
-                      [alteration-sym alteration-val] [["#" 'noon.score/c1] ["b" 'noon.score/c1-]]]
+                      [alteration-sym alteration-val] [["#" 'noon.multi.score/c1] ["b" 'noon.multi.score/c1-]]]
                   (let [[dn dv an av] [degree-sym degree-val alteration-sym alteration-val]]
                     (list 'def (with-meta (symbol (str dn an))
                                  {:doc (str "Go to degree " an dn)

@@ -840,7 +840,7 @@
           ((->multiscore-update update) multi-score))
 
         (defn map-multiscore-update
-          ""
+          "map a multiscore `update` over `score`"
           [score update]
           (->> (map (fn [e]
                       (mv/fmap (update-multiscore (mv/once #{(assoc e :position 0)})
