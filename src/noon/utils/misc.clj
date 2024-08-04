@@ -107,6 +107,15 @@
 
 (do :error&logs
 
+    (defn pp [& xs]
+      (mapv pprint/pprint xs)
+      (last xs))
+
+    (defmacro dbg [& xs]
+      `(do (println '------)
+           (println '~&form)
+           (pp ~@xs)))
+
     (defn throw* [& xs]
       (throw (Exception. (apply str xs))))
 
