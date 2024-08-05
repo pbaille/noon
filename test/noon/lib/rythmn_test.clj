@@ -6,7 +6,7 @@
 
 (deftest main
   (testing "various"
-    (is (t/frozen :example1
+    (is (t/frozen :example1-bis
                   dur4
                   dorian
                   (chans [(patch :vibraphone) vel4 (par> d3 d3 d3)]
@@ -61,7 +61,7 @@
                     (r/rotation :rand-sub 5)])
                   (dup 4)))
 
-    (is (t/frozen :rythmic-permutation-demo
+    (is (t/frozen :rythmic-permutation-demo-bis
                   (chans
                 ;; beat
                    [(patch :taiko-drum) vel5 (dup 4)]
@@ -80,14 +80,16 @@
 
     :euclidean
 
-    (is (t/frozen (patch :tinkle-bell)
+    (is (t/frozen :euclidean-1
+                  (patch :tinkle-bell)
                   dur2
                   (chans o1-
                          (r/gen-tup 12 5 :euclidean)
                          [o1 (r/gen-tup 12 7 :euclidean :shifted)])
                   (dup 4)))
 
-    (is (t/frozen (patch :tinkle-bell)
+    (is (t/frozen :euclidean-2
+                  (patch :tinkle-bell)
                   (let [rtup (! (r/gen-tup 16 5 :euclidean :shifted))]
                     (chans (ntup 2 o1-)
                            rtup

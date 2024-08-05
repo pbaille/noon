@@ -83,16 +83,16 @@
         (u/throw* "vsl-instrument: unknown instrument: " instrument-name))))
 
 (defn patch [patch-name]
-  (n/efn e (if-let [{:keys [_instrument category]} (get e :vsl)]
-             (let [{:keys [programs tree]} (get-in CONFIG [category :patches])]
-               (or (first (keep-indexed (fn [idx [_ patches]]
-                                          (if-let [patch-idx (u/index-of patches patch-name)]
-                                            (-> (assoc e :pc [(+ idx (get programs 0))
-                                                              (+ patch-idx (get programs 1))])
-                                                (update :vsl assoc :patch patch-name))))
-                                        tree))
-                   (u/throw* "vsl-patch: unknown patch " patch-name)))
-             (u/throw* "vsl-patch: vsl-instrument has to be set before patch."))))
+  (n/event-update e (if-let [{:keys [_instrument category]} (get e :vsl)]
+                      (let [{:keys [programs tree]} (get-in CONFIG [category :patches])]
+                        (or (first (keep-indexed (fn [idx [_ patches]]
+                                                   (if-let [patch-idx (u/index-of patches patch-name)]
+                                                     (-> (assoc e :pc [(+ idx (get programs 0))
+                                                                       (+ patch-idx (get programs 1))])
+                                                         (update :vsl assoc :patch patch-name))))
+                                                 tree))
+                            (u/throw* "vsl-patch: unknown patch " patch-name)))
+                      (u/throw* "vsl-patch: vsl-instrument has to be set before patch."))))
 
 (defn vsl
   ([x]

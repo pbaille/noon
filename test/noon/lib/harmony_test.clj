@@ -17,11 +17,11 @@
            (h/bounds-gte [0 3] [1 2])))
 
   (is (h/in-bounds [60 72]
-                   (mk (tup s0 s1 s2))))
+                   (mk1 (tup s0 s1 s2))))
   (is (not (h/in-bounds [60 72]
-                        (mk (tup s0 [o1 d1])))))
+                        (mk1 (tup s0 [o1 d1])))))
   (is (not (h/in-bounds [60 72]
-                        (mk d1-)))))
+                        (mk1 d1-)))))
 
 (deftest voicings
 
@@ -42,44 +42,44 @@
 
   (testing "closed"
 
-    (is (= (h/closed (mk (par s0 s2 s4)))
-           (mk (par s0 s2 [o1- s4]))))
-    (is (= (h/closed (mk (par s0 s2 s4 s6)))
-           (mk (par s0 s2 [o1- s4] [o2- s6]))))
-    (is (= (h/closed-no-unison (mk (par s0 s2 s4 s6)))
-           (mk (par s0 s2 [o1- s4] [o1- s6])))))
+    (is (= (h/closed (mk1 (par s0 s2 s4)))
+           (mk1 (par s0 s2 [o1- s4]))))
+    (is (= (h/closed (mk1 (par s0 s2 s4 s6)))
+           (mk1 (par s0 s2 [o1- s4] [o2- s6]))))
+    (is (= (h/closed-no-unison (mk1 (par s0 s2 s4 s6)))
+           (mk1 (par s0 s2 [o1- s4] [o1- s6])))))
 
   (testing "drops"
     (testing "simple-checks"
-      (is (= (mk (par s0 s1 s2)
-                 (h/drop 1))
-             (mk (par s0 [o1 s1] s2))))
-      (is (= (mk tetrad
-                 (par s0 s1 s2 s3)
-                 (h/drop 1))
-             (mk tetrad
-                 (par s0 [o1 s1] s2 s3))))
-      (is (= (mk tetrad
-                 (par s0 s1 s2 s3)
-                 (h/drop 2))
-             (mk tetrad
-                 (par s0 s1 [o1 s2] s3))))
-      (is (= (mk tetrad
-                 (par s0 s1 s2 s3)
-                 (h/drop -1))
-             (mk tetrad
-                 (par s0 [o2 s1] [o1 s2] s3))))
+      (is (= (mk1 (par s0 s1 s2)
+                  (h/drop 1))
+             (mk1 (par s0 [o1 s1] s2))))
+      (is (= (mk1 tetrad
+                  (par s0 s1 s2 s3)
+                  (h/drop 1))
+             (mk1 tetrad
+                  (par s0 [o1 s1] s2 s3))))
+      (is (= (mk1 tetrad
+                  (par s0 s1 s2 s3)
+                  (h/drop 2))
+             (mk1 tetrad
+                  (par s0 s1 [o1 s2] s3))))
+      (is (= (mk1 tetrad
+                  (par s0 s1 s2 s3)
+                  (h/drop -1))
+             (mk1 tetrad
+                  (par s0 [o2 s1] [o1 s2] s3))))
 
-      (is (pitch-values= (mk (par s0 s1 s2 s3)
-                             (h/drop 1))
-                         (mk (par s0 [o1 s1] s2 s3)))))
+      (is (pitch-values= (mk1 (par s0 s1 s2 s3)
+                              (h/drop 1))
+                         (mk1 (par s0 [o1 s1] s2 s3)))))
     (testing "diatonic no duplicates"
       (is (t/frozen :diatonic-drops
-            (par d0 d1 d2 d3)
-            (sf_ (concat-scores (h/drops _ :inversions true)))))
+                    (par d0 d1 d2 d3)
+                    (sf_ (concat-scores (h/drops _ :inversions true)))))
       (is (t/frozen :diatonic-drops-no-inversions
-            (par d0 d1 d2 d3)
-            (sf_ (concat-scores (h/drops _))))))
+                    (par d0 d1 d2 d3)
+                    (sf_ (concat-scores (h/drops _))))))
     (testing "with two tonic"
       (is (t/frozen :drops-2-tonics
                     (par s0 s1 s2 s3)
@@ -97,29 +97,29 @@
 
   (testing "inversions"
 
-    (is (pitch-values= (mk (par s0 s1 s2)
-                           (h/inversion 1))
-                       (mk (par s1 s2 s3))))
-    (is (pitch-values= (mk (par s0 s1 s2)
-                           (h/inversion -1))
-                       (mk (par s1- s0 s1))))
-    (is (pitch-values= (mk (par s0 s1 s2)
-                           (h/inversion 0))
-                       (mk (par s0 s1 s2))))
-    (is (pitch-values= (mk (par d0 d2 d4 d6 d8)
-                           (h/inversion 1))
-                       (mk (par d1 d4 d6 d7 d9))))
-    (is (pitch-values= (mk (par d0 d2 d4 d6 d8)
-                           (h/inversion -1))
-                       (mk (par d1- d1 d2 d4 d7))))
+    (is (pitch-values= (mk1 (par s0 s1 s2)
+                            (h/inversion 1))
+                       (mk1 (par s1 s2 s3))))
+    (is (pitch-values= (mk1 (par s0 s1 s2)
+                            (h/inversion -1))
+                       (mk1 (par s1- s0 s1))))
+    (is (pitch-values= (mk1 (par s0 s1 s2)
+                            (h/inversion 0))
+                       (mk1 (par s0 s1 s2))))
+    (is (pitch-values= (mk1 (par d0 d2 d4 d6 d8)
+                            (h/inversion 1))
+                       (mk1 (par d1 d4 d6 d7 d9))))
+    (is (pitch-values= (mk1 (par d0 d2 d4 d6 d8)
+                            (h/inversion -1))
+                       (mk1 (par d1- d1 d2 d4 d7))))
 
     (testing "with duplicates"
-      (is (pitch-values= (mk (par s0 s1 s2 s3)
-                             (h/inversion 1))
-                         (mk (par s1 s2 s3 s4))))
-      (is (pitch-values= (mk (par s0 s1 s2 s3)
-                             (h/inversion -1))
-                         (mk (par s1- s0 s1 s2))))))
+      (is (pitch-values= (mk1 (par s0 s1 s2 s3)
+                              (h/inversion 1))
+                         (mk1 (par s1 s2 s3 s4))))
+      (is (pitch-values= (mk1 (par s0 s1 s2 s3)
+                              (h/inversion -1))
+                         (mk1 (par s1- s0 s1 s2))))))
 
   (testing "voicings"
     (is (t/frozen :voicings1

@@ -4,13 +4,14 @@
             [noon.utils.pseudo-random :as pr]
             [noon.utils.chance :as g]
             [noon.utils.misc :as u]
-            [noon.test :as tu]))
+            [noon.test :as tu]
+            [noon.utils.multi-val :as mv]))
 
 (def event0 DEFAULT_EVENT)
 (def S0 score0)
 
 (defn e0> [& xs]
-  (?reduce #(%2 %1) event0 xs))
+  (reduce #(%2 %1) event0 xs))
 
 (deftest helpers
   (testing "numeric-updates"
@@ -36,17 +37,6 @@
     (is ((lte 1) 1))
     (is (not ((lte 1) 2)))
     (is ((lte 1) 0))
-
-    (is (= (hm* [:a 1 :b 2])
-           {:b 2, :a 1}))
-
-    (is (= (?reduce + 0 (range 5))
-           10))
-    (is (nil? (?reduce (fn [a e] (if (> e 2) (+ a e)))
-                       0 (range 5))))
-    (is (= (?reduce (fn [a e] (if (> e 2) (+ a e)))
-                    0 (range 3 6))
-           12))
 
     (is (= (->7bits-natural 1/3)
            0))
@@ -269,19 +259,19 @@
            1))
     (is (= (score-duration (update-score S0 dur2))
            2))
-    (is (= (score-duration (mk (lin s0 s2 s4)))
+    (is (= (score-duration (mk1 (lin s0 s2 s4)))
            3))
 
     (is (= (score-track-count S0)
            1))
-    (is (= (score-track-count (mk (superpose track1)))
+    (is (= (score-track-count (mk1 (superpose track1)))
            2))
 
     (is (= (score-bounds S0 :position)
            [{:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}
             {:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}]))
 
-    (is (= (score-bounds (mk (lin s0 s2 s4)) :position)
+    (is (= (score-bounds (mk1 (lin s0 s2 s4)) :position)
            [{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 4}}, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}]))
 
@@ -292,13 +282,13 @@
 
     (is (= (pitch-value-bounds S0)
            [60 60]))
-    (is (= (pitch-value-bounds (mk (lin s0 s2 s4)))
+    (is (= (pitch-value-bounds (mk1 (lin s0 s2 s4)))
            [60 76])))
 
   (testing "transformations"
 
     (is (= (score-duration
-            (scale-score (mk (lin s0 s2 s4))
+            (scale-score (mk1 (lin s0 s2 s4))
                          1/3))
            1))
     (is (= (score-duration
@@ -311,13 +301,13 @@
            10/3))
     (is (= (shift-score S0 10)
            (update-score S0 {:position (add 10)})))
-    (is (let [s0 (mk (lin s0 s2 s4))
+    (is (let [s0 (mk1 (lin s0 s2 s4))
               s1 (fit-score s0 event0)
               s2 (normalise-score s0)]
           (and (= s1 s2)
                (= 1 (score-duration s1))
                (= 0 (score-origin s2)))))
-    (is (let [s (fit-score (mk (lin s0 s2 s4))
+    (is (let [s (fit-score (mk1 (lin s0 s2 s4))
                            {:position 3 :duration 2})]
           (and (= 5 (score-duration s))
                (= 3 (score-origin s)))))
@@ -332,23 +322,23 @@
           (and (= 6 (score-duration s))
                (= 0 (score-origin s)))))
 
-    (is (= (reverse-score (mk (lin s0 s2 s4)))
-           (mk (lin s4 s2 s0))))
+    (is (= (reverse-score (mk1 (lin s0 s2 s4)))
+           (mk1 (lin s4 s2 s0))))
 
-    (is (= (numerify-pitches (mk (lin s0 s2 s4)))
+    (is (= (numerify-pitches (mk1 (lin s0 s2 s4)))
            #{{:patch [0 4], :channel 0, :pitch 60, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
              {:patch [0 4], :channel 0, :pitch 67, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}
              {:patch [0 4], :channel 0, :pitch 76, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}}))
 
-    (is (= (->> (dedupe-patches-and-control-changes (mk (lin s0 s2 s4)))
+    (is (= (->> (dedupe-patches-and-control-changes (mk1 (lin s0 s2 s4)))
                 (sort-score)
                 (map (juxt :position :patch :cc)))
            (list [0 [0 4] nil] [1 nil nil] [2 nil nil])))
 
-    (is (= (->> (mk (lin s0
-                         [(patch :vibraphone)
-                          (cc :volume 70)
-                          (lin s2 s4)]))
+    (is (= (->> (mk1 (lin s0
+                          [(patch :vibraphone)
+                           (cc :volume 70)
+                           (lin s2 s4)]))
                 (dedupe-patches-and-control-changes)
                 (sort-score)
                 (map (juxt :position :patch :cc)))
@@ -356,117 +346,116 @@
 
   (testing "updates"
     (is (u/t? :score-update (sf_ _)))
-    (is (score-update? (sfn [s] s)))
+    (is (score-update? (score-update s s)))
     (is (= (update-score S0 (sf_ _))
            S0))
     (is (= (update-score S0 dur2)
-           (mk dur2)))
+           (mk1 dur2)))
     (is (= (update-score S0 [vel10 dur2])
-           (mk dur2 vel10)))
+           (mk1 dur2 vel10)))
     (is (= (update-score S0 (g/one-of vel10))
-           (mk vel10)))
-    (is (= (update-score S0 #{vel5 d1})
-           (mk (par vel5 d1))
+           (mk1 vel10)))
+    (is (= (update-score S0 (par vel5 d1))
+           (mk1 (par vel5 d1))
            (into (update-score S0 vel5)
                  (update-score S0 d1))))
 
-    (is (= (mk same)
-           (mk _)
+    (is (= (mk1 same)
+           (mk1 _)
            S0))
 
-    (is (= (mk (k S0))
+    (is (= (mk1 (k _))
            S0))
 
-    (is (= (mk void)
-           #{}))
+    (is (nil? (mk1 void)))
 
-    (is (= (mk (chain chan2 vel2))
-           (mk (chain (chain chan2) (chain vel2)))
-           (mk [chan2 vel2])
+    (is (= (mk1 (chain chan2 vel2))
+           (mk1 (chain (chain chan2) (chain vel2)))
+           (mk1 [chan2 vel2])
            (update-score (update-score S0 chan2)
                          vel2)))
 
-    (is (= S0 (mk (chain))))
+    (is (= S0 (mk1 (chain))))
 
-    (is (= (mk (par chan2 chan3))
-           (mk (par chan2 chan3 chan3))
-           (into (mk chan2)
-                 (mk chan3))))
+    (is (= (mk1 (par chan2 chan3))
+           (mk1 (par chan2 chan3 chan3))
+           (into (mk1 chan2)
+                 (mk1 chan3))))
 
-    (is (= (mk (par> d1 d1))
-           (mk (par d1 d2))))
+    (is (= (mk1 (par> d1 d1))
+           (mk1 (par d1 d2))))
 
-    (is (= (mk (lin s0 s1 s2)
-               (each d1))
-           (mk (lin [s0 d1] [s1 d1] [s2 d1]))))
-    (is (= (mk (lin s0 s1 s2)
-               (each d1 c1))
-           (mk (lin [s0 d1 c1]
-                    [s1 d1 c1]
-                    [s2 d1 c1]))
+    (is (= (mk1 (lin s0 s1 s2)
+                (each d1))
+           (mk1 (lin [s0 d1] [s1 d1] [s2 d1]))))
+    (is (= (mk1 (lin s0 s1 s2)
+                (each d1 c1))
+           (mk1 (lin [s0 d1 c1]
+                     [s1 d1 c1]
+                     [s2 d1 c1]))
            #{{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1, :c 1}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
              {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 1, :c 1}}, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}
              {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 1, :c 1}}, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}}))
 
-    (is (= (mk (lin s1 [chan2 s3]))
-           (concat-score (mk s1) (mk chan2 s3))
+    (is (= (mk1 (lin s1 [chan2 s3]))
+           (concat-score (mk1 s1) (mk1 chan2 s3))
            #{{:patch [0 4], :channel 2, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 3}}, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}
              {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}}))
 
-    (is (= (mk (lin> d1 d1 d1))
-           (mk (lin d1 d2 d3))))
+    (is (= (mk1 (lin> d1 d1 d1))
+           (mk1 (lin d1 d2 d3))))
 
-    (is (= (mk (fit dur2))
+    (is (= (mk1 (fit dur2))
            S0))
 
-    (is (= (mk (fit (lin d1 d2 d3)))
-           (mk (tup d1 d2 d3))))
+    (is (= (mk1 (fit (lin d1 d2 d3)))
+           (mk1 (tup d1 d2 d3))))
 
     (is (= (score-duration
-            (mk (tup d0 d2 d3)))
+            (mk1 (tup d0 d2 d3)))
            1))
 
-    (is (= (mk (tup> d1 d1 d1))
-           (mk (tup d1 d2 d3))))
+    (is (= (mk1 (tup> d1 d1 d1))
+           (mk1 (tup d1 d2 d3))))
 
-    (is (= (mk (append d1))
-           (mk (lin same d1))))
+    (is (= (mk1 (append d1))
+           (mk1 (lin same d1))))
 
-    (is (= (mk (superpose d1))
-           (mk (par same d1))))
+    (is (= (mk1 (superpose d1))
+           (mk1 (par same d1))))
 
-    (is (= (mk (rep 3 d1))
-           (mk (lin same d1 d2))))
+    (is (= (mk1 (rep 3 d1))
+           (mk1 (lin same d1 d2))))
 
-    (is (= (mk (rep 3 d1 :skip-first))
-           (mk (lin d1 d2 d3))))
+    (is (= (mk1 (rep 3 d1 :skip-first))
+           (mk1 (lin d1 d2 d3))))
 
-    (is (= (mk (rup 3 d1))
-           (mk (tup same d1 d2))))
+    (is (= (mk1 (rup 3 d1))
+           (mk1 (tup same d1 d2))))
 
-    (is (= (mk (rup 3 d1 :skip-first))
-           (mk (tup d1 d2 d3))))
+    (is (= (mk1 (rup 3 d1 :skip-first))
+           (mk1 (tup d1 d2 d3))))
 
-    (is (= (mk (dup 3))
-           (mk (lin same same same))))
+    (is (= (mk1 (dup 3))
+           (mk1 (lin same same same))))
 
-    (is (= (mk (dupt 3))
-           (mk (tup same same same))))
+    (is (= (mk1 (dupt 3))
+           (mk1 (tup same same same))))
 
-    (is (= (mk (ntup 3 d1))
-           (mk (tup d1 d1 d1))))
+    (is (= (mk1 (ntup 3 d1))
+           (mk1 (tup d1 d1 d1))))
 
-    (is (= (mk (nlin 3 d1))
-           (mk (lin d1 d1 d1))))
+    (is (= (mk1 (nlin 3 d1))
+           (mk1 (lin d1 d1 d1))))
 
-    (is (= (mk (par chan1 chan2)
-               (parts chan1 d1))
-           (mk (par [chan1 d1] chan2))))
+    (is (= (mk1 (par chan1 chan2)
+                (parts chan1 d1))
+           (mk1 (par [chan1 d1] chan2))))
 
     (is (tu/frozen (lin d1 d2 d3)))))
 
 
-(deftest new-rep
+'(deftest new-rep
   (testing "new rep"
     (play (newrep 5))
     (play (newrep 5 (one-of d1 d2 d3 d4) :fit))
@@ -481,3 +470,34 @@
     (play (iter 4 d3 :par true)
           (iter 4 (one-of d1- d2))
           (iter 4 (transpose c3-)))))
+
+(comment
+  (mk vel2)
+  (mk d0)
+  (mk (lin d0 d1 d2))
+  (mk (lin d0 d1 d2)
+      (each vel2))
+  (mk (mv/join d0 d3))
+  (mk (lin (mv/join d0 d3) d1 d2))
+  (mk (lin d0 d1 d2)
+      (each (mv/join vel4 vel2)))
+
+  (mk (fit (lin d0 d1 d2)))
+  (play (fit (lin d0 d1 d2)))
+  (play (lin d0 d1 d2))
+
+  (play (rep 4 (tup d0 (mv/join d3 d4))))
+  (noon {:play true}
+        (mv/once (concat-scores (mv/get-all (mk (rep 4 (tup d0 (mv/join d3 d4))))))))
+  (count (mv/get-all (mk (rep 4 (tup d0 (mv/join d3 d4))))))
+  (play (par _ {:channel 1} {:channel 2}))
+  (play (par _ _))
+  (play (lin _ _))
+  (play (par [o1 _] {:channel 1} [o1- {:channel 2}]))
+  (play (par [o1 _] {:channel 1} [o1- {:channel 2}])
+        (parts {:channel 0} (tup s0 s1-)
+               {:channel 1} (tup d0 d1 d2)))
+  (play (chans o1 _ o1-)
+        (parts chan0 (tup s0 s1-)
+               chan1 (tup d0 d1 d2)
+               chan2 _)))

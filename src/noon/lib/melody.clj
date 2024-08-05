@@ -188,7 +188,7 @@
                                   (let [last-event (fn [s] (-> (sort-by :position s) last))
                                         {:as _connection dur :duration} (last-event score)
                                         normalise (fn [e] (assoc e :position 0 :duration dur))
-                                        connect (fn [s] (-> (last-event s) normalise hash-set))
+                                        connect (n/sf_ (-> (last-event _) normalise hash-set))
                                         total-duration (* dur length)
                                         done? (fn [s] (> (n/score-duration s) total-duration))]
                                     (n/update-multiscore (mv/once score)

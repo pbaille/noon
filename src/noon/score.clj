@@ -487,7 +487,7 @@
     (defn map-event-update
       "map `event-update` over `score`"
       [score event-update]
-      (set (map event-update score)))
+      (set (keep event-update score)))
 
     (do :views
 
@@ -875,19 +875,41 @@
             (mv/fmap multi-score (fn [s] (map-event-update s event-update)))
             (if-let [score-update (->score-update update)]
               (mv/fmap multi-score (fn [s] (map-score-update s score-update)))
-              (mv/bind multi-score (fn [s] (map-multiscore-update s update))))))))
+              (mv/bind multi-score (fn [s] (map-multiscore-update s update))))))
+
+        (defn update-score
+          "Update a single `score` using `update`.
+           If `update` is a multiscore-update, lift the `score` and apply `update` to it,
+           then return the first score from the resulting multiscore."
+          [score update]
+          (if-let [upd (->score-update update)]
+            (upd score)
+            (if-let [mupd (->multiscore-update update)]
+              (mv/get-1 (update-multiscore (mv/once score) mupd)))))))
 
 (do :creation
 
     "Main entry point to create a score."
 
     (defn mk*
-      "Feed score0 into given updates."
+      "Feed score0 into given updates. returns a multiscore."
       [xs]
       (update-multiscore (mv/once score0) (vec xs)))
 
-    (defn mk [& xs]
-      (mk* xs)))
+    (defn mk
+      "Feed score0 into given updates. returns a multiscore."
+      [& xs]
+      (mk* xs))
+
+    (defn mk1*
+      "Feed score0 into given updates. returns a single score."
+      [xs]
+      (mv/get-1 (mk* xs)))
+
+    (defn mk1
+      "Feed score0 into given updates. returns a single score."
+      [& xs]
+      (mk1* xs)))
 
 
 (do :updates
@@ -907,7 +929,7 @@
       "Act like 'mk, ignoring current score."
       {:tags [:base]}
       [xs]
-      (sf_ (mk* xs)))
+      (mf_ (mk* xs)))
 
     (def ^{:doc "Returns the empty score regardless of input."
            :tags [:base]}
@@ -968,7 +990,7 @@
       [xs]
       (score->multiscore-update score
                                 (-> (update-multiscore (mv/once score) (chain* xs))
-                                    (fit-score {:duration (score-duration score)}))))
+                                    (fit-multiscore {:duration (score-duration score)}))))
 
     (defn* tup
       "Like 'lin but preserve the length of the input score"
