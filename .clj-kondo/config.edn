@@ -10,31 +10,31 @@
  :config-in-comment {:linters {:unresolved-symbol {:level :off}
                                :unresolved-namespace {:level :off}
                                :invalid-arity {:level :off}}}
- :hooks {:analyze-call {noon.utils.chance/gen noon.utils.chance/gen
-                        noon.utils.chance/defcoll noon.utils.chance/defcoll}
-         :macroexpand {noon.utils.chance/defgen noon.utils.chance/defgen
+ :hooks {:analyze-call {noon.utils.chance/gen hooks.noon.utils.chance/gen
+                        noon.utils.chance/defcoll hooks.noon.utils.chance/defcoll}
+         :macroexpand {noon.utils.chance/defgen hooks.noon.utils.chance/defgen
 
-                       noon.utils.misc/defn* noon.utils.misc/defn*
-                       noon.utils.misc/f_ noon.utils.misc/f_
-                       noon.utils.misc/>_ noon.utils.misc/>_
-                       noon.utils.misc/defreduction noon.utils.misc/defreduction
+                       noon.utils.misc/defn* hooks.noon.utils.misc/defn*
+                       noon.utils.misc/f_ hooks.noon.utils.misc/f_
+                       noon.utils.misc/>_ hooks.noon.utils.misc/>_
+                       noon.utils.misc/defreduction hooks.noon.utils.misc/defreduction
 
-                       noon.harmony/defsteps noon.harmony/defsteps
+                       noon.harmony/defsteps hooks.noon.harmony/defsteps
 
-                       noon.score/event-update noon.score/lambda
-                       noon.score/ef_ noon.score/lambda_
-                       noon.score/score-update noon.score/lambda
-                       noon.score/sf_ noon.score/lambda_
-                       noon.score/multiscore-update noon.score/lambda
-                       noon.score/mf_ noon.score/lambda_
-                       noon.score/score->multiscore-update noon.score/lambda
-                       noon.score/import-wrap-harmony-update-constructors noon.score/import-wrap-harmony-update-constructors
-                       noon.score/import-wrap-harmony-updates  noon.score/import-wrap-harmony-updates
-                       noon.score/-def-channels noon.score/-def-channels
-                       noon.score/-def-velocities noon.score/-def-velocities
-                       noon.score/-def-durations noon.score/-def-durations
-                       noon.score/-def-tracks noon.score/-def-tracks
-                       noon.score/-def-wrapped noon.score/-def-wrapped
-                       noon.score/-def-steps noon.score/-def-steps
-                       noon.score/-def-shifts noon.score/-def-shifts
-                       noon.score/-def-degrees noon.score/-def-degrees}}}
+                       noon.score/event-update hooks.noon.score/lambda
+                       noon.score/ef_ hooks.noon.score/lambda_
+                       noon.score/score-update hooks.noon.score/lambda
+                       noon.score/sf_ hooks.noon.score/lambda_
+                       noon.score/multiscore-update hooks.noon.score/lambda
+                       noon.score/mf_ hooks.noon.score/lambda_
+                       noon.score/score->multiscore-update hooks.noon.score/lambda
+                       noon.score/import-wrap-harmony-update-constructors hooks.noon.score/import-wrap-harmony-update-constructors
+                       noon.score/import-wrap-harmony-updates  hooks.noon.score/import-wrap-harmony-updates
+                       noon.score/-def-channels hooks.noon.score/-def-channels
+                       noon.score/-def-velocities hooks.noon.score/-def-velocities
+                       noon.score/-def-durations hooks.noon.score/-def-durations
+                       noon.score/-def-tracks hooks.noon.score/-def-tracks
+                       noon.score/-def-wrapped hooks.noon.score/-def-wrapped
+                       noon.score/-def-steps hooks.noon.score/-def-steps
+                       noon.score/-def-shifts hooks.noon.score/-def-shifts
+                       noon.score/-def-degrees hooks.noon.score/-def-degrees}}}

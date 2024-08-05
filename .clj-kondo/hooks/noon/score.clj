@@ -1,5 +1,5 @@
-(ns noon.score
-  (:require noon.constants))
+(ns hooks.noon.score
+  (:require hooks.noon.constants))
 
 (defmacro lambda
   [arg & body]
@@ -25,17 +25,17 @@
                         (list 'def (with-meta (symbol (str "dur" i))
                                      {:doc (str "Multiply event duration by " i)
                                       :tags [:event-update :alias :temporal]})
-                              `(noon.score/dur (mul ~i)))
+                              `(noon.score/dur (noon.score/mul ~i)))
                         (list 'def (with-meta (symbol (str "dur:" i))
                                      {:doc (str "Divide event duration by " i)
                                       :tags [:event-update :alias :temporal]})
-                              `(noon.score/dur (div ~i)))))
+                              `(noon.score/dur (noon.score/div ~i)))))
                 (for [n (range 2 12)
                       d (range 2 12)]
                   (list 'def (with-meta (symbol (str "dur" n ":" d))
                                {:doc (str "Multiply event duration by " n "/" d)
                                 :tags [:event-update :alias :temporal]})
-                        `(noon.score/dur (mul (/ ~n ~d))))))))
+                        `(noon.score/dur (noon.score/mul (/ ~n ~d))))))))
 
 (defmacro -def-velocities []
   (cons 'do
@@ -63,7 +63,7 @@
                 `(noon.score/track ~i)))))
 
 (defmacro -def-wrapped [wrapper m]
-  (cons 'do (for [[k v] (eval m)]
+  (cons 'do (for [[k v] (eval (symbol (str "hooks." (namespace m)) (name m)))]
               (list 'def
                     (with-meta (symbol (name k))
                       {:tags [:event-update :alias :harmonic]
@@ -113,4 +113,4 @@
                     (list 'def (with-meta (symbol (str dn an))
                                  {:doc (str "Go to degree " an dn)
                                   :tags [:event-update :harmonic]})
-                          `[(transpose ~av) (degree ~dv)]))))))
+                          `[(noon.score/transpose ~av) (noon.score/degree ~dv)]))))))

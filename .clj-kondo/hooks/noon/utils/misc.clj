@@ -1,4 +1,4 @@
-(ns noon.utils.misc)
+(ns hooks.noon.utils.misc)
 
 (defmacro >_
       "shorthand for (as-> x _ ...)"
@@ -40,7 +40,7 @@
         (if (string? x) [x xs] [nil (cons x xs)])]
     `(def ~name
        ~@(if doc [doc])
-       (reduction (fn ~argv ~@body)))))
+       (noon.utils.misc/reduction (fn ~argv ~@body)))))
 
 (defmacro defn*
   [& form]

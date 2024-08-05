@@ -1,4 +1,4 @@
-(ns noon.constants)
+(ns hooks.noon.constants)
 
 (def alt-sym->alt-val
   {"bb" -2

@@ -763,9 +763,6 @@
                   (g/gen? x) (if (->score-update (g/realise x))
                                (sf_ ((->score-update (g/realise x)) _))))))
 
-        (defn update-score [score update]
-          ((->score-update update) score))
-
         (defn map-score-update
           "map `score-update` over `score`.
            - each event of `score` will be converted to a single event score
