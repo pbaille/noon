@@ -1,28 +1,18 @@
 (ns noon.score
   "build, transform, play and write midi scores"
   (:require [clojure.core :as c]
-            [clojure.pprint :refer [pprint]]
             [noon.midi :as midi]
             [noon.harmony :as h]
             [noon.vst.index :as vst]
             [noon.constants :as constants]
             [noon.utils.misc :as u :refer [t t? f_ defn*]]
-            [noon.utils.mapsets :as ms]
             [noon.utils.maps :as m]
             [noon.utils.chance :as g]
             [noon.utils.pseudo-random :as pr]
-            [noon.externals :as externals]))
+            [noon.externals :as externals]
+            [noon.utils.multi-val :as mv]))
 
 (do :help
-
-    (defn pp [& xs]
-      (mapv pprint xs)
-      (last xs))
-
-    (defmacro dbg [& xs]
-      `(do (println '------)
-           (println '~&form)
-           (pp ~@xs)))
 
     (defn sub [x] (f_ (- _ x)))
     (defn add [x] (f_ (+ _ x)))
@@ -35,14 +25,12 @@
     (defn gte [x] (f_ (>= _ x)))
     (defn lte [x] (f_ (<= _ x)))
 
-    (def hm* (partial apply hash-map))
-
-    (defn ?reduce
-      "like reduce but short-circuits (returns nil) on first falsy result"
-      [f init xs]
-      (reduce (fn [a e]
-                (or (f a e) (reduced nil)))
-              init xs))
+    (defn ?keep [f xs]
+      (reduce (fn [ret x]
+                (if-let [v (f x)]
+                  (conj ret v)
+                  (reduced nil)))
+              [] xs))
 
     (defn ->int
       "Turn `x` into an integer, rounding it if needed, returning 0 if not a number."
@@ -105,20 +93,28 @@
 
         "An event-update is a function that takes an event and return an event."
 
-        (defmacro efn
+        (defmacro event-update
           "just a tagged lambda that represents an event update function"
           [arg & body]
           `(t :event-update
               (fn [~arg] ~@body)))
 
         (defmacro ef_ [& body]
-          `(efn ~'_ ~@body))
+          `(event-update ~'_ ~@body))
 
         (def event-update?
           (t? :event-update))
 
         (defn map->efn [x]
-          (t :event-update (m/->upd x))))
+          (t :event-update (m/->upd x)))
+
+        (defn ->event-update [x]
+          (cond (event-update? x) x
+                (map? x) (map->efn x)
+                (vector? x) (if-let [updates (?keep ->event-update x)]
+                              (ef_ (reduce #(%2 %1) _ updates)))
+                (and (g/gen? x)
+                     (->event-update (g/realise x))) (ef_ ((->event-update (g/realise x)) _)))))
 
     (do :midi-val
 
@@ -488,6 +484,11 @@
       (if (set? x)
         (every? map? x)))
 
+    (defn map-event-update
+      "map `event-update` over `score`"
+      [score event-update]
+      (set (map event-update score)))
+
     (do :views
 
         "Basic things we may want to know about a score."
@@ -533,15 +534,15 @@
         (defn scale-score
           "Scale score timing by given ratio."
           [score ratio]
-          (ms/$ score
-                {:duration (mul ratio)
-                 :position (mul ratio)}))
+          (map-event-update score
+                            (map->efn {:duration (mul ratio)
+                                       :position (mul ratio)})))
 
         (defn shift-score
           "Shift all position by the given offset."
           [score offset]
-          (ms/$ score
-                {:position (add offset)}))
+          (map-event-update score
+                            (map->efn {:position (add offset)})))
 
         (defn fit-score
           "Fit a score into a note scaling and shifting it
@@ -562,31 +563,16 @@
           (fit-score score
                      {:position 0 :duration 1}))
 
-        (defn concat-score
-          "Concat 2 scores temporally."
-          [a b]
-          (->> (score-duration a)
-               (shift-score b)
-               (into a)))
-
-        (defn concat-scores
-          "Concat several scores temporally."
-          [xs]
-          (case (count xs)
-            0 #{}
-            1 (first xs)
-            (reduce concat-score xs)))
-
         (defn reverse-score
           "Reverse score temporally."
           [score]
           (let [total-duration (score-duration score)]
-            (ms/$ score
-                  (fn [e]
-                    (assoc e :position
-                           (c/- total-duration
-                                (:position e)
-                                (:duration e)))))))
+            (map-event-update score
+                              (fn [e]
+                                (assoc e :position
+                                       (c/- total-duration
+                                            (:position e)
+                                            (:duration e)))))))
 
         (defn sort-score
           "Sort `score` events.
@@ -597,12 +583,34 @@
           ([f score] (sort-by f score))
           ([f comp score] (sort-by f comp score)))
 
+        (defn filter-score [score f]
+          (set (filter f score)))
+
+        (defn trim-score
+          "Removes everything before `beg` and after `end` from `score`.
+           (triming overlapping durations)."
+          [score beg end]
+          (map-event-update score
+                            (fn [{:as evt :keys [position duration]}]
+                              (let [end-pos (+ position duration)]
+                                (cond (or (>= position end)
+                                          (<= end-pos beg)) nil
+                                      (and (>= position beg) (<= end-pos end)) evt
+                                      :else (cond-> evt
+                                              (> end-pos end)
+                                              (-> (update :duration - (- end-pos end))
+                                                  (assoc :trimed-fw true))
+                                              (< position beg)
+                                              (-> (update :position + (- beg position))
+                                                  (update :duration - (- beg position))
+                                                  (assoc :trimed-bw true))))))))
+
         (do :midi-prepare
 
             (defn numerify-pitches
               "Replace the pitch entry value of each event by its MIDI pitch value (7bits natural)."
               [score]
-              (ms/$ score (fn [e] (update e :pitch h/hc->chromatic-value))))
+              (map-event-update score (fn [e] (update e :pitch h/hc->chromatic-value))))
 
             (defn dedupe-patches-and-control-changes
               "Remove redondant :patch and :cc event entries from `score`"
@@ -650,6 +658,28 @@
                           (let [[x & xs] (sort-by (juxt :track :channel) xs)]
                             (cons x (map (fn [e] (dissoc e :bpm)) xs)))))
                    (reduce into #{})))))
+
+    (do :composition
+
+        (defn concat-score
+          "Concat 2 scores temporally."
+          [a b]
+          (->> (score-duration a)
+               (shift-score b)
+               (into a)))
+
+        (defn concat-scores
+          "Concat several scores temporally."
+          [xs]
+          (case (count xs)
+            0 #{}
+            1 (first xs)
+            (reduce concat-score xs)))
+
+        (defn merge-scores
+          "merge several scores together."
+          [xs]
+          (reduce into #{} xs)))
 
     (do :show
 
@@ -711,76 +741,141 @@
 
         "A score-update is a function that takes a score and return a score."
 
-        (declare ->upd)
-
-        (defmacro sfn
+        (defmacro score-update
           "Just a tagged lambda that represents a score update function."
           [arg & body]
           `(t :score-update
               (fn [~arg] ~@body)))
 
         (defmacro sf_ [& body]
-          `(sfn ~'_ ~@body))
+          `(score-update ~'_ ~@body))
 
         (def score-update? (t? :score-update))
 
-        (defn update-score
+        (defn ->score-update
+          "Turn 'x into a score-update if possible."
+          [x]
+          (if-let [event-update (->event-update x)]
+            (sf_ (map-event-update _ event-update))
+            (cond (score-update? x) x
+                  (vector? x) (if-let [updates (?keep ->score-update x)]
+                                (sf_ (reduce #(%2 %1) _ updates)))
+                  (g/gen? x) (if (->score-update (g/realise x))
+                               (sf_ ((->score-update (g/realise x)) _))))))
+
+        (defn update-score [score update]
+          ((->score-update update) score))
+
+        (defn map-score-update
+          "map `score-update` over `score`.
+           - each event of `score` will be converted to a single event score
+           - this single event score will be repositioned to zero and updated using `score-update`.
+           - all resulting scores will be concatenated into one."
+          [score score-update]
+          (->> (map (fn [e]
+                      (-> (score-update #{(assoc e :position 0)})
+                          (shift-score (:position e))))
+                    score)
+               (reduce into #{})))))
+
+(do :multiscore
+
+    (def multiscore0 (mv/once score0))
+
+    (do :composition
+
+        (defn concat-multiscores
+          "Concat several multiscores into one."
+          [multiscores]
+          (mv/fmap (mv/tup* multiscores)
+                   concat-scores))
+
+        (defn merge-multiscores
+          "Merge several multiscores into one."
+          [multiscores]
+          (mv/fmap (mv/tup* multiscores)
+                   merge-scores))
+
+        (defn fit-multiscore
+          [multiscore options]
+          (mv/fmap multiscore
+                   (fn [score] (fit-score score options)))))
+
+    (do :updates
+
+        "multiscore -> multiscore updates"
+
+        (declare update-multiscore)
+
+        (defmacro multiscore-update
+          "Tagged lambda that represents a multi score update function."
+          [arg & body]
+          `(t :multiscore-update
+              (fn [~arg] ~@body)))
+
+        (def multiscore-update?
+          (t? :multiscore-update))
+
+        (defmacro mf_ [& body]
+          `(multiscore-update ~'_ ~@body))
+
+        (defmacro score->multiscore-update
+          "Creates a score -> multiscore update."
+          [arg & body]
+          (let [multiscore (gensym "multiscore")]
+            `(multiscore-update ~multiscore (mv/bind ~multiscore (fn [~arg] ~@body)))))
+
+        (defn ->multiscore-update [x]
+          (if-let [score-update (->score-update x)]
+            (mf_ (mv/bind _ score-update))
+            (cond (multiscore-update? x) x
+                  (mv/multi-val? x) (mf_ (mv/bind x (fn [update] (update-multiscore _ update))))
+                  (vector? x) (mf_ (reduce update-multiscore _ x))
+                  (g/gen? x) (if (->multiscore-update (g/realise x))
+                               (mf_ ((->multiscore-update (g/realise x)) _))))))
+
+        (defn update-multiscore
           "Updates score 's with update 'x."
-          [s x] ((->upd x) s))
+          [multi-score update]
+          ((->multiscore-update update) multi-score))
 
-        (defn partial-upd
-          "Use 'filt to match some events of the score 's, apply 'x to the resulting subscore,
-           then merge unselected events into the updated subscore."
-          [s filt x]
-          (ms/split-upd s filt (->upd x)))
+        (defn map-multiscore-update
+          "map a multiscore `update` over `score`"
+          [score update]
+          (->> (map (fn [e]
+                      (mv/fmap (update-multiscore (mv/once #{(assoc e :position 0)})
+                                                  update)
+                               (fn [score] (shift-score score (:position e)))))
+                    score)
+               (reduce (fn [ret segment]
+                         (mv/bind ret (fn [score] (mv/fmap segment (partial into score)))))
+                       (mv/once #{}))))
 
-        (defn partial-upd2
+        (defn partial-update-multiscore
           "Use 'filt to match some events of the score 's, apply 'x to the resulting subscore,
            then merge unselected events into the updated subscore.
            This second version allows you to provide an event update as a filter.
            If the result of the update is equal to the original event, it is considered a match."
-          [s filt x]
-          (ms/split-upd s
-                        (if (event-update? filt)
+          [multi-score filt upd]
+          (let [matcher (if (event-update? filt)
                           (fn [evt] (= evt (filt evt)))
-                          filt)
-                        (->upd x)))
+                          filt)]
+            (mv/bind multi-score
+                     (fn [score]
+                       (let [grouped (group-by #(m/match % matcher) score)
+                             common (set (get grouped false))
+                             updated (update-multiscore (mv/once (get grouped true)) upd)]
+                         (mv/fmap updated
+                                  (fn [new-events] (into common new-events))))))))
 
-        (do :casting
-
-            "Casting various clojure's values to score-updates or event-updates."
-
-            (declare chain* par*)
-
-            (defn ->upd
-              "Turn 'x into a score-function."
-              [x]
-              (cond (score-update? x) x
-                    (g/gen? x) (sf_ ((->upd (g/realise x)) _))
-                    (event-update? x) (sf_ (ms/$ _ x))
-                    (map? x) (->upd (map->efn x))
-                    (vector? x) (chain* x)
-                    (set? x) (par* x)
-                    :else (u/throw* "->upd/bad-argument: " x)))
-
-            (defn ->event-upd
-              "Turn 'x into an event-upd (used in 'each)."
-              [x]
-              (cond (event-update? x) x
-
-                    (map? x) (map->efn x)
-
-                    (g/gen? x)
-                    (ef_ ((->event-upd (g/realise x)) _))
-
-                    (score-update? x)
-                    (ef_ (-> ((->upd x) #{(assoc _ :position 0)})
-                             (shift-score (:position _))))
-
-                    (or (vector? x)
-                        (set? x)) (->event-upd (->upd x))
-
-                    :else (u/throw* "->event-upd/bad-argument: " x))))))
+        (defn map-update
+          "map an update over a multiscore"
+          [multi-score update]
+          (if-let [event-update (->event-update update)]
+            (mv/fmap multi-score (fn [s] (map-event-update s event-update)))
+            (if-let [score-update (->score-update update)]
+              (mv/fmap multi-score (fn [s] (map-score-update s score-update)))
+              (mv/bind multi-score (fn [s] (map-multiscore-update s update))))))))
 
 (do :creation
 
@@ -789,10 +884,11 @@
     (defn mk*
       "Feed score0 into given updates."
       [xs]
-      (update-score score0 (chain* xs)))
+      (update-multiscore (mv/once score0) (vec xs)))
 
     (defn mk [& xs]
       (mk* xs)))
+
 
 (do :updates
 
@@ -816,60 +912,63 @@
     (def ^{:doc "Returns the empty score regardless of input."
            :tags [:base]}
       void
-      (sf_ #{}))
+      (mf_ mv/none))
 
     (defn* chain
       "Compose several updates together linearly."
       {:tags [:base]}
       [xs]
-      (sf_ (?reduce update-score _ xs)))
+      (let [updates (vec xs)]
+        (or (->event-update updates)
+            (->score-update updates)
+            (->multiscore-update updates))))
 
     (defn* par
       "Apply several update on a score merging the results."
       {:tags [:base :parallel]}
       [xs]
-      (sf_ (ms/mk (map #(update-score _ %) xs))))
-
-    (defn* par>
-      "Accumulative 'par."
-      {:tags [:accumulative :parallel]}
-      [xs]
-      (sf_ (loop [segments [_] xs xs]
-             (if-let [[x & xs] xs]
-               (recur (conj segments (update-score (peek segments) x)) xs)
-               (reduce into #{} (next segments))))))
-
-    (defn* each
-      "Apply an update to each events of a score."
-      {:tags [:base :iterative]}
-      [xs]
-      (sf_ (?reduce (fn [s x] (ms/$ s (->event-upd x)))
-                    _ xs)))
+      (mf_ (merge-multiscores
+            (map #(update-multiscore _ %) xs))))
 
     (defn* lin
       "Feed each transformations with the current score and concatenate the results."
       {:tags [:base :linear]}
       [xs]
-      (sfn score
-           (concat-scores
-            (map (f_ (update-score score _)) xs))))
+      (mf_ (concat-multiscores
+            (map #(update-multiscore _ %) xs))))
+
+    (defn* each
+      "Apply an update to each events of a score."
+      {:tags [:base :iterative]}
+      [xs]
+      (mf_ (reduce map-update _ xs)))
+
+    (defn* par>
+      "Accumulative 'par."
+      {:tags [:accumulative :parallel]}
+      [xs]
+      (mf_ (loop [segments [_] xs xs]
+             (if-let [[x & xs] xs]
+               (recur (conj segments (update-multiscore (peek segments) x)) xs)
+               (merge-multiscores (next segments))))))
 
     (defn* lin>
       "Accumulative 'lin."
       {:tags [:base :linear :accumulative]}
       [xs]
-      (sf_ (loop [segments [_] xs xs]
+      (mf_ (loop [segments [_] xs xs]
              (if-let [[x & xs] xs]
-               (recur (conj segments (update-score (peek segments) x)) xs)
-               (concat-scores (next segments))))))
+               (recur (conj segments (update-multiscore (peek segments) x)) xs)
+               (concat-multiscores (next segments))))))
 
     (defn* fit
       "Wraps the given transformation 'x, stretching its output to the input score duration.
        In other words, turn any transformation into another one that do not change the duration of its input score."
       {:tags [:base]}
       [xs]
-      (sf_ (fit-score (update-score _ (chain* xs))
-                      {:duration (score-duration _)})))
+      (score->multiscore-update score
+                                (-> (update-multiscore (mv/once score) (chain* xs))
+                                    (fit-score {:duration (score-duration score)}))))
 
     (defn* tup
       "Like 'lin but preserve the length of the input score"
@@ -911,10 +1010,10 @@
       ([n x]
        (rep n x false))
       ([n x skip-first]
-       (sf_ (->> (if skip-first (update-score _ x) _)
-                 (iterate (->upd x))
+       (mf_ (->> (if skip-first (update-multiscore _ x) _)
+                 (iterate #(update-multiscore % x))
                  (take n)
-                 (concat-scores)))))
+                 (concat-multiscores)))))
 
     (defn rup
       "Iterates the given update n times over the input score and tup the results."
@@ -951,8 +1050,8 @@
        (parts sel1 upd1 sel2 upd2 ...)"
       {:tags [:base :partial]}
       [xs]
-      (sf_ (reduce (fn [s [filt upd]]
-                     (partial-upd2 s filt upd))
+      (mf_ (reduce (fn [multi-score [filt upd]]
+                     (partial-update-multiscore multi-score filt upd))
                    _ (partition 2 xs))))
 
     (defn repeat-while
@@ -960,18 +1059,18 @@
       {:tags [:base :iterative]}
       ([test f] (repeat-while test f same))
       ([test f after]
-       (sf_ (let [nxt (update-score _ f)]
-              (if (not-empty (update-score nxt test))
+       (mf_ (let [nxt (update-multiscore _ f)]
+              (if (mv/get-1 (update-multiscore nxt test))
                 (recur nxt)
-                (update-score nxt after))))))
+                (update-multiscore nxt after))))))
 
     (defn* fst
       "Tries given transformations in order until the first success (non empty score)."
       {:tags [:base :selective]}
       [xs]
-      (sf_ (loop [xs xs]
+      (mf_ (loop [xs xs]
              (if-let [[x & xs] (seq xs)]
-               (or (not-empty (update-score _ x))
+               (or (mv/get-1 (update-multiscore _ x))
                    (recur xs))))))
 
     (defn* fst-that
@@ -985,7 +1084,7 @@
       "Shrink a score using 'f on each events to determine if it is kept or not."
       {:tags [:base :temporal]}
       [f]
-      (sf_ (ms/shrink _ f)))
+      (sf_ (filter-score _ f)))
 
     (defn adjust
       "Time stretching/shifting operation
@@ -1035,7 +1134,7 @@
                   (vector? x) x)]
         (sf_ (let [[min-in max-in] (mapv dim (score-bounds _ dim))
                    f #(u/scale-range % min-in max-in min-out max-out)]
-               (update-score _ (each (f_ (update _ dim f))))))))
+               (map-event-update _ (ef_ (update _ dim f)))))))
 
     (do :selection
 
@@ -1094,26 +1193,14 @@
               start-from-last
               (sf_ (-> (group-by :position _)
                        sort last val set
-                       (update-score {:position 0}))))
+                       (map-event-update (map->efn {:position 0})))))
 
             (defn trim
               "Build and update that removes everything before 'beg and after 'end from the received score
                (triming overlapping durations)."
               {:tags [:temporal :selective]}
               [beg end]
-              (each (efn {:as evt :keys [position duration]}
-                         (let [end-pos (+ position duration)]
-                           (cond (or (>= position end)
-                                     (<= end-pos beg)) nil
-                                 (and (>= position beg) (<= end-pos end)) evt
-                                 :else (cond-> evt
-                                         (> end-pos end)
-                                         (-> (update :duration - (- end-pos end))
-                                             (assoc :trimed-fw true))
-                                         (< position beg)
-                                         (-> (update :position + (- beg position))
-                                             (update :duration - (- beg position))
-                                             (assoc :trimed-bw true))))))))))
+              (sf_ (trim-score _ beg end)))))
 
     (do :checks
 
@@ -1156,8 +1243,7 @@
            Returns a score update that wraps the expression so that it is evaluated each time the update is called."
           {:tags [:non-deterministic]}
           [expr]
-          `(vary-meta (sfn score# (update-score score# ~expr))
-                      assoc :non-deterministic true))
+          `(multiscore-update score# (update-multiscore score# ~expr)))
 
         (defn* one-of
           "Returns an update that choose randomly one of the given updates before applying it."
@@ -1209,17 +1295,17 @@
           [xs]
           (! (mixlin* xs)))
 
-        (defn* shuf
-          "Shuffles the values of the given dimensions."
-          {:tags [:non-deterministic]}
-          [dims]
-          (sf_ (let [size (count _)
-                     idxs (range size)
-                     mappings (zipmap idxs (pr/shuffle idxs))
-                     events (vec _)]
-                 (reduce (fn [s i] (conj s (merge (events i) (select-keys (events (mappings i)) dims))))
-                         #{}
-                         idxs)))))
+        #_(defn* shuffle-dimensions
+            "Shuffles the values of the given dimensions."
+            {:tags [:non-deterministic]}
+            [dims]
+            (sf_ (let [size (count _)
+                       idxs (range size)
+                       mappings (zipmap idxs (pr/shuffle idxs))
+                       events (vec _)]
+                   (reduce (fn [s i] (conj s (merge (events i) (select-keys (events (mappings i)) dims))))
+                           #{}
+                           idxs)))))
 
     (do :incubator
 
@@ -1244,66 +1330,47 @@
           [n f] (tup>* (repeat n f)))
 
         (defn $by
-          "Splits the score according to the return of 'f applied to each event,
-           apply 'g on each subscore and merge all the results together."
-          [f g]
-          (sf_ (->> (group-by f _)
-                    (map (fn [[_ group]]
-                           (let [s (set group)
-                                 o (score-origin s)]
-                             (-> (shift-score s (- o))
-                                 (update-score g)
-                                 (shift-score o)))))
-                    (reduce into #{}))))
+          "Splits the score according to the return of `event->group` applied to each event,
+           apply `update` on each subscore and merge all the results together."
+          [event->group update]
+          (score->multiscore-update score
+                                    (->> (group-by event->group score)
+                                         (map (fn [[_ group]]
+                                                (let [subscore (set group)
+                                                      origin (score-origin subscore)]
+                                                  (-> (shift-score subscore (- origin))
+                                                      (update-multiscore update)
+                                                      (mv/fmap (fn [score] (shift-score score origin)))))))
+                                         merge-multiscores)))
 
         (defn zip
           "Zips the current score with the result of updating it with the given update 'x.
            the zipping is done by :position with the given function 'f that takes two scores and produce one.
            All the scores returned by 'f are merged into a final one which is returned."
           [f x]
-          (sf_ (let [updated (update-score _ x)]
-                 (->> (map (fn [[position xs]]
-                             (assert (apply = (map :duration xs))
-                                     "each position group should have events of the same duration.")
-                             (let [duration (:duration (first xs))
-                                   chunk (update-score updated (between position (+ position duration)))]
-                               (f (set xs) chunk)))
-                           (group-by :position _))
-                      (reduce into #{})))))
+          (mf_ (let [updated (update-multiscore _ x)]
+                 (mv/bind updated
+                          (fn [score]
+                            (->> (group-by :position score)
+                                 (map (fn [[position xs]]
+                                        (assert (apply = (map :duration xs))
+                                                "each position group should have events of the same duration.")
+                                        (let [duration (:duration (first xs))
+                                              multichunk (update-multiscore updated (between position (+ position duration)))]
+                                          (mv/fmap multichunk
+                                                   (fn [chunk] (f (set xs) chunk))))))
+                                 merge-multiscores))))))
 
         (defn try-until
           "Given the undeterministic update 'u,
            tries it on the score until the result of it passes 'test"
           [test u & {:keys [max] :or {max 100}}]
-          (sf_ (loop [n 0]
-                 (or (update-score _ (chain u test))
+          (mf_ (loop [n 0]
+                 (let [next-multiscore (update-multiscore _ (chain u test))]
+                   (if (mv/get-1 next-multiscore)
+                     next-multiscore
                      (if (>= max n)
-                       (recur (inc n)))))))
-
-        (defn newrep
-          "INCUB: simple rep"
-          ([n] (newrep n same))
-          ([n & xs]
-           (let [[update flags] (if (keyword? (first xs)) [same xs] [(first xs) (rest xs)])
-                 flags (zipmap flags (repeat true))
-                 updates (repeat n update)]
-             (cond (:par flags) (par* updates)
-                   (:fit flags) (tup* updates)
-                   :else (lin* updates)))))
-
-        (defn iter
-          "INCUB: accumulative rep"
-          [x & xs]
-          (let [[n [f & {:as options}]] (if (number? x) [x xs] [nil (cons x xs)])]
-            (println n f options)
-            (sf_ (let [u (->upd f)
-                       seed (if (:next options) (update-score _ u) _)
-                       scores (->> (iterate u seed)
-                                   (drop (:drop options 0))
-                                   (take (:take options n)))]
-                   (cond (:par options) (reduce into #{} scores)
-                         (:fit options) (fit-score (concat-scores scores) {:duration (score-duration _)})
-                         :else (concat-scores scores))))))))
+                       (recur (inc n))))))))))
 
 (do :midi
 
@@ -1356,7 +1423,8 @@
       ([score]
        (noon {} score))
       ([opts score]
-       (let [{:as options
+       (let [score (mv/get-1 score)
+             {:as options
               :keys [tracks bpm play source]} (merge @options* opts (-> score meta ::options))
 
              {:as files

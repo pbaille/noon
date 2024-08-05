@@ -19,10 +19,15 @@
                        noon.utils.misc/>_ noon.utils.misc/>_
                        noon.utils.misc/defreduction noon.utils.misc/defreduction
 
-                       noon.score/efn noon.score/lambda
+                       noon.harmony/defsteps noon.harmony/defsteps
+
+                       noon.score/event-update noon.score/lambda
                        noon.score/ef_ noon.score/lambda_
-                       noon.score/sfn noon.score/lambda
+                       noon.score/score-update noon.score/lambda
                        noon.score/sf_ noon.score/lambda_
+                       noon.score/multiscore-update noon.score/lambda
+                       noon.score/mf_ noon.score/lambda_
+                       noon.score/score->multiscore-update noon.score/lambda
                        noon.score/import-wrap-harmony-update-constructors noon.score/import-wrap-harmony-update-constructors
                        noon.score/import-wrap-harmony-updates  noon.score/import-wrap-harmony-updates
                        noon.score/-def-channels noon.score/-def-channels
@@ -32,24 +37,4 @@
                        noon.score/-def-wrapped noon.score/-def-wrapped
                        noon.score/-def-steps noon.score/-def-steps
                        noon.score/-def-shifts noon.score/-def-shifts
-                       noon.score/-def-degrees noon.score/-def-degrees
-
-                       noon.harmony/defsteps noon.harmony/defsteps
-
-                       noon.multi.score/event-update noon.multi.score/lambda
-                       noon.multi.score/ef_ noon.multi.score/lambda_
-                       noon.multi.score/score-update noon.multi.score/lambda
-                       noon.multi.score/sf_ noon.multi.score/lambda_
-                       noon.multi.score/multiscore-update noon.multi.score/lambda
-                       noon.multi.score/mf_ noon.multi.score/lambda_
-                       noon.multi.score/score->multiscore-update noon.multi.score/lambda
-                       noon.multi.score/import-wrap-harmony-update-constructors noon.multi.score/import-wrap-harmony-update-constructors
-                       noon.multi.score/import-wrap-harmony-updates  noon.multi.score/import-wrap-harmony-updates
-                       noon.multi.score/-def-channels noon.multi.score/-def-channels
-                       noon.multi.score/-def-velocities noon.multi.score/-def-velocities
-                       noon.multi.score/-def-durations noon.multi.score/-def-durations
-                       noon.multi.score/-def-tracks noon.multi.score/-def-tracks
-                       noon.multi.score/-def-wrapped noon.multi.score/-def-wrapped
-                       noon.multi.score/-def-steps noon.multi.score/-def-steps
-                       noon.multi.score/-def-shifts noon.multi.score/-def-shifts
-                       noon.multi.score/-def-degrees noon.multi.score/-def-degrees}}}
+                       noon.score/-def-degrees noon.score/-def-degrees}}}

@@ -4,7 +4,8 @@
             [noon.utils.sequences :as s]
             [noon.utils.misc :as u]
             [clojure.core :as c]
-            [noon.utils.pseudo-random :as pr]))
+            [noon.utils.pseudo-random :as pr]
+            [noon.utils.multi-val :as mv]))
 
 (do :impl
 
@@ -23,13 +24,14 @@
       (let [duration (n/score-duration score)
             last-event (last (sort-by :position score))]
         (map (fn [shift]
-               (n/update-score (n/shift-score score shift)
-                    (n/trim 0 duration)))
+               (-> score
+                   (n/shift-score shift)
+                   (n/trim-score 0 duration)))
              (range 0 (:duration last-event) increment))))
 
     (defn rand-shift [resolution]
       (n/sf_ (let [increment (/ (n/score-duration _) resolution)]
-             (pr/rand-nth (score-fw-shifts _ increment)))))
+               (pr/rand-nth (score-fw-shifts _ increment)))))
 
     (defn slice-score
       "slice a score into n parts of equal duration."
@@ -38,9 +40,13 @@
             increment (/ duration n)
             points (map (n/mul increment) (range 0 (inc n)))]
         (map (fn [[from to]]
-               (n/update-score score [(n/between from to) (n/trim from to)
-                           (n/sf_ (if (empty? _) (n/mk n/vel0 {:duration increment :position from}) _))
-                           (n/sf_ (n/shift-score _ (- from)))]))
+               (-> score
+                   (n/filter-score (fn [{p :position}] (and (>= p from) (< p to))))
+                   (n/trim-score from to)
+                   ((n/sf_ (if (empty? _)
+                             #{(merge n/DEFAULT_EVENT {:velocity 0 :duration increment :position from})}
+                             _)))
+                   (n/shift-score (- from))))
              (partition 2 1 points))))
 
     (comment :tries
@@ -71,14 +77,23 @@
        "
       ([offset]
        (n/sf_ (let [duration (n/score-duration _)]
-                (n/update-score _
-                       [(n/each {:position (fn [p] (mod (+ p offset) duration))})
-                        (n/trim 0 duration)]))))
+                (-> _
+                    (n/map-event-update
+                     (n/map->efn {:position (fn [p] (mod (+ p offset) duration))}))
+                    (n/trim-score 0 duration)))))
       ([k arg]
-       (case k
-         :relative (n/sf_ (n/update-score _ (rotation (* (n/score-duration _) arg))))
-         :rand-by (n/sf_ (n/update-score _ (rotation (pr/rand-nth (range 0 (n/score-duration _) arg)))))
-         :rand-sub (n/sf_ (n/update-score _ (rotation (* (pr/rand-nth (range 0 arg)) (/ (n/score-duration _) arg))))))))
+       (n/sf_ (let [score-duration (n/score-duration _)
+                    offset (case k
+                             :relative (* score-duration arg)
+                             :rand-by (pr/rand-nth (range 0 score-duration arg))
+                             :rand-sub (* (pr/rand-nth (range 0 arg)) (/ score-duration arg)))]
+                (n/update-score _ (rotation offset))))))
+
+    (defn permutations
+      "turn a score into a multiscore of all its permutations of `n` slices."
+      [n]
+      (n/score->multiscore-update score
+                                  (mv/from-seq (s/permutations (slice-score score n)))))
 
     (defn permutation
       "permute a score by time slices,

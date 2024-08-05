@@ -6,7 +6,8 @@
             [noon.utils.misc :as u]
             [noon.harmony :as h]
             [clojure.math.combinatorics :as comb]
-            [noon.utils.pseudo-random :as pr]))
+            [noon.utils.pseudo-random :as pr]
+            [noon.utils.multi-val :as mv]))
 
 (do :help
 
@@ -105,28 +106,28 @@
 
     (defn contour-change [layer f]
 
-      (n/sfn s
-             (assert (apply = (map (fn [e] (dissoc (:pitch e) :position)) s))
-                     "For now, only mono harmony scores are supported here")
+      (n/score-update s
+                      (assert (apply = (map (fn [e] (dissoc (:pitch e) :position)) s))
+                              "For now, only mono harmony scores are supported here")
 
-             (let [layer (or layer (score-lowest-layer s))
-                   layer-converter (partial h/down-to-layer layer)
-                   splits (sort-by :position (layer-split layer s))
-                   idxs (map :layer-idx splits)
-                   contour (mapv (n/sub (apply min idxs)) idxs)
-                   new-contour (f contour)
+                      (let [layer (or layer (score-lowest-layer s))
+                            layer-converter (partial h/down-to-layer layer)
+                            splits (sort-by :position (layer-split layer s))
+                            idxs (map :layer-idx splits)
+                            contour (mapv (n/sub (apply min idxs)) idxs)
+                            new-contour (f contour)
 
-                   deltas (mapv - new-contour contour)
-                   position-key (layer-kw->position-key layer)]
-               (n/concat-scores
-                (map-indexed (fn [i {:keys [position score]}]
-                               (->> score
-                                    (map (fn [e]
-                                           (-> (update e :pitch layer-converter)
-                                               (update :position - position)
-                                               (update-in [:pitch :position position-key] + (deltas i)))))
-                                    (into #{})))
-                             splits)))))
+                            deltas (mapv - new-contour contour)
+                            position-key (layer-kw->position-key layer)]
+                        (n/concat-scores
+                         (map-indexed (fn [i {:keys [position score]}]
+                                        (->> score
+                                             (map (fn [e]
+                                                    (-> (update e :pitch layer-converter)
+                                                        (update :position - position)
+                                                        (update-in [:pitch :position position-key] + (deltas i)))))
+                                             (into #{})))
+                                      splits)))))
 
     (defn contour
       "changing the melodic contour of a score.
@@ -173,22 +174,25 @@
        4. else go to step 1."
       {:tags [:linear :melodic]}
       [connect step done? finish]
-      (n/sf_ (let [nxt (n/concat-score _ (n/update-score (connect _) step))]
-               (cond (empty? nxt) nil
-                     (done? nxt) (n/update-score nxt finish)
-                     :else (recur nxt)))))
+      (n/mf_ (mv/bind (n/update-multiscore _ (n/append [connect step]))
+                      (fn [score]
+                        (if (done? score)
+                          (n/update-multiscore (mv/once score) finish)
+                          (n/update-multiscore (mv/once score) (line connect step done? finish)))))))
 
     (defn simple-line
       "A simple way to create a line of given 'length using the given 'step"
       {:tags [:linear :melodic]}
       [length step]
-      (n/sf_ (let [last-event (fn [s] (-> (sort-by :position s) last))
-                   {:as _connection dur :duration} (last-event _)
-                   normalise (fn [e] (assoc e :position 0 :duration dur))
-                   connect (fn [s] (-> (last-event s) normalise hash-set))
-                   total-duration (* dur length)
-                   done? (fn [s] (> (n/score-duration s) total-duration))]
-               (n/update-score _ (line connect step done? (n/trim 0 total-duration))))))
+      (n/score->multiscore-update score
+                                  (let [last-event (fn [s] (-> (sort-by :position s) last))
+                                        {:as _connection dur :duration} (last-event score)
+                                        normalise (fn [e] (assoc e :position 0 :duration dur))
+                                        connect (fn [s] (-> (last-event s) normalise hash-set))
+                                        total-duration (* dur length)
+                                        done? (fn [s] (> (n/score-duration s) total-duration))]
+                                    (n/update-multiscore (mv/once score)
+                                                         (line connect step done? (n/trim 0 total-duration))))))
 
     (defn simple-tupline
       "tuped version of `noon.lib.melody/simple-line`"
@@ -331,12 +335,14 @@
     (def ^{:doc "Returns the given score if it is a 1 voice line with no holes or superpositions."
            :tags [:check :temporal :melodic]}
       line?
-      (n/sf_ (if (and (= (n/score-duration _)
-                         (reduce + (map :duration _)))
-                      (let [xs (sort-by :position _)
-                            [p1 :as ps] (map :position xs)]
-                        (= ps (reductions + p1 (butlast (map :duration xs))))))
-               _)))
+      (n/score->multiscore-update score
+                                  (if (and (= (n/score-duration score)
+                                              (reduce + (map :duration score)))
+                                           (let [xs (sort-by :position score)
+                                                 [p1 :as ps] (map :position xs)]
+                                             (= ps (reductions + p1 (butlast (map :duration xs))))))
+                                    (mv/once score)
+                                    mv/none)))
 
     (def ^{:doc "Fill melodic holes by extending each note to the start position of the following one in.
                  It operates on each :track/channel/voice sub scores."
