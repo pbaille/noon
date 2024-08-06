@@ -45,14 +45,6 @@ Let's use the chorium soundfont:
       (dup 2))
 #+end_src
 
-#+RESULTS:
-#+begin_src clojure
-{:source-file "generated/history/1721641684099.noon",
- :seed-file "generated/history/1721641684099.seed",
- :midi-file "generated/history/1721641684099.mid"}
-
-#+end_src
-
 ** simple I IV VII I
 
 Experimenting passing notes:
@@ -211,8 +203,8 @@ full grid:
             (maybe
              (any-that* (within-pitch-bounds? :G-1 :C2)
                         [d4- d3- d1- d1 d3 d4])))
-     (each (probs {void 1
-                same 5}))
+     (each (probs {vel0 1
+                   same 5}))
      m/connect-repetitions
      (vel-humanize 10 [30 70])]))
 
@@ -256,6 +248,8 @@ full grid:
 
         (adjust 32)
         (nlin 4 (s-shift -1))))
+
+
 #+end_src
 
 ** Tritonal experiment
@@ -496,6 +490,3 @@ Trying to produce vibrating textures by playing very fast note sequences.
       (each (par> d4 d4 d4)
          (one-of vel0 vel1 vel2 vel3 vel4 vel5)))
 #+end_src
-
-
-
