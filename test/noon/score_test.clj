@@ -37,9 +37,6 @@
     (is (not ((lte 1) 2)))
     (is ((lte 1) 0))
 
-    (is (= (hm* [:a 1 :b 2])
-           {:b 2, :a 1}))
-
     (is (= (?reduce + 0 (range 5))
            10))
     (is (nil? (?reduce (fn [a e] (if (> e 2) (+ a e)))

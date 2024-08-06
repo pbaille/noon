@@ -1,28 +1,17 @@
 (ns noon.score
   "build, transform, play and write midi scores"
   (:require [clojure.core :as c]
-            [clojure.pprint :refer [pprint]]
             [noon.midi :as midi]
             [noon.harmony :as h]
             [noon.vst.index :as vst]
             [noon.constants :as constants]
             [noon.utils.misc :as u :refer [t t? f_ defn*]]
-            [noon.utils.mapsets :as ms]
             [noon.utils.maps :as m]
             [noon.utils.chance :as g]
             [noon.utils.pseudo-random :as pr]
             [noon.externals :as externals]))
 
 (do :help
-
-    (defn pp [& xs]
-      (mapv pprint xs)
-      (last xs))
-
-    (defmacro dbg [& xs]
-      `(do (println '------)
-           (println '~&form)
-           (pp ~@xs)))
 
     (defn sub [x] (f_ (- _ x)))
     (defn add [x] (f_ (+ _ x)))
@@ -35,14 +24,21 @@
     (defn gte [x] (f_ (>= _ x)))
     (defn lte [x] (f_ (<= _ x)))
 
-    (def hm* (partial apply hash-map))
-
     (defn ?reduce
       "like reduce but short-circuits (returns nil) on first falsy result"
       [f init xs]
       (reduce (fn [a e]
                 (or (f a e) (reduced nil)))
               init xs))
+
+    (defn ?keep
+      "like `clojure.core/map`, but if `f` returns nil for one element, the whole form returns nil."
+      [f xs]
+      (reduce (fn [ret e]
+                (if-let [v (f e)]
+                  (conj ret v)
+                  (reduced nil)))
+              [] xs))
 
     (defn ->int
       "Turn `x` into an integer, rounding it if needed, returning 0 if not a number."
@@ -118,7 +114,15 @@
           (t? :event-update))
 
         (defn map->efn [x]
-          (t :event-update (m/->upd x))))
+          (t :event-update (m/->upd x)))
+
+        (defn ->event-update [x]
+          (cond (event-update? x) x
+                (map? x) (map->efn x)
+                (vector? x) (if-let [updates (?keep ->event-update x)]
+                              (ef_ (reduce #(%2 %1) _ updates)))
+                (and (g/gen? x)
+                     (->event-update (g/realise x))) (ef_ ((->event-update (g/realise x)) _)))))
 
     (do :midi-val
 
@@ -530,18 +534,21 @@
 
         "Some score transformation helpers, low level building blocks used in score-updates definitions."
 
+        (defn map-event-update [score event-update]
+          (set (keep event-update score)))
+
         (defn scale-score
           "Scale score timing by given ratio."
           [score ratio]
-          (ms/$ score
-                {:duration (mul ratio)
-                 :position (mul ratio)}))
+          (map-event-update score
+                            (map->efn {:duration (mul ratio)
+                                       :position (mul ratio)})))
 
         (defn shift-score
           "Shift all position by the given offset."
           [score offset]
-          (ms/$ score
-                {:position (add offset)}))
+          (map-event-update score
+                            (map->efn {:position (add offset)})))
 
         (defn fit-score
           "Fit a score into a note scaling and shifting it
@@ -562,31 +569,16 @@
           (fit-score score
                      {:position 0 :duration 1}))
 
-        (defn concat-score
-          "Concat 2 scores temporally."
-          [a b]
-          (->> (score-duration a)
-               (shift-score b)
-               (into a)))
-
-        (defn concat-scores
-          "Concat several scores temporally."
-          [xs]
-          (case (count xs)
-            0 #{}
-            1 (first xs)
-            (reduce concat-score xs)))
-
         (defn reverse-score
           "Reverse score temporally."
           [score]
           (let [total-duration (score-duration score)]
-            (ms/$ score
-                  (fn [e]
-                    (assoc e :position
-                           (c/- total-duration
-                                (:position e)
-                                (:duration e)))))))
+            (map-event-update score
+                              (fn [e]
+                                (assoc e :position
+                                       (c/- total-duration
+                                            (:position e)
+                                            (:duration e)))))))
 
         (defn sort-score
           "Sort `score` events.
@@ -597,12 +589,34 @@
           ([f score] (sort-by f score))
           ([f comp score] (sort-by f comp score)))
 
+        (defn filter-score [score f]
+          (set (filter f score)))
+
+        (defn trim-score
+          "Removes everything before `beg` and after `end` from `score`.
+           (triming overlapping durations)."
+          [score beg end]
+          (map-event-update score
+                            (fn [{:as evt :keys [position duration]}]
+                              (let [end-pos (+ position duration)]
+                                (cond (or (>= position end)
+                                          (<= end-pos beg)) nil
+                                      (and (>= position beg) (<= end-pos end)) evt
+                                      :else (cond-> evt
+                                              (> end-pos end)
+                                              (-> (update :duration - (- end-pos end))
+                                                  (assoc :trimed-fw true))
+                                              (< position beg)
+                                              (-> (update :position + (- beg position))
+                                                  (update :duration - (- beg position))
+                                                  (assoc :trimed-bw true))))))))
+
         (do :midi-prepare
 
             (defn numerify-pitches
               "Replace the pitch entry value of each event by its MIDI pitch value (7bits natural)."
               [score]
-              (ms/$ score (fn [e] (update e :pitch h/hc->chromatic-value))))
+              (map-event-update score (fn [e] (update e :pitch h/hc->chromatic-value))))
 
             (defn dedupe-patches-and-control-changes
               "Remove redondant :patch and :cc event entries from `score`"
@@ -650,6 +664,28 @@
                           (let [[x & xs] (sort-by (juxt :track :channel) xs)]
                             (cons x (map (fn [e] (dissoc e :bpm)) xs)))))
                    (reduce into #{})))))
+
+    (do :composition
+
+        (defn merge-scores
+          "Merge several scores together."
+          [scores]
+          (reduce into #{} scores))
+
+        (defn concat-score
+          "Concat 2 scores temporally."
+          [a b]
+          (->> (score-duration a)
+               (shift-score b)
+               (into a)))
+
+        (defn concat-scores
+          "Concat several scores temporally."
+          [xs]
+          (case (count xs)
+            0 #{}
+            1 (first xs)
+            (reduce concat-score xs))))
 
     (do :show
 
@@ -724,63 +760,56 @@
 
         (def score-update? (t? :score-update))
 
+        (defn ->score-update
+          "Turn 'x into a score-update if possible."
+          [x]
+          (if-let [event-update (->event-update x)]
+            (sf_ (map-event-update _ event-update))
+            (cond (score-update? x) x
+                  (vector? x) (if-let [updates (?keep ->score-update x)]
+                                (sf_ (reduce #(%2 %1) _ updates)))
+                  (g/gen? x) (if (->score-update (g/realise x))
+                               (sf_ ((->score-update (g/realise x)) _))))))
+
+        (defn map-score-update
+          "map `score-update` over `score`.
+           - each event of `score` will be converted to a single event score
+           - this single event score will be repositioned to zero and updated using `score-update`.
+           - all resulting scores will be concatenated into one."
+          [score score-update]
+          (->> (map (fn [e]
+                      (-> (score-update #{(assoc e :position 0)})
+                          (shift-score (:position e))))
+                    score)
+               (reduce into #{})))
+
         (defn update-score
-          "Updates score 's with update 'x."
-          [s x] ((->upd x) s))
+          "Updates `score` with `update`."
+          [score update]
+          (if-let [score-update (->score-update update)]
+            (score-update score)
+            (u/throw* `update-score "bad argument: " update)))
 
-        (defn partial-upd
-          "Use 'filt to match some events of the score 's, apply 'x to the resulting subscore,
-           then merge unselected events into the updated subscore."
-          [s filt x]
-          (ms/split-upd s filt (->upd x)))
-
-        (defn partial-upd2
+        (defn partial-update
           "Use 'filt to match some events of the score 's, apply 'x to the resulting subscore,
            then merge unselected events into the updated subscore.
            This second version allows you to provide an event update as a filter.
            If the result of the update is equal to the original event, it is considered a match."
-          [s filt x]
-          (ms/split-upd s
-                        (if (event-update? filt)
-                          (fn [evt] (= evt (filt evt)))
+          [score filt update]
+          (let [matcher (if-let [event-update (->event-update filt)]
+                          (ef_ (= _ (event-update _)))
                           filt)
-                        (->upd x)))
+                grouped (group-by #(m/match % matcher) score)
+                common (set (get grouped false))
+                updated (update-score (get grouped true) update)]
+            (into common updated)))
 
-        (do :casting
-
-            "Casting various clojure's values to score-updates or event-updates."
-
-            (declare chain* par*)
-
-            (defn ->upd
-              "Turn 'x into a score-function."
-              [x]
-              (cond (score-update? x) x
-                    (g/gen? x) (sf_ ((->upd (g/realise x)) _))
-                    (event-update? x) (sf_ (ms/$ _ x))
-                    (map? x) (->upd (map->efn x))
-                    (vector? x) (chain* x)
-                    (set? x) (par* x)
-                    :else (u/throw* "->upd/bad-argument: " x)))
-
-            (defn ->event-upd
-              "Turn 'x into an event-upd (used in 'each)."
-              [x]
-              (cond (event-update? x) x
-
-                    (map? x) (map->efn x)
-
-                    (g/gen? x)
-                    (ef_ ((->event-upd (g/realise x)) _))
-
-                    (score-update? x)
-                    (ef_ (-> ((->upd x) #{(assoc _ :position 0)})
-                             (shift-score (:position _))))
-
-                    (or (vector? x)
-                        (set? x)) (->event-upd (->upd x))
-
-                    :else (u/throw* "->event-upd/bad-argument: " x))))))
+        (defn map-update [score update]
+          (if-let [event-update (->event-update update)]
+            (map-event-update score event-update)
+            (if-let [score-update (->score-update update)]
+              (map-score-update score score-update)
+              (u/throw* `map-update "bad argument: " update))))))
 
 (do :creation
 
@@ -789,7 +818,7 @@
     (defn mk*
       "Feed score0 into given updates."
       [xs]
-      (update-score score0 (chain* xs)))
+      (update-score score0 (vec xs)))
 
     (defn mk [& xs]
       (mk* xs)))
@@ -828,7 +857,7 @@
       "Apply several update on a score merging the results."
       {:tags [:base :parallel]}
       [xs]
-      (sf_ (ms/mk (map #(update-score _ %) xs))))
+      (sf_ (merge-scores (map #(update-score _ %) xs))))
 
     (defn* par>
       "Accumulative 'par."
@@ -837,22 +866,20 @@
       (sf_ (loop [segments [_] xs xs]
              (if-let [[x & xs] xs]
                (recur (conj segments (update-score (peek segments) x)) xs)
-               (reduce into #{} (next segments))))))
+               (merge-scores (next segments))))))
 
     (defn* each
       "Apply an update to each events of a score."
       {:tags [:base :iterative]}
       [xs]
-      (sf_ (?reduce (fn [s x] (ms/$ s (->event-upd x)))
-                    _ xs)))
+      (sf_ (reduce map-update _ xs)))
 
     (defn* lin
       "Feed each transformations with the current score and concatenate the results."
       {:tags [:base :linear]}
       [xs]
-      (sfn score
-           (concat-scores
-            (map (f_ (update-score score _)) xs))))
+      (sf_ (concat-scores
+            (map #(update-score _ %) xs))))
 
     (defn* lin>
       "Accumulative 'lin."
@@ -952,7 +979,7 @@
       {:tags [:base :partial]}
       [xs]
       (sf_ (reduce (fn [s [filt upd]]
-                     (partial-upd2 s filt upd))
+                     (partial-update s filt upd))
                    _ (partition 2 xs))))
 
     (defn repeat-while
@@ -985,7 +1012,7 @@
       "Shrink a score using 'f on each events to determine if it is kept or not."
       {:tags [:base :temporal]}
       [f]
-      (sf_ (ms/shrink _ f)))
+      (sf_ (filter-score _ f)))
 
     (defn adjust
       "Time stretching/shifting operation
@@ -1101,19 +1128,7 @@
                (triming overlapping durations)."
               {:tags [:temporal :selective]}
               [beg end]
-              (each (efn {:as evt :keys [position duration]}
-                         (let [end-pos (+ position duration)]
-                           (cond (or (>= position end)
-                                     (<= end-pos beg)) nil
-                                 (and (>= position beg) (<= end-pos end)) evt
-                                 :else (cond-> evt
-                                         (> end-pos end)
-                                         (-> (update :duration - (- end-pos end))
-                                             (assoc :trimed-fw true))
-                                         (< position beg)
-                                         (-> (update :position + (- beg position))
-                                             (update :duration - (- beg position))
-                                             (assoc :trimed-bw true))))))))))
+              (sf_ (trim-score _ beg end)))))
 
     (do :checks
 
@@ -1209,17 +1224,17 @@
           [xs]
           (! (mixlin* xs)))
 
-        (defn* shuf
-          "Shuffles the values of the given dimensions."
-          {:tags [:non-deterministic]}
-          [dims]
-          (sf_ (let [size (count _)
-                     idxs (range size)
-                     mappings (zipmap idxs (pr/shuffle idxs))
-                     events (vec _)]
-                 (reduce (fn [s i] (conj s (merge (events i) (select-keys (events (mappings i)) dims))))
-                         #{}
-                         idxs)))))
+        #_(defn* shuffle-dimensions
+            "Shuffles the values of the given dimensions."
+            {:tags [:non-deterministic]}
+            [dims]
+            (sf_ (let [size (count _)
+                       idxs (range size)
+                       mappings (zipmap idxs (pr/shuffle idxs))
+                       events (vec _)]
+                   (reduce (fn [s i] (conj s (merge (events i) (select-keys (events (mappings i)) dims))))
+                           #{}
+                           idxs)))))
 
     (do :incubator
 
@@ -1262,14 +1277,14 @@
            All the scores returned by 'f are merged into a final one which is returned."
           [f x]
           (sf_ (let [updated (update-score _ x)]
-                 (->> (map (fn [[position xs]]
+                 (->> (group-by :position _)
+                      (map (fn [[position xs]]
                              (assert (apply = (map :duration xs))
                                      "each position group should have events of the same duration.")
                              (let [duration (:duration (first xs))
                                    chunk (update-score updated (between position (+ position duration)))]
-                               (f (set xs) chunk)))
-                           (group-by :position _))
-                      (reduce into #{})))))
+                               (f (set xs) chunk))))
+                      merge-scores))))
 
         (defn try-until
           "Given the undeterministic update 'u,
