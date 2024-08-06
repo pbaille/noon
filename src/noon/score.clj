@@ -747,8 +747,6 @@
 
         "A score-update is a function that takes a score and return a score."
 
-        (declare ->upd)
-
         (defmacro sfn
           "Just a tagged lambda that represents a score update function."
           [arg & body]
@@ -939,7 +937,7 @@
        (rep n x false))
       ([n x skip-first]
        (sf_ (->> (if skip-first (update-score _ x) _)
-                 (iterate (->upd x))
+                 (iterate (->score-update x))
                  (take n)
                  (concat-scores)))))
 
@@ -1096,13 +1094,13 @@
               "Build an update that removes the elements anterior to the given position from the received score."
               {:tags [:temporal :selective]}
               [x]
-              (shrink {:position (gte x)}))
+              (shrink (map->efn {:position (gte x)})))
 
             (defn until
               "Build an update that removes the elements posterior to the given position from the received score."
               {:tags [:temporal :selective]}
               [x]
-              (shrink {:position (lt x)}))
+              (shrink (map->efn {:position (lt x)})))
 
             (defn between
               "Build an update that keeps only events that are positioned between x and y positions."
@@ -1311,7 +1309,7 @@
           [x & xs]
           (let [[n [f & {:as options}]] (if (number? x) [x xs] [nil (cons x xs)])]
             (println n f options)
-            (sf_ (let [u (->upd f)
+            (sf_ (let [u (->score-update f)
                        seed (if (:next options) (update-score _ u) _)
                        scores (->> (iterate u seed)
                                    (drop (:drop options 0))

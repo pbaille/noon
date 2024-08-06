@@ -24,12 +24,12 @@
             last-event (last (sort-by :position score))]
         (map (fn [shift]
                (n/update-score (n/shift-score score shift)
-                    (n/trim 0 duration)))
+                               (n/trim 0 duration)))
              (range 0 (:duration last-event) increment))))
 
     (defn rand-shift [resolution]
       (n/sf_ (let [increment (/ (n/score-duration _) resolution)]
-             (pr/rand-nth (score-fw-shifts _ increment)))))
+               (pr/rand-nth (score-fw-shifts _ increment)))))
 
     (defn slice-score
       "slice a score into n parts of equal duration."
@@ -39,8 +39,8 @@
             points (map (n/mul increment) (range 0 (inc n)))]
         (map (fn [[from to]]
                (n/update-score score [(n/between from to) (n/trim from to)
-                           (n/sf_ (if (empty? _) (n/mk n/vel0 {:duration increment :position from}) _))
-                           (n/sf_ (n/shift-score _ (- from)))]))
+                                      (n/sf_ (if (empty? _) (n/mk n/vel0 {:duration increment :position from}) _))
+                                      (n/sf_ (n/shift-score _ (- from)))]))
              (partition 2 1 points))))
 
     (comment :tries

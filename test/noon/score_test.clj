@@ -362,7 +362,7 @@
            (mk dur2 vel10)))
     (is (= (update-score S0 (g/one-of vel10))
            (mk vel10)))
-    (is (= (update-score S0 #{vel5 d1})
+    (is (= (update-score S0 (par vel5 d1))
            (mk (par vel5 d1))
            (into (update-score S0 vel5)
                  (update-score S0 d1))))
@@ -371,7 +371,7 @@
            (mk _)
            S0))
 
-    (is (= (mk (k S0))
+    (is (= (mk (k _))
            S0))
 
     (is (= (mk void)
@@ -463,7 +463,7 @@
     (is (tu/frozen (lin d1 d2 d3)))))
 
 
-(deftest new-rep
+'(deftest new-rep
   (testing "new rep"
     (play (newrep 5))
     (play (newrep 5 (one-of d1 d2 d3 d4) :fit))

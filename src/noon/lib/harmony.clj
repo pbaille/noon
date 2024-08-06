@@ -342,8 +342,11 @@
 (def ^{:doc "Build a structural chord on top of received event."
        :tags [:event-update :chord :harmonic]}
   simple-chord
-  (n/ef_ (let [structure-size (-> _ :pitch :structure count)]
-           (n/update-score #{_} (n/par* (mapv n/s-step (range structure-size)))))))
+  (n/sfn score
+         (->> score
+              (map (fn [e] (let [structure-size (-> e :pitch :structure count)]
+                             (n/update-score #{e} (n/par* (mapv n/s-step (range structure-size)))))))
+              (n/merge-scores))))
 
 (comment :tries
 

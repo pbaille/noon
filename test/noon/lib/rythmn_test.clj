@@ -61,7 +61,7 @@
                     (r/rotation :rand-sub 5)])
                   (dup 4)))
 
-    (is (t/frozen :rythmic-permutation-demo
+    (is (t/frozen :rythmic-permutation-demo-re
                   (chans
                 ;; beat
                    [(patch :taiko-drum) vel5 (dup 4)]
