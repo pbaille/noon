@@ -1,4 +1,4 @@
-(ns noon.utils.chance
+(ns hooks.noon.utils.chance
   (:require [clj-kondo.hooks-api :as api]))
 
 (defn gen [{:keys [node]}]
@@ -8,7 +8,7 @@
 
 (defmacro defgen
   ([name return]
-   `(def ~name (gen ~return)))
+   `(def ~name (noon.utils.chance/gen ~return)))
   ([name x & xs]
    (let [[doc [x & xs]] (if (string? x) [x xs] [nil (cons x xs)])
          [attrs body] (if (map? x) [x xs] [nil (cons x xs)])
@@ -16,7 +16,7 @@
      `(defn ~name
         ~@(if doc [doc])
         ~@(if attrs [attrs])
-        ~@(map (fn [[argv & body]] `(~argv (gen ~@body))) arities)))))
+        ~@(map (fn [[argv & body]] `(~argv (noon.utils.chance/gen ~@body))) arities)))))
 
 (defn defcoll [{:keys [node]}]
   (let [[name _ argv gen-expr] (rest (:children node))
