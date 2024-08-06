@@ -41,15 +41,7 @@
                (n/update-score score [(n/between from to) (n/trim from to)
                                       (n/sf_ (if (empty? _) (n/mk n/vel0 {:duration increment :position from}) _))
                                       (n/sf_ (n/shift-score _ (- from)))]))
-             (partition 2 1 points))))
-
-    (comment :tries
-
-             (play (dup 3)
-                   (trim 0.5 2.5))
-
-             (map qshow (tup-shifts 1/3
-                                    (mk (dup 3))))))
+             (partition 2 1 points)))))
 
 (do :basic
 
