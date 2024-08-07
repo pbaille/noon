@@ -9,7 +9,8 @@
             [noon.utils.maps :as m]
             [noon.utils.chance :as g]
             [noon.utils.pseudo-random :as pr]
-            [noon.externals :as externals]))
+            [noon.externals :as externals]
+            [clojure.string :as str]))
 
 (do :help
 
@@ -125,8 +126,13 @@
                      (->event-update (g/realise x))) (ef_ ((->event-update (g/realise x)) _))))
 
         (defn ->event-matcher
-          {:doc (str "turn `x` into an event-matcher."
-                     "an event-matcher is a function from event to boolean.")}
+          {:doc (str/join "\n"
+                          ["turn `x` into an event-matcher."
+                           "an event-matcher is a function from event to boolean."
+                           "If `x` is an event-update, the result of applying it to the received event should be "
+                           "equal to the received event in order for it to indicate a match."
+                           "In other cases `x` is passed as second argument to `noon.utils.maps/match`:"
+                           (:doc (meta #'m/match))])}
           [x]
           (let [matcher (if (event-update? x)
                           (fn [e] (= e (x e)))
@@ -544,7 +550,10 @@
 
         "Some score transformation helpers, low level building blocks used in score-updates definitions."
 
-        (defn map-event-update [score event-update]
+        (defn map-event-update
+          {:doc (str "Apply `event-update` to each event of `score`. "
+                     "if `event-update` returns nil for an event, it is removed from the resulting score.")}
+          [score event-update]
           (set (keep event-update score)))
 
         (defn scale-score
@@ -805,12 +814,11 @@
             (u/throw* `update-score "bad argument: " update)))
 
         (defn partial-update
-          "Use 'filt to match some events of the score 's, apply 'x to the resulting subscore,
+          "Use `event-matcher` to match some events of `score`, apply `update` to the resulting subscore,
            then merge unselected events into the updated subscore.
-           This second version allows you to provide an event update as a filter.
-           If the result of the update is equal to the original event, it is considered a match."
-          [score filt update]
-          (let [grouped (group-by (->event-matcher filt) score)
+           see `noon.score/->event-matcher` for exact semantics of event matching."
+          [score event-matcher update]
+          (let [grouped (group-by (->event-matcher event-matcher) score)
                 common (set (get grouped false))
                 updated (update-score (get grouped true) update)]
             (into common updated)))
