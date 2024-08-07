@@ -460,7 +460,8 @@
                (parts chan1 d1))
            (mk (par [chan1 d1] chan2))))
 
-    (is (tu/frozen (lin d1 d2 d3)))))
+    (is (tu/frozen :frozen-test
+                   (lin d1 d2 d3)))))
 
 
 '(deftest new-rep

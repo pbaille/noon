@@ -23,11 +23,12 @@
                   (append lydian)
                   (dup 2)))
 
-    (is (t/frozen (patch :tinkle-bell)
+    (is (t/frozen :gen-tup-1
+                  (patch :tinkle-bell)
                   (r/gen-tup 8 5 :durations [2 1/2 1])
                   (dup 4)))
 
-    (is (t/frozen (patch :tinkle-bell)
+    (is (t/frozen :gen-tup-2 (patch :tinkle-bell)
                   dur2
                   (par [o1- (dupt 2)]
                        (r/gen-tup 12 5 :durations [2 1/2 1 3])
@@ -35,33 +36,37 @@
                   (dup 4)))
 
     "shifted"
-    (is (t/frozen (patch :tinkle-bell)
+    (is (t/frozen :gen-tup-shifted-1
+                  (patch :tinkle-bell)
                   dur2
                   (par [o1- (dupt 2)]
                        (r/gen-tup 8 5 :shifted :durations [1/4 1/2 1 2 4]))
                   (dup 4)))
 
-    (is (t/frozen (patch :tinkle-bell)
+    (is (t/frozen :gen-tup-shifted-2
+                  (patch :tinkle-bell)
                   dur2
                   (par [o1- (dupt 2)]
                        (r/gen-tup 12 5 :shifted)
                        [o1 (r/gen-tup 12 5 :shifted)])
                   (dup 4)))
 
-    (is (t/frozen (patch :tinkle-bell)
+    (is (t/frozen :gen-tup-with-durations
+                  (patch :tinkle-bell)
                   dur2
                   (par [o1- (dupt 2)]
                        (r/gen-tup 12 5 :shifted :durations [1 2 3])
                        [o1 (r/gen-tup 12 7 :shifted :durations [2 1 3])])
                   (dup 4)))
 
-    (is (t/frozen (chans
+    (is (t/frozen :rotation-rand-sub
+                  (chans
                    [(patch :woodblock) o2-]
                    [(patch :woodblock) (tup dur2 dur3 dur3)
                     (r/rotation :rand-sub 5)])
                   (dup 4)))
 
-    (is (t/frozen :rythmic-permutation-demo-re
+    (is (t/frozen :rythmic-permutation-demo
                   (chans
                 ;; beat
                    [(patch :taiko-drum) vel5 (dup 4)]
@@ -80,14 +85,16 @@
 
     :euclidean
 
-    (is (t/frozen (patch :tinkle-bell)
+    (is (t/frozen :euclidean-1
+                  (patch :tinkle-bell)
                   dur2
                   (chans o1-
                          (r/gen-tup 12 5 :euclidean)
                          [o1 (r/gen-tup 12 7 :euclidean :shifted)])
                   (dup 4)))
 
-    (is (t/frozen (patch :tinkle-bell)
+    (is (t/frozen :euclidean-2
+                  (patch :tinkle-bell)
                   (let [rtup (! (r/gen-tup 16 5 :euclidean :shifted))]
                     (chans (ntup 2 o1-)
                            rtup
