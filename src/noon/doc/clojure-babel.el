@@ -17,7 +17,7 @@ For blocks to be correctly fontified, we need to install those using cider."
     (font-lock-flush)))
 
 ;; evaluate this to fontify the guide.org buffer
-(pb-clojure-babel_refresh-dynamic-font-lock-keywords
+'(pb-clojure-babel_refresh-dynamic-font-lock-keywords
  " *org-src-fontification:clojure-mode*"
  "noon.doc.guide")
 '(pb-clojure-babel_refresh-dynamic-font-lock-keywords
@@ -50,18 +50,25 @@ For blocks to be correctly fontified, we need to install those using cider."
   (interactive)
   (let ((buffer (current-buffer)))
     (when (not (cider-connected-p))
+      '(print "starting cider repl")
       (call-interactively #'cider-jack-in-clj)
       (sit-for 5))
     (with-current-buffer buffer
       (save-excursion
         (goto-char (point-min))
+        '(print "will evaluate top clojure form")
         (when (re-search-forward "#\\+begin_src clojure" nil t)
+          '(print "find first block")
           (let* ((element (org-element-context)))
             (when (eq (org-element-type element) 'src-block)
+              '(print "code block found")
               (let ((block-content (org-element-property :value element)))
+                '(print (concat "will eval:\n " block-content))
                 (pb-cider_eval! block-content)
                 (sit-for 3)
                 (string-match "(ns \\([^ ]+\\)" block-content)
+                '(print "will refresh fontification")
+                '(print (concat "ns: " (string-trim-right (match-string 1 block-content))))
                 (pb-clojure-babel_refresh-dynamic-font-lock-keywords
                  " *org-src-fontification:clojure-mode*"
                  (string-trim-right (match-string 1 block-content)))))))))))
