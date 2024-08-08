@@ -1,6 +1,6 @@
 (ns noon.score-test
   (:use noon.score)
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :as t :refer [deftest testing is]]
             [noon.utils.pseudo-random :as pr]
             [noon.utils.chance :as g]
             [noon.utils.misc :as u]
@@ -680,9 +680,140 @@
       (is (= (mk (nlin 3 d1))
              (mk (lin d1 d1 d1)))))
 
-    (is (= (mk (par chan1 chan2)
-               (parts chan1 d1))
-           (mk (par [chan1 d1] chan2))))
+    (testing "parts"
+
+      (is (= score0
+             (mk (parts chan2 void))
+             (mk (parts chan0 same))))
+
+      (is (= #{}
+             (mk (parts chan0 void))))
+
+      (is (= (mk (par chan1 chan2)
+                 (parts chan1 d1))
+             (mk (par [chan1 d1] chan2))))
+
+      (is (= (mk (par chan1 chan2)
+                 (parts chan1 d1 chan2 d2))
+             (mk (par [chan1 d1] [chan2 d2])))))
+
+    (testing "repeat-while"
+
+      (is (= (mk (repeat-while within-midi-pitch-bounds?
+                               o1
+                               o1-))
+             (mk o5)))
+
+      (testing "test can be a regular function"
+        (is (= (mk (repeat-while (fn [s] (< (count s) 8))
+                                 (dup 2)))
+               (mk (dup 8)))))
+
+      (testing "test empty set return is interpreted as failure"
+        (is (= (mk (repeat-while (fn [_] #{})
+                                 (tup d0 d1)))
+               (mk (tup d0 d1)))))
+
+      (testing "throwing when update or after are not updates"
+        (is (thrown? Exception (repeat-while :not-an-update same)))
+        (is (thrown? Exception (repeat-while same same :not-an-update)))))
+
+    (testing "fst fst-that"
+
+      (is (= (mk (fst void
+                      d2))
+             (mk (fst void
+                      void
+                      d2
+                      void))
+             (mk (fst d2
+                      void))
+             (mk d2)))
+
+      (is (= (mk (fst-that (within-pitch-bounds? :C0 :G0)
+                           o1
+                           d5
+                           d2
+                           d1))
+             (mk d2)))
+
+      (is (= (mk (fst-that (within-pitch-bounds? :C0 :G0)
+                           o1
+                           d1
+                           d2))
+             (mk d1)))
+
+      (is (= (mk (fst-that (within-time-bounds? 0 1)
+                           (dup 3)
+                           (lin d0 d1)
+                           (tup _ _)))
+             (mk (dupt 2)))))
+
+    (testing "shrink"
+
+      (is (= (mk (chans (dupt 3)
+                        (dup 3))
+                 (shrink chan1))
+             (mk [chan1 (dup 3)])))
+
+      (is (= (mk (lin d0 d1 d2)
+                 (shrink {:position (lt 2)}))
+             (mk (lin d0 d1)))))
+
+    (testing "adjust"
+
+      (is (= (mk (dup 4)
+                 (adjust {:duration 2}))
+             (mk (dupt 2)
+                 (dup 2))))
+
+      (is (= (mk (dup 4)
+                 (adjust {:duration 2 :position 2}))
+             (mk dur:2
+                 (dup 4)
+                 (sf_ (shift-score _ 2))))))
+
+    (testing "fork-with, voices, chans, tracks"
+
+      (is (= (mk (fork-with (fn [i] (vel (* 10 i)))
+                            s1
+                            o1))
+             (mk (par [s1 (vel 0)] [o1 (vel 10)]))))
+
+      (is (= (mk (voices d0 d1 d2))
+             (mk (par [(voice 0) d0]
+                      [(voice 1) d1]
+                      [(voice 2) d2]))))
+
+      (is (= (mk (chans d0 d1 d2))
+             (mk (par [chan0 d0]
+                      [chan1 d1]
+                      [chan2 d2]))))
+
+      (is (= (mk (tracks d0 d1 d2))
+             (mk (par [track0 d0]
+                      [track1 d1]
+                      [track2 d2])))))
+
+    (testing "mirror rev"
+
+      (is (= (mk (tup d0 d1 d2)
+                 rev)
+             (mk (tup d2 d1 d0))
+             (mk (tup d2 d1 d0)
+                 rev rev)))
+
+      (is (= (numerify-pitches
+              (mk (tup d0 d1 d2)
+                  (mirror :C0)))
+             (numerify-pitches
+              (mk (tup d0 c2- c4-)))))
+
+      (is (= (numerify-pitches
+              (mk (tup d0 d1 d2)
+                  (mirror :G0)))
+             (numerify-pitches
+              (mk (tup [o1 d1] o1 [o1 c2-]))))))
 
     (is (tu/frozen :frozen-test
                    (lin d1 d2 d3)))))
