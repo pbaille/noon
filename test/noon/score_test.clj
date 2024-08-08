@@ -133,7 +133,9 @@
                (-> DEFAULT_EVENT (a) (c))
                (assoc DEFAULT_EVENT :position 1 :duration 1/2)))))
 
-    (testing "->event-matcher"
+    (testing "event-matcher"
+
+      (is (event-matcher? (event-matcher (fn [e] true))))
 
       (let [m1-1 (->event-matcher chan0)
             m1-2 (->event-matcher {:channel 0})
@@ -492,6 +494,23 @@
               score0)
              #{(assoc DEFAULT_EVENT :channel 1)})))
 
+    (testing "->score-checker"
+
+      (is (= score0
+             ((->score-checker (fn [s] (<= (score-duration s) 1)))
+              score0)))
+
+      (is (nil?
+           ((->score-checker (fn [s] (< (score-duration s) 1)))
+            score0)))
+
+      (is (nil? ((->score-checker {:position (gt 0)})
+                 score0)))
+
+      (is (= score0
+             ((->score-checker {:position (gte 0)})
+              score0))))
+
     (testing "chain-score-updates"
 
       (is (= score0
@@ -710,7 +729,7 @@
                (mk (dup 8)))))
 
       (testing "test empty set return is interpreted as failure"
-        (is (= (mk (repeat-while (fn [_] #{})
+        (is (= (mk (repeat-while (sf_ #{})
                                  (tup d0 d1)))
                (mk (tup d0 d1)))))
 
@@ -814,6 +833,143 @@
                   (mirror :G0)))
              (numerify-pitches
               (mk (tup [o1 d1] o1 [o1 c2-]))))))
+
+    (testing "event-scale"
+
+      (is (= (mk (tup (vel 0) (vel 60) (vel 120))
+                 (event-scale :velocity [30 60]))
+             (mk (tup (vel 30) (vel 45) (vel 60))))))
+
+    (testing "selection"
+
+      (testing "min-by max-by"
+
+        (is (= (mk (tup d0 d1 d2)
+                   (min-by :position))
+               (mk [dur:3 d0])))
+
+        (is (= (mk (tup d0 [vel12 d1] d2)
+                   (max-by :velocity))
+               (mk [dur:3 d1 vel12]
+                   (adjust {:position 1/3}))))
+
+        (is (= (mk (lin d0 d1 d2)
+                   min-pitch)
+               (mk d0)))
+
+        (is (= (mk (lin d0 d1 d2)
+                   max-pitch)
+               (mk d2
+                   (adjust {:position 2})))))
+
+      (testing "time"
+
+        (is (= (mk (lin d0 d1 d2)
+                   (from 1))
+               (mk (lin d0 d1 d2)
+                   (from 0.5))
+               (mk (lin d1 d2)
+                   (adjust {:position 1}))))
+
+        (is (= (mk (lin d0 d1 d2)
+                   (until 2))
+               (mk (lin d0 d1 d2)
+                   (until 1.5))
+               (mk (lin d0 d1))))
+
+        (is (= (mk (lin d0 d1 d2)
+                   (between 1 2))
+               (mk (lin d0 d1 d2)
+                   (between 0.5 1.5))
+               (mk d1 (adjust {:position 1}))))
+
+        (is (= (mk (lin d0 d1 d2)
+                   (start-from 1))
+               (mk (lin d1 d2))))
+
+        (is (= (mk (lin d0 d1 d2)
+                   start-from-last)
+               (mk d2)))
+
+        (testing "trim"
+
+          (is (= (mk (lin d0 d1 d2)
+                     (trim 1 2))
+                 (mk d1
+                     (adjust {:position 1}))))
+
+          (is (= (mk (lin d0 d1 d2)
+                     (trim 0 3))
+                 (mk (lin d0 d1 d2))))
+
+          (is (= #{}
+                 (mk (lin d0 d1 d2)
+                     (trim 0 0))))
+
+          (is ((->event-matcher {:trimed-fw true
+                                 :duration 1/2
+                                 :position 0})
+               (first (mk (trim 0 1/2)))))
+
+          (is ((->event-matcher {:trimed-bw true
+                                 :duration 1/2
+                                 :position 1/2})
+               (first (mk (trim 1/2 1))))))
+
+        (testing "checks"
+
+          (let [f (within-bounds? :velocity 30 60)]
+            (is (and (not (mk vel1 f))
+                     (mk vel3 f)
+                     (mk (vel 60) f)
+                     (mk (vel 30) f)
+                     (mk vel5 f)
+                     (not (mk vel7 f))
+                     (not (mk vel9 f))
+                     (not (mk vel11 f)))))
+
+          (is (mk (lin d0 d1 d2)
+                  (within-time-bounds? 0 3)))
+
+          (is (not (mk (lin d0 d1 d2 d3)
+                       (within-time-bounds? 0 3))))
+
+          (is (mk (lin d0 d1 d2)
+                  (within-pitch-bounds? :C0 :E0)))
+
+          (is (not (mk (lin d0 d1 d2)
+                       (within-pitch-bounds? :C0 :D0))))
+
+          (is (not (mk o8 within-midi-pitch-bounds?)))
+          (is (not (mk o8- within-midi-pitch-bounds?)))
+          (is (mk within-midi-pitch-bounds?))
+          (is (mk (lin o1 o2 o3)
+                  within-midi-pitch-bounds?)))
+
+        (testing "non determinism"
+
+          (is (pr/with-rand 0
+                (= (mk (one-of chan1 chan2 chan3))
+                   (mk chan3))))
+
+          (is (pr/with-rand -78
+                (= (mk (one-of chan1 chan2 chan3))
+                   (mk chan1))))
+
+          (is (every? (->event-matcher {:channel (partial contains? #{0 1 2 3})})
+                      (mk (nlin 100 (maybe chan1 chan2 chan3)))))
+
+          (is (every? (->event-matcher {:channel (partial contains? #{0 1 2 3})})
+                      (mk (nlin 100 (probs {chan1 1 chan2 2 chan3 7})))))
+
+          (testing "mix and shuf"
+
+            (is (= (sort (map pitch-value (mk (shuftup d0 d1 d2))))
+                   (sort (map pitch-value (mk (mixtup d0 d1 d2))))
+                   (sort (map pitch-value (mk (tup d0 d1 d2))))
+                   (sort (map pitch-value (mk (shuflin d0 d1 d2))))
+                   (sort (map pitch-value (mk (mixlin d0 d1 d2))))
+                   (sort (map pitch-value (mk (lin d0 d1 d2))))))))))
 
     (is (tu/frozen :frozen-test
                    (lin d1 d2 d3)))))
