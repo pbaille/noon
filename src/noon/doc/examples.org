@@ -45,13 +45,6 @@ Let's use the chorium soundfont:
       (dup 2))
 #+end_src
 
-#+RESULTS:
-#+begin_src clojure
-{:source-file "generated/history/1721641684099.noon",
- :seed-file "generated/history/1721641684099.seed",
- :midi-file "generated/history/1721641684099.mid"}
-
-#+end_src
 
 ** simple I IV VII I
 
