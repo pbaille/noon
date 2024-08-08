@@ -26,7 +26,7 @@
     (defn lte [x] (f_ (<= _ x)))
 
     (defn ?reduce
-      "like reduce but short-circuits (returns nil) on first falsy result"
+      "like `clojure.core/reduce` but short-circuits (returns nil) on first falsy result"
       [f init xs]
       (reduce (fn [a e]
                 (or (f a e) (reduced nil)))
@@ -57,7 +57,7 @@
           (min 127)))
 
     (defn ->16bits-natural
-      "MIDI sometimes deals with 16 bits between values,
+      "MIDI sometimes deals with 16 bits values,
        this function coerce its input to this range."
       [x]
       (-> (->int x)
