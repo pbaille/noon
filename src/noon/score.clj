@@ -795,6 +795,22 @@
           (or (->score-update x)
               (u/throw* `->score-update! "not convertible: " x)))
 
+        (defn ->score-checker
+          "Convert `x` to a score-checker if possible. (score-checker: function from score to boolean)."
+          [x]
+          (if-let [event-matcher (->event-matcher x)]
+            (fn [s] (every? event-matcher s))
+            (if-let [update (->score-update x)]
+              (fn [s] (boolean (not-empty (update s))))
+              (if (fn? x)
+                (comp boolean x)))))
+
+        (defn ->score-checker!
+          "Strict version of `noon.score/->score-checker`"
+          [x]
+          (or (->score-checker x)
+              (u/throw* `->score-checker! "not convertible: " x)))
+
         (defn chain-score-updates [updates]
           (if-let [updates (?keep ->score-update updates)]
             (sf_ (?reduce #(%2 %1) _ updates))
