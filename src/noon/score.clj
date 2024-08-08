@@ -117,13 +117,25 @@
         (defn map->efn [x]
           (t :event-update (m/->upd x)))
 
+        (defn chain-event-updates
+          "Chain several `event-updates` one after another."
+          [event-updates]
+          (ef_ (?reduce #(%2 %1) _ event-updates)))
+
         (defn ->event-update [x]
           (cond (event-update? x) x
                 (map? x) (map->efn x)
                 (vector? x) (if-let [updates (?keep ->event-update x)]
-                              (ef_ (reduce #(%2 %1) _ updates)))
+                              (chain-event-updates updates))
                 (and (g/gen? x)
                      (->event-update (g/realise x))) (ef_ ((->event-update (g/realise x)) _))))
+
+        (defn event-matcher [f] (t :event-matcher f))
+
+        (def event-matcher? (t? :event-matcher))
+
+        (defn event-update->event-matcher [event-update]
+          (event-matcher (fn [e] (= e (event-update e)))))
 
         (defn ->event-matcher
           {:doc (str/join "\n"
@@ -134,11 +146,9 @@
                            "In other cases `x` is passed as second argument to `noon.utils.maps/match`:"
                            (:doc (meta #'m/match))])}
           [x]
-          (let [matcher (if (event-update? x)
-                          (fn [e] (= e (x e)))
-                          x)]
-            (fn [e]
-              (m/match e matcher)))))
+          (cond (event-matcher? x) x
+                (event-update? x) (event-update->event-matcher x)
+                :else (event-matcher (fn [e] (m/match e x))))))
 
     (do :midi-val
 
@@ -796,14 +806,23 @@
               (u/throw* `->score-update! "not convertible: " x)))
 
         (defn ->score-checker
-          "Convert `x` to a score-checker if possible. (score-checker: function from score to boolean)."
+          "Convert `x` to a score-checker if possible.
+           A score-checker is a score-update that can return the score unchanged or nil indicating failure."
           [x]
-          (if-let [event-matcher (->event-matcher x)]
-            (fn [s] (every? event-matcher s))
-            (if-let [update (->score-update x)]
-              (fn [s] (boolean (not-empty (update s))))
-              (if (fn? x)
-                (comp boolean x)))))
+          (cond (fn? x!)
+                (if (or (event-matcher? x)
+                   (event-update? x)
+                   (map? x))
+
+             (sfn s
+               (if (every? (->event-matcher x) s) s))
+
+             (if-let [update (->score-update x)]
+               (sfn s (let [s' (update s)]
+                        (if (and s' (not= #{} s'))
+                          s)))
+               (if (fn? x)
+                 (sfn s (if (x s) s)))))))
 
         (defn ->score-checker!
           "Strict version of `noon.score/->score-checker`"
@@ -1029,11 +1048,10 @@
       ([test update] (repeat-while test update same))
       ([test update after]
        (let [update (->score-update! update)
-             test (if (fn? test) test (->score-update! test))
+             test (->score-checker! test)
              after (->score-update! after)]
-         (sf_ (let [nxt (update _)
-                    tested (test nxt)]
-                (if (and tested (not= #{} tested))
+         (sf_ (let [nxt (update _)]
+                (if (test nxt)
                   (recur nxt)
                   (after nxt)))))))
 
@@ -1050,8 +1068,9 @@
       {:doc "Tries given `updates` in order until one passes `test`."
        :tags [:base :selective]}
       [test updates]
-      (fst* (map (f_ (chain _ test))
-                 updates)))
+      (let [test (->score-checker! test)]
+        (fst* (map (f_ (chain _ test))
+                   updates))))
 
     (defn shrink
       {:doc "Shrink a score using `event-check` on each events to determine if it is kept or not."
@@ -1181,20 +1200,22 @@
 
         (defn within-bounds?
           {:doc (str "Build a check update (one that can return nil or the score unchanged) "
-                     "succeed if `event-update` applied to each event is between `min` and `max`.")
+                     "succeed if `event-fn` applied to each event is between `min` and `max`.")
            :tags [:check :bounding]}
-          [event-update min max]
-          (sf_ (if (every? (fn [e] (<= min (event-update e) max)) _)
-                 _)))
+          [event-fn min max]
+          (->score-checker
+           (fn [s] (every? (fn [e] (<= min (event-fn e) max))
+                           s))))
 
         (defn within-time-bounds?
           {:doc (str "Build a check update (one that can return nil or the score unchanged) "
                      "Succeed if all its events are between `start` and `end`.")
            :tags [:check :temporal]}
           [start end]
-          (sf_ (if (and (>= (score-origin _) start)
-                        (<= (score-duration _) end))
-                 _)))
+          (->score-checker
+           (fn [s]
+             (and (>= (score-origin s) start)
+                  (<= (score-duration s) end)))))
 
         (defn within-pitch-bounds?
           {:doc (str "Build a check update (one that can return nil or the score unchanged)"
