@@ -15,3 +15,5 @@
 .calva/output-window/output.calva-repl
 vsl/*
 .git.bfg-report
+/test/frozen/temp/
+/.clj-kondo/.lock
