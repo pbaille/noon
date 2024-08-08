@@ -1,6 +1,22 @@
 (ns noon.scratch
   (:use noon.score)
-  (:use noon.lib.reaper))
+  (:require [noon.utils.maps :as m]))
+
+(comment :debug-filter-score
+         (mk (dup 4)
+             (between 1 3))
+
+         (mk (dup 4)
+             (from 1))
+
+         (filter-score {:position (gte 1)}
+                       (mk (dup 4)))
+
+         (set (filter (fn [e] (m/match e {:position (gte 1)}))
+                      (mk (dup 4))))
+
+         (set (filter (->event-matcher {:position (gte 1)})
+                      (mk (dup 4)))))
 
 (comment
   (play (chans [(patch :clarinet)
