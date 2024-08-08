@@ -789,6 +789,12 @@
                   (g/gen? x) (if (->score-update (g/realise x))
                                (sf_ ((->score-update (g/realise x)) _))))))
 
+        (defn ->score-update!
+          "Strict version of `noon.score/->score-update`, it throws if `x` is not convertible."
+          [x]
+          (or (->score-update x)
+              (u/throw* `->score-update! "not convertible: " x)))
+
         (defn chain-score-updates [updates]
           (if-let [updates (?keep ->score-update updates)]
             (sf_ (?reduce #(%2 %1) _ updates))
@@ -1006,11 +1012,12 @@
        :tags [:base :iterative]}
       ([test update] (repeat-while test update same))
       ([test update after]
-       (let [update (->score-update update)
-             test (->score-update test)
-             after (->score-update after)]
-         (sf_ (let [nxt (update _)]
-                (if (not-empty (test nxt))
+       (let [update (->score-update! update)
+             test (if (fn? test) test (->score-update! test))
+             after (->score-update! after)]
+         (sf_ (let [nxt (update _)
+                    tested (test nxt)]
+                (if (and tested (not= #{} tested))
                   (recur nxt)
                   (after nxt)))))))
 
