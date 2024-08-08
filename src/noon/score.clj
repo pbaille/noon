@@ -809,20 +809,19 @@
           "Convert `x` to a score-checker if possible.
            A score-checker is a score-update that can return the score unchanged or nil indicating failure."
           [x]
-          (cond (fn? x!)
-                (if (or (event-matcher? x)
-                   (event-update? x)
-                   (map? x))
+          (if (or (event-matcher? x)
+                  (event-update? x)
+                  (map? x))
 
-             (sfn s
-               (if (every? (->event-matcher x) s) s))
+            (sfn s
+                 (if (every? (->event-matcher x) s) s))
 
-             (if-let [update (->score-update x)]
-               (sfn s (let [s' (update s)]
-                        (if (and s' (not= #{} s'))
-                          s)))
-               (if (fn? x)
-                 (sfn s (if (x s) s)))))))
+            (if-let [update (->score-update x)]
+              (sfn s (let [s' (update s)]
+                       (if (and s' (not= #{} s'))
+                         s)))
+              (if (fn? x)
+                (sfn s (if (x s) s))))))
 
         (defn ->score-checker!
           "Strict version of `noon.score/->score-checker`"
@@ -1128,7 +1127,7 @@
                   (vector? x) x)]
         (sf_ (let [[min-in max-in] (mapv dimension (score-bounds _ dimension))
                    f #(u/scale-range % min-in max-in min-out max-out)]
-               (update-score _ (each (f_ (update _ dimension f))))))))
+               (update-score _ (each (ef_ (update _ dimension f))))))))
 
     (do :selection
 
