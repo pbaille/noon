@@ -1,5 +1,3 @@
-#+title: Examples
-
 * Noon experiments
 
 #+begin_src clojure
@@ -8,9 +6,7 @@
   (:require [noon.lib.harmony :as h]
             [noon.lib.melody :as m]
             [noon.lib.rythmn :as r]
-            [noon.utils.misc :as u]
-            [noon.midi :as midi]
-            [clojure.math.combinatorics :as comb]))
+            [noon.utils.pseudo-random :as pr]))
 #+end_src
 
 Let's use the chorium soundfont:
@@ -112,7 +108,7 @@ Ocarina runs over simplistic bass and piano comping.
                    {:degree :V} (structure [1 2 5 6])
                    {:degree :I} (structure :tetrad)))
          (ntup 32 [(one-of o1 o2)
-                   (! (rup (rand-nth [5 6 7]) s1))
+                   (! (rup (pr/rand-nth [5 6 7]) s1))
                    (tup (maybe (m/permutation 1/4))
                         [(maybe rev) (one-of s1 s2 s2- s1-)])])]))
       m/connect-repetitions
@@ -215,40 +211,40 @@ full grid:
 ** epic lydian
 
 #+begin_src clojure :pp
-(let [s? (one-of s2- s1- s1 s2)]
+(def s? (one-of s2- s1- s1 s2))
 
-  (play {:description "epic lydian sequence by minor thirds"}
+(play {:description "epic lydian sequence by minor thirds"}
 
-        (h/harmonic-zip
-         [lydian sus47
-          (tup* (map root [:C :Eb :F# :A]))
-          (dupt 2)
-          (h/align-contexts :s)]
+      (h/harmonic-zip
+       [lydian sus47
+        (tup* (map root [:C :Eb :F# :A]))
+        (dupt 2)
+        (h/align-contexts :s)]
 
-         (par [(chan 1) (patch :choir-aahs) vel3
-               (ntup 8 (par s0 s1 s2))]
+       (par [(chan 1) (patch :choir-aahs) vel3
+             (ntup 8 (par s0 s1 s2))]
 
-              [vel4
-               (m/simple-tupline (* 16 16)
-                                 (any-that (within-pitch-bounds? :C-1 :C2)
-                                           (lin s? s?)
-                                           [(shuflin s1 s2 s3 s4) (maybe rev)]
-                                           (lin d1 d1- s0 s?)
-                                           (lin d1- d1 s0 s?)))
+            [vel4
+             (m/simple-tupline (* 16 16)
+                               (any-that (within-pitch-bounds? :C-1 :C2)
+                                         (lin s? s?)
+                                         [(shuflin s1 s2 s3 s4) (maybe rev)]
+                                         (lin d1 d1- s0 s?)
+                                         (lin d1- d1 s0 s?)))
 
-               (par [(chan 2) (patch :french-horn)]
-                    [(chan 3) vel5 o2 (patch :flute)])]
+             (par [(chan 2) (patch :french-horn)]
+                  [(chan 3) vel5 o2 (patch :flute)])]
 
-              [(chan 4) (patch :taiko-drum)
-               vel2 (ntup 16 (lin dur3 [o1 vel4 dur2] dur3))]
+            [(chan 4) (patch :taiko-drum)
+             vel2 (ntup 16 (lin dur3 [o1 vel4 dur2] dur3))]
 
-              [(chan 5) (patch :acoustic-bass)
-               o2- (ntup 32 t0)]))
+            [(chan 5) (patch :acoustic-bass)
+             o2- (ntup 32 t0)]))
 
-        #_(sub {:channel 5} (each tonic-round))
+      #_(sub {:channel 5} (each tonic-round))
 
-        (adjust 32)
-        (nlin 4 (s-shift -1))))
+      (adjust 32)
+      (nlin 4 (s-shift -1)))
 #+end_src
 
 ** Tritonal experiment

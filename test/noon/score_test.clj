@@ -135,7 +135,7 @@
 
     (testing "event-matcher"
 
-      (is (event-matcher? (event-matcher (fn [e] true))))
+      (is (event-matcher? (event-matcher (fn [_] true))))
 
       (let [m1-1 (->event-matcher chan0)
             m1-2 (->event-matcher {:channel 0})
