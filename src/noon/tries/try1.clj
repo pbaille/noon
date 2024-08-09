@@ -12,290 +12,30 @@
             [noon.vst.vsl :as vsl :refer [vsl]]
             [clojure.math.combinatorics :as comb]))
 
-(comment :barry-harris
-
-         (def barry-harris (scale [0 2 4 5 7 8 9 11]))
-
-         (play barry-harris
-               (tup d0 d3 d4 d7)
-               (tup d0 d2)
-               (rep 4 d1))
-
-         (let [chord-tones [d0 d2 d4 d7]]
-           (play barry-harris
-                 (lin d0 d3)
-                 (rep 8 (one-of d1- d1))
-                 (each [(chans [(patch :pad-1-new-age) o1- vel3 (par* chord-tones)]
-                            [(patch :ocarina) vel4 (shuftup* chord-tones) (each (maybe (tup (one-of d1 d1-) d0)))]
-                            [(patch :vibraphone) vel5 o1 (ntup 6 [(one-of* chord-tones) (maybe o1) (maybe (tup d1- d0))])])
-                     (maybe rev)])))
-
-         (def barry-harris2 [barry-harris (structure [0 2 4 7])])
-
-         (play barry-harris2
-               (lin I VI VII IV)
-               (h/align-contexts :d)
-               (each (chans [(patch :brass) (par s0 s1 s2 s3)]
-                         [(patch :acoustic-bass) o1- t-round]
-                         [(patch :ethnic) o1 (shuftup s0 s1 s2 s3 s4 s5 s6)]))
-               (rep 2 s1)
-               (append (transpose c3)))
-
-         (play barry-harris2
-               (lin IV I)
-               (h/align-contexts :d)
-               (each (par s0 s1 s2 s3))
-               (rep 4 (transpose c3))
-               h/voice-led))
-
-(comment :minor-progression
-         (play (lin [I melodic-minor] [V phrygian3] [V phrygian3] [I melodic-minor]
-                    [I phrygian3] [IV dorian] [II locrian] [IIb lydianb7])
-               (dup 2)
-               (lin {:section :a}
-                    [{:section :b} (transpose c6)])
-               (h/align-contexts :d)
-               (parts {:section :a} (each (chans [(patch :vibraphone) (shuftup s0 s1 s2 s3 s4 s5)]
-                                              [(patch :flute) o1 (shuftup s0 s1 s2 s3 s4 s5)]
-                                              [(patch :acoustic-bass) o1- t-round]))
-                      {:section :b} (each (chans [(patch :choir-aahs) vel4 (par s0 s1 s2)]
-                                              [(patch :ocarina) vel4 s2- (shuftup s0 s2 s4)]
-                                              [(patch :music-box) vel6 o1 (shuftup s0 s1 s2 s3 s4 s5 s6 s7 s8)]
-                                              [(patch :acoustic-bass) o1- t-round])))
-               (dup 2)))
-
-(comment :one-five
-         (play dur3
-               (lin [I (scale :melm) (structure :tetrad)]
-                    [V (scale :alt) (structure :sus47)])
-               (append s1-)
-               (append [(transpose c4-)
-                        (parts (scale :melm) (scale :lydian)
-                               (scale :alt) [(scale :mixolydianb2) (structure [1 5 9 10])])])
-               (dup 2)
-               (h/align-contexts :s)
-               (let [below (one-of d1- s1-)
-                     above (one-of d1 s1)
-                     contours [[0 -1 1 0]
-                               [0 1 -1 0]
-                               [-1 0 1 0]
-                               [1 0 -1 0]
-                               [1 0 -1 0]
-                               [-1 0 1 0]]
-                     passings (mapv (partial mapv {0 _ -1 below 1 above}) contours)
-                     rand-passing (one-of* (map tup* passings))
-                     below-step (one-of d1- d3- d4-)
-                     above-step (one-of d1 d3 d4)
-                     rand-line (rup 4 (one-of below-step above-step))
-                     rand-vel (fn [min max] {:velocity (fn [_] (+ min (rand-int (- max min))))})]
-                 (each (chans [(patch :choir-aahs) vel4 (par s0 s1 s2 s3)
-                            (h/drop 1)]
-                           [(patch :acoustic-bass) t-round o1-]
-                           [(shuftup s0 s1 s2 s3)
-                            (each (one-of rand-passing rand-line))
-                            (chans [(patch :vibraphone) (each (rand-vel 40 70)) (each (maybe vel0))]
-                                   [(patch :flute)
-                                    (each (rand-vel 60 80))
-                                    o1
-                                    (each (maybe vel0 [(chan inc) (patch :glockenspiel) vel4]))])])))))
-
-(comment :symetric-modes
-         (def symetric-modes {:half-whole (scale [0 1 3 4 6 7 9 10])
-                              :whole-half (scale [0 2 3 5 6 8 9 11])
-                              :whole (scale [0 2 4 6 8 10])
-                              :augm-half (scale [0 3 4 7 8 11])
-                              :half-augm (scale [0 1 4 5 8 9])
-                              :messian3 (scale [0 2 3 4 6 7 8 10 11])
-                              :messian4 (scale [0 1 2 5 6 7 8 11])
-                              :messian5 (scale [0 1 5 6 7 11])
-                              :messian6 (scale [0 2 4 5 6 8 10 11])
-                              :messian7 (scale [0 1 2 3 5 6 7 8 9 11])})
-
-         (play (symetric-modes :augm-half)
-               (:two {:one (rup 8 (one-of d1 d1- d2 d2- d3 d3-))
-                      :two (shuftup d1 d2 d3 d4 d5 d6 d7)})
-
-               (patch :electric-piano-1)
-               (rep 32 (one-of (each d3)
-                               (each d3-)
-                               (m/rotation 1/2)
-                               (m/permutation :rand {:grade 2})
-                               (m/contour :similar {:delta 0 :layer :d}))))
-
-         (defn rand-structure [size]
-           (ef_ (let [degree-count (-> _ :pitch :scale count)
-                      degrees (first (mv/consume size (mv/mix* (range degree-count))))]
-                  (update-score #{_} (structure (vec (sort degrees)))))))
-
-         (def rand-degree
-           (ef_ (let [scale-size (-> _ :pitch :scale count)
-                      deg (rand-nth (range 1 scale-size))]
-                  (update-score #{_} (degree (rand-nth [(- deg) deg]))))))
-
-         (defn rand-tup [size]
-           (ef_ (let [degree-count (-> _ :pitch :scale count)
-                      degrees (first (mv/consume size (mv/mix* (range degree-count))))]
-                  (update-score #{_} (tup* (mapv d-step degrees))))))
-
-         (play (symetric-modes :half-whole)
-               (rand-structure 3)
-               (rep 3 rand-degree)
-               (each (chans [vel4 h/simple-chord]
-                         [(patch :music-box) o1 (rand-tup 7) (each (one-of vel0 vel4 vel6 vel7))]))
-               (append [rev s2])
-               (append (transpose c5))
-               (append (between 0 1/3))))
-
-(comment :sparkling-waves
-         (play dur:4
-               vel4
-               (scale :lydian)
-               (patch :music-box)
-               (par s0 s2 s4)
-               (rep 3 (each [{:mark (rand)} s1 {:velocity (div 1.1) :duration (mul 1.3)} (shuftup s2- s0 s2)])
-                    :skip-first)
-               (lin I [rev III] [o1- V] [rev o1- VII])
-               (append [rev (transpose c3)])))
-
-(comment :arvo-part
-         (def connect-repetitions
-           (sf_ (let [[e1 & todo] (sort-by :position _)]
-                  (loop [[last-note & prev-notes :as ret] (list e1)
-                         todo todo]
-                    (if-let [[e & todo] (seq todo)]
-                      (if (and (= (pitch-value e) (pitch-value last-note))
-                               (= (dissoc e :position :duration :pitch)
-                                  (dissoc last-note :position :duration :pitch)))
-                        (recur (cons (update last-note :duration + (:duration e))
-                                     prev-notes)
-                               todo)
-                        (recur (cons e ret) todo))
-                      (set ret))))))
-
-         (let [m-line (fn [size]
-                        (rand-nth (vals {:up-to [(rep size d1-) rev]
-                                         :up-from (rep size d1)
-                                         :down-to [(rep size d1) rev]
-                                         :down-from (rep size d1-)})))
-               humanize (one-of vel4 vel5 vel6)
-               base (shuffle (map vector
-                                  [s0 s1 s2 (one-of s0 s1 s2)]
-                                  (map m-line (shuffle (rand-nth (u/sums 12 4 [2 3 4 5]))))))]
-           (play lydianb7
-                 (lin* base)
-                 (each (chans [(patch :piccolo) vel6 o1]
-                           [(patch :flute) vel3 o1 d5-]
-                           [(patch :accordion) vel4 d0]
-                           [(patch :choir-aahs) s-floor humanize]
-                           [(patch :choir-aahs) s-floor o1 s1 humanize]
-                           [(patch :acoustic-bass) C-2 t-floor]))
-
-                 ($by :channel connect-repetitions)
-                 (append [rev (transpose c3-)])
-                 (append dorian)
-                 (dup 2))))
-
-(comment :violin-fast-arpegio
-         (play (dur 3/2)
-               dorian
-               (patch :violin)
-               (lin I IV V I)
-               (h/align-contexts :s)
-               (each (ntup 2 (tup s0 s2 s4 s4 s2 s0)))
-               (each (! (vel (mul (+ 0.9 (* (rand) 0.2))))))
-               (append s1-)))
-
 (comment :elements
          (let [r {:a (r/gen-tup 8 5)
                   :b (r/gen-tup 8 3)
                   :c (r/gen-tup 12 5)}
-               m {:a (m/gen-tup :size 8)}
+               m {:a (m/gen-tup :d 4 3)}
                h {:a [(scale :melm) (structure :tetrad) (lin I [IV dorian] [V (scale :alt) (structure :sus47)] I)]}]
            (play dur2
                  (h :a)
                  (h/align-contexts :d)
+                 (dup 2)
+                 (append (transpose c3-))
                  (each (chans [(patch :taiko-drum) o1-]
-                           [(patch :woodblock) vel3 C2 (r :a) (maybe (m/rotation :rand))]
-                           [(patch :acoustic-bas) o1- t-round]
-                           [(patch :vibraphone) vel3 closed-chord]
-                           [(patch :flute) (m :a) (shuftup d0 d3 d6)])))))
-
-(comment :inner-urge
-
-         (stop)
-
-         (defn last-n-positions
-           "Limit the score to the n latest positions found."
-           [n]
-           (sf_ (let [_ (->> (group-by :position _)
-                             seq (sort-by key)
-                             reverse (take n)
-                             (map second) (reduce into #{}))]
-                  (update-score _ (start-from (score-origin _))))))
-
-         (let [n-bars 24
-               choir [(patch :choir-aahs) vel5 (par> d3 d3 d3)]
-               bass [(patch :acoustic-bass) C-2 t-round]
-               lead-line (any-that (within-pitch-bounds? :C0 :C3)
-                                   (rep 2 d3 :skip-first)
-                                   (rep 2 d3- :skip-first)
-                                   d4 d4-
-                                   d1 d1-
-                                   (rep 3 d2 :skip-first)
-                                   (rep 3 d2- :skip-first))]
-           (play (h/harmonic-zip
-                  [(tup (lin (nlin 4 [(root :F#) locrian2])
-                             (nlin 4 [(root :F) lydian])
-                             (nlin 4 [(root :Eb) lydian])
-                             (nlin 4 [(root :Db) lydian]))
-                        [lydian
-                         (lin* (map root [:E :Db :D :B :C :A :Bb :G]))])
-                   (h/align-contexts :s)
-                   (dupt 4)]
-                  (tup (chans choir
-                              bass
-                              [(patch :music-box)
-                               vel5 C1
-                               (m/simple-tupline (* n-bars 10) lead-line)])
-                       (chans choir
-                              bass
-                              [(patch :ocarina)
-                               vel4 C1
-                               (m/simple-tupline (* n-bars 24) lead-line)])
-                       (chans choir
-                              bass
-                              [(patch :sawtooth)
-                               (dur (/ 1 n-bars))
-                               vel4 C1
-                               (tup d0 d3 d6)
-                               (tup d0 d4 d8)
-                               (m/line (one-of (last-n-positions 10) (last-n-positions 7))
-                                       (any-that (within-pitch-bounds? :C0 :C3)
-                                                 (m/permutation {:grade 3})
-                                                 #_(one-of (m/contour :rotation {:layer :d})
-                                                           (m/contour :mirror {:layer :d})
-                                                           (m/contour :similar {:delta 0 :layer :d}))
-                                                 (one-of d1 d1-)
-                                                 (one-of d2 d2-))
-                                       (sf_ (> (score-duration _) 1))
-                                       (trim 0 1))
-                               (vel-humanize 5 [40 80])])
-                       (chans [choir
-                               (ntup (/ n-bars 2) same)
-                               ($by :position [(! (one-of (r/gen-tup 8 3 :euclidean)
-                                                          (r/gen-tup 8 3 :durations [2 3 4 5])))
-                                               (sf_ (let [xs (-> (group-by :position _) seq sort vals)]
-                                                      (reduce into #{} (map update-score xs (pr/shuffle [d0 d1 d1-])))))])]
-                              bass)))
-                 (adjust 180))))
+                              [(patch :woodblock) vel3 C2 (r :c) (maybe (m/rotation :rand))]
+                              [(patch :acoustic-bas) o1- t-round]
+                              [(patch :vibraphone) vel3 h/simple-chord]
+                              [(patch :flute) (m :a) (mixtup s0 s2 s4)])))))
 
 (comment :grid
          (stop)
          (play dur3
                (nlin> 48 (one-of d1 d1-))
                (each (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
-                         [(patch :ocarina) (shuftup s0 s2 s4 s6) (shuftup d0 d3 d6) (tup _ rev)]
-                         [(patch :acoustic-bass) t2-]))
+                            [(patch :ocarina) (shuftup s0 s2 s4 s6) (shuftup d0 d3 d6) (tup _ rev)]
+                            [(patch :acoustic-bass) t2-]))
                (h/grid dur3 tetrad
                        (lin [I lydian (structure [2 3 5 6])]
                             [IIb dorian (structure [1 2 3 6])]
@@ -307,14 +47,14 @@
 
          (play (ntup> 24 (one-of d1 d1-))
                (each (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
-                         [(patch :ocarina)
-                          (one-of (mixtup s0 s2 s4 s6)
-                                  (mixtup s0 s2 s4 s6))
-                          (one-of (mixtup d0 d3 d6)
-                                  (mixtup d0 d3 d6))
-                          (vel-humanize 10 [40 80])
-                          (tup _ rev)]
-                         [(patch :acoustic-bass) t2-]))
+                            [(patch :ocarina)
+                             (one-of (mixtup s0 s2 s4 s6)
+                                     (mixtup s0 s2 s4 s6))
+                             (one-of (mixtup d0 d3 d6)
+                                     (mixtup d0 d3 d6))
+                             (vel-humanize 10 [40 80])
+                             (tup _ rev)]
+                            [(patch :acoustic-bass) t2-]))
                (h/grid tetrad
                        (tup [I lydian]
                             [IIb dorian]
@@ -359,26 +99,6 @@
                       (each (tup (maybe o1) (one-of d4 d3-))))
                (adjust 32)))
 
-(comment :zip-rythmn
-
-         (play lydianb7
-               (h/modal-structure 5)
-               (chans
-                [(patch :vibraphone)
-                 (shuflin s0 s1 s2 s3 s4)
-                 (nlin 4 (one-of s1 s2 s1- s2-))
-                 (sf_ (let [rythmn (mk (nlin 2 (! (r/gen-tup 12 5 :shifted))) (append rev))]
-                        (set (map (fn [r n]
-                                    (merge n (select-keys r [:position :duration])))
-                                  (sort-by :position rythmn)
-                                  (sort-by :position _)))))]
-                [(patch :woodblock) (r/gen-tup 12 5 :euclidean) (dup 4)]
-                [(patch :tinkle-bell) (dup 4)]
-                [(patch :metallic) (shuflin s0 s1 s2 s3) (each (par s0 s1 s2))]
-                [(patch :acoustic-bass) t2- (dup 4)])
-               (adjust 8)
-               (append [(transpose c3-) s1 rev] _)))
-
 (comment :target-notes
          "Building good rythmic melodies is not easy."
          "Here, I will try to start from target notes and fill the holes between them."
@@ -405,7 +125,7 @@
                                                       (recur (inc cnt) (nh/upd current (nh/d-step -1))))))]
                                   (concat-score ret
                                                 (update-score #{(assoc a :position 0)}
-                                                     (rup cnt (case direction :up d1 :down d1-))))))
+                                                              (rup cnt (case direction :up d1 :down d1-))))))
                               #{}
                               couples)
                       (conj (last sorted))))))
@@ -430,7 +150,7 @@
                                               (recur (inc cnt) (nh/upd current (nh/layer-step layer increment)))))]
                                   (concat-score ret
                                                 (update-score #{(assoc a :position 0)}
-                                                     (rup cnt (ef_ (update _ :pitch (nh/layer-step layer increment))))))))
+                                                              (rup cnt (ef_ (update _ :pitch (nh/layer-step layer increment))))))))
                               #{}
                               couples)
                       (conj (last sorted))))))
@@ -501,20 +221,6 @@
           (chans [(patch :tango) (m/connect 5 3 2 1 0)]
                  [(patch :ocarina) vel6 s2 (m/connect 2 1 0)]
                  [(patch :acoustic-bass) o1- s2- (m/connect 1 0)])))
-
-(comment :infinite-climb-illusion
-
-         (play dur6 dur2
-               (patch :ocarina)
-               (rup 36 c1)
-               (sf_ (set (map-indexed (fn [i n] (let [vel (* 60 2 (/ (inc i) (count _)))
-                                                      vel (if (> vel 60) (- 60 (- vel 60)) vel)]
-                                                  (assoc n :velocity vel)))
-                                      (sort-by :position _))))
-               (par _
-                    (m/rotation 1/3)
-                    (m/rotation 2/3))
-               (dup 4)))
 
 (comment :garzone-triads
 
@@ -664,37 +370,6 @@
                            [(patch :vibraphone) pat2])))
                (dup 2)))
 
-(comment "elliot Smith chords"
-
-         (play dur2
-               (lin [VI seventh]
-                    [IV add2]
-                    [I]
-                    [III seventh (inversion 2)]
-                    [VI seventh]
-                    [IV add2]
-                    (tup I [III seventh phrygian3])
-                    [IV])
-               (h/align-contexts :d)
-               (each (chans [(patch :acoustic-bass) o1- t-round]
-                         h/simple-chord)))
-
-         (play (chans [(patch :electric-piano-1) (tup (shuftup s0 s1 s2 s3) (shuftup s2 s3 s4 s5))]
-                      [(patch :acoustic-bass) o1- t-round])
-               (dupt 8)
-               (h/grid
-                [(tup [VI seventh]
-                      [IV add2]
-                      [I]
-                      [III seventh (inversion 2)]
-                      [VI seventh]
-                      [IV add2]
-                      (tup I [III seventh phrygian3])
-                      [IV])
-                 (h/align-contexts :d)])
-               (adjust 8)
-               (dup 2)))
-
 (comment "bartok harmony axis"
          (let [L- (transpose c5)
                L+ (transpose c5-)
@@ -810,16 +485,12 @@
                    [(patch :acoustic-bass) o2-
                     t-round
                     (each (probs {_ 3
-                               (one-of s1- s2) 3
-                               (tup _ (one-of s1- s2)) 1
-                               (tup (one-of s1- s2) _) 1}))])
+                                  (one-of s1- s2) 3
+                                  (tup _ (one-of s1- s2)) 1
+                                  (tup (one-of s1- s2) _) 1}))])
                  ;; why not ?
             (lin _ s1 [up s1-] up)
             (options :bpm 40 :xml true))))
-
-(comment "try pseudo random"
-         (pr/with-rand 12
-           (play (shuftup d0 d1 d2 d3 d4))))
 
 (comment "chords"
 
@@ -899,20 +570,20 @@
                           #{(last sorted)} (partition 2 1 sorted)))))
 
          (noon {:play true :pdf true}
-                      (mk dur2
-                          (lin (shuftup s0 s1 s2 s3)
-                               [(one-of s1 s1-) (shuftup s0 s1 s2 s3)])
-                          decorate
-                          (lin _ (s-shift 1) (s-shift -1) _)
-                          (lin _ (s-shift 2))
-                          (chans [(patch :ocarina) o1 (s-shift -1)]
-                                 [(sf_ (shift-score _ 2))]
-                                 [(patch :acoustic-bass) o2- (s-shift 1) (sf_ (shift-score _ 5))])
-                          (h/grid dur2
-                                  harmonic-minor
-                                  (lin I IV VII I [IV melodic-minor VII] IV [V harmonic-minor VII] VII)
-                                  (dup 4)
-                                  (h/align-contexts :s))))
+               (mk dur2
+                   (lin (shuftup s0 s1 s2 s3)
+                        [(one-of s1 s1-) (shuftup s0 s1 s2 s3)])
+                   decorate
+                   (lin _ (s-shift 1) (s-shift -1) _)
+                   (lin _ (s-shift 2))
+                   (chans [(patch :ocarina) o1 (s-shift -1)]
+                          [(sf_ (shift-score _ 2))]
+                          [(patch :acoustic-bass) o2- (s-shift 1) (sf_ (shift-score _ 5))])
+                   (h/grid dur2
+                           harmonic-minor
+                           (lin I IV VII I [IV melodic-minor VII] IV [V harmonic-minor VII] VII)
+                           (dup 4)
+                           (h/align-contexts :s))))
 
          (stop)
          (play harmonic-minor (tup s1 s2) (m/connect 1))
