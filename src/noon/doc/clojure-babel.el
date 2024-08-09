@@ -16,26 +16,29 @@ For blocks to be correctly fontified, we need to install those using cider."
     (font-lock-add-keywords nil cider--dynamic-font-lock-keywords 'end)
     (font-lock-flush)))
 
-;; evaluate this to fontify the guide.org buffer
-'(pb-clojure-babel_refresh-dynamic-font-lock-keywords
- " *org-src-fontification:clojure-mode*"
- "noon.doc.guide")
-'(pb-clojure-babel_refresh-dynamic-font-lock-keywords
- " *org-src-fontification:clojure-mode*"
- "noon.doc.examples")
+(defun pb-org-babel_get-clojure-namespace ()
+  "Retreive the clojure namespace of the current org buffer.
+The ns declaration is assumed to be the first clojure block of the file."
+  (save-excursion
+    (goto-char (point-min))
+    (when (re-search-forward "#\\+begin_src clojure" nil t)
+      (let* ((element (org-element-context)))
+        (when (eq (org-element-type element) 'src-block)
+          (let ((block-content (org-element-property :value element)))
+            (string-match "(ns \\([^ ]+\\)" block-content)
+            (list :ns-name (string-trim-right (match-string 1 block-content))
+                  :ns-form block-content)))))))
 
 (defun pb-org-babel_edit-src-code-hook (fun &optional code buf-name)
-  (funcall fun code buf-name)
-  (cond ((equal (buffer-name) "*Org Src guide.org[ clojure ]*")
-         (pb-clojure-babel_refresh-dynamic-font-lock-keywords
-          "*Org Src guide.org[ clojure ]*"
-          "noon.doc.guide"))
-        ((equal (buffer-name) "*Org Src examples.org[ clojure ]*")
-         (pb-clojure-babel_refresh-dynamic-font-lock-keywords
-          "*Org Src examples.org[ clojure ]*"
-          "noon.doc.examples")))
-  (flycheck-mode -1)
-  (symex-mode-interface))
+  (let ((clojure-ns (km_get (pb-org-babel_get-clojure-namespace)
+                            :ns-name)))
+    (funcall fun code buf-name)
+    (when clojure-ns
+      (pb-clojure-babel_refresh-dynamic-font-lock-keywords
+       (concat "*Org Src " (buffer-name (current-buffer)) "[ clojure ]*")
+       clojure-ns)
+      (flycheck-mode -1)
+      (symex-mode-interface))))
 
 (advice-add 'org-edit-src-code :around #'pb-org-babel_edit-src-code-hook)
 
@@ -49,29 +52,21 @@ For blocks to be correctly fontified, we need to install those using cider."
 - set the corresponding namespace for code blocks fontification."
   (interactive)
   (let ((buffer (current-buffer)))
-    (when (not (cider-connected-p))
-      '(print "starting cider repl")
-      (call-interactively #'cider-jack-in-clj)
-      (sit-for 5))
-    (with-current-buffer buffer
-      (save-excursion
-        (goto-char (point-min))
-        '(print "will evaluate top clojure form")
-        (when (re-search-forward "#\\+begin_src clojure" nil t)
-          '(print "find first block")
-          (let* ((element (org-element-context)))
-            (when (eq (org-element-type element) 'src-block)
-              '(print "code block found")
-              (let ((block-content (org-element-property :value element)))
-                '(print (concat "will eval:\n " block-content))
-                (pb-cider_eval! block-content)
-                (sit-for 3)
-                (string-match "(ns \\([^ ]+\\)" block-content)
-                '(print "will refresh fontification")
-                '(print (concat "ns: " (string-trim-right (match-string 1 block-content))))
-                (pb-clojure-babel_refresh-dynamic-font-lock-keywords
-                 " *org-src-fontification:clojure-mode*"
-                 (string-trim-right (match-string 1 block-content)))))))))))
+    (if (not (cider-connected-p))
+        (if (yes-or-no-p "Start Cider repl? ")
+            (progn
+              (message "Starting cider repl")
+              (call-interactively #'cider-jack-in-clj)))
+      (with-current-buffer buffer
+        (print (pb-org-babel_get-clojure-namespace))
+        (pb_let [(km ns-name ns-form) (pb-org-babel_get-clojure-namespace)]
+            (progn (print (list ns-name ns-form))
+                   (pb-cider_eval! ns-form)
+                   (sit-for 3)
+                   (pb-clojure-babel_refresh-dynamic-font-lock-keywords
+                    " *org-src-fontification:clojure-mode*"
+                    ns-name)
+                   (revert-buffer buffer)))))))
 
 
 (pb-org-babel_add-custom-param
