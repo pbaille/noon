@@ -5,6 +5,9 @@
             [clojure.string :as str]))
 
 (do :piano-roll
+
+    "Support for emacs piano-roll mode"
+
     (defn elispify [x]
       (cond
         (map? x) (seq (mapcat (fn [[k v]]
@@ -41,14 +44,14 @@
 
     (defn ->piano-roll
       "Turns a score into a datastructure suitable for elisp piano-roll display.
-  X can be a score or something that holds a :score entry in metadata."
+       `x` can be a score or something that holds a :score entry in metadata."
       [x]
       (if-let [score (if (n/score? x) x (some-> (meta x) :score))]
         (elispify
          {:notes (->> (filter :pitch score)
                       (sort-by :position)
                       (map (fn [{:as e
-                                 p :pitch}]
+                                p :pitch}]
                              (assoc (select-keys e [:position :duration :channel])
                                     :pitch (h/hc->chromatic-value p)
                                     :kind (cond
@@ -56,32 +59,34 @@
                                             (h/structural-equivalent? p) :structural
                                             (h/diatonic-equivalent? p) :diatonic
                                             :else :chromatic)))))
-          :harmony (harmonic-chunks score)}))))
+          :harmony (harmonic-chunks score)})))
 
-(comment
-  '(do (use 'noon.score)
-       (require '[noon.lib.harmony :as lh]))
-  (spit "src/noon/doc/sample-pr.el"
-        (with-out-str
-          (clojure.pprint/pprint
-           (->piano-roll
-            (mk (lin s0 s2 s1 s3)
-                (lin s0 s2)
-                (each (chans o1-
-                          (tup _ d1 c1- _))))))))
+    (comment
+      '(do (use 'noon.score)
+           (require '[noon.lib.harmony :as lh]))
+      (spit "src/noon/doc/sample-pr.el"
+            (with-out-str
+              (clojure.pprint/pprint
+               (->piano-roll
+                (mk (lin s0 s2 s1 s3)
+                    (lin s0 s2)
+                    (each (chans o1-
+                                 (tup _ d1 c1- _))))))))
 
-  (spit "src/noon/doc/sample-pr.el"
-        (with-out-str
-          (clojure.pprint/pprint
-           (->piano-roll
-            (mk harmonic-minor
-                dur2
-                (lin I V IV I)
-                (lh/align-contexts :d)
-                (each (chans [o1 (shuftup s0 s1 s2 s4)]
-                          (par s0 s1 s2)))))))))
+      (spit "src/noon/doc/sample-pr.el"
+            (with-out-str
+              (clojure.pprint/pprint
+               (->piano-roll
+                (mk harmonic-minor
+                    dur2
+                    (lin I V IV I)
+                    (lh/align-contexts :d)
+                    (each (chans [o1 (shuftup s0 s1 s2 s4)]
+                                 (par s0 s1 s2))))))))))
 
 (do :org->clj
+
+    "Utils for converting org files to clojure files (regular and test)"
 
     (defn parse-org-headline [line]
       (if-let [[_ stars title] (re-matches #"^(\*+) (.*)$"
