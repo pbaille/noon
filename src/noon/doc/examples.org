@@ -741,7 +741,6 @@ Trying to produce vibrating textures by playing very fast note sequences.
          (one-of vel0 vel1 vel2 vel3 vel4 vel5)))
 #+end_src
 
-
 *** Sparkling waves
 
 #+begin_src clojure
@@ -809,8 +808,7 @@ Trying to produce vibrating textures by playing very fast note sequences.
 
 
 
-
-** Gradual melodic transformation
+*** Gradual melodic transformation
 
 Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody derives using transposition, rotation and permutation.
 
@@ -836,7 +834,9 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
               same))
 #+end_src
 
-** =noon.lib.rythmn/bintup=
+** Usage
+
+*** =noon.lib.rythmn/bintup=
 
 An experiment around =noon.lib.rythmn/gen-bintup=
 The =gen-bintup= function is used to produce a bass line and a fast rythmic texture alternating between electric-piano and marimba.
