@@ -165,6 +165,7 @@
         (spit clj-file
               (with-out-str (mapv (fn [e] (clojure.pprint/pprint e) (println))
                                   (cons (list* 'ns (symbol (str (name ns) "-test"))
+                                               "This file is generated from `src/noon/doc/examples.org`"
                                                (map first (vals enriched-body)))
                                         (concat (get grouped false)
                                                 (list (list* 'deftest 'main frozen)))))))))
