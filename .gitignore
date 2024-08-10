@@ -17,3 +17,4 @@ vsl/*
 .git.bfg-report
 /test/frozen/temp/
 /.clj-kondo/.lock
+.dir-locals.el
