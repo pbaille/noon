@@ -265,6 +265,9 @@
                                        :else (u/throw* "Bad value for event's :cc entry: " v))))}})
             (u/throw* "Unrecognised control change code: " key)))
 
+        (defn pc [& xs]
+          (map->efn {:pc (vec xs)}))
+
         (defn patch
           ([x]
            (cond (keyword? x) (patch (vst/pick x))
