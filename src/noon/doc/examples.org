@@ -12,6 +12,7 @@
             [noon.utils.pseudo-random :as pr]
             [noon.constants :as nc]
             [noon.midi :as midi]
+            [noon.vst.vsl :as vsl :refer [vsl]]
             [clojure.math.combinatorics :as comb]))
 #+end_src
 
