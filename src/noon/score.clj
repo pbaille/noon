@@ -1322,6 +1322,28 @@
           {:doc "Creates a `noon.score/tup>` of size `n` using `update`."}
           [n update] (tup>* (repeat n update)))
 
+        (defn fill
+          {:doc (str "Fill the score using a `tup` of `update` of size (score-duration / `resolution`)"
+                     "`resolution` should be an exact multiple of received score's duration.")
+           :tags [:temporal :multiplicative]}
+          [resolution update]
+          (sf_ (let [sdur (score-duration _)
+                     n (quot sdur resolution)]
+                 (assert (zero? (rem sdur resolution))
+                         "fill: resolution should be a multiple of score length ")
+                 (update-score _ (ntup n update)))))
+
+        (defn fill>
+          {:doc (str "Fill the score using an accumulative `tup>` of `update` of size (score-duration / `resolution`)"
+                     "`resolution` should be an exact multiple of received score's duration.")
+           :tags [:temporal :multiplicative]}
+          [resolution update]
+          (sf_ (let [sdur (score-duration _)
+                     n (quot sdur resolution)]
+                 (assert (zero? (rem sdur resolution))
+                         "fill>: resolution should be a multiple of score length ")
+                 (update-score _ (ntup> n update)))))
+
         (defn $by
           {:doc (str "Splits the score according to the return of `event->group` applied to each event."
                      "apply `update` on each subscore and merge all the results together."
