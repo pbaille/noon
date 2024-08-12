@@ -205,16 +205,21 @@
        - all those scores are merged together."
       {:tags [:iterative :temporal]}
       [f]
-      (n/sf_ (let [sorted (sort-by :position _)]
+      (n/sf_ (let [sorted (map (comp set val) (sort (group-by :position _)))]
                (reduce (fn [s [n1 n2]]
                          (into s (f n1 n2)))
-                       #{(last sorted)} (partition 2 1 sorted)))))
+                       (last sorted) (partition 2 1 sorted)))))
 
     (defn simple-connection
       "A simple connection function that leverage `noon.harmony/simplest-connection`"
       [sizes]
-      (fn [start end]
-        (let [hcs (loop [sizes sizes]
+      (fn [chunk1 chunk2]
+        (when-not (and (= 1 (count chunk1))
+                       (= 1 (count chunk2)))
+          (u/throw* `simple-connection " simple connection works only on monophonic scores"))
+        (let [start (first chunk1)
+              end (first chunk2)
+              hcs (loop [sizes sizes]
                     (if-let [[s & sizes] (seq sizes)]
                       (or (h/simplest-connection s (:pitch start) (:pitch end))
                           (recur sizes))))
