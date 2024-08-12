@@ -102,9 +102,7 @@ Experimenting passing notes:
 
 *** epic lydian
 
-#+begin_src clojure :pp
-(def s? (one-of s2- s1- s1 s2))
-
+#+begin_src clojure
 (play {:description "epic lydian sequence by minor thirds"}
 
       (h/harmonic-zip
@@ -117,12 +115,13 @@ Experimenting passing notes:
              (ntup 8 (par s0 s1 s2))]
 
             [vel4
-             (m/simple-tupline (* 16 16)
-                               (any-that (within-pitch-bounds? :C-1 :C2)
-                                         (lin s? s?)
-                                         [(shuflin s1 s2 s3 s4) (maybe rev)]
-                                         (lin d1 d1- s0 s?)
-                                         (lin d1- d1 s0 s?)))
+             (let [s? (one-of s2- s1- s1 s2)]
+               (m/simple-tupline (* 16 16)
+                                 (any-that (within-pitch-bounds? :C-1 :C2)
+                                           (lin s? s?)
+                                           [(shuflin s1 s2 s3 s4) (maybe rev)]
+                                           (lin d1 d1- s0 s?)
+                                           (lin d1- d1 s0 s?))))
 
              (par [(chan 2) (patch :french-horn)]
                   [(chan 3) vel5 o2 (patch :flute)])]
@@ -243,17 +242,34 @@ A rich harmonic sequence using V I progressions over tritonal modulation cycle (
 #+end_src
 
 *** I V
+A chord sequence based on I V progressions in major and minor.
 
 #+begin_src clojure
 (play dur3
+
+      ;; base I V in minor using melodic minor and superlocrian modes
       (lin [I (scale :melm) (structure :tetrad)]
            [V (scale :alt) (structure :sus47)])
+
+      ;; repeat it one time shifting one structural degree down
       (append s1-)
+
+      ;; repeat this 4 bars sequence modulating it a major third up
+      ;; degree I becomes lydian and V mixolydianb2
       (append [(transpose c4-)
                (parts (scale :melm) (scale :lydian)
                       (scale :alt) [(scale :mixolydianb2) (structure [1 5 9 10])])])
+
+      ;; the whole sequence is repeated 2 times
       (dup 2)
+
+      ;; align all harmonic contexts so the melody can come over without skips between chords
       (h/align-contexts :s)
+
+      ;; on each chord we apply some content
+      ;; melody is built using several techniques
+      ;; - passing notes
+      ;; - randomized diatonic steps
       (let [below (one-of d1- s1-)
             above (one-of d1 s1)
             contours [[0 -1 1 0]
@@ -268,27 +284,63 @@ A rich harmonic sequence using V I progressions over tritonal modulation cycle (
             above-step (one-of d1 d3 d4)
             rand-line (rup 4 (one-of below-step above-step))
             rand-vel (fn [min max] {:velocity (fn [_] (+ min (rand-int (- max min))))})]
-        (each (chans [(patch :choir-aahs) vel4 (par s0 s1 s2 s3)
-                      (h/drop 1)]
-                     [(patch :acoustic-bass) t-round o1-]
-                     [(shuftup s0 s1 s2 s3)
-                      (each (one-of rand-passing rand-line))
-                      (chans [(patch :vibraphone) (each (rand-vel 40 70)) (each (maybe vel0))]
-                             [(patch :flute)
-                              (each (rand-vel 60 80))
-                              o1
-                              (each (maybe vel0 [(chan inc) (patch :glockenspiel) vel4]))])]))))
+
+
+        (each (chans
+               ;; simple choir structural chords
+               [(patch :choir-aahs) vel4 (par s0 s1 s2 s3)
+                (h/drop 1)]
+               ;; simple bass
+               [(patch :acoustic-bass) t-round o1-]
+               ;; melody, composing a line using shuftup rand-passing and rand-line
+               ;; playing it a the vibraphone
+               ;; add some flute and glockenspeil decorations
+               [(shuftup s0 s1 s2 s3)
+                (each (one-of rand-passing rand-line))
+                (chans [(patch :vibraphone) (each (rand-vel 40 70)) (each (maybe vel0))]
+                       [(patch :flute)
+                        (each (rand-vel 60 80))
+                        o1
+                        (each (maybe vel0 [(chan inc) (patch :glockenspiel) vel4]))])]))))
 #+end_src
+
 
 *** Not too happy birthday
 
+A simple experiment on happy birthday chords turned into minor.
+
 #+begin_src clojure
-(play harmonic-minor
-      (lin I V VII I [IV melodic-minor VII] IV I VII)
-      (h/align-contexts :s))
+(play
+
+  ;; setting up the main scale
+  harmonic-minor
+
+  ;; the chord sequence
+  (lin I
+       V
+       VII
+       I
+       ;; this notation for the secondary dominant of fourth degree
+       ;; is not satisfaying, I would like to be able to write `(Vof IV)` maybe...
+       [IV melodic-minor VII]
+       IV
+       I
+       VII)
+
+  ;; aligning harmonic contexts to get voice leading more easily
+  (h/align-contexts :s)
+
+  ;; simple chord plus arpegio on each chord.
+  (each (par (par s0 s1 s2)
+             [o1 (shuftup s0 s1 s2)]))
+
+  ;; loop 4 times
+  (dup 4))
 #+end_src
 
 *** I.m.M7 VI.alt bVI.7.#11 bII.7.sus4
+
+A very artificial sounding chord sequence using quartal voicings and ninuplets (tup of size 9)
 
 #+begin_src clojure
 (play (lin [I melodic-minor] [VI superlocrian] [VIb lydianb7] [IIb mixolydian])
@@ -318,10 +370,12 @@ Here, I will try to start from target notes and fill the holes between them.
       (lin s0 s2 s1 s0))
 #+end_src
 
-How to fill betwwen the notes of this simple line.
+How to fill between the notes of this simple line?
 
 #+begin_src clojure
 (def fill-diatonically
+  "A very low level way to connect subsequent notes diatonically using `noon.harmony` directly.
+   It feels too complicated for such a simple thing..."
   (sf_ (let [sorted (sort-by :position _)
              couples (partition 2 1 sorted)]
          (-> (reduce (fn [ret [a b]]
@@ -343,15 +397,19 @@ How to fill betwwen the notes of this simple line.
                      couples)
              (conj (last sorted))))))
 
+;; trying it on a basic structural line
 (play eolian
       (lin s0 s2 s1 s0)
       fill-diatonically)
 #+end_src
 
-Let's generalise to other layers
+Let's generalise to other layers:
 
 #+begin_src clojure
-(defn fill-line [layer]
+(defn fill-line
+  "This evolution of fill-diatonically let the user specify the harmonic layer.
+   It is still relying on `noon.harmony` which is not great."
+  [layer]
   (sf_ (let [sorted (sort-by :position _)
              couples (partition 2 1 sorted)]
          (-> (reduce (fn [ret [a b]]
@@ -370,10 +428,12 @@ Let's generalise to other layers
                      couples)
              (conj (last sorted))))))
 
+;; The same as in previous example
 (play eolian
       (lin s0 s2 s1 s0)
       (fill-line :c))
 
+;; A more elaborated example using structural filling
 (play dur:2
       harmonic-minor
       tetrad
@@ -387,14 +447,30 @@ Let's generalise to other layers
 Next step will be to have control over the number of notes between targets.
 
 #+begin_src clojure
-(defn target [layer size _direction duration]
-           (ef_ (into #{_} (map (fn [i]
-                                  (-> (update _ :pitch (nh/layer-step layer (inc i)))
-                                      (update :position - (* (inc i) duration))
-                                      (assoc :duration duration)))
-                                (range size)))))
+(defn target
+  [layer size direction duration]
+  (sfn score
+    (->> score
+         (map (fn [e]
+                (->> (range size)
+                     (map (fn [i]
+                            (-> (update e :pitch
+                                        (nh/layer-step
+                                         layer
+                                         (case direction
+                                           :up (inc i)
+                                           :down (- (inc i)))))
+                                (update :position - (* (inc i) duration))
+                                (assoc :duration duration))))
+                     (into #{e}))))
+         (merge-scores))))
 
-(play (lin _ [s2 (target :c 3 :up 1/4)]))
+;; It is a step in the right direction but it overlaps passing notes
+(play (lin _
+           [s2 (target :c 3 :up 1/4)]
+           [s1- (target :d 3 :down 1/4)]
+           [_ (target :c 3 :up 1/4)])
+      (options {:filename "test/trash/target"}))
 #+end_src
 
 The problem here is that the precedent note overlaps the targeting notes.
