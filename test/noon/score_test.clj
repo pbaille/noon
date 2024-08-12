@@ -897,9 +897,8 @@
                    (start-from-nth-last 2))
                (mk (lin d1 d2))))
 
-        (is (= (mk (lin d0 d1 d2)
-                   (start-from-nth-last 4))
-               #{}))
+        (is (nil? (mk (lin d0 d1 d2)
+                      (start-from-nth-last 4))))
 
         (testing "trim"
 

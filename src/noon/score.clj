@@ -1199,8 +1199,7 @@
                      (if (>= (count sorted) nth)
                        (let [taken (map (comp set val) (take-last nth sorted))]
                          (update-score (merge-scores taken)
-                                       {:position (sub (:position (ffirst taken)))}))
-                       #{}))))
+                                       {:position (sub (:position (ffirst taken)))}))))))
 
             (defn trim
               {:doc (str "Build and update that removes everything before `beg` and after `end` from the received score. "
