@@ -1,4 +1,4 @@
-* Noon examples
+* Noon experiments
 
 #+begin_src clojure
 (ns noon.doc.examples
@@ -22,305 +22,32 @@ Let's use the chorium soundfont:
 (swap! options* assoc :tracks {0 :chorium})
 #+end_src
 
-** Tunes
-*** Autumn leaves
+** Harmonic experiments
 
-Simple experiment on the first part of autumn leaves grid:
+Some experiences built on top of an harmonic idea.
 
-#+begin_src clojure :pp
-(play {:title "Autumn Leaves"}
-
-      vel3
-      [tetrad
-       (lin II V I IV VII [III phrygian3] [VI (lin [melodic-minor sixth] phrygian3)])
-       (h/align-contexts :s)
-       (dup 2)]
-
-      (h/grid-zipped
-       (nlin 16 (chans [(patch :acoustic-bass)
-                        o1- t-round]
-
-                       [(patch :vibraphone)
-                        (par s0 s1 s2 s3)]
-
-                       [(patch :electric-piano-1) vel2
-                        o2 (par s0 s2 s4) (shuftup s0 s2)]
-
-                       [(patch :whistle) o1 vel5
-                        (each [(shuftup s0 s1 s2 s3)
-                               (tup same (one-of s1 s1- s2 s2-))])]))))
-#+end_src
-
-*** Giant steps (John Coltrane)
-
-An experiment using Giant steps harmony.
-
-Ocarina runs over simplistic bass and piano comping.
-
-#+begin_src clojure :pp
-
-(def GIANT_STEPS
-  (let [II [II {:degree :II}]
-        V [V {:degree :V}]
-        I [I {:degree :I}]
-        t1 same
-        t2 (transpose c4-)
-        t3 (transpose c4)
-        s1 (lin [t1 I] [t2 (lin V I)] [t3 (lin V [dur2 I])] [t2 (lin II V)])
-        II-V-I (lin II V [I dur2])]
-    [tetrad
-     (tup s1
-          [t2 s1]
-          [t3 I dur2] [t2 II-V-I] II-V-I [t3 II-V-I] [t1 (lin II V)])
-     (h/align-contexts :structural :static)]))
-
-(play vel3
-      (h/harmonic-zip
-       [GIANT_STEPS (dupt 2)]
-       (chans
-        [(patch :acoustic-bass) o2- (each t-round)]
-        [(patch :electric-piano-1) (each (par s0 s1 s2 s3))]
-        [(patch :ocarina)
-         vel5
-         (each (parts {:degree :II} (structure [0 3 4 6])
-                   {:degree :V} (structure [1 2 5 6])
-                   {:degree :I} (structure :tetrad)))
-         (ntup 32 [(one-of o1 o2)
-                   (! (rup (pr/rand-nth [5 6 7]) s1))
-                   (tup (maybe (m/permutation 1/4))
-                        [(maybe rev) (one-of s1 s2 s2- s1-)])])]))
-      m/connect-repetitions
-      (adjust 32))
-#+end_src
-
-*** ESP (Wayne Shorter)
-
-Two utility functions:
-
-#+begin_src clojure
-(defn fill
-  [resolution f]
-  (sf_ (let [sdur (score-duration _)
-             n (quot sdur resolution)]
-         (assert (zero? (rem sdur resolution))
-                 "fill: resolution should be a multiple of score length ")
-         (update-score _ (ntup n f)))))
-
-(defn fill> [resolution f]
-  (sf_ (let [sdur (score-duration _)
-             n (quot sdur resolution)]
-         (assert (zero? (rem sdur resolution))
-                 "fill: resolution should be a multiple of score length ")
-         (update-score _ (ntup> n f)))))
-#+end_src
-
-first try:
-
-#+begin_src clojure
-(play
-
-  {:title "ESP"
-   :composer "Wayne Shorter"}
-
-  (h/harmonic-zip
-   ;; grid
-   [tetrad
-    (tup [VII superlocrian dur2] [I lydian dur2]
-         [VII superlocrian dur2] [VIIb lydian dur2]
-         [VI superlocrian] [VIIb lydian] [VII superlocrian] (tup [I lydian] [VIIb lydianb7])
-         [VI dorian] [II lydianb7] [II dorian] [IIb lydianb7])
-    (h/align-contexts :s)
-    (dupt 2)]
-
-   ;; parts
-   [vel4
-    (chans [(patch :acoustic-bass) o2-
-            t-round]
-
-           [(patch :electric-piano-1) vel3 o1-
-            (par> d0 d3 d3 d3 d3)]
-
-           [(patch :flute) vel6
-            (fill> (/ 1 (* 2 32 6)) (any-that (within-pitch-bounds? :C0 :C3) d4- d3- d1- d1 d3 d4))])])
-
-  ;; repeat
-  (adjust 32)
-  (dup 2))
-#+end_src
-
-full grid:
-
-#+begin_src clojure
-(def ESP_fullgrid
-  (let [common (lin [VII superlocrian dur2] [I lydian dur2]
-                    [VII superlocrian dur2] [VIIb lydian dur2]
-                    [VI superlocrian] [VIIb lydian] [VII superlocrian] (tup [I lydian] [VIIb lydianb7]))]
-    (tup common
-         (lin [VI dorian] [II lydianb7] [II dorian] [IIb lydianb7])
-         common
-         (lin [VIb lydianb7] [II dorian] (tup [VIb dorian] [IIb lydianb7]) I))))
-
-(play
-  (h/harmonic-zip
-   [ESP_fullgrid
-    (dupt 2)
-    (h/align-contexts :s)]
-
-   (chans
-
-    [(patch :electric-piano-1) o1- vel3
-     (voices> d0 d3 d3 d3 d3)]
-
-    [(patch :acoustic-bass) vel2 C-2 t-round]
-
-    [(patch :flute)
-     (fill> (/ 1 (* 6 64))
-            (maybe
-             (any-that* (within-pitch-bounds? :G-1 :C2)
-                        [d4- d3- d1- d1 d3 d4])))
-     (each (probs {void 1
-                same 5}))
-     m/connect-repetitions
-     (vel-humanize 10 [30 70])]))
-
-  (adjust 48))
-#+end_src
-
-*** Cyclic episode (Sam Rivers)
-One more shredding experiment
-
-#+begin_src clojure :pp
-(def CYCLIC_EPISODE
-  (let [a1 [dorian (rep 4 (transpose c3))]
-        a2 [dorian (rep 4 (transpose c3-))]
-        b (lin [IV dorian] [V superlocrian (structure [2 3 5 6])])
-        c (lin [V mixolydian sus47] [V phrygian sus27])
-        d [dorian (append (transpose c3))]]
-    [tetrad
-     (tup [(root :Bb) a1]
-          [(root :G) b] [(root :D) b]
-          [(root :D) a2]
-          [(root :G) c] [(root :Eb) d])
-     (dupt 4)
-     (h/align-contexts :s :static)]))
-
-(let [n-bars (* 4 16)
-
-      bass [(patch :acoustic-bass) (each t2-)]
-      vibe [(patch :vibraphone) vel5 t1 (each (par s0 s1 s2 s3)) h/voice-led]
-
-      ;; alternate leads
-
-      lead1 (ntup> (* n-bars 12)
-                   (any-that (within-pitch-bounds? :C0 :C3)
-                             d1 d1- d3 d3- d4 d4-))
-
-      lead2 [(repeat-while (within-time-bounds? 0 (* n-bars 10))
-               (append [start-from-last
-                        (any-that (within-pitch-bounds? :C-1 :C2)
-                                  (rep 3 d3 :skip-first)
-                                  (rep 3 d3- :skip-first)
-                                  d1 d1-)]))
-             (adjust 1)]
-
-      lead4 [(tup (mixtup s0 s1 s2 s3)
-                  (mixtup s2 s3 s4 s5))
-             (rup n-bars
-                  (probs {(m/permutation [0 1/2]) 2
-                          (m/rotation :rand) 3
-                          rev 1
-                          (any-that* (within-pitch-bounds? :C0 :C3)
-                                     (map s-step (range -2 3))) 5}))]]
-
-  (play CYCLIC_EPISODE
-        (chans bass
-               vibe
-               [(h/grid-zipped lead4)
-                (chans [(patch :flute) vel8 s2]
-                       [(patch :electric-piano-1) vel5])
-                (each (probs {vel0 1
-                           same 2}))])
-        (vel-humanize 0.15)
-        (adjust 64)))
-#+end_src
-
-*** Inner urge (Joe Henderson)
-
-
-#+begin_src clojure
-(defn last-n-positions
-           "Limit the score to the n latest positions found."
-           [n]
-           (sf_ (let [_ (->> (group-by :position _)
-                             seq (sort-by key)
-                             reverse (take n)
-                             (map second) (reduce into #{}))]
-                  (update-score _ (start-from (score-origin _))))))
-
-(let [n-bars 24
-      choir [(patch :choir-aahs) vel5 (par> d3 d3 d3)]
-      bass [(patch :acoustic-bass) C-2 t-round]
-      lead-line (any-that (within-pitch-bounds? :C0 :C3)
-                          (rep 2 d3 :skip-first)
-                          (rep 2 d3- :skip-first)
-                          d4 d4-
-                          d1 d1-
-                          (rep 3 d2 :skip-first)
-                          (rep 3 d2- :skip-first))]
-  (play (h/harmonic-zip
-         [(tup (lin (nlin 4 [(root :F#) locrian2])
-                    (nlin 4 [(root :F) lydian])
-                    (nlin 4 [(root :Eb) lydian])
-                    (nlin 4 [(root :Db) lydian]))
-               [lydian
-                (lin* (map root [:E :Db :D :B :C :A :Bb :G]))])
-          (h/align-contexts :s)
-          (dupt 4)]
-         (tup (chans choir
-                     bass
-                     [(patch :music-box)
-                      vel5 C1
-                      (m/simple-tupline (* n-bars 10) lead-line)])
-              (chans choir
-                     bass
-                     [(patch :ocarina)
-                      vel4 C1
-                      (m/simple-tupline (* n-bars 24) lead-line)])
-              (chans choir
-                     bass
-                     [(patch :sawtooth)
-                      (dur (/ 1 n-bars))
-                      vel4 C1
-                      (tup d0 d3 d6)
-                      (tup d0 d4 d8)
-                      (m/line (one-of (last-n-positions 10) (last-n-positions 7))
-                              (any-that (within-pitch-bounds? :C0 :C3)
-                                        (m/permutation {:grade 3})
-                                        #_(one-of (m/contour :rotation {:layer :d})
-                                                  (m/contour :mirror {:layer :d})
-                                                  (m/contour :similar {:delta 0 :layer :d}))
-                                        (one-of d1 d1-)
-                                        (one-of d2 d2-))
-                              (sf_ (> (score-duration _) 1))
-                              (trim 0 1))
-                      (vel-humanize 5 [40 80])])
-              (chans [choir
-                      (ntup (/ n-bars 2) same)
-                      ($by :position [(! (one-of (r/gen-tup 8 3 :euclidean)
-                                                 (r/gen-tup 8 3 :durations [2 3 4 5])))
-                                      (sf_ (let [xs (-> (group-by :position _) seq sort vals)]
-                                             (reduce into #{} (map update-score xs (pr/shuffle [d0 d1 d1-])))))])]
-                     bass)))
-        (adjust 180)))
-
-#+end_src
-
-** Harmonic sequences
 *** simple I IV VII I
+
+#+begin_src clojure
+(play (scale :harmonic-minor)
+      (lin I IV VII I)
+      (h/align-contexts :s)
+      (each (tup s0 s1 s2)))
+#+end_src
 
 Experimenting passing notes:
 
-#+begin_src clojure :pp
+#+begin_src clojure
+(play (scale :harmonic-minor)
+      (lin I IV VII I)
+      (h/align-contexts :s)
+      (lin s0 s1 s2-)
+      (each [(tup s0 s2)
+             (each (tup s0 c1- s+ s0))])
+      (append rev))
+#+end_src
+
+#+begin_src clojure
 (play dur2
       (scale :harmonic-minor)
       (lin I IV VII I)
@@ -332,16 +59,16 @@ Experimenting passing notes:
 
        [(patch :choir-aahs) vel4
         (each [(par s0 s1 s2)
-            (maybe (tup s0 s1-) (tup s0 s1))])]
+               (maybe (tup s0 s1-) (tup s0 s1))])]
 
        [(patch :ocarina) vel6
         (each [(shuftup s0 s1 s2)
-            (each (one-of (tup s0 (shuflin (one-of c1- s-) s+) s0)
-                       (tup s0 c1- s0 (one-of s2- s2))))])]
+               (each (one-of (tup s0 (shuflin (one-of c1- s-) s+) s0)
+                             (tup s0 c1- s0 (one-of s2- s2))))])]
 
        [(patch :kalimba) vel4 o2
         (each [(shuftup s0 s1 s2)
-            (each (one-of vel0 (par s0 s2-) (shuftup s0 s1 s2)))])]
+               (each (one-of vel0 (par s0 s2-) (shuftup s0 s1 s2)))])]
 
        [(patch :acoustic-bass) vel3
         o2-]))
@@ -561,274 +288,26 @@ A rich harmonic sequence using V I progressions over tritonal modulation cycle (
       (h/align-contexts :s))
 #+end_src
 
-
-** Concepts and techniques
-Some attempts to implement or illustrate various musical ideas using noon.
-*** Barry Harris
+*** I.m.M7 VI.alt bVI.7.#11 bII.7.sus4
 
 #+begin_src clojure
-(def barry-harris (scale [0 2 4 5 7 8 9 11]))
+(play (lin [I melodic-minor] [VI superlocrian] [VIb lydianb7] [IIb mixolydian])
+      (h/align-contexts :s)
+      (dup 2)
+      (each (chans [(patch :vibraphone) vel6 t0 (par> d0 d3 d3 d3 d3)]
+                   [(patch :acoustic-bass) vel6 t2-]
+                   [(patch :taiko-drum) (shuftup vel3 vel5 [vel4 (dupt 2)])]
+                   [(ntup> 9 (any-that (within-pitch-bounds? :G-1 :C2)
+                                       d1- d1 d3 d3- d4 d4-))
+                    vel9
+                    (chans (patch :flute)
+                           [o1- vel4 (patch :vibraphone)])]))
+      (lin _ c6)
+      (dup 2) )
 #+end_src
 
 
-#+begin_src clojure
-(play barry-harris
-      (tup d0 d3 d4 d7)
-      (tup d0 d2)
-      (rep 4 d1))
-#+end_src
-
-
-#+begin_src clojure
-(let [chord-tones [d0 d2 d4 d7]]
-  (play barry-harris
-        (lin d0 d3)
-        (rep 8 (one-of d1- d1))
-        (each [(chans [(patch :pad-1-new-age) o1- vel3 (par* chord-tones)]
-                      [(patch :ocarina) vel4 (shuftup* chord-tones) (each (maybe (tup (one-of d1 d1-) d0)))]
-                      [(patch :vibraphone) vel5 o1 (ntup 6 [(one-of* chord-tones) (maybe o1) (maybe (tup d1- d0))])])
-               (maybe rev)])))
-#+end_src
-
-
-#+begin_src clojure
-(def barry-harris2 [barry-harris (structure [0 2 4 7])])
-#+end_src
-
-
-#+begin_src clojure
-(play barry-harris2
-      (lin I VI VII IV)
-      (h/align-contexts :d)
-      (each (chans [(patch :brass) (par s0 s1 s2 s3)]
-                   [(patch :acoustic-bass) o1- t-round]
-                   [(patch :ethnic) o1 (shuftup s0 s1 s2 s3 s4 s5 s6)]))
-      (rep 2 s1)
-      (append (transpose c3)))
-#+end_src
-
-
-#+begin_src clojure
-(play barry-harris2
-      (lin IV I)
-      (h/align-contexts :d)
-      (each (par s0 s1 s2 s3))
-      (rep 4 (transpose c3))
-      h/voice-led)
-#+end_src
-
-*** Symetric modes
-
-#+begin_src clojure
-(def symetric-modes {:half-whole (scale [0 1 3 4 6 7 9 10])
-                     :whole-half (scale [0 2 3 5 6 8 9 11])
-                     :whole (scale [0 2 4 6 8 10])
-                     :augm-half (scale [0 3 4 7 8 11])
-                     :half-augm (scale [0 1 4 5 8 9])
-                     :messian3 (scale [0 2 3 4 6 7 8 10 11])
-                     :messian4 (scale [0 1 2 5 6 7 8 11])
-                     :messian5 (scale [0 1 5 6 7 11])
-                     :messian6 (scale [0 2 4 5 6 8 10 11])
-                     :messian7 (scale [0 1 2 3 5 6 7 8 9 11])})
-#+end_src
-
-
-#+begin_src clojure
-(play (symetric-modes :augm-half)
-      (:two {:one (rup 8 (one-of d1 d1- d2 d2- d3 d3-))
-             :two (shuftup d1 d2 d3 d4 d5 d6 d7)})
-
-      (patch :electric-piano-1)
-      (rep 32 (one-of (each d3)
-                      (each d3-)
-                      (m/rotation 1/2)
-                      (m/permutation :rand {:grade 2})
-                      (m/contour :similar {:delta 0 :layer :d}))))
-#+end_src
-
-
-#+begin_src clojure
-(defn rand-structure [size]
-  (ef_ (let [degree-count (-> _ :pitch :scale count)
-             degrees (first (mv/consume size (mv/mix* (range degree-count))))]
-         (update-score #{_} (structure (vec (sort degrees)))))))
-#+end_src
-
-
-#+begin_src clojure
-(def rand-degree
-  (ef_ (let [scale-size (-> _ :pitch :scale count)
-             deg (rand-nth (range 1 scale-size))]
-         (update-score #{_} (degree (rand-nth [(- deg) deg]))))))
-#+end_src
-
-
-#+begin_src clojure
-(defn rand-tup [size]
-  (ef_ (let [degree-count (-> _ :pitch :scale count)
-             degrees (first (mv/consume size (mv/mix* (range degree-count))))]
-         (update-score #{_} (tup* (mapv d-step degrees))))))
-#+end_src
-
-
-#+begin_src clojure
-(play (symetric-modes :half-whole)
-      (rand-structure 3)
-      (rep 3 rand-degree)
-      (each (chans [vel4 h/simple-chord]
-                   [(patch :music-box) o1 (rand-tup 7) (each (one-of vel0 vel4 vel6 vel7))]))
-      (append [rev s2])
-      (append (transpose c5))
-      (append (between 0 1/3)))
-#+end_src
-
-*** Arvo part
-
-#+begin_src clojure
-(let [m-line (fn [size]
-               (pr/rand-nth (vals {:up-to [(rep size d1-) rev]
-                                   :up-from (rep size d1)
-                                   :down-to [(rep size d1) rev]
-                                   :down-from (rep size d1-)})))
-      base (pr/shuffle (map vector
-                            [s0 s1 s2 (one-of s0 s1 s2)]
-                            (map m-line (pr/shuffle (pr/rand-nth (u/sums 12 4 [2 3 4 5]))))))]
-  (play lydianb7
-        (lin* base)
-        (each (chans [(patch :piccolo) vel6 o1]
-                     [(patch :flute) vel3 o1 d5-]
-                     [(patch :accordion) vel4 d0]
-                     [(patch :choir-aahs) s-floor (vel-humanize 7 [40 80])]
-                     [(patch :choir-aahs) s-floor o1 s1 (vel-humanize 7 [40 80])]
-                     [(patch :acoustic-bass) C-2 t-floor]))
-
-        m/connect-repetitions
-        (append [rev (transpose c3-)])
-        (append dorian)
-        (dup 2)))
-
-#+end_src
-
-*** Bartok harmony axis
-
-#+begin_src clojure
-(let [L- (transpose c5)
-      L+ (transpose c5-)
-      R- (transpose c3)
-      R+ (transpose c3-)
-      M (transpose c6)]
-  (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)])
-        (h/align-contexts :d)
-        (chans [(patch :aahs) (each (par s0 s1 s2))]
-               [(patch :ocarina) o1 (each (shuftup s2- s1- s0 s1 s2 s3))]
-               [(patch :acoustic-bass) o1-
-                t-round
-                (maybe s1 s1-)])
-        (lin _ s1 s1- _)))
-#+end_src
-
-
-#+begin_src clojure
-(let [L- (transpose c5)
-      L+ (transpose c5-)
-      R- (transpose c3)
-      R+ (transpose c3-)
-      M (transpose c6)
-      tup1 (mixtup s2- s1- s0 s1 s2 s3)
-      tup2 (mixtup s2- s1- s0 s1 s2 s3)]
-  (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)
-                (maybe dur2 dur:2)])
-        (h/align-contexts :d)
-        (chans [(patch :aahs)
-                (each [add2 (par s0 s1 s2 s3)])
-                m/connect-repetitions]
-               [(patch :ocarina) o1 add2 (each [(one-of tup1 tup2) (maybe rev)])]
-               [(patch :acoustic-bass) o1-
-                t-round
-                (maybe s1 s1-)])
-        (lin _ s1 s1- _)))
-#+end_src
-
-
-#+begin_src clojure
-(let [L- (transpose c5)
-      _L+ (transpose c5-)
-      R- (transpose c3)
-      R+ (transpose c3-)
-      M (transpose c6)
-
-      base [(pr/rand-nth [R- R+ M]) (pr/rand-nth [ionian eolian])]
-      rand-color [(maybe R- R+ M) (one-of ionian eolian)]
-      tup1 (mixtup s2- s1- s0 s1 s2 s3)
-      tup2 (mixtup s2- s1- s0 s1 s2 s3)]
-  (play base
-        (lin _ [L- rand-color] rand-color [L- rand-color] _)
-        (lin _ M rev)
-        (h/align-contexts :d)
-        (chans [(patch :aahs)
-                (each [add2 (par s0 s1 s2 s3)])
-                m/connect-repetitions]
-               [(patch :ocarina) o1 add2 (each [(one-of tup1 tup2) (maybe rev)])]
-               [(patch :acoustic-bass) o1-
-                t-round
-                (maybe s1 s1-)])
-        (lin _ s1 [rev s1-] _)))
-#+end_src
-
-
-#+begin_src clojure
-(let [initial [{:harmonic-coords [0 0]} melodic-minor sixth]
-      up [{:harmonic-coords (fn [[x y]] [x (mod (inc y) 3)])} (transpose c5)]
-      down [{:harmonic-coords (fn [[x y]] [x (mod (dec y) 3)])} (transpose c5-)]
-      left [{:harmonic-coords (fn [[x y]] [(mod (dec x) 4) y])} (transpose c3)]
-      right [{:harmonic-coords (fn [[x y]] [(mod (inc x) 4) y])} (transpose c3-)]]
-  (play initial
-        (lin> _ up left down)
-        (lin _ up)
-        (lin _ [rev left])
-        (lin _ [right right])
-        (h/align-contexts :d)
-        (chans [(patch :aahs) (structure [1 2 5 6]) (each (par s0 s1 s2 s3))]
-               (let [tup1 (mixtup s2- s1- s0 s1 s2 s3)
-                     tup2 (mixtup s2- s1- s0 s1 s2 s3)]
-                 [(patch :ocarina) o1 add2 (each [(one-of tup1 tup2) (maybe rev)])])
-               [(patch :acoustic-bass) o1-
-                t-round
-                (maybe s1 s1- s2-)])
-        (lin _ s1 [up s1-] up)))
-#+end_src
-
-
-#+begin_src clojure
-(let [initial [lydian seventh]
-      up (transpose c5)
-      down (transpose c5-)
-      left (transpose c3)
-      right (transpose c3-)]
-  (play ;; grid
-   [initial
-    (lin> _ up left down)
-    (each (maybe (degree 2) (degree -2)))
-    (lin _ up)
-    (lin _ [rev left])
-    (lin _ [right right])
-    (h/align-contexts :d)]
-   ;; voices
-   (chans [(patch :aahs) (each (par s0 s1 s2 s3))]
-          #_[(patch :aahs) t-round (each (par d0 d3 d6 d9)) #_h/voice-led]
-          (let [tup1 [(structure [2 3 4 6]) (mixtup s3- s2- s1- s0 s1 s2 s3 s4)]
-                tup2 (mixtup d3- d2- d1- d0 d1 d2 d3 d4)]
-            [(patch :ocarina) o1 (each [(one-of tup1 tup2) (maybe rev)])])
-          [(patch :acoustic-bass) o2-
-           t-round
-           (each (probs {_ 3
-                         (one-of s1- s2) 3
-                         (tup _ (one-of s1- s2)) 1
-                         (tup (one-of s1- s2) _) 1}))])
-   ;; why not ?
-   (lin _ s1 [up s1-] up)
-   (options :bpm 40 :xml true)))
-#+end_src
+** Melodic experiments
 
 *** Target notes
 Building good rythmic melodies is not easy.
@@ -1155,7 +634,6 @@ The =connect= function is now available in =noon.lib.melody=
         (adjust {:duration 64})))
 #+end_src
 
-
 *** Canon
 First thing would be to come up with a simple melodic motiv.
 It will be based on a triad, with some decorating tones.
@@ -1201,6 +679,277 @@ But it is not really what we want.
                   (lin I IV VII I [IV melodic-minor VII] IV [V harmonic-minor VII] VII)
                   (dup 4)
                   (h/align-contexts :s))))
+#+end_src
+
+
+** Concepts and techniques
+
+Some attempts to implement or illustrate various musical ideas using noon.
+
+*** Barry Harris
+
+#+begin_src clojure
+(def barry-harris (scale [0 2 4 5 7 8 9 11]))
+#+end_src
+
+
+#+begin_src clojure
+(play barry-harris
+      (tup d0 d3 d4 d7)
+      (tup d0 d2)
+      (rep 4 d1))
+#+end_src
+
+
+#+begin_src clojure
+(let [chord-tones [d0 d2 d4 d7]]
+  (play barry-harris
+        (lin d0 d3)
+        (rep 8 (one-of d1- d1))
+        (each [(chans [(patch :pad-1-new-age) o1- vel3 (par* chord-tones)]
+                      [(patch :ocarina) vel4 (shuftup* chord-tones) (each (maybe (tup (one-of d1 d1-) d0)))]
+                      [(patch :vibraphone) vel5 o1 (ntup 6 [(one-of* chord-tones) (maybe o1) (maybe (tup d1- d0))])])
+               (maybe rev)])))
+#+end_src
+
+
+#+begin_src clojure
+(def barry-harris2 [barry-harris (structure [0 2 4 7])])
+#+end_src
+
+
+#+begin_src clojure
+(play barry-harris2
+      (lin I VI VII IV)
+      (h/align-contexts :d)
+      (each (chans [(patch :brass) (par s0 s1 s2 s3)]
+                   [(patch :acoustic-bass) o1- t-round]
+                   [(patch :ethnic) o1 (shuftup s0 s1 s2 s3 s4 s5 s6)]))
+      (rep 2 s1)
+      (append (transpose c3)))
+#+end_src
+
+
+#+begin_src clojure
+(play barry-harris2
+      (lin IV I)
+      (h/align-contexts :d)
+      (each (par s0 s1 s2 s3))
+      (rep 4 (transpose c3))
+      h/voice-led)
+#+end_src
+
+*** Symetric modes
+
+#+begin_src clojure
+(def symetric-modes {:half-whole (scale [0 1 3 4 6 7 9 10])
+                     :whole-half (scale [0 2 3 5 6 8 9 11])
+                     :whole (scale [0 2 4 6 8 10])
+                     :augm-half (scale [0 3 4 7 8 11])
+                     :half-augm (scale [0 1 4 5 8 9])
+                     :messian3 (scale [0 2 3 4 6 7 8 10 11])
+                     :messian4 (scale [0 1 2 5 6 7 8 11])
+                     :messian5 (scale [0 1 5 6 7 11])
+                     :messian6 (scale [0 2 4 5 6 8 10 11])
+                     :messian7 (scale [0 1 2 3 5 6 7 8 9 11])})
+#+end_src
+
+
+#+begin_src clojure
+(play (symetric-modes :augm-half)
+      (:two {:one (rup 8 (one-of d1 d1- d2 d2- d3 d3-))
+             :two (shuftup d1 d2 d3 d4 d5 d6 d7)})
+
+      (patch :electric-piano-1)
+      (rep 32 (one-of (each d3)
+                      (each d3-)
+                      (m/rotation 1/2)
+                      (m/permutation :rand {:grade 2})
+                      (m/contour :similar {:delta 0 :layer :d}))))
+#+end_src
+
+
+#+begin_src clojure
+(defn rand-structure [size]
+  (ef_ (let [degree-count (-> _ :pitch :scale count)
+             degrees (first (mv/consume size (mv/mix* (range degree-count))))]
+         (update-score #{_} (structure (vec (sort degrees)))))))
+#+end_src
+
+
+#+begin_src clojure
+(def rand-degree
+  (ef_ (let [scale-size (-> _ :pitch :scale count)
+             deg (rand-nth (range 1 scale-size))]
+         (update-score #{_} (degree (rand-nth [(- deg) deg]))))))
+#+end_src
+
+
+#+begin_src clojure
+(defn rand-tup [size]
+  (ef_ (let [degree-count (-> _ :pitch :scale count)
+             degrees (first (mv/consume size (mv/mix* (range degree-count))))]
+         (update-score #{_} (tup* (mapv d-step degrees))))))
+#+end_src
+
+
+#+begin_src clojure
+(play (symetric-modes :half-whole)
+      (rand-structure 3)
+      (rep 3 rand-degree)
+      (each (chans [vel4 h/simple-chord]
+                   [(patch :music-box) o1 (rand-tup 7) (each (one-of vel0 vel4 vel6 vel7))]))
+      (append [rev s2])
+      (append (transpose c5))
+      (append (between 0 1/3)))
+#+end_src
+
+*** Arvo Part
+
+#+begin_src clojure
+(let [m-line (fn [size]
+               (pr/rand-nth (vals {:up-to [(rep size d1-) rev]
+                                   :up-from (rep size d1)
+                                   :down-to [(rep size d1) rev]
+                                   :down-from (rep size d1-)})))
+      base (pr/shuffle (map vector
+                            [s0 s1 s2 (one-of s0 s1 s2)]
+                            (map m-line (pr/shuffle (pr/rand-nth (u/sums 12 4 [2 3 4 5]))))))]
+  (play lydianb7
+        (lin* base)
+        (each (chans [(patch :piccolo) vel6 o1]
+                     [(patch :flute) vel3 o1 d5-]
+                     [(patch :accordion) vel4 d0]
+                     [(patch :choir-aahs) s-floor (vel-humanize 7 [40 80])]
+                     [(patch :choir-aahs) s-floor o1 s1 (vel-humanize 7 [40 80])]
+                     [(patch :acoustic-bass) C-2 t-floor]))
+
+        m/connect-repetitions
+        (append [rev (transpose c3-)])
+        (append dorian)
+        (dup 2)))
+
+#+end_src
+
+*** Bartok harmony axis
+
+#+begin_src clojure
+(let [L- (transpose c5)
+      L+ (transpose c5-)
+      R- (transpose c3)
+      R+ (transpose c3-)
+      M (transpose c6)]
+  (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)])
+        (h/align-contexts :d)
+        (chans [(patch :aahs) (each (par s0 s1 s2))]
+               [(patch :ocarina) o1 (each (shuftup s2- s1- s0 s1 s2 s3))]
+               [(patch :acoustic-bass) o1-
+                t-round
+                (maybe s1 s1-)])
+        (lin _ s1 s1- _)))
+#+end_src
+
+
+#+begin_src clojure
+(let [L- (transpose c5)
+      L+ (transpose c5-)
+      R- (transpose c3)
+      R+ (transpose c3-)
+      M (transpose c6)
+      tup1 (mixtup s2- s1- s0 s1 s2 s3)
+      tup2 (mixtup s2- s1- s0 s1 s2 s3)]
+  (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)
+                (maybe dur2 dur:2)])
+        (h/align-contexts :d)
+        (chans [(patch :aahs)
+                (each [add2 (par s0 s1 s2 s3)])
+                m/connect-repetitions]
+               [(patch :ocarina) o1 add2 (each [(one-of tup1 tup2) (maybe rev)])]
+               [(patch :acoustic-bass) o1-
+                t-round
+                (maybe s1 s1-)])
+        (lin _ s1 s1- _)))
+#+end_src
+
+
+#+begin_src clojure
+(let [L- (transpose c5)
+      _L+ (transpose c5-)
+      R- (transpose c3)
+      R+ (transpose c3-)
+      M (transpose c6)
+
+      base [(pr/rand-nth [R- R+ M]) (pr/rand-nth [ionian eolian])]
+      rand-color [(maybe R- R+ M) (one-of ionian eolian)]
+      tup1 (mixtup s2- s1- s0 s1 s2 s3)
+      tup2 (mixtup s2- s1- s0 s1 s2 s3)]
+  (play base
+        (lin _ [L- rand-color] rand-color [L- rand-color] _)
+        (lin _ M rev)
+        (h/align-contexts :d)
+        (chans [(patch :aahs)
+                (each [add2 (par s0 s1 s2 s3)])
+                m/connect-repetitions]
+               [(patch :ocarina) o1 add2 (each [(one-of tup1 tup2) (maybe rev)])]
+               [(patch :acoustic-bass) o1-
+                t-round
+                (maybe s1 s1-)])
+        (lin _ s1 [rev s1-] _)))
+#+end_src
+
+
+#+begin_src clojure
+(let [initial [{:harmonic-coords [0 0]} melodic-minor sixth]
+      up [{:harmonic-coords (fn [[x y]] [x (mod (inc y) 3)])} (transpose c5)]
+      down [{:harmonic-coords (fn [[x y]] [x (mod (dec y) 3)])} (transpose c5-)]
+      left [{:harmonic-coords (fn [[x y]] [(mod (dec x) 4) y])} (transpose c3)]
+      right [{:harmonic-coords (fn [[x y]] [(mod (inc x) 4) y])} (transpose c3-)]]
+  (play initial
+        (lin> _ up left down)
+        (lin _ up)
+        (lin _ [rev left])
+        (lin _ [right right])
+        (h/align-contexts :d)
+        (chans [(patch :aahs) (structure [1 2 5 6]) (each (par s0 s1 s2 s3))]
+               (let [tup1 (mixtup s2- s1- s0 s1 s2 s3)
+                     tup2 (mixtup s2- s1- s0 s1 s2 s3)]
+                 [(patch :ocarina) o1 add2 (each [(one-of tup1 tup2) (maybe rev)])])
+               [(patch :acoustic-bass) o1-
+                t-round
+                (maybe s1 s1- s2-)])
+        (lin _ s1 [up s1-] up)))
+#+end_src
+
+
+#+begin_src clojure
+(let [initial [lydian seventh]
+      up (transpose c5)
+      down (transpose c5-)
+      left (transpose c3)
+      right (transpose c3-)]
+  (play ;; grid
+   [initial
+    (lin> _ up left down)
+    (each (maybe (degree 2) (degree -2)))
+    (lin _ up)
+    (lin _ [rev left])
+    (lin _ [right right])
+    (h/align-contexts :d)]
+   ;; voices
+   (chans [(patch :aahs) (each (par s0 s1 s2 s3))]
+          #_[(patch :aahs) t-round (each (par d0 d3 d6 d9)) #_h/voice-led]
+          (let [tup1 [(structure [2 3 4 6]) (mixtup s3- s2- s1- s0 s1 s2 s3 s4)]
+                tup2 (mixtup d3- d2- d1- d0 d1 d2 d3 d4)]
+            [(patch :ocarina) o1 (each [(one-of tup1 tup2) (maybe rev)])])
+          [(patch :acoustic-bass) o2-
+           t-round
+           (each (probs {_ 3
+                         (one-of s1- s2) 3
+                         (tup _ (one-of s1- s2)) 1
+                         (tup (one-of s1- s2) _) 1}))])
+   ;; why not ?
+   (lin _ s1 [up s1-] up)
+   (options :bpm 40 :xml true)))
 #+end_src
 
 *** Simple counterpoint
@@ -1413,6 +1162,284 @@ But it is not really what we want.
                 ($by :channel (connect-with
                                (sf_ (->> (get-in choices [:ornamentation (:connection (first _))])
                                          (update-score _))))))))
+#+end_src
+
+
+** Tunes
+
+Trying to make music on top of some known jazz standards
+
+*** Autumn leaves
+
+Simple experiment on the first part of autumn leaves grid:
+
+#+begin_src clojure :pp
+(play {:title "Autumn Leaves"}
+
+      vel3
+      [tetrad
+       (lin II V I IV VII [III phrygian3] [VI (lin [melodic-minor sixth] phrygian3)])
+       (h/align-contexts :s)
+       (dup 2)]
+
+      (h/grid-zipped
+       (nlin 16 (chans [(patch :acoustic-bass)
+                        o1- t-round]
+
+                       [(patch :vibraphone)
+                        (par s0 s1 s2 s3)]
+
+                       [(patch :electric-piano-1) vel2
+                        o2 (par s0 s2 s4) (shuftup s0 s2)]
+
+                       [(patch :whistle) o1 vel5
+                        (each [(shuftup s0 s1 s2 s3)
+                               (tup same (one-of s1 s1- s2 s2-))])]))))
+#+end_src
+
+*** Giant steps (John Coltrane)
+
+An experiment using Giant steps harmony.
+
+Ocarina runs over simplistic bass and piano comping.
+
+#+begin_src clojure :pp
+
+(def GIANT_STEPS
+  (let [II [II {:degree :II}]
+        V [V {:degree :V}]
+        I [I {:degree :I}]
+        t1 same
+        t2 (transpose c4-)
+        t3 (transpose c4)
+        s1 (lin [t1 I] [t2 (lin V I)] [t3 (lin V [dur2 I])] [t2 (lin II V)])
+        II-V-I (lin II V [I dur2])]
+    [tetrad
+     (tup s1
+          [t2 s1]
+          [t3 I dur2] [t2 II-V-I] II-V-I [t3 II-V-I] [t1 (lin II V)])
+     (h/align-contexts :structural :static)]))
+
+(play vel3
+      (h/harmonic-zip
+       [GIANT_STEPS (dupt 2)]
+       (chans
+        [(patch :acoustic-bass) o2- (each t-round)]
+        [(patch :electric-piano-1) (each (par s0 s1 s2 s3))]
+        [(patch :ocarina)
+         vel5
+         (each (parts {:degree :II} (structure [0 3 4 6])
+                   {:degree :V} (structure [1 2 5 6])
+                   {:degree :I} (structure :tetrad)))
+         (ntup 32 [(one-of o1 o2)
+                   (! (rup (pr/rand-nth [5 6 7]) s1))
+                   (tup (maybe (m/permutation 1/4))
+                        [(maybe rev) (one-of s1 s2 s2- s1-)])])]))
+      m/connect-repetitions
+      (adjust 32))
+#+end_src
+
+*** ESP (Wayne Shorter)
+
+first try:
+
+#+begin_src clojure
+(play
+
+  {:title "ESP"
+   :composer "Wayne Shorter"}
+
+  (h/harmonic-zip
+   ;; grid
+   [tetrad
+    (tup [VII superlocrian dur2] [I lydian dur2]
+         [VII superlocrian dur2] [VIIb lydian dur2]
+         [VI superlocrian] [VIIb lydian] [VII superlocrian] (tup [I lydian] [VIIb lydianb7])
+         [VI dorian] [II lydianb7] [II dorian] [IIb lydianb7])
+    (h/align-contexts :s)
+    (dupt 2)]
+
+   ;; parts
+   [vel4
+    (chans [(patch :acoustic-bass) o2-
+            t-round]
+
+           [(patch :electric-piano-1) vel3 o1-
+            (par> d0 d3 d3 d3 d3)]
+
+           [(patch :flute) vel6
+            (fill> (/ 1 (* 2 32 6)) (any-that (within-pitch-bounds? :C0 :C3) d4- d3- d1- d1 d3 d4))])])
+
+  ;; repeat
+  (adjust 32)
+  (dup 2))
+#+end_src
+
+full grid:
+
+#+begin_src clojure
+(def ESP_fullgrid
+  (let [common (lin [VII superlocrian dur2] [I lydian dur2]
+                    [VII superlocrian dur2] [VIIb lydian dur2]
+                    [VI superlocrian] [VIIb lydian] [VII superlocrian] (tup [I lydian] [VIIb lydianb7]))]
+    (tup common
+         (lin [VI dorian] [II lydianb7] [II dorian] [IIb lydianb7])
+         common
+         (lin [VIb lydianb7] [II dorian] (tup [VIb dorian] [IIb lydianb7]) I))))
+
+(play
+  (h/harmonic-zip
+   [ESP_fullgrid
+    (dupt 2)
+    (h/align-contexts :s)]
+
+   (chans
+
+    [(patch :electric-piano-1) o1- vel3
+     (voices> d0 d3 d3 d3 d3)]
+
+    [(patch :acoustic-bass) vel2 C-2 t-round]
+
+    [(patch :flute)
+     (fill> (/ 1 (* 6 64))
+            (maybe
+             (any-that* (within-pitch-bounds? :G-1 :C2)
+                        [d4- d3- d1- d1 d3 d4])))
+     (each (probs {void 1
+                   same 5}))
+     m/connect-repetitions
+     (vel-humanize 10 [30 70])]))
+
+  (adjust 48))
+#+end_src
+
+*** Cyclic episode (Sam Rivers)
+One more shredding experiment
+
+#+begin_src clojure :pp
+(def CYCLIC_EPISODE
+  (let [a1 [dorian (rep 4 (transpose c3))]
+        a2 [dorian (rep 4 (transpose c3-))]
+        b (lin [IV dorian] [V superlocrian (structure [2 3 5 6])])
+        c (lin [V mixolydian sus47] [V phrygian sus27])
+        d [dorian (append (transpose c3))]]
+    [tetrad
+     (tup [(root :Bb) a1]
+          [(root :G) b] [(root :D) b]
+          [(root :D) a2]
+          [(root :G) c] [(root :Eb) d])
+     (dupt 4)
+     (h/align-contexts :s :static)]))
+
+(let [n-bars (* 4 16)
+
+      bass [(patch :acoustic-bass) (each t2-)]
+      vibe [(patch :vibraphone) vel5 t1 (each (par s0 s1 s2 s3)) h/voice-led]
+
+      ;; alternate leads
+
+      lead1 (ntup> (* n-bars 12)
+                   (any-that (within-pitch-bounds? :C0 :C3)
+                             d1 d1- d3 d3- d4 d4-))
+
+      lead2 [(repeat-while (within-time-bounds? 0 (* n-bars 10))
+               (append [start-from-last
+                        (any-that (within-pitch-bounds? :C-1 :C2)
+                                  (rep 3 d3 :skip-first)
+                                  (rep 3 d3- :skip-first)
+                                  d1 d1-)]))
+             (adjust 1)]
+
+      lead4 [(tup (mixtup s0 s1 s2 s3)
+                  (mixtup s2 s3 s4 s5))
+             (rup n-bars
+                  (probs {(m/permutation [0 1/2]) 2
+                          (m/rotation :rand) 3
+                          rev 1
+                          (any-that* (within-pitch-bounds? :C0 :C3)
+                                     (map s-step (range -2 3))) 5}))]]
+
+  (play CYCLIC_EPISODE
+        (chans bass
+               vibe
+               [(h/grid-zipped lead4)
+                (chans [(patch :flute) vel8 s2]
+                       [(patch :electric-piano-1) vel5])
+                (each (probs {vel0 1
+                           same 2}))])
+        (vel-humanize 0.15)
+        (adjust 64)))
+#+end_src
+
+*** Inner urge (Joe Henderson)
+
+
+#+begin_src clojure
+(defn last-n-positions
+           "Limit the score to the n latest positions found."
+           [n]
+           (sf_ (let [_ (->> (group-by :position _)
+                             seq (sort-by key)
+                             reverse (take n)
+                             (map second) (reduce into #{}))]
+                  (update-score _ (start-from (score-origin _))))))
+
+(let [n-bars 24
+      choir [(patch :choir-aahs) vel5 (par> d3 d3 d3)]
+      bass [(patch :acoustic-bass) C-2 t-round]
+      lead-line (any-that (within-pitch-bounds? :C0 :C3)
+                          (rep 2 d3 :skip-first)
+                          (rep 2 d3- :skip-first)
+                          d4 d4-
+                          d1 d1-
+                          (rep 3 d2 :skip-first)
+                          (rep 3 d2- :skip-first))]
+  (play (h/harmonic-zip
+         [(tup (lin (nlin 4 [(root :F#) locrian2])
+                    (nlin 4 [(root :F) lydian])
+                    (nlin 4 [(root :Eb) lydian])
+                    (nlin 4 [(root :Db) lydian]))
+               [lydian
+                (lin* (map root [:E :Db :D :B :C :A :Bb :G]))])
+          (h/align-contexts :s)
+          (dupt 4)]
+         (tup (chans choir
+                     bass
+                     [(patch :music-box)
+                      vel5 C1
+                      (m/simple-tupline (* n-bars 10) lead-line)])
+              (chans choir
+                     bass
+                     [(patch :ocarina)
+                      vel4 C1
+                      (m/simple-tupline (* n-bars 24) lead-line)])
+              (chans choir
+                     bass
+                     [(patch :sawtooth)
+                      (dur (/ 1 n-bars))
+                      vel4 C1
+                      (tup d0 d3 d6)
+                      (tup d0 d4 d8)
+                      (m/line (one-of (last-n-positions 10) (last-n-positions 7))
+                              (any-that (within-pitch-bounds? :C0 :C3)
+                                        (m/permutation {:grade 3})
+                                        #_(one-of (m/contour :rotation {:layer :d})
+                                                  (m/contour :mirror {:layer :d})
+                                                  (m/contour :similar {:delta 0 :layer :d}))
+                                        (one-of d1 d1-)
+                                        (one-of d2 d2-))
+                              (sf_ (> (score-duration _) 1))
+                              (trim 0 1))
+                      (vel-humanize 5 [40 80])])
+              (chans [choir
+                      (ntup (/ n-bars 2) same)
+                      ($by :position [(! (one-of (r/gen-tup 8 3 :euclidean)
+                                                 (r/gen-tup 8 3 :durations [2 3 4 5])))
+                                      (sf_ (let [xs (-> (group-by :position _) seq sort vals)]
+                                             (reduce into #{} (map update-score xs (pr/shuffle [d0 d1 d1-])))))])]
+                     bass)))
+        (adjust 180)))
+
 #+end_src
 
 
@@ -1659,6 +1686,58 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
       (lin _ [rev c3])
       (lin _ [rev c3-])
       (options :bpm 30 :xml true :preview true))
+#+end_src
+
+*** melodic development
+
+#+begin_src clojure
+(play
+
+  ;; use dorian mode
+  dorian
+
+  ;; random tup holding the 7 degrees of the scale
+  (shuftup d0 d1 d2 d3 d4 d5 d6)
+
+  ;; iterating while within time span 0-8
+  (repeat-while (within-time-bounds? 0 8)
+                ;; each time we will append to the current score
+                (append
+                 ;; taking care to stay within pitch bounds
+                 (any-that (within-pitch-bounds? :C0 :C3)
+                           ;; those 4 expression are randomly picked (if they respect the pitch bound condition)
+                           ;; each one is operating on the nth last elements of the melody using the
+                           ;; `noon.score/start-from-nth-last` update builder.
+                           [(start-from-nth-last 1) (one-of d1- d1)]
+                           ;; takes a random permutation in the 0-1/4 complexity range
+                           [(start-from-nth-last 8) (m/permutation [0 1/4])]
+                           ;; reverse the 4 last four notes of the score
+                           [(start-from-nth-last 4) rev]
+                           ;; change the contour of the last four notes
+                           [(start-from-nth-last 4) (m/contour :similar {:extent [-2 2] :layer :d})]))
+                ;; at the end of the loop we adjust the score duration
+                (trim 0 8))
+
+  ;; each note will have some chance to spawn some extra voice (vibraphone or flute)
+  ;; or a velocity humanisation
+  (each
+   (probs {(one-of vel3 vel5 vel7 vel9) 6
+           (superpose [(chan 2) (patch :vibraphone) vel8 (one-of d3 d4)]) 1
+           (superpose [(chan 7) (patch :flute) vel8 o1]) 5
+           }))
+
+  ;; adding a simple bass
+  (superpose (k (nlin 4 [(chan 5) (patch :acoustic-bass) t2- vel8 dur2])))
+
+  ;; a randomized harmonic modulation sequence
+  (rep 4 (one-of [(d-shift -2) (transpose c3)]
+                 [(d-shift 2) (transpose c3-)]
+                 [(d-shift 1) (transpose c1-)]
+                 [(d-shift -3) (transpose c6)]))
+
+  ;; the whole score is repeated superposing a taiko drum
+  (append (superpose (k (nlin 4 [(patch :taiko-drum) (chan 3) (! [vel4 (maybe o1- d1) (r/gen-tup 7 3)])])
+                        (dup 8)))))
 #+end_src
 
 ** Usage
