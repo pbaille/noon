@@ -3,14 +3,7 @@
   (:require [noon.lib.melody :as m]
             [noon.lib.harmony :as h]
             [noon.lib.rythmn :as r]
-            [noon.harmony :as nh]
-            [noon.utils.multi-val :as mv]
-            [noon.utils.misc :as u]
-            [noon.utils.pseudo-random :as pr]
-            [noon.constants :as nc]
-            #_[noon.midi :as midi]
-            [noon.vst.vsl :as vsl :refer [vsl]]
-            [clojure.math.combinatorics :as comb]))
+            [noon.utils.pseudo-random :as pr]))
 
 (comment :elements
          (let [r {:a (r/gen-tup 8 5)

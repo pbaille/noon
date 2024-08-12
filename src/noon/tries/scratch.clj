@@ -2,10 +2,7 @@
   (:use noon.score)
   (:require [noon.lib.harmony :as h]
             [noon.lib.melody :as m]
-            [noon.lib.rythmn :as r]
-            [noon.utils.misc :as u]
-            [noon.midi :as midi]
-            [clojure.math.combinatorics :as comb]))
+            [noon.lib.rythmn :as r]))
 
 (comment
 
