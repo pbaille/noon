@@ -889,7 +889,17 @@
 
         (is (= (mk (lin d0 d1 d2)
                    start-from-last)
+               (mk (lin d0 d1 d2)
+                   (start-from-nth-last 1))
                (mk d2)))
+
+        (is (= (mk (lin d0 d1 d2)
+                   (start-from-nth-last 2))
+               (mk (lin d1 d2))))
+
+        (is (= (mk (lin d0 d1 d2)
+                   (start-from-nth-last 4))
+               #{}))
 
         (testing "trim"
 
@@ -969,7 +979,26 @@
                    (sort (map pitch-value (mk (tup d0 d1 d2))))
                    (sort (map pitch-value (mk (shuflin d0 d1 d2))))
                    (sort (map pitch-value (mk (mixlin d0 d1 d2))))
-                   (sort (map pitch-value (mk (lin d0 d1 d2))))))))))
+                   (sort (map pitch-value (mk (lin d0 d1 d2))))))))
+
+        (testing "incubating"
+
+          (testing "fill fill>"
+
+            (is (= (mk (fill 1/4 d3))
+                   (mk (tup d3 d3 d3 d3))))
+
+            (is (= (mk dur2 (fill 1/4 d3))
+                   (mk dur2 (ntup 8 d3))))
+
+            (is (= (mk (fill> 1/4 d3))
+                   (mk (ntup> 4 d3))))
+
+            (is (= (mk dur2 (fill> 2/5 d3))
+                   (mk dur2 (ntup> 5 d3))))
+
+            (is (thrown? Exception
+                         (mk (fill 2/3 d1))))))))
 
     (is (tu/frozen :frozen-test
                    (lin d1 d2 d3)))))

@@ -1191,6 +1191,17 @@
                        sort last val set
                        (update-score {:position 0}))))
 
+            (defn start-from-nth-last
+              {:doc "Shifting the score to `nth` last position erasing all anterior events."
+               :tags [:temporal :selective]}
+              [nth]
+              (sf_ (let [sorted (sort (group-by :position _))]
+                     (if (>= (count sorted) nth)
+                       (let [taken (map (comp set val) (take-last nth sorted))]
+                         (update-score (merge-scores taken)
+                                       {:position (sub (:position (ffirst taken)))}))
+                       #{}))))
+
             (defn trim
               {:doc (str "Build and update that removes everything before `beg` and after `end` from the received score. "
                          "(triming overlapping durations).")
@@ -1329,8 +1340,8 @@
           [resolution update]
           (sf_ (let [sdur (score-duration _)
                      n (quot sdur resolution)]
-                 (assert (zero? (rem sdur resolution))
-                         "fill: resolution should be a multiple of score length ")
+                 (if-not (zero? (rem sdur resolution))
+                   (u/throw* `fill " resolution should be a multiple of score length "))
                  (update-score _ (ntup n update)))))
 
         (defn fill>
@@ -1340,8 +1351,8 @@
           [resolution update]
           (sf_ (let [sdur (score-duration _)
                      n (quot sdur resolution)]
-                 (assert (zero? (rem sdur resolution))
-                         "fill>: resolution should be a multiple of score length ")
+                 (if-not (zero? (rem sdur resolution))
+                   (u/throw* `fill> " resolution should be a multiple of score length "))
                  (update-score _ (ntup> n update)))))
 
         (defn $by
