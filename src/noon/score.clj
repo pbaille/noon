@@ -858,6 +858,18 @@
                     score)
                (reduce into #{})))
 
+        (defn wrap-event->score-fn
+          "Build a score-update from an event -> score function."
+          [f]
+          (sfn score (->> (map (fn [e]
+                                   (-> (f (assoc e :position 0))
+                                       (shift-score (:position e))))
+                                 score)
+                            (reduce into #{}))))
+
+        (defmacro e->s [pat & body]
+          `(wrap-event->score-fn (fn [~pat] ~@body)))
+
         (defn update-score
           "Updates `score` with `update`."
           [score update]

@@ -17,6 +17,7 @@
                        noon.score/ef_ hooks.noon.score/lambda_
                        noon.score/sfn hooks.noon.score/lambda
                        noon.score/sf_ hooks.noon.score/lambda_
+                       noon.score/e->s hooks.noon.score/lambda
                        noon.utils.misc/defn* hooks.noon.utils.misc/defn*
                        noon.utils.misc/f_ hooks.noon.utils.misc/f_
                        noon.utils.misc/>_ hooks.noon.utils.misc/>_
