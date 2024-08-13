@@ -815,7 +815,7 @@
           "Strict version of `noon.score/->score-update`, it throws if `x` is not convertible."
           [x]
           (or (->score-update x)
-              (u/throw* `->score-update! "not convertible: " x)))
+              (u/throw* `->score-update! " not convertible: " x)))
 
         (defn ->score-checker
           "Convert `x` to a score-checker if possible.
@@ -839,12 +839,12 @@
           "Strict version of `noon.score/->score-checker`"
           [x]
           (or (->score-checker x)
-              (u/throw* `->score-checker! "not convertible: " x)))
+              (u/throw* `->score-checker! " not convertible: " x)))
 
         (defn chain-score-updates [updates]
           (if-let [updates (?keep ->score-update updates)]
             (sf_ (?reduce #(%2 %1) _ updates))
-            (u/throw* `chain-score-updates "bad argument: " updates)))
+            (u/throw* `chain-score-updates " bad argument: " updates)))
 
         (defn map-score-update
           "map `score-update` over `score`.
@@ -863,7 +863,7 @@
           [score update]
           (if-let [score-update (->score-update update)]
             (score-update score)
-            (u/throw* `update-score "bad argument: " update)))
+            (u/throw* `update-score " bad argument: " update)))
 
         (defn partial-update
           "Use `event-matcher` to match some events of `score`, apply `update` to the resulting subscore,
@@ -880,7 +880,7 @@
             (map-event-update score event-update)
             (if-let [score-update (->score-update update)]
               (map-score-update score score-update)
-              (u/throw* `map-update "bad argument: " update))))))
+              (u/throw* `map-update " bad argument: " update))))))
 
 (do :creation
 
