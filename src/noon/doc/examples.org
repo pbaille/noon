@@ -304,7 +304,6 @@ A chord sequence based on I V progressions in major and minor.
                         (each (maybe vel0 [(chan inc) (patch :glockenspiel) vel4]))])]))))
 #+end_src
 
-
 *** Not too happy birthday
 
 A simple experiment on happy birthday chords turned into minor.
@@ -1065,7 +1064,6 @@ Experimenting interleaving passing notes
 ;; The `scan` and `scan>` function are now part of `noon.score` incubation subsection.
 ;; `only-between` and `in-place` are part of `noon.score`
 #+end_src
-
 
 
 *** Canon
@@ -2173,6 +2171,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
   (append (superpose (k (nlin 4 [(patch :taiko-drum) (chan 3) (! [vel4 (maybe o1- d1) (r/gen-tup 7 3)])])
                         (dup 8)))))
 #+end_src
+
 
 ** Usage
 *** =noon.lib.rythmn/bintup=
