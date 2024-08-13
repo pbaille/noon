@@ -941,7 +941,7 @@
 
     (defn* each
       {:doc "Apply an update to each events of a score."
-       :tags [:base :iterative]}
+       :tags [:base :traversing]}
       [updates]
       (sf_ (reduce map-update _ updates)))
 
@@ -1451,7 +1451,7 @@
                      "- Chunks the score with `noon.score/chunk-score` accordingly to `by`, resulting ina a list of scores.\n"
                      "- Iterates this sorted list by pair, applying `f` to each one producing a new score.\n"
                      "- all those scores are merged together.")
-           :tags [:iterative]}
+           :tags [:traversing]}
           [by f]
           (sf_ (let [chunks (chunk-score _ by)]
                  (reduce (fn [s [n1 n2]]
@@ -1462,7 +1462,8 @@
           {:doc (str "Chunk the score using the `by` function. "
                      "Chunks are partitioned by `size` and stepped by `step`. "
                      "`f` is applied to each chunks partition and should return a single score. "
-                     "Resulting scores are merged together.")}
+                     "Resulting scores are merged together.")
+           :tags [:traversing]}
           ([size f]
            (scan :position size size f))
           ([size step f]
@@ -1480,9 +1481,9 @@
           ([size f]
            (scan> size size f))
           ([size step f]
-           (sfn s (reduce (fn [s from]
-                            (update-score s (only-between from (+ from size) f)))
-                          s (range 0 (score-duration s) step)))))))
+           (sf_ (reduce (fn [s from]
+                          (update-score s (only-between from (+ from size) f)))
+                        _ (range 0 (score-duration _) step)))))))
 
 (do :midi
 
