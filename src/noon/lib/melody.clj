@@ -198,18 +198,6 @@
 
 (do :connect
 
-    (defn $connect
-      "Build an update that use `f` to join successive score's positional chunks.
-       - received score is chunked by position, resulting a list of scores sorted by position.
-       - iterates this list by pair, applying `f` to each one producing a new score.
-       - all those scores are merged together."
-      {:tags [:iterative :temporal]}
-      [f]
-      (n/sf_ (let [sorted (map (comp set val) (sort (group-by :position _)))]
-               (reduce (fn [s [n1 n2]]
-                         (into s (f n1 n2)))
-                       (last sorted) (partition 2 1 sorted)))))
-
     (defn simple-connection
       "A simple connection function that leverage `noon.harmony/simplest-connection`"
       [sizes]
@@ -239,7 +227,7 @@
        Intermediate step notes are selected in priority on the lowest harmonic layer."
       {:tags [:melodic]}
       [& connection-sizes]
-      ($connect (simple-connection connection-sizes))))
+      (n/connect-by :position (simple-connection connection-sizes))))
 
 (defn stup
   "build a tup of steps on the specified layer

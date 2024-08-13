@@ -763,8 +763,9 @@ Experimenting interleaving passing notes
 (defn connect-with
   "use `f` to connect subsequent notes of a score."
   [f]
-  (m/$connect (fn [chunk1 chunk2]
-                ;; `noon.lib.melody/$connect` is chunking the received score by position
+  (connect-by :position
+              (fn [chunk1 chunk2]
+                ;; `noon.score/connect-by` is chunking the received score by :position
                 ;; the two chunks are sets of events
                 ;; but we assumes a monophonic scores so we only take care of first (and only) event of each chunk
                 (let [from (first chunk1)
@@ -824,7 +825,8 @@ Experimenting interleaving passing notes
 ;; Targetting other chord/key
 
 (defn connect-with2 [f]
-  (m/$connect (fn [from to]
+  (connect-by :position
+              (fn [from to]
                 (let [{:keys [scale structure origin]} (:pitch from)
                       target-pitch (:pitch to)]
                   (update-score #{(assoc from :position 0)}
