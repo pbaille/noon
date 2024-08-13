@@ -143,8 +143,9 @@
       (loop [blocks [] block nil lines (str/split-lines (slurp org-file))]
         (if-let [[line & lines] (seq lines)]
           (cond (str/starts-with? line "#+begin_src clojure") (recur blocks "" lines)
-                (str/starts-with? line "#+end_src") (recur (concat blocks (read-string (str "[" block "]")))
-                                                           false lines)
+                (str/starts-with? line "#+end_src") (do (println block)
+                                                        (recur (concat blocks (read-string (str "[" block "\n]")))
+                                                            false lines))
                 block (recur blocks (str block "\n" line) lines)
                 :else (recur blocks block lines))
           blocks)))
@@ -175,6 +176,7 @@
                                         (concat (get grouped false)
                                                 (list (list* 'deftest 'main frozen)))))))))
 
-    (comment (org-file->clojure-expressions "src/noon/doc/examples.org")
+    (comment (slurp org-file)
+             (org-file->clojure-expressions "src/noon/doc/examples.org")
              (org->test "src/noon/doc/examples.org"
                         "test/noon/doc/examples_test.clj")))
