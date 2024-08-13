@@ -3,7 +3,8 @@
   (:require [noon.lib.melody :as m]
             [noon.lib.harmony :as h]
             [noon.lib.rythmn :as r]
-            [noon.utils.pseudo-random :as pr]))
+            [noon.utils.pseudo-random :as pr]
+            [noon.score :as n]))
 
 (comment :elements
          (let [r {:a (r/gen-tup 8 5)
@@ -177,97 +178,39 @@
          "I would like to list/sort the most basic transformations that can be applied to a simple melodic fragment."
          "In order to create some really simple pieces relying on one or two simple motives"
 
-         (let [m1 (tup s0 s1 s2)]
+         "transposition"
 
-           "transposition"
+         (play (tup s0 s1 s2)
+               (lin _ vel0
+                    s1 vel0
+                    s1- vel0))
 
-           (p m1
-              (lin _ vel0
-                   s1 vel0
-                   s1- vel0))
+         "reversion"
 
-           "reversion"
+         (play (tup s0 s1 s2)
+               (lin _ vel0 rev))
 
-           (p m1
-              (lin _ vel0
-                   rev))
+         "mirror"
 
-           "mirror"
+         (play (tup s0 s2 s1 s2)
+               (lin _ vel0 (m/contour :mirror)))
 
-           (p (lin s0 s2 s1 s2)
-              (lin _ vel0 (m/contour :mirror)))
+         "mixing"
 
-           "mixing"
+         (play dur:2
+               (tup s0 s1 s2)
+               (append s1)
+               (append [s1 rev])
+               (append (degree -1) rev [(degree 3) s1-]))
 
-           (p dur:2
-              m1
-              (lin _ s1)
-              (lin _ [s1 rev])
-              (lin _ (degree -1) rev [(degree 3) s1-]))
+         "dodecaphonic"
 
-           (stop)
-
-           "dodecaphonic"
-
-           (let [serie (mapv c-step (pr/shuffle (range 12)))]
-             (p (chans [(patch :ocarina)
-                        (lin* serie)
-                        (tup _ rev (m/contour :mirror) [(m/contour :mirror) rev])]
-                       [(patch :choir-aahs) (lin* serie) o1-])
-                (lin* serie)))))
-
-(comment "scanning"
-
-         (reset! options* {:bpm 60 :tracks {0 :chorium} :pdf true :play true})
-         (noon (mk (patch :electric-piano-1)
-                   dur2 eolian
-                   (nlin> 4 s1)
-                   (each (tup _ [s2 c1-] c1- _ s2 [s1 d1]))))
-
-         "it could make sense to have some sort of scan/partition mapping operator"
-
-         (defn scan [by chunk-size step-size f]
-           (sfn s (let [chunks (partition chunk-size step-size (sort-by by s))]
-                    (reduce (fn [s chunk] (into s (f chunk))) #{} chunks))))
-
-         (noon (mk (patch :electric-piano-1)
-                   dur2 eolian
-                   (nlin> 4 s3)
-                   (scan :position 2 1 (fn [[a b]]
-                                         ((efit (tup _ [s2 c1-] c1- _ s2 [(efn e (assoc e :pitch (:pitch b))) d1]))
-                                          a)))))
-
-         (noon (mk (patch :electric-piano-1)
-                   eolian
-                   (nlin> 8 [(degree 4) s1-])
-                   (scan :position 2 1 (fn [[a b]]
-                                         (upd-in-place a (tup _ [s2 c1-] c1- _ s2 [(efn e (assoc e :pitch (:pitch b))) d1]))))))
-         (p (patch :electric-piano-1)
-            eolian
-            (nlin> 6 s1)
-            (each (tup _ c1- [s1 c1-] _)))
-
-         "another approach"
-
-         (defn swap-between [from to f]
-           (sfn s (let [s' (update-score s [(trim from to) (in-place f)])]
-                    (set (concat (update-score s (trim 0 from))
-                                 s'
-                                 (update-score s (trim to (score-duration s))))))))
-
-         (noon (mk (nlin> 8 d1)
-                   (swap-between 4 6 o1)))
-
-         (defn scan2
-           ([size f]
-            (scan2 size size f))
-           ([size step f]
-            (sfn s (reduce (fn [s from]
-                             (update-score s (swap-between from (+ from size) f)))
-                           s (range 0 (score-duration s) step)))))
-
-         (noon (mk (nlin> 8 d1)
-                   (scan2 4 3 (tup _ d1 d1-)))))
+         (let [serie (mapv c-step (pr/shuffle (range 12)))]
+           (play (chans [(patch :ocarina)
+                         (lin* serie)
+                         (tup _ rev (m/contour :mirror) [(m/contour :mirror) rev])]
+                        [(patch :choir-aahs) (lin* serie) o1-])
+                 (lin* serie))))
 
 (comment (noon {:pdf true
                 :play true
@@ -278,35 +221,3 @@
                           [(patch :acoustic-bass) _
                            o1- {:position (add 2)}]
                           [(patch :electric-piano-1) d4 {:position (add 1)}]))))
-
-(do :utils
-
-    (defn p [& xs]
-      (noon {:play true
-             :tracks {0 :chorium}}
-            (mk* xs)))
-
-    (defn efit
-      "build an efn using a sfn, constraining the result to the input event position and duration"
-      [f]
-      (ef_ (update-score #{(assoc _ :position 0)}
-                [f (adjust _)])))
-
-    (defn in-place
-      "Turn the given update `u` into an update that reposition received score to position zero before applying `u` to it.
-       The resulting score is then adjusted to its initial duration and shifted to its original position.
-       This is useful when you need to scan update a score."
-      [u]
-      (sf_ (let [score-origin (score-origin _)
-                 score-duration (- (score-duration _) score-origin)]
-             (update-score (shift-score _ (- score-origin))
-                  [u (adjust {:position score-origin :duration score-duration})]))))
-
-    (defn upd-in-place [s u]
-      (update-score (score s) (in-place u)))
-
-    (defn connect-with [f]
-      (m/$connect (fn [from to]
-                    (let [ef (efit (lin _ [(ef_ (conj _ (find to :pitch)))
-                                           f]))]
-                      (ef from))))))

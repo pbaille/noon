@@ -641,7 +641,6 @@ A bunch of simplistic passing note examples
         (each (tup c-d+ _))))
 #+end_src
 
-
 **** interleaving
 
 Experimenting interleaving passing notes
@@ -746,7 +745,6 @@ Experimenting interleaving passing notes
          [(chan 2) (nlin 4 (shuftup s0 s1 s2 s3)) s4- (each rand-double-passing)]
          [(chan 3) (nlin 4 (shuftup s0 s1 s2 s3)) s4 (each rand-double-passing)])))
 #+end_src
-
 
 **** experience 1
 
@@ -947,6 +945,126 @@ Experimenting interleaving passing notes
                         pol- (each (degree -1)))])
         (adjust {:duration 64})))
 #+end_src
+
+**** scanning
+
+#+begin_src clojure
+
+;; as mentioned previously, in order to build or evolve a melody,
+;; it can be handy to start with a squeleton and fill the hole between them with passing tones.
+;; In order to be able to do so, it is necessary to scan the melodic line 2 by 2 in order
+;; to determine the correct passing tones.
+
+;; in this first example we are just using each to decorate our skeleton line
+;; but it do not "connect" the subsequent notes, it just decorate them.
+(play (patch :electric-piano-1)
+      eolian
+      (nlin> 6 s1)
+      (each (tup _ c1- [s1 c1-] _)))
+
+;; here we can get a glimpse at what we are trying to achieve
+;; Our skeleton line: (nlin> 4 s1) is regular,
+;; so we know that every next note will be one structural step above
+;; therefore we can decorate each note and finish the decoration with
+;; one passing note toward the next skeleton note.
+;;
+;; It works well but it lacks flexibility
+;; (we want to be able to achieve similar result regardless of the skeleton line)
+(play (patch :electric-piano-1)
+      dur2 eolian
+      (nlin> 4 s1)
+      (each (tup
+             ;; decoration
+             _ [s2 c1-] c1- _ s2
+             ;; anticipating of the next note
+             [s1 d1])))
+
+;; it could make sense to have some sort of scan/partition mapping operator
+
+(defn scan
+  {:doc (str "Chunk the score using the `by` function. "
+             "Chunks are partitioned by `size` and stepped by `step`. "
+             "`f` is applied to each chunks partition and should return a single score. "
+             "Resulting scores are merged together.")}
+  [by size step f]
+  (sf_ (->> (chunk-score _ by)
+            (partition size step)
+            (map f)
+            (merge-scores))))
+
+(play (patch :electric-piano-1)
+      dur2
+      eolian (nlin> 4 s3)
+      (scan :position 2 1
+            (fn [[a b]]
+              (let [start (first a)
+                    {target-pitch :pitch} (first b)]
+                (update-score #{start}
+                              (each (tup _ [s2 c1-] c1- _ s2
+                                         [(ef_ (assoc _ :pitch target-pitch)) d1])))))))
+
+(defn in-place
+  {:doc (str "Turn the given update `u` into an update that reposition received score to position zero before applying `u` to it. "
+             "The resulting score is then adjusted to its initial duration and shifted to its original position. "
+             "This is useful when you need to scan update a score. "
+             "It is similar to what the `noon.score/each` function is doing.")}
+  [u]
+  (sf_ (let [score-origin (score-origin _)
+             score-duration (- (score-duration _) score-origin)]
+         (update-score (shift-score _ (- score-origin))
+                       [u (adjust {:position score-origin :duration score-duration})]))))
+
+;; slight variation of the previous snippet, but using the 'in-place function which is more self explanatory.
+
+(play (patch :electric-piano-1)
+      eolian
+      (nlin> 8 [(degree 4) s1-])
+      (scan :position 2 1 (fn [[a b]]
+                            (let [start (first a)
+                                  {target-pitch :pitch} (first b)]
+                              (update-score #{start}
+                                            (in-place (tup _ [s2 c1-] c1- _ s2
+                                                           [(ef_ (assoc _ :pitch target-pitch)) d1])))))))
+
+
+
+;; This approach seems more flexible even if it is still a bit verbose
+
+;; This scan operation can be built following another approach
+;; by implementing an update builder that limits the effect of an update to a given time span,
+;; we can scan the score by a given step, applying the update only to a limited time span.
+;; Accumulating the score along the way, subsequent framed updates will "see" the effect of previous framed updates.
+
+(defn only-between
+  {:doc (str "Use `f` to update the subscore delimited by `beg` and `end` positions. "
+             "Leave other events unchanged.")}
+  [beg end f]
+  (par [(trim beg end) (in-place f)]
+       (trim nil beg)
+       (trim end nil)))
+
+(play (nlin> 8 d1)
+      (only-between 4 6 o1))
+
+(defn scan>
+  {:doc (str "Accumulative scan. "
+             "Use `f` to accumulatively update time slices of given `size` of the score, stepping by `step`.")
+   :tags [:temporal :accumulative :iterative]}
+  ([size f]
+   (scan> size size f))
+  ([size step f]
+   (sfn s (reduce (fn [s from]
+                    (update-score s (only-between from (+ from size) f)))
+                  s (range 0 (score-duration s) step)))))
+
+(play (nlin> 8 d1)
+      (scan> 4 3 (tup _ d1 d1-)))
+
+;; The `scan` and `scan>` function are now part of `noon.score` incubation subsection.
+;; `only-between` and `in-place` are part of `noon.score`
+#+end_src
+
+
 
 *** Canon
 First thing would be to come up with a simple melodic motiv.
