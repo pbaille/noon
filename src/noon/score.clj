@@ -612,15 +612,6 @@
                                             (:position e)
                                             (:duration e)))))))
 
-        (defn sort-score
-          "Sort `score` events.
-           arity 1: by :position.
-           arity 2: by `f`
-           arity 3: by `f` using `comp` as compare fn."
-          ([score] (sort-score :position score))
-          ([f score] (sort-by f score))
-          ([f comp score] (sort-by f comp score)))
-
         (defn filter-score [score f]
           (set (filter (->event-matcher f) score)))
 
@@ -696,6 +687,24 @@
                           (let [[x & xs] (sort-by (juxt :track :channel) xs)]
                             (cons x (map (fn [e] (dissoc e :bpm)) xs)))))
                    (reduce into #{})))))
+
+    (do :sorting-grouping
+
+        (defn sort-score
+          "Sort `score` events.
+           arity 1: by :position.
+           arity 2: by `f`
+           arity 3: by `f` using `comp` as compare fn."
+          ([score] (sort-score :position score))
+          ([f score] (sort-by f score))
+          ([f comp score] (sort-by f comp score)))
+
+        (defn chunk-score
+          {:doc (str "Chunk `score` using the `by` function,"
+                     "return a sorted (accordingly to `by`) sequence of subscores.")}
+          [score by]
+          (map (comp set val)
+               (sort (group-by by score)))))
 
     (do :composition
 

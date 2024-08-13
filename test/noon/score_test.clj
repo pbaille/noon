@@ -460,6 +460,14 @@
                           (mk (lin d1 d2 d3))])
            (mk (lin (par d0 d1) (par d1 d2) (par d2 d3))))))
 
+  (testing "chunk-score"
+
+    (is (= (chunk-score (mk (lin d0 (par d1 d2) d3))
+                        :position)
+           (list (mk d0)
+                 (mk (par d1 d2) (adjust {:position 1}))
+                 (mk d3 (adjust {:position 2}))))))
+
   (testing "updates"
 
     (testing "basics"
