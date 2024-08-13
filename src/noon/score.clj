@@ -1098,6 +1098,18 @@
                        (vector? x) {:duration (x 1) :position (x 0)})]
         (sf_ (fit-score _ opts))))
 
+    (defn in-place
+      {:doc (str "Turn the given update `u` into an update that reposition received score to position zero before applying `u` to it. "
+                 "The resulting score is then adjusted to its initial duration and shifted to its original position. "
+                 "This is useful when you need to scan update a score. "
+                 "It is similar to what the `noon.score/each` function is doing.")
+       :tags [:base :temporal]}
+      [u]
+      (sf_ (let [score-origin (score-origin _)
+                 score-duration (- (score-duration _) score-origin)]
+             (update-score (shift-score _ (- score-origin))
+                           [u (adjust {:position score-origin :duration score-duration})]))))
+
     (defn* fork-with
       {:doc (str "Like `noon.score/par` but let you the opportunity to do something on the score "
                  "based on the index of the branch before applying corresponding update.")}
@@ -1215,7 +1227,16 @@
                          "(triming overlapping durations).")
                :tags [:temporal :selective]}
               [beg end]
-              (sf_ (trim-score _ beg end)))))
+              (sf_ (trim-score _ (or beg 0) (or end (score-duration _)))))
+
+            (defn only-between
+              {:doc (str "Use `f` to update the subscore delimited by `beg` and `end` positions. "
+                         "Leave other events unchanged.")
+               :tags [:temporal :selective]}
+              [beg end f]
+              (par [(trim beg end) (in-place f)]
+                   (trim nil beg)
+                   (trim end nil)))))
 
     (do :checks
 
@@ -1423,7 +1444,45 @@
                                    (take (:take options n)))]
                    (cond (:par options) (merge-scores scores)
                          (:fit options) (fit-score (concat-scores scores) {:duration (score-duration _)})
-                         :else (concat-scores scores))))))))
+                         :else (concat-scores scores))))))
+
+        (defn connect-by
+          {:doc (str "Build an update that use `f` to join successive score's chunks.\n"
+                     "- Chunks the score with `noon.score/chunk-score` accordingly to `by`, resulting ina a list of scores.\n"
+                     "- Iterates this sorted list by pair, applying `f` to each one producing a new score.\n"
+                     "- all those scores are merged together.")
+           :tags [:iterative]}
+          [by f]
+          (sf_ (let [chunks (chunk-score _ by)]
+                 (reduce (fn [s [n1 n2]]
+                           (into s (f n1 n2)))
+                         (last chunks) (partition 2 1 chunks)))))
+
+        (defn scan
+          {:doc (str "Chunk the score using the `by` function. "
+                     "Chunks are partitioned by `size` and stepped by `step`. "
+                     "`f` is applied to each chunks partition and should return a single score. "
+                     "Resulting scores are merged together.")}
+          ([size f]
+           (scan :position size size f))
+          ([size step f]
+           (scan :position size step f))
+          ([by size step f]
+           (sf_ (->> (chunk-score _ by)
+                     (partition size step)
+                     (map f)
+                     (merge-scores)))))
+
+        (defn scan>
+          {:doc (str "Accumulative scan. "
+                     "Use `f` to accumulatively update time slices of given `size` of the score, stepping by `step`.")
+           :tags [:temporal :accumulative :iterative]}
+          ([size f]
+           (scan> size size f))
+          ([size step f]
+           (sfn s (reduce (fn [s from]
+                            (update-score s (only-between from (+ from size) f)))
+                          s (range 0 (score-duration s) step)))))))
 
 (do :midi
 

@@ -800,6 +800,15 @@
                  (dup 4)
                  (sf_ (shift-score _ 2))))))
 
+    (testing "in-place"
+
+      (is (= (mk (lin d0 d1 d2)
+                 (adjust {:position 3 :duration 2})
+                 (in-place (dup 3)))
+             (mk (lin d0 d1 d2)
+                 (dup 3)
+                 (adjust {:position 3 :duration 2})))))
+
     (testing "fork-with, voices, chans, tracks"
 
       (is (= (mk (fork-with (fn [i] (vel (* 10 i)))
@@ -933,6 +942,12 @@
                                  :position 1/2})
                (first (mk (trim 1/2 1))))))
 
+        (testing "only-between"
+
+          (is (= (mk (lin d0 d1 d2 d3)
+                     (only-between 1 3 (each (tup d0 d1 d2))))
+                 (mk (lin d0 (tup d1 d2 d3) (tup d2 d3 d4) d3)))))
+
         (testing "checks"
 
           (let [f (within-bounds? :velocity 30 60)]
@@ -1005,7 +1020,24 @@
                    (mk dur2 (ntup> 5 d3))))
 
             (is (thrown? Exception
-                         (mk (fill 2/3 d1))))))))
+                         (mk (fill 2/3 d1)))))
+
+          (testing "connect-by scan"
+
+            (is (= (mk (lin s0 s2 s4)
+                       (scan :position 2 1 merge-scores))
+                   (mk (lin s0 s2 s4))))
+
+            (is (= (mk (lin s0 s2 s4)
+                       (connect-by :position into))
+                   (mk (lin s0 s2 s4))))
+
+            (is (= (mk (lin s0 s2 s4)
+                       (connect-by :position
+                                   (fn [a b]
+                                     (update-score a
+                                                   (in-place (tup same [(ef_ (conj _ (find (first b) :pitch))) d1]))))))
+                   (mk (lin (tup s0 [s2 d1]) (tup s2 [s4 d1]) s4))))))))
 
     (is (tu/frozen :frozen-test
                    (lin d1 d2 d3)))))
