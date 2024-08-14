@@ -2,7 +2,8 @@
   (:require [noon.score :as n]
             [noon.harmony :as h]
             [clojure.pprint :as pprint]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [noon.utils.misc :as u]))
 
 (do :piano-roll
 
@@ -160,22 +161,29 @@
       "Parse a score creating form into :return and :bindings or return nil."
       [e]
       (if (seq? e)
-        (cond (contains? #{"play" "mk"} (name (first e)))
-              {:return (cons 'noon.score/mk (rest e))}
-              (= "mk*" (name (first e)))
-              {:return (list* 'noon.score/mk* (second e))}
-              (= "noon" (name (first e)))
-              {:return (nth e 2)}
-              (= 'let (first e))
-              (if-let [parsed-return (parse-score-creating-form (nth e 2))]
-                (assoc parsed-return :bindings (second e))))))
+        (some-> (cond (contains? #{"play" "mk"} (name (first e)))
+                      {:return (cons 'noon.score/mk (rest e))}
+                      (= "mk*" (name (first e)))
+                      {:return (list* 'noon.score/mk* (second e))}
+                      (= "noon" (name (first e)))
+                      {:return (nth e 2)}
+                      (= 'let (first e))
+                      (if-let [parsed-return (parse-score-creating-form (nth e 2))]
+                        (assoc parsed-return :bindings (second e))))
+                (with-meta (meta e)))))
+
+    (defn assertion-tree->nested-testing
+      [content]
+      (concat (:content content)
+              (mapv (fn [[subtitle subcontent]]
+                      (list* 'testing subtitle (assertion-tree->nested-testing subcontent)))
+                    (dissoc content :content))))
 
     (defn org->test
       "Turn an org files containing noon examples into a test ns.
        top forms starting with 'play and 'let are assumed to be the one we froze."
       [org-file clj-file]
       (let [[ns-decl & expressions] (org-file->clojure-expressions org-file)
-            _ (println (list 'n-exprs (count expressions)))
             {:keys [statements score-creating-forms]}
             (reduce (fn [ret expr]
                       (if-let [parsed-noon-expr (parse-score-creating-form expr)]
@@ -185,26 +193,37 @@
                           ret)))
                     {:statements [] :score-creating-forms []}
                     expressions)
-            assertions (mapv (fn [{:keys [bindings return]}]
-                               (list 'is (list 'noon.test/frozen nil
-                                               (if bindings
-                                                 (list 'let bindings return)
-                                                 return))))
+            assertions (mapv (fn [{:as e :keys [bindings return]}]
+                               (with-meta (list 'is (list 'noon.test/frozen* nil
+                                                          (if bindings
+                                                            (list 'let bindings return)
+                                                            return)))
+                                 (meta e)))
                              score-creating-forms)
-            _ (println [(count statements) (count assertions)])
+            assertion-tree (reduce (fn [ret expr]
+                                     (update-in ret (conj (vec (:path (meta expr)))
+                                                          :content)
+                                                (fnil conj [])
+                                                expr))
+                                   {} assertions)
             [_ ns & ns-body] ns-decl
             enriched-body (-> (group-by first (filter seq? ns-body))
                               (update :require (fn [reqs] (map (fn [req]
                                                                  (concat req
-                                                                         '([clojure.test :refer [deftest is]] [noon.test])))
+                                                                         '([clojure.test :refer [deftest testing is]] [noon.test])))
                                                                reqs))))]
+        '(spit "test/trash/tree.edn"
+               (u/pretty-str assertion-tree))
+        '(spit "test/trash/testing-forms.edn"
+               (u/pretty-str (assertion-tree->nested-testing assertion-tree)))
         (spit clj-file
               (with-out-str (mapv (fn [x] (println) (pprint/pprint x))
                                   (cons (list* 'ns (symbol (str (name ns) "-test"))
                                                (str "This file is generated from `" org-file "`")
                                                (map first (vals enriched-body)))
                                         (concat statements
-                                                (list (list* 'deftest 'main assertions)))))))))
+                                                (list (list* 'deftest 'main
+                                                             (assertion-tree->nested-testing assertion-tree))))))))))
 
     (comment (slurp org-file)
              (org-file->clojure-expressions "src/noon/doc/examples.org")
