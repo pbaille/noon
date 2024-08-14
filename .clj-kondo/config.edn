@@ -31,5 +31,7 @@
                        noon.score/-def-steps hooks.noon.score/-def-steps
                        noon.score/-def-shifts hooks.noon.score/-def-shifts
                        noon.score/-def-degrees hooks.noon.score/-def-degrees
+                       noon.lib.multi/forking-update hooks.noon.score/lambda
+                       noon.lib.multi/multi-update hooks.noon.score/lambda
                        noon.harmony/defsteps hooks.noon.harmony/defsteps
                        noon.utils.misc/defreduction hooks.noon.utils.misc/defreduction}}}
