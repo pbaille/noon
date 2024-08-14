@@ -140,28 +140,58 @@
                        "src/noon/doc/examples.clj"))
 
     (defn org-file->clojure-expressions [org-file]
-      (loop [blocks [] block nil lines (str/split-lines (slurp org-file))]
+      (loop [blocks [] path [] block nil lines (str/split-lines (slurp org-file))]
         (if-let [[line & lines] (seq lines)]
-          (cond (str/starts-with? line "#+begin_src clojure") (recur blocks "" lines)
-                (str/starts-with? line "#+end_src") (do (println block)
-                                                        (recur (concat blocks (read-string (str "[" block "\n]")))
-                                                            false lines))
-                block (recur blocks (str block "\n" line) lines)
-                :else (recur blocks block lines))
+          (cond (str/starts-with? line "*") (let [{:keys [level title]} (parse-org-headline line)]
+                                              (recur blocks (concat (take (dec level) (concat path (repeat nil)))
+                                                                    (list title))
+                                                     block lines))
+                (str/starts-with? line "#+begin_src clojure") (recur blocks path "" lines)
+                (str/starts-with? line "#+end_src") (recur (concat blocks
+                                                                   (map (fn [expr]
+                                                                          (with-meta expr {:path path}))
+                                                                        (read-string (str "[" block "\n]"))))
+                                                           path false lines)
+                block (recur blocks path (str block "\n" line) lines)
+                :else (recur blocks path block lines))
           blocks)))
+
+    (defn parse-score-creating-form
+      "Parse a score creating form into :return and :bindings or return nil."
+      [e]
+      (if (seq? e)
+        (cond (contains? #{"play" "mk"} (name (first e)))
+              {:return (cons 'noon.score/mk (rest e))}
+              (= "mk*" (name (first e)))
+              {:return (list* 'noon.score/mk* (second e))}
+              (= "noon" (name (first e)))
+              {:return (nth e 2)}
+              (= 'let (first e))
+              (if-let [parsed-return (parse-score-creating-form (nth e 2))]
+                (assoc parsed-return :bindings (second e))))))
 
     (defn org->test
       "Turn an org files containing noon examples into a test ns.
        top forms starting with 'play and 'let are assumed to be the one we froze."
       [org-file clj-file]
       (let [[ns-decl & expressions] (org-file->clojure-expressions org-file)
-            grouped (group-by (fn [e] (contains? '#{play let} (first e)))
-                              expressions)
-            frozen (map (fn [e]
-                          (if (= 'let (first e))
-                            (list 'let (second e) (list 'is (cons 'noon.test/frozen (rest (nth e 2)))))
-                            (list 'is (cons 'noon.test/frozen (rest e)))))
-                        (get grouped true))
+            _ (println (list 'n-exprs (count expressions)))
+            {:keys [statements score-creating-forms]}
+            (reduce (fn [ret expr]
+                      (if-let [parsed-noon-expr (parse-score-creating-form expr)]
+                        (update ret :score-creating-forms conj parsed-noon-expr)
+                        (if (and (seq? expr) (str/starts-with? (name (first expr)) "def"))
+                          (update ret :statements conj expr)
+                          ret)))
+                    {:statements [] :score-creating-forms []}
+                    expressions)
+            assertions (mapv (fn [{:keys [bindings return]}]
+                               (list 'is (list 'noon.test/frozen nil
+                                               (if bindings
+                                                 (list 'let bindings return)
+                                                 return))))
+                             score-creating-forms)
+            _ (println [(count statements) (count assertions)])
             [_ ns & ns-body] ns-decl
             enriched-body (-> (group-by first (filter seq? ns-body))
                               (update :require (fn [reqs] (map (fn [req]
@@ -169,12 +199,12 @@
                                                                          '([clojure.test :refer [deftest is]] [noon.test])))
                                                                reqs))))]
         (spit clj-file
-              (with-out-str (mapv (fn [e] (clojure.pprint/pprint e) (println))
+              (with-out-str (mapv (fn [x] (println) (pprint/pprint x))
                                   (cons (list* 'ns (symbol (str (name ns) "-test"))
-                                               "This file is generated from `src/noon/doc/examples.org`"
+                                               (str "This file is generated from `" org-file "`")
                                                (map first (vals enriched-body)))
-                                        (concat (get grouped false)
-                                                (list (list* 'deftest 'main frozen)))))))))
+                                        (concat statements
+                                                (list (list* 'deftest 'main assertions)))))))))
 
     (comment (slurp org-file)
              (org-file->clojure-expressions "src/noon/doc/examples.org")

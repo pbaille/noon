@@ -18,7 +18,7 @@
 
 Let's use the chorium soundfont:
 
-#+begin_src clojure :pp
+#+begin_src clojure :results silent
 (swap! options* assoc :tracks {0 :chorium})
 #+end_src
 
@@ -28,7 +28,7 @@ Some experiences built on top of an harmonic idea.
 
 *** simple I IV VII I
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (scale :harmonic-minor)
       (lin I IV VII I)
       (h/align-contexts :s)
@@ -37,7 +37,7 @@ Some experiences built on top of an harmonic idea.
 
 Experimenting passing notes:
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (scale :harmonic-minor)
       (lin I IV VII I)
       (h/align-contexts :s)
@@ -47,7 +47,7 @@ Experimenting passing notes:
       (append rev))
 #+end_src
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play dur2
       (scale :harmonic-minor)
       (lin I IV VII I)
@@ -76,7 +76,7 @@ Experimenting passing notes:
 
 *** simple I IV I V
 
-#+begin_src clojure :pp
+#+begin_src clojure :results silent
 (play dur2
       ;; grid
       (lin I IV I V)
@@ -102,7 +102,7 @@ Experimenting passing notes:
 
 *** epic lydian
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play {:description "epic lydian sequence by minor thirds"}
 
       (h/harmonic-zip
@@ -142,7 +142,7 @@ Experimenting passing notes:
 
 A rich harmonic sequence using V I progressions over tritonal modulation cycle (like Giant step).
 
-#+begin_src clojure :pp
+#+begin_src clojure :results silent
 (play {:description "tritonal chord sequence shifts by minor thirds"}
 
       (let [I (one-of [lydian+ (structure [2 3 4 5 6])] [melodic-minor (structure [1 2 4 5 6])])
@@ -162,7 +162,7 @@ A rich harmonic sequence using V I progressions over tritonal modulation cycle (
           [(patch :vibraphone)
            vel5
            (each (probs {(par s0 s1 s2 s3 s4) 1
-                      (shuftup [dur2 (par s0 s2 s4)] [(one-of dur2 dur3) (par s1- s1 s3)]) 3}))]
+                         (shuftup [dur2 (par s0 s2 s4)] [(one-of dur2 dur3) (par s1- s1 s3)]) 3}))]
 
           [(patch :acoustic-bass)
            vel5
@@ -180,15 +180,15 @@ A rich harmonic sequence using V I progressions over tritonal modulation cycle (
                     (any-that (within-pitch-bounds? :C-2 :C2)
                               s1 s2 s1- s2- s3 s3-))]
             (each (probs {vel0 1
-                       same 4
-                       (superpose (one-of s1 s2 s3)) 0})))])
+                          same 4
+                          (superpose (one-of s1 s2 s3)) 0})))])
 
          (adjust 48)]))
 #+end_src
 
 *** Elliot smith chords
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play dur2
       (lin [VI seventh]
            [IV add2]
@@ -204,7 +204,7 @@ A rich harmonic sequence using V I progressions over tritonal modulation cycle (
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (chans [(patch :electric-piano-1) (tup (shuftup s0 s1 s2 s3) (shuftup s2 s3 s4 s5))]
              [(patch :acoustic-bass) o1- t-round])
       (dupt 8)
@@ -224,7 +224,7 @@ A rich harmonic sequence using V I progressions over tritonal modulation cycle (
 
 *** Minor progression
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (lin [I melodic-minor] [V phrygian3] [V phrygian3] [I melodic-minor]
            [I phrygian3] [IV dorian] [II locrian] [IIb lydianb7])
       (dup 2)
@@ -244,7 +244,7 @@ A rich harmonic sequence using V I progressions over tritonal modulation cycle (
 *** I V
 A chord sequence based on I V progressions in major and minor.
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play dur3
 
       ;; base I V in minor using melodic minor and superlocrian modes
@@ -283,7 +283,7 @@ A chord sequence based on I V progressions in major and minor.
             below-step (one-of d1- d3- d4-)
             above-step (one-of d1 d3 d4)
             rand-line (rup 4 (one-of below-step above-step))
-            rand-vel (fn [min max] {:velocity (fn [_] (+ min (rand-int (- max min))))})]
+            rand-vel (fn [min max] {:velocity (fn [_] (+ min (pr/rand-int (- max min))))})]
 
 
         (each (chans
@@ -308,7 +308,7 @@ A chord sequence based on I V progressions in major and minor.
 
 A simple experiment on happy birthday chords turned into minor.
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play
 
   ;; setting up the main scale
@@ -341,7 +341,7 @@ A simple experiment on happy birthday chords turned into minor.
 
 A very artificial sounding chord sequence using quartal voicings and ninuplets (tup of size 9)
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (lin [I melodic-minor] [VI superlocrian] [VIb lydianb7] [IIb mixolydian])
       (h/align-contexts :s)
       (dup 2)
@@ -364,14 +364,14 @@ A very artificial sounding chord sequence using quartal voicings and ninuplets (
 Building good rythmic melodies is not easy.
 Here, I will try to start from target notes and fill the holes between them.
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play eolian
       (lin s0 s2 s1 s0))
 #+end_src
 
 How to fill between the notes of this simple line?
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (def fill-diatonically
   "A very low level way to connect subsequent notes diatonically using `noon.harmony` directly.
    It feels too complicated for such a simple thing..."
@@ -404,7 +404,7 @@ How to fill between the notes of this simple line?
 
 Let's generalise to other layers:
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (defn fill-line
   "This evolution of fill-diatonically let the user specify the harmonic layer.
    It is still relying on `noon.harmony` which is not great."
@@ -445,7 +445,7 @@ Let's generalise to other layers:
 
 Next step will be to have control over the number of notes between targets.
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (defn target
   [layer size direction duration]
   (sfn score
@@ -477,7 +477,7 @@ The problem here is that the precedent note overlaps the targeting notes.
 Using the =noon.harmony/simplest-connections= we can connect two notes in a given amount of steps using.
 Let's build a function that leverage that to fill subsequent notes in a melodic way.
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (defn connect [& sizes]
   (sf_ (let [sorted (sort-by :position _)]
          (reduce (fn [s [n1 n2]]
@@ -508,7 +508,7 @@ Let's build a function that leverage that to fill subsequent notes in a melodic 
 
 The =connect= function is now available in =noon.lib.melody=
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play harmonic-minor
       (lin I [VI lydianb7] V IV [II phrygian3] [V eolian] [IIb lydian])
       (h/align-contexts :s)
@@ -524,7 +524,7 @@ The =connect= function is now available in =noon.lib.melody=
 
 A bunch of simplistic passing note examples
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play dorian
       (rep 4 s1)
       (each (tup c1- s2 s1 s0))
@@ -612,7 +612,7 @@ A bunch of simplistic passing note examples
 
 **** intermediate
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (defn chromatic-double-passing [side]
   (sf_
     (assert (= 1 (count _))
@@ -644,7 +644,7 @@ A bunch of simplistic passing note examples
 
 Experimenting interleaving passing notes
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (defn interpose-with [f]
   (sf_ (if (m/line? _)
          (set (mapcat (fn [[a b]] (if b ((f a b)) a))
@@ -697,7 +697,7 @@ Experimenting interleaving passing notes
 
 (defn rand-interleaving
   ([a b]
-   (interleaving (shuffle (concat (repeat (count a) 0) (repeat (count b) 1)))
+   (interleaving (pr/shuffle (concat (repeat (count a) 0) (repeat (count b) 1)))
                  a b))
   ([a b & xs]
    (reduce rand-interleaving
@@ -747,7 +747,7 @@ Experimenting interleaving passing notes
 
 **** experience 1
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 ;; Try to implement diverse melodic passing notes things.
 
 ;; Mono harmony passing notes
@@ -836,18 +836,20 @@ Experimenting interleaving passing notes
                                          f])
                                  (adjust from)])))))
 
-(play (lin d0 [IIb mixolydian])
-      (connect-with d1-))
-(play (lin d0 [IIb mixolydian])
-      (connect-with2 d-floor))
-(play (lin d0 d-floor))
+(comment
+
+  (play (lin d0 [IIb mixolydian])
+        (connect-with d1-))
+  (play (lin d0 [IIb mixolydian])
+        (connect-with2 d-floor))
+  (play (lin d0 d-floor)))
 
 ;; This is difficult... to be continued
 #+end_src
 
 **** polarity
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 ;; This morning I was playing modal melodies on the flute, and experimenting with different polarity cycles.
 
 [0 0 1 0]
@@ -879,25 +881,26 @@ Experimenting interleaving passing notes
 
 ;; Let's experiment around creating those polarity sequences
 
-(let [id identity
-      rev (fn [x] (mapv {0 1 1 0} x))
-      _dup (fn [x] (vec (concat x x)))
-      cat (fn [& xs] (fn [x] (vec (mapcat (fn [f] (f x)) xs))))
-      acc (fn [n f] (apply comp (repeat n f)))
-      each (fn [f] (fn [x] (vec (mapcat (comp f vector) x))))
-      _scan (fn [size step f] (fn [x] (vec (mapcat f (partition size step x)))))
-      >> (fn [& xs] (fn [x] (reduce #(%2 %1) x xs)))
-      upd (fn [x f] (f x))]
-  (upd [1]
-       (>> (acc 3 (cat id rev))
-           (each (cat id rev id)))))
+(comment
+  (let [id identity
+        rev (fn [x] (mapv {0 1 1 0} x))
+        _dup (fn [x] (vec (concat x x)))
+        cat (fn [& xs] (fn [x] (vec (mapcat (fn [f] (f x)) xs))))
+        acc (fn [n f] (apply comp (repeat n f)))
+        each (fn [f] (fn [x] (vec (mapcat (comp f vector) x))))
+        _scan (fn [size step f] (fn [x] (vec (mapcat f (partition size step x)))))
+        >> (fn [& xs] (fn [x] (reduce #(%2 %1) x xs)))
+        upd (fn [x f] (f x))]
+    (upd [1]
+         (>> (acc 3 (cat id rev))
+             (each (cat id rev id))))))
 
 ;; to be continued...
 #+end_src
 
 **** degree moves
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 ;; It seems that the degree that is under the current one can serve as kind of a dominant.
 
 (play dorian
@@ -949,7 +952,7 @@ Experimenting interleaving passing notes
 
 **** scanning
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 
 ;; as mentioned previously, in order to build or evolve a melody,
 ;; it can be handy to start with a squeleton and fill the hole between them with passing tones.
@@ -982,7 +985,7 @@ Experimenting interleaving passing notes
 
 ;; it could make sense to have some sort of scan/partition mapping operator
 
-(defn scan
+'(defn scan
   {:doc (str "Chunk the score using the `by` function. "
              "Chunks are partitioned by `size` and stepped by `step`. "
              "`f` is applied to each chunks partition and should return a single score. "
@@ -1004,7 +1007,7 @@ Experimenting interleaving passing notes
                               (each (tup _ [s2 c1-] c1- _ s2
                                          [(ef_ (assoc _ :pitch target-pitch)) d1])))))))
 
-(defn in-place
+'(defn in-place
   {:doc (str "Turn the given update `u` into an update that reposition received score to position zero before applying `u` to it. "
              "The resulting score is then adjusted to its initial duration and shifted to its original position. "
              "This is useful when you need to scan update a score. "
@@ -1036,7 +1039,7 @@ Experimenting interleaving passing notes
 ;; we can scan the score by a given step, applying the update only to a limited time span.
 ;; Accumulating the score along the way, subsequent framed updates will "see" the effect of previous framed updates.
 
-(defn only-between
+'(defn only-between
   {:doc (str "Use `f` to update the subscore delimited by `beg` and `end` positions. "
              "Leave other events unchanged.")}
   [beg end f]
@@ -1047,7 +1050,7 @@ Experimenting interleaving passing notes
 (play (nlin> 8 d1)
       (only-between 4 6 o1))
 
-(defn scan>
+'(defn scan>
   {:doc (str "Accumulative scan. "
              "Use `f` to accumulatively update time slices of given `size` of the score, stepping by `step`.")
    :tags [:temporal :accumulative :iterative]}
@@ -1065,14 +1068,13 @@ Experimenting interleaving passing notes
 ;; `only-between` and `in-place` are part of `noon.score`
 #+end_src
 
-
 *** Canon
 First thing would be to come up with a simple melodic motiv.
 It will be based on a triad, with some decorating tones.
 
 The skeleton could be something like
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (shuftup s0 s1 s2))
 #+end_src
 
@@ -1081,7 +1083,7 @@ The next step will be to decorate it.
 
 Previously we've discussed the connect function that can do something like this
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (shuftup s0 s1 s2)
       (m/connect 1))
 #+end_src
@@ -1089,28 +1091,27 @@ Previously we've discussed the connect function that can do something like this
 But it is not really what we want.
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (def decorate
   (sf_ (let [sorted (sort-by :position _)]
          (reduce (fn [s [n1 n2]]
                    (into s (update-score #{n1 n2} (maybe (m/connect 1)))))
                  #{(last sorted)} (partition 2 1 sorted)))))
 
-(noon {:play true :pdf true}
-      (mk dur2
-          (lin (shuftup s0 s1 s2 s3)
-               [(one-of s1 s1-) (shuftup s0 s1 s2 s3)])
-          decorate
-          (lin _ (s-shift 1) (s-shift -1) _)
-          (lin _ (s-shift 2))
-          (chans [(patch :ocarina) o1 (s-shift -1)]
-                 [(sf_ (shift-score _ 2))]
-                 [(patch :acoustic-bass) o2- (s-shift 1) (sf_ (shift-score _ 5))])
-          (h/grid dur2
-                  harmonic-minor
-                  (lin I IV VII I [IV melodic-minor VII] IV [V harmonic-minor VII] VII)
-                  (dup 4)
-                  (h/align-contexts :s))))
+(play dur2
+      (lin (shuftup s0 s1 s2 s3)
+           [(one-of s1 s1-) (shuftup s0 s1 s2 s3)])
+      decorate
+      (lin _ (s-shift 1) (s-shift -1) _)
+      (lin _ (s-shift 2))
+      (chans [(patch :ocarina) o1 (s-shift -1)]
+             [(sf_ (shift-score _ 2))]
+             [(patch :acoustic-bass) o2- (s-shift 1) (sf_ (shift-score _ 5))])
+      (h/grid dur2
+              harmonic-minor
+              (lin I IV VII I [IV melodic-minor VII] IV [V harmonic-minor VII] VII)
+              (dup 4)
+              (h/align-contexts :s)))
 #+end_src
 
 
@@ -1120,12 +1121,12 @@ Some attempts to implement or illustrate various musical ideas using noon.
 
 *** Barry Harris
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (def barry-harris (scale [0 2 4 5 7 8 9 11]))
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play barry-harris
       (tup d0 d3 d4 d7)
       (tup d0 d2)
@@ -1133,7 +1134,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (let [chord-tones [d0 d2 d4 d7]]
   (play barry-harris
         (lin d0 d3)
@@ -1145,12 +1146,12 @@ Some attempts to implement or illustrate various musical ideas using noon.
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (def barry-harris2 [barry-harris (structure [0 2 4 7])])
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play barry-harris2
       (lin I VI VII IV)
       (h/align-contexts :d)
@@ -1162,7 +1163,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play barry-harris2
       (lin IV I)
       (h/align-contexts :d)
@@ -1173,7 +1174,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 
 *** Symetric modes
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (def symetric-modes {:half-whole (scale [0 1 3 4 6 7 9 10])
                      :whole-half (scale [0 2 3 5 6 8 9 11])
                      :whole (scale [0 2 4 6 8 10])
@@ -1187,7 +1188,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (symetric-modes :augm-half)
       (:two {:one (rup 8 (one-of d1 d1- d2 d2- d3 d3-))
              :two (shuftup d1 d2 d3 d4 d5 d6 d7)})
@@ -1201,36 +1202,38 @@ Some attempts to implement or illustrate various musical ideas using noon.
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (defn rand-structure [size]
   (ef_ (let [degree-count (-> _ :pitch :scale count)
              degrees (first (mv/consume size (mv/mix* (range degree-count))))]
-         (update-score #{_} (structure (vec (sort degrees)))))))
+         ((structure (vec (sort degrees))) _))))
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (def rand-degree
   (ef_ (let [scale-size (-> _ :pitch :scale count)
-             deg (rand-nth (range 1 scale-size))]
-         (update-score #{_} (degree (rand-nth [(- deg) deg]))))))
+             deg (pr/rand-nth (range 1 scale-size))]
+         ((degree (pr/rand-nth [(- deg) deg])) _))))
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (defn rand-tup [size]
-  (ef_ (let [degree-count (-> _ :pitch :scale count)
-             degrees (first (mv/consume size (mv/mix* (range degree-count))))]
-         (update-score #{_} (tup* (mapv d-step degrees))))))
+  (e->s event
+        (let [degree-count (-> event :pitch :scale count)
+              degrees (first (mv/consume size (mv/mix* (range degree-count))))]
+          (update-score #{event} (tup* (mapv d-step degrees))))))
+
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (symetric-modes :half-whole)
       (rand-structure 3)
       (rep 3 rand-degree)
       (each (chans [vel4 h/simple-chord]
-                   [(patch :music-box) o1 (rand-tup 7) (each (one-of vel0 vel4 vel6 vel7))]))
+                   [(patch :music-box) o1 (rand-tup 6) (each (one-of vel0 vel4 vel6 vel7))]))
       (append [rev s2])
       (append (transpose c5))
       (append (between 0 1/3)))
@@ -1397,8 +1400,8 @@ Some attempts to implement or illustrate various musical ideas using noon.
                                perms)))
               {} perms)
 
-      [base complements] (rand-nth (seq complementary-map))
-      voice1 (rand-nth complements)
+      [base complements] (pr/rand-nth (seq complementary-map))
+      voice1 (pr/rand-nth complements)
       voice2 (map (fn [a b]
                     (first (filter (complement (set (map #(mod % 3) [a b])))
                                    [0 1 2])))
@@ -1461,7 +1464,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 (let [[v1 v2 v3] (->> (complementarity-tree 3 3)
                       (leaves-paths)
                       (filter #(= 3 (count %)))
-                      (rand-nth))]
+                      (pr/rand-nth))]
   (play [dur3
          eolian
          (lin _ (degree -1))
@@ -1469,7 +1472,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
          (lin _ [(degree 3) s1-])
          (lin _ [s1 (transpose c3-)])]
         (patch :electric-piano-1)
-        (each (! (let [[v1 v2 v3] (shuffle [v1 v2 v3])]
+        (each (! (let [[v1 v2 v3] (pr/shuffle [v1 v2 v3])]
                    (chans (tup* (map s-step v1))
                           [o1- (tup* (map s-step v2))]
                           [o1 (tup* (map s-step v3))]))))
@@ -1480,7 +1483,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 (let [[[r1 r2 r3] [l1 l2 l3]] (->> (complementarity-tree 3 3)
                                    (leaves-paths)
                                    (filter #(= 3 (count %)))
-                                   (shuffle))
+                                   (pr/shuffle))
       f (fn [r l] (tup* (map (fn [r l]
                               [(s-step l)
                                (case r
@@ -1496,7 +1499,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
                  (lin _ s1)
                  (lin _ [(degree 3) s1-])
                  (lin _ [s1 (transpose c3-)])]
-                (each (! (let [[a b c] (shuffle [(f r1 l1) (f r2 l2) (f r3 l3)])]
+                (each (! (let [[a b c] (pr/shuffle [(f r1 l1) (f r2 l2) (f r3 l3)])]
                            (chans
                                         ;[(vsl :flute-1 :staccato) vel3 o1 (s-shift 1) c]
                             [(vsl :solo-violin-1 :pizzicato) o1 b]
@@ -1510,7 +1513,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
       (->> (complementarity-tree 3 3)
            (leaves-paths)
            (filter #(= 3 (count %)))
-           (shuffle))
+           (pr/shuffle))
 
       choices {:harmony {0 _
                          1 [(degree 3) (s-shift -1)]
@@ -1546,11 +1549,11 @@ Some attempts to implement or illustrate various musical ideas using noon.
                                (sf_ (->> (get-in choices [:ornamentation (:connection (first _))])
                                          (update-score _))))))))
 
-(let [[arpegios ornamentations harmonic-sequences articulations]
+'(let [[arpegios ornamentations harmonic-sequences articulations]
       (->> (complementarity-tree 3 3)
            (leaves-paths)
            (filter #(= 3 (count %)))
-           (shuffle))
+           (pr/shuffle))
 
       choices {:harmony {0 _
                          1 [lydian (transpose c4) (s-shift -1)]
@@ -1925,7 +1928,7 @@ Trying to produce vibrating textures by playing very fast note sequences.
       (scale :lydian)
       (patch :music-box)
       (par s0 s2 s4)
-      (rep 3 (each [{:mark (rand)} s1 {:velocity (div 1.1) :duration (mul 1.3)} (shuftup s2- s0 s2)])
+      (rep 3 (each [{:mark (pr/rand)} s1 {:velocity (div 1.1) :duration (mul 1.3)} (shuftup s2- s0 s2)])
            :skip-first)
       (lin I [rev III] [o1- V] [rev o1- VII])
       (append [rev (transpose c3)]))
@@ -1956,7 +1959,7 @@ Trying to produce vibrating textures by playing very fast note sequences.
       (lin I IV V I)
       (h/align-contexts :s)
       (each (ntup 2 (tup s0 s2 s4 s4 s2 s0)))
-      (each (! (vel (mul (+ 0.9 (* (rand) 0.2))))))
+      (each (! (vel (mul (+ 0.9 (* (pr/rand) 0.2))))))
       (append s1-))
 #+end_src
 
@@ -2056,12 +2059,12 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
 
 #+begin_src clojure
 (let [rand-color (fn []
-                   (let [k (rand-nth [:lydian+ :lydian :ionian :dorian
-                                      :melodic-minor :mixolydian :phrygian6])]
+                   (let [k (pr/rand-nth [:lydian+ :lydian :ionian :dorian
+                                         :melodic-minor :mixolydian :phrygian6])]
                      [(scale k)
                       (h/modal-structure 4)]))]
   (play dur2
-        (lin* (map (comp transpose c-step) (shuffle (range 12))))
+        (lin* (map (comp transpose c-step) (pr/shuffle (range 12))))
         (each (! (rand-color)))
         (h/align-contexts :d :static)
         (chans [(patch :aahs) (each (par s0 s2 s3 s5)) #_h/voice-led]
@@ -2078,7 +2081,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
 #+begin_src clojure
 (defn possible-modes
   "given a chromatic degree (int between 0 an 11)
-            return possible modes"
+   return possible modes"
   [cd modal-lvl least-priority]
   (let [modes (nc/lvl->mode->degree-priority modal-lvl)
         candidates (filter (fn [[_ s]] (-> (take least-priority s)
@@ -2097,7 +2100,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
                       chord-size 4
                       [min-pitch-val max-pitch-val] (h/pitch-values score)
                       interval (mod (- max-pitch-val min-pitch-val) 12)
-                      [mode-kw prio] (rand-nth (possible-modes interval modal-lvl (dec chord-size)))
+                      [mode-kw prio] (pr/rand-nth (possible-modes interval modal-lvl (dec chord-size)))
                       partial-scale (cons 0 (take (dec chord-size) prio))
                       structure' (nc/partial-scale->structure mode-kw partial-scale)
                       closed (mk (dissoc (first score) :pitch)
@@ -2107,7 +2110,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
                                  (par* (map s-step (range chord-size))))
                       drops (filter (fn [drop] (= max-pitch-val (last (h/pitch-values drop))))
                                     (h/drops closed))]
-                  (rand-nth drops))))
+                  (pr/rand-nth drops))))
       ($by :position (chans _
                             [(patch :contrabass) vel3 min-pitch o1-]
                             [max-pitch

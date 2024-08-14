@@ -30,17 +30,22 @@
         (dir-equal? dir temp-dir))
       (s/noon options score))))
 
-(defmacro frozen [x & xs]
-  (let [dir (str/join "/"
-                      (str/split (or (and (keyword? x)
-                                          (namespace x))
-                                     (str *ns*))
-                                 #"\."))
-        [id-prefix updates] (if (keyword? x)
-                              [(str (name x) "__") xs]
-                              [nil (cons x xs)])]
-    `(frozen? ~(str dir "/" id-prefix (hash updates))
-              (pr/with-rand 0 (noon.score/mk ~@updates)))))
+(defmacro frozen
+  ([id score-evaluating-expr]
+   (let [dir (str/join "/"
+                       (str/split (or (and id (namespace id))
+                                      (str *ns*))
+                                  #"\."))
+         id-prefix (if id (str (name id) "__"))]
+     `(frozen? ~(str dir "/" id-prefix (hash score-evaluating-expr))
+               (pr/with-rand 0 ~score-evaluating-expr)))))
+
+(defmacro frozen* [x & xs]
+  (let [[id updates] (if (keyword? x)
+                       [x xs]
+                       [nil (cons x xs)])]
+    `(frozen ~id
+       (noon.score/mk ~@updates))))
 
 (comment (macroexpand '(freezm (s/lin s/d0 s/d1)))
          (freezm (s/lin s/d0 s/d1)))
