@@ -1,0 +1,13 @@
+{:paths ["scripts"]
+ :deps {zprint/zprint {:mvn/version "1.2.9"}}
+ :tasks {zprint {:requires ([zprint.main]),
+                 :task (apply zprint.main/-main *command-line-args*)}
+
+         build-examples-tests {:requires ([org-utils]),
+                               :task (org-utils/build-examples-tests)}
+         build-clj-guide {:requires ([org-utils]),
+                          :task (org-utils/build-clj-guide)}
+         build-clj-examples {:requires ([org-utils]),
+                             :task (org-utils/build-clj-examples)}
+         build-all {:requires ([org-utils]),
+                    :task (org-utils/build-all)}}}
