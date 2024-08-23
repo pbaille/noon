@@ -30,22 +30,21 @@
          (parse "ionian+#2")
          (parse "ionian#2"))
 
-(defn root->pitch-class [[_ [pitch-class] [alteration]]]
-  (-> (constants/get-pitch-class pitch-class)
+(defn root->pitch-class [natural-pitch-class alteration]
+  (-> (constants/get-pitch-class natural-pitch-class)
       (update :c + (case alteration
                      :double-bemol -2 :bemol -1
                      :natural 0 :sharp 1 :double-sharp 2))))
 
-(defn degree->offset [[_ [alteration] [degree]]]
+(defn degree-offset [alteration degree]
   (root->pitch-class
-   [nil
-    (case degree
-      :one :C :two :D :three :E
-      :four :F :five :G :six :A :sevent :B)
-    alteration]))
+   (case degree
+     :one :C :two :D :three :E
+     :four :F :five :G :six :A :sevent :B)
+   alteration))
 
-(defn degree->update [tree]
-  (let [offset (degree->offset tree)
+(defn degree-update [alteration degree]
+  (let [offset (degree-offset alteration degree)
         minimal-offset (if (> (:c offset) 6)
                          (merge-with - offset {:d -7 :c -12})
                          offset)]
@@ -53,8 +52,8 @@
       (update harmonic-context :origin
               (fn [o] (merge-with + o minimal-offset))))))
 
-(defn root->update [tree]
-  (let [pitch-class (root->pitch-class tree)
+(defn root-update [natural-pitch-class alteration]
+  (let [pitch-class (root->pitch-class natural-pitch-class alteration)
         candidates (iterate (fn [pc] (-> (update pc :d + 7) (update :c + 12))) pitch-class)]
     (fn [harmonic-context]
       (let [c-origin (get-in harmonic-context [:origin :c])]
@@ -62,14 +61,11 @@
                (first (sort-by (fn [candidate] (abs (- (:c candidate) c-origin)))
                                candidates)))))))
 
-(defn mode->update [[_ [mode]]]
-  (h/scale mode))
-
 (defn degree-alteration-update [alteration degree]
   (fn [harmonic-context]
     ()))
 
-(defn base-structure->update [[_ [structure]]]
+(defn base-structure-update [structure]
   (let [structure-update
         (case structure
           (:major :minor :diminished :augmented) (h/structure :triad)
@@ -95,40 +91,42 @@
                 :minor-major-seventh [[:bemol :third] [:natural :fifth] [:natural :seventh]]))]
     (reduce comp structure-update degree-updates)))
 
-(defn structure-suspension->update [[_]])
+(defn structure-add [x]
+  (fn [harmonic-context]
+    (update harmonic-context :structure
+            (fn [s] (vec (sort (into (set s) x)))))))
 
-(defn structure-omission->update [[_]])
+(defn structure-remove [x]
+  (fn [harmonic-context]
+    (update harmonic-context :structure
+            (fn [s] (vec (sort (disj (set s) x)))))))
 
-(defn altered-degree->update [[_ [alteration] [degree]]]
-  (degree-alteration-update alteration degree))
+(defn structure-omission-update [omission]
+  (structure-remove (case omission "1" 0 "3" 2 "5" 4)))
+
+(defn structure-suspension-update [suspension]
+  (comp (structure-remove 2)
+        (structure-add (case suspension :sus2 1 :sus4 3))))
 
 (defn structure-addition-update [alteration degree]
   (comp (degree-alteration-update alteration degree)
-        (fn [harmonic-context]
-          (update harmonic-context :structure
-                  (fn [s] (->> (case degree :second 1 :third 2 :fourth 3 :fifth 4 :sixth 5 :seventh 6)
-                               (into (set s))
-                               (sort)
-                               (vec)))))))
+        (structure-add (case degree :second 1 :third 2 :fourth 3 :fifth 4 :sixth 5 :seventh 6))))
 
-(defn structure-addition->update [[_ [alteration] [degree]]]
-  (structure-addition-update alteration degree))
-
-(defn parsed->update [tree]
-  (case (first tree)
+(defn parsed->update [[type & [[x1] [x2] :as content]]]
+  (case type
     (:abstract-chord
      :abstract-mode
      :concrete-chord
      :concrete-mode
      :structure-modifiers
-     :mode-alterations) (mapv parsed->update (next tree))
-    :degree (degree->update tree)
-    :root (root->update tree)
-    :base-structure (base-structure->update tree)
-    :mode (mode->update tree)
-    :structure-addition (structure-addition->update tree)
-    :structure-suspension (structure-suspension->update tree)
-    :structure-omission (structure-omission->update tree)
-    :altered-degree (altered-degree->update tree)
+     :mode-alterations) (mapv parsed->update content)
+    :degree (degree-update x1 x2)
+    :root (root-update x1 x2)
+    :base-structure (base-structure-update x1)
+    :mode (h/scale x1)
+    :structure-addition (structure-addition-update x1 x2)
+    :structure-suspension (structure-suspension-update x1)
+    :structure-omission (structure-omission-update x1)
+    :altered-degree (degree-alteration-update x1 x2)
     :augmented-fifth (degree-alteration-update :sharp :fifth)
-    :augmented-structure (structure-addition-update :sharp :fifth) ))
+    :augmented-structure (structure-addition-update :sharp :fifth)))
