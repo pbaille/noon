@@ -8,7 +8,10 @@ concrete-chord = (degree | root) base-structure structure-modifiers?
 
 concrete-mode = (degree | root) mode mode-alterations?
 
+(* MISC ---------------------------------------------------------------------------------------- *)
+
 <separator> = <'.'>
+augmented-fifth = <'+'>
 
 (* DEGREE -------------------------------------------------------------------------------------- *)
 
@@ -60,11 +63,11 @@ root = pitch-class alteration
 (* BASE STRUCTURE ------------------------------------------------------------------------------ *)
 
 
-base-structure = (tetrad / triad)
+base-structure = (tetrad augmented-fifth? / triad)
 
 
-<tetrad> = major-seventh | minor-major-seventh | minor-seventh | minor-sixth | major-sixth |
-           augmented-major-seventh | dominant | augmented-seventh | half-diminished
+<tetrad> = major-seventh | minor-major-seventh | minor-seventh |
+           minor-sixth | major-sixth | dominant | half-diminished
 
   major-seventh = <'Δ' | 'M7'>
   diminished-seventh = <'o7'>
@@ -73,10 +76,7 @@ base-structure = (tetrad / triad)
   major-sixth = <'6'>
   dominant = <'7'>
   half-diminished = <'ø' | 'm7b5'>
-  augmented-major-seventh = <'Δ+' | 'M7+'>
   minor-major-seventh = <'mΔ' | 'mM7'>
-  augmented-seventh = <'7+'>
-
 
 <triad> = diminished | augmented | minor | major
 
@@ -111,10 +111,9 @@ structure-addition = alteration mode-degree
 (* MODES ------------------------------------------------------------------------------------- *)
 
 
-mode = major-mode | melodic-minor-mode | harmonic-minor-mode | harmonic-major-mode | double-harmonic-mode
-
-
-<major-mode> = ionian | dorian | phrygian | mixolydian | aeolian | locrian
+mode = ionian | dorian | phrygian | mixolydian | aeolian | locrian |
+       harmonic-minor | melodic-minor | altered | harmonic-major |
+       double-harmonic | ultraphrygian | hungarian-minor | oriental | ultralocrian
 
   ionian = <'ionian'>
   dorian = <'dorian'>
@@ -123,54 +122,15 @@ mode = major-mode | melodic-minor-mode | harmonic-minor-mode | harmonic-major-mo
   mixolydian = <'mixolydian'>
   aeolian = <'aeolian'>
   locrian = <'locrian'>
-
-
-<harmonic-minor-mode> = harmonic-minor | locrian-natural6 | ionian-augmented | dorian-sharp4 |
-                        phrygian-natural3 | lydian-sharp2 | altered-diminished7
-
   harmonic-minor = <'harmonic-minor'>
-  locrian-natural6 = <'locrian6'>
-  ionian-augmented = <'ionia#5' | 'ionian+'>
-  dorian-sharp4 = <'dorian#4'>
-  phrygian-natural3 = <'phrygian-dominant' | 'phrygian3'>
-  lydian-sharp2 = <'lydian#2'>
-  altered-diminished7 = <'alteredbb7' | 'alteredo7' | 'altered-diminished'>
-
-
-<melodic-minor-mode> = melodic-minor | dorian-flat2 | lydian-augmented | lydian-dominant |
-                       mixolydian-flat6 | locrian-natural2 | altered
-
   melodic-minor = <'melodic-minor'>
-  dorian-flat2 = <'dorianb2' | 'phrygian6'>
-  lydian-augmented = <'lydian-augmented' | 'lydian+' | 'lydian#5'>
-  lydian-dominant = <'lydian-dominant' | 'bartok' | 'lydianb7' | 'mixolydian#4'>
-  mixolydian-flat6 = <'mixolydianb6'>
-  locrian-natural2 = <'locrian2'>
   altered = <'superlocrian' | 'altered'>
-
-
-<harmonic-major-mode> = harmonic-major | dorian-flat5 | phrygian-flat4 | lydian-flat3 |
-                        mixolydian-flat2 | lydian-augmented-sharp2 | locrian-diminished7
-
   harmonic-major = <'harmonic-major'>
-  dorian-flat5 = <'dorianb5'>
-  phrygian-flat4 = <'phrygianb4'>
-  lydian-flat3 = <'lydian-minor' | 'lydianb3' | 'lydianm'>
-  mixolydian-flat2 = <'mixolydianb2'>
-  lydian-augmented-sharp2 = <'lydian+#2' | 'lydian#5#2'>
-  locrian-diminished7 = <'locrian-diminished' | 'locriano7' | 'locrianbb7'>
-
-
-<double-harmonic-mode> = double-harmonic | lydian-sharp2-sharp6 | ultraphygian | hungarian-minor |
-                         oriental | ionian-augmented-sharp2 | ultralocrian
-
   double-harmonic = <'double-harmonic'>
-  lydian-sharp2-sharp6 = <'lydian#2#6'>
-  ultraphygian = <'ultraphygian' | 'phrygianb4o7'>
-  hungarian-minor = <'hungarian-minor' | 'harmonic-minor#4'>
-  oriental = <'oriental' | 'mixolydianb5b2'>
-  ionian-augmented-sharp2 = <'ionian#5#2' | 'ionian+#2'>
-  ultralocrian = <'ultralocrian' | 'locrianb2bb7' | 'locrianb2o7'>
+  ultraphrygian = <'ultraphrygian'>
+  hungarian-minor = <'hungarian-minor'>
+  oriental = <'oriental'>
+  ultralocrian = <'ultralocrian'>
 
-mode-alterations = mode-alteration+
-  mode-alteration = alteration mode-degree
+mode-alterations = augmented-fifth? altered-degree*
+  altered-degree = alteration mode-degree
