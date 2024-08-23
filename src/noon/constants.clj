@@ -163,13 +163,15 @@
        :mixb6 :mixolydianb6
        :loc2 :locrian2
        :alt :superlocrian
+       :altered :superlocrian
        :harmm :harmonic-minor
        :loc6 :locrian6
        :ion+ :ionian+
        :dor+4 :dorian+4
        :phryM :phrgian3
        :lyd+2 :lydian+2
-       :altdim :superlocriano7})
+       :altdim :superlocriano7
+       :hungarian :hungarian-minor})
 
     (def degree-priority
       {:ionian [6 3 2 5 1 4]
@@ -208,7 +210,7 @@
        :double-harmonic [1 5 6 2 3 4]
        :lydian+2+6 [3 1 5 6 2 4]
        :ultraphrygian [3 6 1 4 5 2]
-       :hungarian [2 3 5 6 4 1]
+       :hungarian-minor [2 3 5 6 4 1]
        :oriental [1 2 5 4 6 3]
        :ionian++2 [1 3 4 6 2 5]
        :ultralocrian [3 6 2 1 4 5]})
