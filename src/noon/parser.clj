@@ -2,7 +2,38 @@
   (:require [clojure.java.io :as io]
             [instaparse.core :as insta]
             [noon.constants :as constants]
-            [noon.harmony :as h]))
+            [noon.harmony :as h]
+            [noon.utils.misc :as u]))
+
+;; move to harmony
+
+(defn degree-alteration [scale-idx c-val]
+  (fn [harmonic-context]
+    (let [scale (:scale harmonic-context)
+          scale-size (count scale)
+          _ (when (>= scale-size scale-idx)
+              (u/throw* `degree-alteration " scale-idx out of bounds."))
+          current-c-val (get scale scale-idx)]
+      (if (= current-c-val c-val)
+        harmonic-context
+        (let [below-c-val (get scale (dec scale-idx))
+              above-c-val (if (< scale-idx scale-size) (get scale (inc scale-idx)))]
+          (if (and (> c-val below-c-val)
+                   (or (not above-c-val) (< c-val above-c-val)))
+            (update harmonic-context :scale assoc scale-idx c-val)
+            (u/throw* `degree-alteration " conflict, your alteration overlaps neighbour degrees.")))))))
+
+(defn structure-add [x]
+  (fn [harmonic-context]
+    (update harmonic-context :structure
+            (fn [s] (vec (sort (into (set s) x)))))))
+
+(defn structure-remove [x]
+  (fn [harmonic-context]
+    (update harmonic-context :structure
+            (fn [s] (vec (sort (disj (set s) x)))))))
+
+;; parser
 
 (def parser
   (insta/parser (slurp (io/resource "noon.bnf"))))
@@ -40,7 +71,7 @@
   (root->pitch-class
    (case degree
      :one :C :two :D :three :E
-     :four :F :five :G :six :A :sevent :B)
+     :four :F :five :G :six :A :seven :B)
    alteration))
 
 (defn degree-update [alteration degree]
@@ -61,9 +92,16 @@
                (first (sort-by (fn [candidate] (abs (- (:c candidate) c-origin)))
                                candidates)))))))
 
+(defn degree-kw->scale-idx [k]
+  (case k :second 1 :third 2 :fourth 3 :fifth 4 :sixth 5 :seventh 6))
+
 (defn degree-alteration-update [alteration degree]
-  (fn [harmonic-context]
-    ()))
+  (let [c-val (:c (degree-offset alteration degree))
+        scale-idx (degree-kw->scale-idx degree)]
+    (fn [harmonic-context]
+      (if (= (count (:scale harmonic-context)) 7)
+        (degree-alteration scale-idx c-val)
+        (u/throw*)))))
 
 (defn base-structure-update [structure]
   (let [structure-update
@@ -91,16 +129,6 @@
                 :minor-major-seventh [[:bemol :third] [:natural :fifth] [:natural :seventh]]))]
     (reduce comp structure-update degree-updates)))
 
-(defn structure-add [x]
-  (fn [harmonic-context]
-    (update harmonic-context :structure
-            (fn [s] (vec (sort (into (set s) x)))))))
-
-(defn structure-remove [x]
-  (fn [harmonic-context]
-    (update harmonic-context :structure
-            (fn [s] (vec (sort (disj (set s) x)))))))
-
 (defn structure-omission-update [omission]
   (structure-remove (case omission "1" 0 "3" 2 "5" 4)))
 
@@ -110,16 +138,17 @@
 
 (defn structure-addition-update [alteration degree]
   (comp (degree-alteration-update alteration degree)
-        (structure-add (case degree :second 1 :third 2 :fourth 3 :fifth 4 :sixth 5 :seventh 6))))
+        (structure-add (degree-kw->scale-idx degree))))
 
-(defn parsed->update [[type & [[x1] [x2] :as content]]]
+(defn parsed-tree->update
+  [[type & [[x1] [x2] :as content]]]
   (case type
     (:abstract-chord
      :abstract-mode
      :concrete-chord
      :concrete-mode
      :structure-modifiers
-     :mode-alterations) (mapv parsed->update content)
+     :mode-alterations) (mapv parsed-tree->update content)
     :degree (degree-update x1 x2)
     :root (root-update x1 x2)
     :base-structure (base-structure-update x1)
