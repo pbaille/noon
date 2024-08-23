@@ -97,9 +97,11 @@ structure-suspension = (sus2 | sus4)
   sus4 = <'sus4'>
 
 
-structure-omission = 'omit' omited-degree
+structure-omission = <'omit'> (omit1 | omit3 | omit5)
 
-  omited-degree = '1' | '3' | '5'
+  omit1 = <'1'>
+  omit3 = <'3'>
+  omit5 = <'5'>
 
 augmented-structure = <augmented-fifth>
 structure-addition = alteration mode-degree
@@ -110,7 +112,7 @@ structure-addition = alteration mode-degree
 
 mode = mode-name
 
-<mode-name> = ionian | dorian | phrygian | mixolydian | aeolian | locrian |
+<mode-name> = ionian | dorian | phrygian | mixolydian | lydian | aeolian | locrian |
               harmonic-minor | melodic-minor | altered | harmonic-major |
               double-harmonic | ultraphrygian | hungarian-minor | oriental | ultralocrian
 
