@@ -6,4 +6,5 @@
         clj-fuzzy/clj-fuzzy {:mvn/version "0.4.1"}
         backtick/backtick {:mvn/version "0.3.4"}
         org.clj-commons/byte-streams {:mvn/version "0.3.4"}
-        org.clojure/data.codec {:mvn/version "0.1.1"}}}
+        org.clojure/data.codec {:mvn/version "0.1.1"}
+        instaparse/instaparse {:mvn/version "1.5.0"}}}
