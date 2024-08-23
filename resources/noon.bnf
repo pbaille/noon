@@ -63,22 +63,19 @@ root = pitch-class alteration
 (* BASE STRUCTURE ------------------------------------------------------------------------------ *)
 
 
-base-structure = (tetrad augmented-fifth? / triad)
+base-structure = tetrad / triad
 
 
-<tetrad> = major-seventh | minor-major-seventh | minor-seventh |
-           minor-sixth | major-sixth | dominant | half-diminished
+<tetrad> = major-seventh | minor-major-seventh | minor-seventh | dominant | half-diminished
 
   major-seventh = <'Δ' | 'M7'>
   diminished-seventh = <'o7'>
   minor-seventh = <'m7'>
-  minor-sixth = <'m6'>
-  major-sixth = <'6'>
   dominant = <'7'>
-  half-diminished = <'ø' | 'm7b5'>
+  half-diminished = <'ø'>
   minor-major-seventh = <'mΔ' | 'mM7'>
 
-<triad> = diminished | augmented | minor | major
+<triad> = diminished / augmented / minor / major
 
   diminished = <'o'>
   augmented = <'+'>
@@ -89,7 +86,7 @@ base-structure = (tetrad augmented-fifth? / triad)
 (* MODIFERS ----------------------------------------------------------------------------------- *)
 
 
-structure-modifiers = structure-modifier+
+structure-modifiers = augmented-structure? structure-modifier* augmented-structure?
 
   <structure-modifier> = separator? (structure-omission | structure-addition | structure-suspension)
 
@@ -104,16 +101,18 @@ structure-omission = 'omit' omited-degree
 
   omited-degree = '1' | '3' | '5'
 
-
+augmented-structure = <augmented-fifth>
 structure-addition = alteration mode-degree
 
 
 (* MODES ------------------------------------------------------------------------------------- *)
 
 
-mode = ionian | dorian | phrygian | mixolydian | aeolian | locrian |
-       harmonic-minor | melodic-minor | altered | harmonic-major |
-       double-harmonic | ultraphrygian | hungarian-minor | oriental | ultralocrian
+mode = mode-name
+
+<mode-name> = ionian | dorian | phrygian | mixolydian | aeolian | locrian |
+              harmonic-minor | melodic-minor | altered | harmonic-major |
+              double-harmonic | ultraphrygian | hungarian-minor | oriental | ultralocrian
 
   ionian = <'ionian'>
   dorian = <'dorian'>
@@ -132,5 +131,5 @@ mode = ionian | dorian | phrygian | mixolydian | aeolian | locrian |
   oriental = <'oriental'>
   ultralocrian = <'ultralocrian'>
 
-mode-alterations = augmented-fifth? altered-degree*
+mode-alterations = augmented-fifth? altered-degree* augmented-fifth?
   altered-degree = alteration mode-degree
