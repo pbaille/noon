@@ -3,7 +3,9 @@
   (:require [noon.lib.harmony :as h]
             [noon.lib.melody :as m]
             [noon.lib.rythmn :as r]
-            [noon.utils.pseudo-random :as pr]))
+            [noon.utils.pseudo-random :as pr]
+            [noon.harmony :as nh]
+            [noon.score :as n]))
 
 (comment
 
@@ -96,7 +98,6 @@
                            [(par s0 s1 s2 s3) (shuftup s1- s0 s1)])))
 
                    (adjust 8))))
-
 
 (comment :elements
          (let [r {:a (r/gen-tup 8 5)
@@ -303,3 +304,28 @@
                          (tup _ rev (m/contour :mirror) [(m/contour :mirror) rev])]
                         [(patch :choir-aahs) (lin* serie) o1-])
                  (lin* serie))))
+
+(comment :harmonic-modifiers
+
+         (def secondary-dominant
+           (ef_ (let [{:as ctx :keys [scale]} (:pitch _)]
+                  (if (and (= 7 (count scale))
+                           (<= 6 (nth scale 4) 8))
+                    (assoc _ :pitch (nh/upd ctx
+                                            (nh/rescale (assoc (vec scale) 3 5 6 11 ;4 7
+                                                               ))
+                                            (nh/redegree 4)))))))
+
+         (noon {:play true
+                :midi true
+                :filename "test/trash/secondary-dominants"}
+               (mk (structure :tetrad)
+                   (rep 6 (degree 3))
+                   (each (tup secondary-dominant same))
+                   (h/align-contexts :d)
+                   (each (chans (par s0 s1 s2 s3)
+                                [C-2 t-round]))
+                   (adjust 16)
+                   (dup 2)))
+
+         )
