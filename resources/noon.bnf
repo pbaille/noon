@@ -66,7 +66,7 @@ root = pitch-class alteration
 base-structure = tetrad / triad
 
 
-<tetrad> = major-seventh | minor-major-seventh | minor-seventh | dominant | half-diminished
+<tetrad> = major-seventh | minor-major-seventh | minor-seventh | dominant | half-diminished | diminished-seventh
 
   major-seventh = <'Δ' | 'M7'>
   diminished-seventh = <'o7'>
@@ -110,7 +110,7 @@ structure-addition = alteration mode-degree
 (* MODES ------------------------------------------------------------------------------------- *)
 
 
-mode = mode-name
+mode = <separator?> mode-name
 
 <mode-name> = ionian | dorian | phrygian | mixolydian | lydian | aeolian | locrian |
               harmonic-minor | melodic-minor | altered | harmonic-major |
@@ -133,7 +133,7 @@ mode = mode-name
   oriental = <'oriental'>
   ultralocrian = <'ultralocrian'>
 
-mode-alterations = augmented-fifth? altered-degree* augmented-fifth?
+mode-alterations = augmented-fifth? <separator?> altered-degree* augmented-fifth?
   altered-degree = alteration mode-degree
 
 structure-shorthand = <separator> <'s'> structure-digit+
