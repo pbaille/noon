@@ -2,11 +2,11 @@
 
 abstract-chord = base-structure structure-modifiers?
 
-abstract-mode = mode mode-alterations?
+abstract-mode = mode mode-alterations? structure-shorthand?
 
 concrete-chord = (degree | root) base-structure structure-modifiers?
 
-concrete-mode = (degree | root) mode mode-alterations?
+concrete-mode = (degree | root) mode mode-alterations? structure-shorthand?
 
 (* MISC ---------------------------------------------------------------------------------------- *)
 
@@ -135,3 +135,6 @@ mode = mode-name
 
 mode-alterations = augmented-fifth? altered-degree* augmented-fifth?
   altered-degree = alteration mode-degree
+
+structure-shorthand = <separator> <'s'> structure-digit+
+  <structure-digit> = '1' | '2' | '3' | '4' | '5' | '6' | '7'
