@@ -592,17 +592,23 @@
 
     (do :update
 
+        (defn chain-update [xs]
+          (let [[x & xs] (reverse xs)]
+            (reduce comp x xs)))
+
         (defn ->hc-update
           "Turn `x` into an harmonic context update
            `x` can be either:
             - nil which represent the identity update.
             - a function from context to context.
-            - another context that will replace the received one preserving its current pitch."
+            - another context that will replace the received one preserving its current pitch.
+            - a vector is interpreted as a sequence of successive updates."
           [x]
           (cond
             (nil? x) identity
             (fn? x) x
             (hc? x) (fn [ctx] ((repitch (hc->pitch ctx)) x))
+            (vector? x) (chain-update (map ->hc-update x))
             :else (u/throw* "not an update " x)))
 
         (defn upd
