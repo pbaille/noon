@@ -114,20 +114,15 @@
           (update harmonic-context :origin
                   (fn [o] (merge-with + o minimal-offset))))))
 
-    (defn root-update [natural-pitch-class alteration]
-      (let [pitch-class (pitch-offset natural-pitch-class alteration)
-            candidates (take 10 (iterate (fn [pc] (-> (update pc :d + 7) (update :c + 12))) pitch-class))]
-        (fn [harmonic-context]
-          (let [c-origin (get-in harmonic-context [:origin :c])]
-            (assoc harmonic-context :origin
-                   (first (sort-by (fn [candidate] (abs (- (:c candidate) c-origin)))
-                                   candidates)))))))
-
     (defn degree-alteration-update [degree alteration]
       (let [c-val (:c (-> (scale-degree->natural-pitch-class degree)
                           (pitch-offset alteration)))
             scale-idx (scale-degree->scale-idx degree)]
         (degree-alteration scale-idx c-val)))
+
+    (defn structure-addition-update [degree alteration]
+      (comp (degree-alteration-update degree alteration)
+            (structure-add (scale-degree->scale-idx degree))))
 
     (defn base-structure-update [structure]
       (let [structure-update
@@ -158,20 +153,6 @@
                     :minor-major-seventh [[:third :bemol] [:fifth :natural] [:seventh :natural]]))]
         (reduce comp structure-update degree-updates)))
 
-    (defn structure-omission-update [omission]
-      (structure-remove (omission->removed-scale-idx omission)))
-
-    (defn structure-suspension-update [suspension]
-      (comp (structure-remove 2)
-            (structure-add (suspension->added-scale-idx suspension))))
-
-    (defn structure-addition-update [degree alteration]
-      (comp (degree-alteration-update degree alteration)
-            (structure-add (scale-degree->scale-idx degree))))
-
-    (defn structure-shorthand-update [digits]
-      (h/structure (mapv string-digit->scale-idx digits)))
-
     (defn chain-update [xs]
       (let [[x & xs] (reverse xs)]
         (reduce comp x xs)))
@@ -186,16 +167,16 @@
          :structure-modifiers
          :mode-alterations) (chain-update (mapv parsed-tree->update content))
         :degree (degree-update x2 x1)
-        :root (root-update x1 x2)
+        :root (h/root (pitch-offset x1 x2))
         :base-structure (base-structure-update x1)
         :mode (h/scale x1)
         :structure-addition (structure-addition-update x2 x1)
-        :structure-suspension (structure-suspension-update x1)
-        :structure-omission (structure-omission-update x1)
+        :structure-suspension (comp (structure-remove 2) (structure-add (suspension->added-scale-idx x1)))
+        :structure-omission (structure-remove (omission->removed-scale-idx x1))
         :altered-degree (degree-alteration-update x2 x1)
         :augmented-fifth (degree-alteration-update :fifth :sharp)
         :augmented-structure (structure-addition-update :fifth :sharp)
-        :structure-shorthand (structure-shorthand-update content))))
+        :structure-shorthand (h/structure (mapv string-digit->scale-idx content)))))
 
 (comment :tries
 
