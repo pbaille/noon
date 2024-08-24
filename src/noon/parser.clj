@@ -121,8 +121,8 @@
         (degree-alteration scale-idx c-val)))
 
     (defn structure-addition-update [degree alteration]
-      (comp (degree-alteration-update degree alteration)
-            (structure-add (scale-degree->scale-idx degree))))
+      [(degree-alteration-update degree alteration)
+       (structure-add (scale-degree->scale-idx degree))])
 
     (defn base-structure-update [structure]
       (let [structure-update
@@ -151,32 +151,29 @@
                     :dominant [[:third :natural] [:fifth :natural] [:seventh :bemol]]
                     :half-diminished [[:third :bemol] [:fifth :bemol] [:seventh :bemol]]
                     :minor-major-seventh [[:third :bemol] [:fifth :natural] [:seventh :natural]]))]
-        (reduce comp structure-update degree-updates)))
-
-    (defn chain-update [xs]
-      (let [[x & xs] (reverse xs)]
-        (reduce comp x xs)))
+        (vec (cons structure-update degree-updates))))
 
     (defn parsed-tree->update
       [[type & [[x1] [x2] :as content]]]
-      (case type
-        (:abstract-chord
-         :abstract-mode
-         :concrete-chord
-         :concrete-mode
-         :structure-modifiers
-         :mode-alterations) (chain-update (mapv parsed-tree->update content))
-        :degree (degree-update x2 x1)
-        :root (h/root (pitch-offset x1 x2))
-        :base-structure (base-structure-update x1)
-        :mode (h/scale x1)
-        :structure-addition (structure-addition-update x2 x1)
-        :structure-suspension (comp (structure-remove 2) (structure-add (suspension->added-scale-idx x1)))
-        :structure-omission (structure-remove (omission->removed-scale-idx x1))
-        :altered-degree (degree-alteration-update x2 x1)
-        :augmented-fifth (degree-alteration-update :fifth :sharp)
-        :augmented-structure (structure-addition-update :fifth :sharp)
-        :structure-shorthand (h/structure (mapv string-digit->scale-idx content)))))
+      (h/->hc-update
+       (case type
+         (:abstract-chord
+          :abstract-mode
+          :concrete-chord
+          :concrete-mode
+          :structure-modifiers
+          :mode-alterations) (mapv parsed-tree->update content)
+         :degree (degree-update x2 x1)
+         :root (h/root (pitch-offset x1 x2))
+         :base-structure (base-structure-update x1)
+         :mode (h/scale x1)
+         :structure-addition (structure-addition-update x2 x1)
+         :structure-suspension [(structure-remove 2) (structure-add (suspension->added-scale-idx x1))]
+         :structure-omission (structure-remove (omission->removed-scale-idx x1))
+         :altered-degree (degree-alteration-update x2 x1)
+         :augmented-fifth (degree-alteration-update :fifth :sharp)
+         :augmented-structure (structure-addition-update :fifth :sharp)
+         :structure-shorthand (h/structure (mapv string-digit->scale-idx content))))))
 
 (comment :tries
 
@@ -188,6 +185,7 @@
             h/hc0))
 
          (comment
+           (?? :m)
            (?? "aeolian")
            (?? "aeolianb2")
            (parse "D#aeolianb2")
