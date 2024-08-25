@@ -9,199 +9,167 @@
 
     (testing "triads"
       (is (= (parse :m)
-             (list [:abstract-chord [:base-structure [:minor]]])))
+             (list [:structure [:structure/base [:triad/minor]]])))
 
       (is (= (parse :o)
-             (list [:abstract-chord [:base-structure [:diminished]]])))
+             (list [:structure [:structure/base [:trid/diminished]]])))
 
-      (is (= (parse "")
-             (parse "M")
-             (list [:abstract-chord [:base-structure [:major]]]))))
+      (is (= (parse "M")
+             (list [:structure [:structure/base [:triad/major]]]))))
 
     (testing "root and degree"
 
       (is (= (parse "D")
-             (list [:concrete-chord
-                    [:root [:D] [:natural]]
-                    [:base-structure [:major]]])))
+             (list [:root [:D] [:natural]])))
 
       (is (= (parse "Bbbm")
-             (list [:concrete-chord
-                    [:root [:B] [:double-bemol]]
-                    [:base-structure [:minor]]])))
+             (list [:root [:B] [:double-bemol]]
+                   [:structure [:structure/base [:triad/minor]]])))
 
       (is (= (parse "bII+")
-             (list [:concrete-chord
-                    [:degree [:flat] [:two]]
-                    [:base-structure [:augmented]]])))
+             (list [:degree [:bemol] [:two]]
+                   [:structure [:structure/modifiers [:structure.modifier/augmented]]])))
 
       (is (= (parse :#IVo)
-             (list [:concrete-chord
-                    [:degree [:sharp] [:four]]
-                    [:base-structure [:diminished]]]))))
+             (list [:degree [:sharp] [:four]]
+                   [:structure [:structure/base [:triad/diminished]]]))))
 
     (testing "tetrads"
 
       (is (= (parse :mΔ)
              (parse :mM7)
-             (list [:abstract-chord
-                    [:base-structure [:minor-major-seventh]]])))
+             (list [:structure [:structure/base [:tetrad/minor-major-seventh]]])))
 
       (is (= (parse :ø)
-             (list [:abstract-chord
-                    [:base-structure [:half-diminished]]])))
+             (list [:structure [:structure/base [:tetrad/half-diminished]]])))
 
       (is (= (parse :o7)
-             (list [:abstract-chord
-                    [:base-structure [:diminished-seventh]]]))))
+             (list [:structure [:structure/modifiers [:structure.modifier/degree [:double-bemol] [:seventh]]]]))))
 
     (testing "modifiers"
 
       (is (= (parse :m7b5)
-             (list [:abstract-chord
-                    [:base-structure [:minor-seventh]]
-                    [:structure-modifiers
-                     [:structure-addition [:bemol] [:fifth]]]])))
+             (list [:structure
+                    [:structure/base [:tetrad/minor-seventh]]
+                    [:structure/modifiers [:structure.modifier/degree [:bemol] [:fifth]]]])))
 
       (is (= (parse :M79#11)
-             (list [:abstract-chord
-                    [:base-structure [:major-seventh]]
-                    [:structure-modifiers
-                     [:structure-addition [:natural] [:second]]
-                     [:structure-addition [:sharp] [:fourth]]]])))
+             (list [:structure
+                    [:structure/base [:tetrad/major-seventh]]
+                    [:structure/modifiers
+                     [:structure.modifier/degree [:natural] [:second]]
+                     [:structure.modifier/degree [:sharp] [:fourth]]]])))
 
       (is (= (parse :Eb7sus4)
-             (list [:concrete-chord
-                    [:root [:E] [:bemol]]
-                    [:base-structure [:dominant]]
-                    [:structure-modifiers
-                     [:structure-suspension [:sus4]]]])))
+             (list [:root [:E] [:bemol]]
+                   [:structure
+                    [:structure/modifiers
+                     [:structure.modifier/degree [:natural] [:seventh]]
+                     [:structure.modifier/omission [:omit3]]
+                     [:structure.modifier/degree [:natural] [:fourth]]]])))
 
       (is (= (parse :Fomit3)
-             (list [:concrete-chord
-                    [:root [:F] [:natural]]
-                    [:base-structure [:major]]
-                    [:structure-modifiers [:structure-omission [:omit3]]]])))
+             (list [:root [:F] [:natural]]
+                   [:structure [:structure/modifiers [:structure.modifier/omission [:omit3]]]])))
 
       (is (= (parse :E7b913)
-             (list [:concrete-chord
-                    [:root [:E] [:natural]]
-                    [:base-structure [:dominant]]
-                    [:structure-modifiers
-                     [:structure-addition [:bemol] [:second]]
-                     [:structure-addition [:natural] [:sixth]]]])))
+             (list [:root [:E] [:natural]]
+                   [:structure
+                    [:structure/modifiers
+                     [:structure.modifier/degree [:natural] [:seventh]]
+                     [:structure.modifier/degree [:bemol] [:second]]
+                     [:structure.modifier/degree [:natural] [:sixth]]]])))
 
       (is (= (parse :CM7+)
              (parse :CΔ+)
-             (list [:concrete-chord
-                    [:root [:C] [:natural]]
-                    [:base-structure [:major-seventh]]
-                    [:structure-modifiers
-                     [:augmented-structure]]])))))
+             (list [:root [:C] [:natural]]
+                   [:structure
+                    [:structure/base [:tetrad/major-seventh]]
+                    [:structure/modifiers [:structure.modifier/augmented]]])))))
 
   (testing "modes"
 
     (testing "basics"
 
       (is (= (parse :ionian)
-             (list [:abstract-mode [:mode [:ionian]]])))
+             (list [:mode [:mode/base [:ionian]]])))
 
       (is (= (parse :Dionian)
-             (list [:concrete-mode [:root [:D] [:natural]]
-                    [:mode [:ionian]]])))
+             (list [:root [:D] [:natural]]
+                   [:mode [:mode/base [:ionian]]])))
 
       (is (= (parse :Vlydian)
-             (list [:concrete-mode
-                    [:degree [:natural] [:five]]
-                    [:mode [:lydian]]])))
+             (list [:degree [:natural] [:five]]
+                   [:mode [:mode/base [:lydian]]])))
 
       (is (= (parse :#IValtered)
-             (list [:concrete-mode
-                    [:degree [:sharp] [:four]]
-                    [:mode [:altered]]]))))
+             (list [:degree [:sharp] [:four]] [:mode [:mode/base [:altered]]]))))
 
     (testing "modifiers"
 
       (is (= (parse :Eblocrian2)
              (parse :Eb.locrian2)
-             (list [:concrete-mode
-                    [:root [:E] [:bemol]]
-                    [:mode [:locrian]]
-                    [:mode-alterations
-                     [:altered-degree [:natural] [:second]]]])))
+             (list [:root [:E] [:bemol]]
+                   [:mode
+                    [:mode/base [:locrian]]
+                    [:mode/alterations [:mode.alteration/degree [:natural] [:second]]]])))
 
       (is (and (= (parse :lydian+#2)
-                  (list [:abstract-mode
-                         [:mode [:lydian]]
-                         [:mode-alterations
-                          [:augmented-fifth]
-                          [:altered-degree [:sharp] [:second]]]]))
+                  (list [:mode [:mode/base [:lydian]] [:mode/alterations [:mode.alteration/augmented-fifth] [:mode.alteration/degree [:sharp] [:second]]]]))
                (= (parse :lydian#5#2)
-                  (list [:abstract-mode
-                         [:mode [:lydian]]
-                         [:mode-alterations
-                          [:altered-degree [:sharp] [:fifth]]
-                          [:altered-degree [:sharp] [:second]]]]))
+                  (list [:mode [:mode/base [:lydian]] [:mode/alterations [:mode.alteration/degree [:sharp] [:fifth]] [:mode.alteration/degree [:sharp] [:second]]]]))
                (= (parse :lydian#2+)
-                  (list [:abstract-mode
-                         [:mode [:lydian]]
-                         [:mode-alterations
-                          [:altered-degree [:sharp] [:second]]
-                          [:augmented-fifth]]]))))
+                  (list [:mode [:mode/base [:lydian]] [:mode/alterations [:mode.alteration/degree [:sharp] [:second]] [:mode.alteration/augmented-fifth]]]))))
 
       (is (= (parse :alteredbb7)
              (parse :altered.bb7)
-             (list [:abstract-mode
-                    [:mode [:altered]]
-                    [:mode-alterations
-                     [:altered-degree [:double-bemol] [:seventh]]]]))))
+             (list [:mode [:mode/base [:altered]] [:mode/alterations [:mode.alteration/degree [:double-bemol] [:seventh]]]]))))
 
     (testing "structure shorthand"
 
       (is (= (parse :aeolian.s2367)
-             (list [:abstract-mode
-                    [:mode [:aeolian]]
-                    [:structure-shorthand "2" "3" "6" "7"]])))
+             (list [:mode [:mode/base [:aeolian]]]
+                   [:structure/shorthand "2" "3" "6" "7"])))
 
       (is (= (parse :phrygian6.s2467)
-             (list [:abstract-mode
-                    [:mode [:phrygian]]
-                    [:mode-alterations
-                     [:altered-degree [:natural] [:sixth]]]
-                    [:structure-shorthand "2" "4" "6" "7"]]))))))
+             (list [:mode [:mode/base [:phrygian]] [:mode/alterations [:mode.alteration/degree [:natural] [:sixth]]]] [:structure/shorthand "2" "4" "6" "7"]))))))
 
 (defn upd [& xs]
   (h/upd h/hc0
-         (p/parsed-tree->update (first (apply parse xs)))))
+         (apply p/interpret xs)))
 
 (deftest interpretation
 
   (testing "root change"
 
     (is (= (upd :F)
-           (upd :IV)
            {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 38, :c 65}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
     (testing "closest root"
       (is (= (upd :G)
-             (upd :V)
              {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 32, :c 55}, :position {:t 0, :s 0, :d 0, :c 0}})))
 
     (is (= (upd :Eb)
-           (upd :bIII)
            {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 37, :c 63}, :position {:t 0, :s 0, :d 0, :c 0}})))
+
+  (testing "degree change"
+    (is (= (upd :IV)
+           {:scale [0 2 4 6 7 9 11], :structure [0 2 4], :origin {:d 38, :c 65}, :position {:t 0, :s 0, :d 0, :c 0}}))
+
+    (is (= (upd :bIII)
+           {:scale [0 2 4 6 8 9 11], :structure [0 2 4], :origin {:d 37, :c 63}, :position {:t 0, :s 0, :d 0, :c 0}}))
+
+    (testing "closest move"
+      (is (not (= (upd :V)
+                  {:scale [0 2 4 5 7 9 10], :structure [0 2 4], :origin {:d 39, :c 67}, :position {:t 0, :s 0, :d 0, :c 0}})))))
 
   (testing "chords"
 
     (is (= (upd :m)
-           {:scale [0 2 3 5 7 9 11],
-            :structure [0 2 4],
-            :origin {:d 35, :c 60},
-            :position {:t 0, :s 0, :d 0, :c 0}}))
+           {:scale [0 2 3 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
-    ;; this should not be this
-    ;; moving by degree somehow preserve original scale
-    ;; in this case it should be an error because E phrygian can't have sharp fifth without colliding with minor sixth
-    (is (not (= (upd :E+)
-                (upd :III+)
-                {:scale [0 2 4 5 8 9 11], :structure [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}})))))
+    (is (= (upd :E+)
+           {:scale [0 2 4 5 8 9 11], :structure [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
+
+    (is (= (upd :IIIM7)
+           {:scale [0 1 4 5 7 8 11], :structure [0 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))))
