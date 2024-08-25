@@ -12,7 +12,7 @@
              (list [:structure [:structure/base [:triad/minor]]])))
 
       (is (= (parse :o)
-             (list [:structure [:structure/base [:trid/diminished]]])))
+             (list [:structure [:structure/base [:triad/diminished]]])))
 
       (is (= (parse "M")
              (list [:structure [:structure/base [:triad/major]]]))))
@@ -160,8 +160,8 @@
            {:scale [0 2 4 6 8 9 11], :structure [0 2 4], :origin {:d 37, :c 63}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
     (testing "closest move"
-      (is (not (= (upd :V)
-                  {:scale [0 2 4 5 7 9 10], :structure [0 2 4], :origin {:d 39, :c 67}, :position {:t 0, :s 0, :d 0, :c 0}})))))
+      (is (= (upd :V)
+             {:scale [0 2 4 5 7 9 10], :structure [0 2 4], :origin {:d 32, :c 55}, :position {:t 0, :s 0, :d 0, :c 0}}))))
 
   (testing "chords"
 
@@ -172,4 +172,7 @@
            {:scale [0 2 4 5 8 9 11], :structure [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
     (is (= (upd :IIIM7)
-           {:scale [0 1 4 5 7 8 11], :structure [0 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))))
+           {:scale [0 1 4 5 7 8 11], :structure [0 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
+
+    (is (= (upd :IIImM7)
+           {:scale [0 1 3 5 7 8 11], :structure [0 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))))
