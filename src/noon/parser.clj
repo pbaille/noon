@@ -36,7 +36,8 @@
 
 (do :parser
     (def parser
-      (insta/parser (slurp (io/resource "noon.bnf"))))
+      (insta/parser (slurp (io/resource "noon.bnf"))
+                    :allow-namespaced-nts true))
 
     (defn parse [& xs]
       (insta/parse parser (str/join "." (map name xs)))))
@@ -85,11 +86,6 @@
         :omit3 2
         :omit5 4))
 
-    (defn suspension->added-scale-idx [v]
-      (case v
-        :sus2 1
-        :sus4 3))
-
     (defn string-digit->scale-idx [v]
       (get {"1" 0
             "2" 1
@@ -107,12 +103,14 @@
 
     (defn degree-update [degree alteration]
       (let [offset (pitch-offset (roman-degree->natural-pitch-class degree) alteration)
-            minimal-offset (if (> (:c offset) 6)
-                             (merge-with - offset {:d 7 :c 12})
-                             offset)]
-        (fn [harmonic-context]
-          (update harmonic-context :origin
-                  (fn [o] (merge-with + o minimal-offset))))))
+            degree-shift (if (> (:c offset) 6)
+                           (mod (- (:d offset) 7) 7)
+                           (:d offset))]
+        (fn [{:as harmonic-context :keys [scale]}]
+          (h/upd harmonic-context
+                 (when (not= (get (:d offset) scale) (:c offset))
+                   (degree-alteration (:d offset) (:c offset)))
+                 (h/degree degree-shift)))))
 
     (defn degree-alteration-update [degree alteration]
       (let [c-val (:c (-> (scale-degree->natural-pitch-class degree)
@@ -125,22 +123,16 @@
        (structure-add (scale-degree->scale-idx degree))])
 
     (defn base-structure-update [structure]
-      (let [structure-update
-            (case structure
-              (:major
-               :minor
-               :diminished
-               :augmented) (h/structure :triad)
-              (:major-seventh
-               :diminished-seventh
-               :minor-seventh
-               :dominant
-               :half-diminished
-               :minor-major-seventh) (h/structure :tetrad))
+      (let [type (keyword (namespace structure))
+            structure-name (keyword (name structure))
+            structure-update
+            (case type
+              :triad (h/structure :triad)
+              :tetrad (h/structure :tetrad))
             degree-updates
             (mapv (fn [[degree alteration]]
                     (degree-alteration-update degree alteration))
-                  (case structure
+                  (case structure-name
                     :major [[:third :natural] [:fifth :natural]]
                     :minor [[:third :bemol] [:fifth :natural]]
                     :diminished [[:third :bemol] [:fifth :bemol]]
@@ -157,31 +149,29 @@
       [[type & [[x1] [x2] :as content]]]
       (h/->hc-update
        (case type
-         (:abstract-chord
-          :abstract-mode
-          :concrete-chord
-          :concrete-mode
-          :structure-modifiers
-          :mode-alterations) (mapv parsed-tree->update content)
+         (:mode
+          :structure
+          :structure/modifiers
+          :mode/alterations) (mapv parsed-tree->update content)
          :degree (degree-update x2 x1)
          :root (h/root (pitch-offset x1 x2))
-         :base-structure (base-structure-update x1)
-         :mode (h/scale x1)
-         :structure-addition (structure-addition-update x2 x1)
-         :structure-suspension [(structure-remove 2) (structure-add (suspension->added-scale-idx x1))]
-         :structure-omission (structure-remove (omission->removed-scale-idx x1))
-         :altered-degree (degree-alteration-update x2 x1)
-         :augmented-fifth (degree-alteration-update :fifth :sharp)
-         :augmented-structure (structure-addition-update :fifth :sharp)
-         :structure-shorthand (h/structure (mapv string-digit->scale-idx content))))))
+         :structure/base (base-structure-update x1)
+         :mode/base (h/scale x1)
+         :structure.modifier/degree (structure-addition-update x2 x1)
+         :structure.modifier/omission (structure-remove (omission->removed-scale-idx x1))
+         :mode.alteration/degree (degree-alteration-update x2 x1)
+         :mode.alteration/augmented-fifth (degree-alteration-update :fifth :sharp)
+         :structure.modifier/augmented (structure-addition-update :fifth :sharp)
+         :structure/shorthand (h/structure (mapv string-digit->scale-idx content)))))
+
+    (defn interpret [& xs]
+      (h/->hc-update
+       (mapv parsed-tree->update (apply parse xs)))))
 
 (comment :tries
 
-         (defn ? [& xs]
-           (parsed-tree->update (first (apply parse xs))))
-
          (defn ?? [& xs]
-           ((apply ? xs)
+           ((apply interpret xs)
             h/hc0))
 
          (comment
@@ -194,10 +184,15 @@
            (?? :IIm)
            (?? :IImM713omit1)
            (parse :dorianb2 :s2467)
-           (?? :dorianb2 :s2467))
+           (?? :dorianb2 :s2467)
+           (parse :bIIIsus4)
+
+           (?? :bIIIsus4)
+           )
 
          (comment
            (parse "D")
+           (parse :m)
            (parse "D6")
            (parse "Dm6")
            (parse "C#m7")
