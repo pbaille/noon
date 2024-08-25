@@ -104,7 +104,7 @@
     (defn degree-update [degree alteration]
       (let [offset (pitch-offset (roman-degree->natural-pitch-class degree) alteration)
             degree-shift (if (> (:c offset) 6)
-                           (mod (- (:d offset) 7) 7)
+                           (- (:d offset) 7)
                            (:d offset))]
         (fn [{:as harmonic-context :keys [scale]}]
           (h/upd harmonic-context
