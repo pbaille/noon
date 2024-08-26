@@ -132,7 +132,8 @@
                    [:structure/shorthand "2" "3" "6" "7"])))
 
       (is (= (parse :phrygian6.s2467)
-             (list [:mode [:mode/base [:phrygian]] [:mode/alterations [:mode.alteration/degree [:natural] [:sixth]]]] [:structure/shorthand "2" "4" "6" "7"]))))))
+             (list [:mode [:mode/base [:phrygian]] [:mode/alterations [:mode.alteration/degree [:natural] [:sixth]]]]
+                   [:structure/shorthand "2" "4" "6" "7"]))))))
 
 (defn upd [& xs]
   (h/upd h/hc0
@@ -143,25 +144,25 @@
   (testing "root change"
 
     (is (= (upd :F)
-           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 38, :c 65}, :position {:t 0, :s 0, :d 0, :c 0}}))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 38, :c 65}, :position {:t 0, :s -1, :d 0, :c 0}}))
 
     (testing "closest root"
       (is (= (upd :G)
-             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 32, :c 55}, :position {:t 0, :s 0, :d 0, :c 0}})))
+             {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 32, :c 55}, :position {:t 0, :s 1, :d 1, :c 0}})))
 
     (is (= (upd :Eb)
-           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 37, :c 63}, :position {:t 0, :s 0, :d 0, :c 0}})))
+           {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 37, :c 63}, :position {:t 0, :s -1, :d 1, :c 0}})))
 
   (testing "degree change"
     (is (= (upd :IV)
-           {:scale [0 2 4 6 7 9 11], :structure [0 2 4], :origin {:d 38, :c 65}, :position {:t 0, :s 0, :d 0, :c 0}}))
+           {:scale [0 2 4 6 7 9 11], :structure [0 2 4], :origin {:d 38, :c 65}, :position {:t 0, :s -1, :d 0, :c 0}}))
 
     (is (= (upd :bIII)
-           {:scale [0 2 4 6 8 9 11], :structure [0 2 4], :origin {:d 37, :c 63}, :position {:t 0, :s 0, :d 0, :c 0}}))
+           {:scale [0 2 4 6 8 9 11], :structure [0 2 4], :origin {:d 37, :c 63}, :position {:t 0, :s -1, :d 1, :c 0}}))
 
     (testing "closest move"
       (is (= (upd :V)
-             {:scale [0 2 4 5 7 9 10], :structure [0 2 4], :origin {:d 32, :c 55}, :position {:t 0, :s 0, :d 0, :c 0}}))))
+             {:scale [0 2 4 5 7 9 10], :structure [0 2 4], :origin {:d 32, :c 55}, :position {:t 0, :s 1, :d 1, :c 0}}))))
 
   (testing "chords"
 
@@ -169,10 +170,10 @@
            {:scale [0 2 3 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
     (is (= (upd :E+)
-           {:scale [0 2 4 5 8 9 11], :structure [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
+           {:scale [0 2 4 5 8 9 11], :structure [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s -1, :d 0, :c 0}}))
 
     (is (= (upd :IIIM7)
-           {:scale [0 1 4 5 7 8 11], :structure [0 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
+           {:scale [0 1 4 5 7 8 11], :structure [0 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s -2, :d 1, :c 0}}))
 
     (is (= (upd :IIImM7)
-           {:scale [0 1 3 5 7 8 11], :structure [0 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))))
+           {:scale [0 1 3 5 7 8 11], :structure [0 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s -2, :d 1, :c 0}}))))
