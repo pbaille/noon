@@ -27,7 +27,8 @@
 (do :parsed-update
 
     (defn upd [& xs]
-      (n/ef_ (update _ :pitch (apply ph/interpret xs))))
+      (let [u (apply ph/interpret xs)]
+        (n/ef_ (update _ :pitch u))))
 
     (u/defn* lin
       "Build an update similarly to `noon.score/lin` but interpret keywords using `noon.parse.harmony`."
