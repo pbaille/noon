@@ -9,7 +9,8 @@
             [noon.utils.sequences :as s]
             [clojure.core :as c]
             [clojure.math.combinatorics :as comb]
-            [noon.utils.maps :as m]))
+            [noon.utils.maps :as m]
+            [noon.parse.harmony :as ph]))
 
 (do :help
 
@@ -22,6 +23,21 @@
       "Check if the score `s` is within given pitch `bounds`."
       [bounds s]
       (bounds-gte bounds (n/pitch-value-bounds s))))
+
+(do :parsed-update
+
+    (defn upd [& xs]
+      (n/ef_ (update _ :pitch (apply ph/interpret xs))))
+
+    (u/defn* lin
+      "Build an update similarly to `noon.score/lin` but interpret keywords using `noon.parse.harmony`."
+      [xs]
+      (n/lin* (map upd xs)))
+
+    (u/defn* tup
+      "Build an update similarly to `noon.score/tup` but interpret keywords using `noon.parse.harmony`."
+      [xs]
+      (n/tup* (map upd xs))))
 
 (do :voicings
 
