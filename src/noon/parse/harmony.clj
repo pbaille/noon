@@ -136,14 +136,19 @@
          :structure.modifier/augmented (structure-addition-update :fifth :sharp)
          :structure/shorthand (h/structure (mapv string-digit->scale-idx content)))))
 
-    (defn interpret [& xs]
+    (defn interpret-tree [tree]
       (h/->hc-update
-       (mapv parsed-tree->update (apply parse xs)))))
+       (if (seq? tree)
+         (mapv parsed-tree->update tree)
+         (parsed-tree->update tree))))
+
+    (defn interpret [& xs]
+      (interpret-tree (apply parse xs))))
 
 (comment :tries
 
          (defn ?? [& xs]
-           ((apply interpret xs)
+           ((apply interpret (apply parse xs) )
             h/hc0))
 
          (comment
