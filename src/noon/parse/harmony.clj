@@ -11,8 +11,10 @@
       (insta/parser (slurp (io/resource "harmony.bnf"))
                     :allow-namespaced-nts true))
 
-    (defn parse [& xs]
-      (insta/parse parser (str/join "." (map name xs)))))
+    (defn parse
+      "Parse `x` according to `harmony.bnf`, return a sequence of parse results."
+      [x]
+      (insta/parse parser (name x))))
 
 (do :parsed-leaf-convertion
 
@@ -119,36 +121,30 @@
 
     (defn parsed-tree->update
       [[type & [[x1] [x2] :as content]]]
-      (h/->hc-update
-       (case type
-         (:mode
-          :structure
-          :structure/modifiers
-          :mode/alterations) (mapv parsed-tree->update content)
-         :degree (degree-update x2 x1)
-         :root (h/root (pitch-offset x1 x2))
-         :structure/base (base-structure-update x1)
-         :mode/base (h/scale x1)
-         :structure.modifier/degree (structure-addition-update x2 x1)
-         :structure.modifier/omission (h/structure-remove (omission->removed-scale-idx x1))
-         :mode.alteration/degree (degree-alteration-update x2 x1)
-         :mode.alteration/augmented-fifth (degree-alteration-update :fifth :sharp)
-         :structure.modifier/augmented (structure-addition-update :fifth :sharp)
-         :structure/shorthand (h/structure (mapv string-digit->scale-idx content)))))
-
-    (defn interpret-tree [tree]
-      (h/->hc-update
-       (if (seq? tree)
-         (mapv parsed-tree->update tree)
-         (parsed-tree->update tree))))
+      (case type
+        (:mode
+         :structure
+         :structure/modifiers
+         :mode/alterations) (mapv parsed-tree->update content)
+        :degree (degree-update x2 x1)
+        :root (h/root (pitch-offset x1 x2))
+        :structure/base (base-structure-update x1)
+        :mode/base (h/scale x1)
+        :structure.modifier/degree (structure-addition-update x2 x1)
+        :structure.modifier/omission (h/structure-remove (omission->removed-scale-idx x1))
+        :mode.alteration/degree (degree-alteration-update x2 x1)
+        :mode.alteration/augmented-fifth (degree-alteration-update :fifth :sharp)
+        :structure.modifier/augmented (structure-addition-update :fifth :sharp)
+        :structure/shorthand (h/structure (mapv string-digit->scale-idx content))))
 
     (defn interpret [& xs]
-      (interpret-tree (apply parse xs))))
+      (h/rebase (mapv parsed-tree->update
+                      (mapcat parse xs)))))
 
 (comment :tries
 
          (defn ?? [& xs]
-           ((apply interpret (apply parse xs) )
+           ((apply interpret xs)
             h/hc0))
 
          (comment
@@ -184,4 +180,5 @@
            (parse "ionianb2b3")
            (parse "dorian#4")
            (parse "ionian+#2")
-           (parse "ionian#2")))
+           (parse "ionian#2")
+           (parse :s123)))
