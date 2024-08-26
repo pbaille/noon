@@ -1,4 +1,4 @@
-(ns noon.parser
+(ns noon.parse.harmony
   (:require [clojure.java.io :as io]
             [instaparse.core :as insta]
             [noon.constants :as constants]
@@ -35,8 +35,9 @@
                 (fn [s] (vec (sort (disj (set s) x))))))))
 
 (do :parser
+
     (def parser
-      (insta/parser (slurp (io/resource "noon.bnf"))
+      (insta/parser (slurp (io/resource "harmony.bnf"))
                     :allow-namespaced-nts true))
 
     (defn parse [& xs]
@@ -186,9 +187,7 @@
            (parse :dorianb2 :s2467)
            (?? :dorianb2 :s2467)
            (parse :bIIIsus4)
-
-           (?? :bIIIsus4)
-           )
+           (?? :bIIIsus4))
 
          (comment
            (parse "D")

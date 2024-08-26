@@ -1,5 +1,5 @@
-(ns noon.parser-test
-  (:require [noon.parser :as p :refer [parse]]
+(ns noon.parse.harmony-test
+  (:require [noon.parse.harmony :as p :refer [parse]]
             [clojure.test :refer [testing deftest is]]
             [noon.harmony :as h]))
 
