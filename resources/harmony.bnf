@@ -1,8 +1,8 @@
-<top> = concrete-chord | concrete-mode
+<top> = top/structure | top/mode
 
-<concrete-chord> = (degree | root)? structure?
+<top/structure> = (degree | root)? (structure | structure/shorthand)?
 
-<concrete-mode> = (degree | root)? mode structure/shorthand?
+<top/mode> = (degree | root)? mode (<separator> structure/shorthand)?
 
 (* MISC ---------------------------------------------------------------------------------------- *)
 
@@ -87,36 +87,35 @@ structure.modifier/omission = (omit1 | omit3 | omit5)
 structure.modifier/augmented = <'+'>
 structure.modifier/degree = alteration mode-degree
 
+structure/shorthand = <'s'> degree-digit+
+  <degree-digit> = '1' | '2' | '3' | '4' | '5' | '6' | '7'
 
 (* MODES ------------------------------------------------------------------------------------- *)
 
 
-mode = <separator?> mode/base mode/alterations? structure/shorthand?
+mode = <separator?> mode/base mode/alterations?
 
 mode/base = ionian | dorian | phrygian | mixolydian | lydian | aeolian | locrian |
             harmonic-minor | melodic-minor | altered | harmonic-major |
             double-harmonic | ultraphrygian | hungarian-minor | oriental | ultralocrian
 
-  ionian = <'ionian'>
-  dorian = <'dorian'>
-  phrygian = <'phrygian'>
-  lydian = <'lydian'>
-  mixolydian = <'mixolydian'>
-  aeolian = <'aeolian'>
-  locrian = <'locrian'>
-  harmonic-minor = <'harmonic-minor'>
-  melodic-minor = <'melodic-minor'>
-  altered = <'superlocrian' | 'altered'>
-  harmonic-major = <'harmonic-major'>
+  ionian = <'ionian' | 'ion'>
+  dorian = <'dorian' | 'dor'>
+  phrygian = <'phrygian' | 'phry'>
+  lydian = <'lydian' | 'lyd'>
+  mixolydian = <'mixolydian' | 'mix'>
+  aeolian = <'aeolian' | 'eolian' | 'eol'>
+  locrian = <'locrian' | 'loc'>
+  harmonic-minor = <'harmonic-minor' | 'harmm'>
+  melodic-minor = <'melodic-minor' | 'melm'>
+  altered = <'superlocrian' | 'altered' | 'alt'>
+  harmonic-major = <'harmonic-major' | 'harmM'>
   double-harmonic = <'double-harmonic'>
   ultraphrygian = <'ultraphrygian'>
-  hungarian-minor = <'hungarian-minor'>
+  hungarian-minor = <'hungarian-minor' | 'hungarian'>
   oriental = <'oriental'>
   ultralocrian = <'ultralocrian'>
 
 mode/alterations = mode.alteration/augmented-fifth? <separator?> mode.alteration/degree* mode.alteration/augmented-fifth?
   mode.alteration/augmented-fifth = <'+'>
   mode.alteration/degree = alteration mode-degree
-
-structure/shorthand = <separator> <'s'> degree-digit+
-  <degree-digit> = '1' | '2' | '3' | '4' | '5' | '6' | '7'
