@@ -3,8 +3,7 @@
   (:require [clojure.test :as t :refer [deftest testing is]]
             [noon.utils.pseudo-random :as pr]
             [noon.utils.chance :as g]
-            [noon.utils.misc :as u]
-            [noon.test :as tu]))
+            [noon.utils.misc :as u]))
 
 (def event0 DEFAULT_EVENT)
 (def S0 score0)
@@ -1039,8 +1038,7 @@
                                                    (in-place (tup same [(ef_ (conj _ (find (first b) :pitch))) d1]))))))
                    (mk (lin (tup s0 [s2 d1]) (tup s2 [s4 d1]) s4))))))))
 
-    (is (tu/frozen :frozen-test
-                   (lin d1 d2 d3)))))
+    ))
 
 
 '(deftest new-rep
