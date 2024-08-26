@@ -308,6 +308,7 @@
 
         (def ^{:doc "Get the chromatic value of the given harmonic context."}
           hc->chromatic-value (comp :c hc->pitch))
+
         (def ^{:doc "Get the diatonic value of the given harmonic context."}
           hc->diatonic-value (comp :d hc->pitch))
 
@@ -644,6 +645,25 @@
                          (mod n (count sc))))
              (origin (hc->pitch (upd ctx (d-position n)))))))
 
+    (defn degree-alteration
+      "Build an update that alter the degree at `scale-idx` according to `c-val`.
+       Throws if not possible due to neighbours degrees."
+      [scale-idx c-val]
+      (fn [harmonic-context]
+        (let [scale (:scale harmonic-context)
+              scale-size (count scale)
+              _ (when (>= scale-idx scale-size)
+                  (u/throw* `degree-alteration " scale-idx out of bounds."))
+              current-c-val (get scale scale-idx)]
+          (if (= current-c-val c-val)
+            harmonic-context
+            (let [below-c-val (get scale (dec scale-idx))
+                  above-c-val (if (< scale-idx scale-size) (get scale (inc scale-idx)))]
+              (if (and (> c-val below-c-val)
+                       (or (not above-c-val) (< c-val above-c-val)))
+                (update harmonic-context :scale assoc scale-idx c-val)
+                (u/throw* `degree-alteration " conflict, your alteration overlaps neighbour degrees.")))))))
+
     (defn inversion
       "Build an update that go to inversion `n` (potentially negative) of the received context preserving its position."
       [n]
@@ -652,18 +672,15 @@
               new-scale (get (constants/scale-modes sc)
                              (mod (-> (s->d new-origin) :position :d) (count sc)))
               new-structure (get (constants/structure-inversions sc st)
-                              (mod n (count st)))]
+                                 (mod n (count st)))]
           (upd ctx
                (scale new-scale)
                (structure new-structure)
                (origin (hc->pitch new-origin))))))
 
-    (comment
-      (constants/structure-inversions [0 2 4 5 7 9 11] [0 1 2 4])
-      (upd hc0 (inversion 2)))
-
     (def ^{:doc "Build an update that changes the root of the received context, without changing its pitch. see `noon.harmony/root`."}
       reroot (comp rebase root))
+
     (def ^{:doc "Build an update that changes the degree of the received context, without changing its pitch. see `noon.harmony/degree`."}
       redegree (comp rebase degree))
 
@@ -705,8 +722,6 @@
           (:diatonic :d) (d-round ret)
           (:chromatic :c) ret)))
 
-    ;; passing-tones
-
     (defn mirror
       "Build an update that mirror received context against `pitch`."
       [pitch]
@@ -717,7 +732,22 @@
               nxt-p (merge-with - pivot delta)]
           (upd ctx (repitch nxt-p)))))
 
+    (defn structure-add
+      "Build an update that add the given `scale-idx` to the :structure of the received context."
+      [scale-idx]
+      (fn [harmonic-context]
+        (update harmonic-context :structure
+                (fn [s] (vec (sort (conj (set s) scale-idx)))))))
+
+    (defn structure-remove
+      "Build an update that removes the given `scale-idx` to the :structure of the received context."
+      [scale-idx]
+      (fn [harmonic-context]
+        (update harmonic-context :structure
+                (fn [s] (vec (sort (disj (set s) scale-idx)))))))
+
     (do :passings
+
         (defn s+
           "melodic superior diatonic passing note"
           [ctx]
@@ -825,6 +855,7 @@
            (chromatic-distance (upd ctx d1) ctx)]))
 
     (do :connections
+
         (defn connections
           "For each layer, computes the ctxs between hc1 and hc2
            returns a map of kind {layer intermediate-ctxs}
@@ -891,6 +922,7 @@
                     :else nil))))
 
         (comment
+
           (neibourhood (upd (hc)
                             (position 0 0 0 1)))
           (connections (upd (hc) (position 2 1))

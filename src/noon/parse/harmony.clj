@@ -3,36 +3,7 @@
             [instaparse.core :as insta]
             [noon.constants :as constants]
             [noon.harmony :as h]
-            [noon.utils.misc :as u]
             [clojure.string :as str]))
-
-(do :move-to-harmony
-
-    (defn degree-alteration [scale-idx c-val]
-      (fn [harmonic-context]
-        (let [scale (:scale harmonic-context)
-              scale-size (count scale)
-              _ (when (>= scale-idx scale-size)
-                  (u/throw* `degree-alteration " scale-idx out of bounds."))
-              current-c-val (get scale scale-idx)]
-          (if (= current-c-val c-val)
-            harmonic-context
-            (let [below-c-val (get scale (dec scale-idx))
-                  above-c-val (if (< scale-idx scale-size) (get scale (inc scale-idx)))]
-              (if (and (> c-val below-c-val)
-                       (or (not above-c-val) (< c-val above-c-val)))
-                (update harmonic-context :scale assoc scale-idx c-val)
-                (u/throw* `degree-alteration " conflict, your alteration overlaps neighbour degrees.")))))))
-
-    (defn structure-add [x]
-      (fn [harmonic-context]
-        (update harmonic-context :structure
-                (fn [s] (vec (sort (conj (set s) x)))))))
-
-    (defn structure-remove [x]
-      (fn [harmonic-context]
-        (update harmonic-context :structure
-                (fn [s] (vec (sort (disj (set s) x))))))))
 
 (do :parser
 
@@ -110,18 +81,18 @@
         (fn [{:as harmonic-context :keys [scale]}]
           (h/upd harmonic-context
                  (when (not= (get (:d offset) scale) (:c offset))
-                   (degree-alteration (:d offset) (:c offset)))
+                   (h/degree-alteration (:d offset) (:c offset)))
                  (h/degree degree-shift)))))
 
     (defn degree-alteration-update [degree alteration]
       (let [c-val (:c (-> (scale-degree->natural-pitch-class degree)
                           (pitch-offset alteration)))
             scale-idx (scale-degree->scale-idx degree)]
-        (degree-alteration scale-idx c-val)))
+        (h/degree-alteration scale-idx c-val)))
 
     (defn structure-addition-update [degree alteration]
       [(degree-alteration-update degree alteration)
-       (structure-add (scale-degree->scale-idx degree))])
+       (h/structure-add (scale-degree->scale-idx degree))])
 
     (defn base-structure-update [structure]
       (let [type (keyword (namespace structure))
@@ -159,7 +130,7 @@
          :structure/base (base-structure-update x1)
          :mode/base (h/scale x1)
          :structure.modifier/degree (structure-addition-update x2 x1)
-         :structure.modifier/omission (structure-remove (omission->removed-scale-idx x1))
+         :structure.modifier/omission (h/structure-remove (omission->removed-scale-idx x1))
          :mode.alteration/degree (degree-alteration-update x2 x1)
          :mode.alteration/augmented-fifth (degree-alteration-update :fifth :sharp)
          :structure.modifier/augmented (structure-addition-update :fifth :sharp)
