@@ -147,6 +147,9 @@
            ((apply interpret xs)
             h/hc0))
 
+         (?? :III7)
+         (parse :III7)
+
          (comment
            (?? :m)
            (?? "aeolian")
@@ -159,7 +162,8 @@
            (parse :dorianb2 :s2467)
            (?? :dorianb2 :s2467)
            (parse :bIIIsus4)
-           (?? :bIIIsus4))
+           (?? :bIIIsus4)
+           (?? :V7b9omit1))
 
          (comment
            (parse "D")
@@ -181,4 +185,5 @@
            (parse "dorian#4")
            (parse "ionian+#2")
            (parse "ionian#2")
-           (parse :s123)))
+           (parse :s123)
+           (parse :V7b9omit1)))
