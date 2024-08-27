@@ -57,7 +57,7 @@ root = pitch-class alteration
 
 (* STRUCTURE ------------------------------------------------------------------------------ *)
 
-structure = structure/base? structure/modifiers?
+structure = structure/base structure/modifiers / structure/modifiers
 
 structure/base = tetrad/major-seventh / tetrad/diminished-seventh / tetrad/minor-seventh /
                  tetrad/dominant / tetrad/half-diminished / tetrad/minor-major-seventh /
