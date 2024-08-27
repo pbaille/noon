@@ -226,9 +226,9 @@
                       structure-size (count structure)
                       contains-tonic? (zero? (first structure))]
                   (update ctx :position
-                          (fn [{:as p :keys [t]}]
+                          (fn [{:as p :keys [t s]}]
 
-                            (if contains-tonic?
+                            (if (or contains-tonic? s)
                               (-> (assoc p :t 0)
                                   (update :s safe-add (* structure-size t)))
                               (-> (assoc p :t 0)
@@ -594,8 +594,9 @@
     (do :update
 
         (defn chain-update [xs]
-          (let [[x & xs] (reverse xs)]
-            (reduce comp x xs)))
+          (if-let [[x & xs] (seq (reverse xs))]
+            (reduce comp x xs)
+            identity))
 
         (defn ->hc-update
           "Turn `x` into an harmonic context update
