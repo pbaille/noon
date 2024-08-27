@@ -9,13 +9,19 @@
 
     (testing "triads"
       (is (= (parse :m)
-             (list [:structure [:structure/base [:triad/minor]]])))
+             (list [:structure
+                    [:structure/base [:triad/minor]]
+                    [:structure/modifiers]])))
 
       (is (= (parse :o)
-             (list [:structure [:structure/base [:triad/diminished]]])))
+             (list [:structure
+                    [:structure/base [:triad/diminished]]
+                    [:structure/modifiers]])))
 
       (is (= (parse "M")
-             (list [:structure [:structure/base [:triad/major]]]))))
+             (list [:structure
+                    [:structure/base [:triad/major]]
+                    [:structure/modifiers]]))))
 
     (testing "root and degree"
 
@@ -24,27 +30,31 @@
 
       (is (= (parse "Bbbm")
              (list [:root [:B] [:double-bemol]]
-                   [:structure [:structure/base [:triad/minor]]])))
+                   [:structure [:structure/base [:triad/minor]] [:structure/modifiers]])))
 
       (is (= (parse "bII+")
              (list [:degree [:bemol] [:two]]
-                   [:structure [:structure/modifiers [:structure.modifier/augmented]]])))
+                   [:structure
+                    [:structure/base [:triad/augmented]]
+                    [:structure/modifiers]])))
 
       (is (= (parse :#IVo)
              (list [:degree [:sharp] [:four]]
-                   [:structure [:structure/base [:triad/diminished]]]))))
+                   [:structure
+                    [:structure/base [:triad/diminished]]
+                    [:structure/modifiers]]))))
 
     (testing "tetrads"
 
       (is (= (parse :mΔ)
              (parse :mM7)
-             (list [:structure [:structure/base [:tetrad/minor-major-seventh]]])))
+             (list [:structure [:structure/base [:tetrad/minor-major-seventh]] [:structure/modifiers]])))
 
       (is (= (parse :ø)
-             (list [:structure [:structure/base [:tetrad/half-diminished]]])))
+             (list [:structure [:structure/base [:tetrad/half-diminished]] [:structure/modifiers]])))
 
       (is (= (parse :o7)
-             (list [:structure [:structure/modifiers [:structure.modifier/degree [:double-bemol] [:seventh]]]]))))
+             (list [:structure [:structure/base [:tetrad/diminished-seventh]] [:structure/modifiers]]))))
 
     (testing "modifiers"
 
@@ -63,8 +73,8 @@
       (is (= (parse :Eb7sus4)
              (list [:root [:E] [:bemol]]
                    [:structure
+                    [:structure/base [:tetrad/dominant]]
                     [:structure/modifiers
-                     [:structure.modifier/degree [:natural] [:seventh]]
                      [:structure.modifier/omission [:omit3]]
                      [:structure.modifier/degree [:natural] [:fourth]]]])))
 
@@ -75,8 +85,8 @@
       (is (= (parse :E7b913)
              (list [:root [:E] [:natural]]
                    [:structure
+                    [:structure/base [:tetrad/dominant]]
                     [:structure/modifiers
-                     [:structure.modifier/degree [:natural] [:seventh]]
                      [:structure.modifier/degree [:bemol] [:second]]
                      [:structure.modifier/degree [:natural] [:sixth]]]])))
 
@@ -176,4 +186,9 @@
            {:scale [0 1 4 5 7 8 11], :structure [0 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s -2, :d 1, :c 0}}))
 
     (is (= (upd :IIImM7)
-           {:scale [0 1 3 5 7 8 11], :structure [0 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s -2, :d 1, :c 0}}))))
+           {:scale [0 1 3 5 7 8 11], :structure [0 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s -2, :d 1, :c 0}})))
+
+  (testing "chaining"
+
+    (is (= (upd :IIImelm :mM79 :omit1)
+           {:scale [0 2 3 5 7 9 11], :structure [1 2 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s -1, :d -1, :c -1}}))))
