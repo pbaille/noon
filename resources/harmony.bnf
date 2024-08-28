@@ -1,12 +1,13 @@
 <top> = top/structure | top/mode
 
-<top/structure> = (degree | root)? (structure | structure/shorthand)?
+<top/structure> = colon? (secondary-degree | degree | root)? separator? (structure | structure/shorthand)?
 
-<top/mode> = (degree | root)? mode (<separator> structure/shorthand)?
+<top/mode> = colon? (secondary-degree | degree | root)? separator? mode (separator structure/shorthand)?
 
 (* MISC ---------------------------------------------------------------------------------------- *)
 
 <separator> = <'.'>
+<colon> = <':'>
 
 (* DEGREE -------------------------------------------------------------------------------------- *)
 
@@ -38,6 +39,8 @@ degree = alteration roman-degree
   fifth = <'5'>
   sixth = <'6' | '13'>
   seventh = <'7'>
+
+secondary-degree = degree <'/'> degree
 
 
 (* ROOT ---------------------------------------------------------------------------------------- *)
