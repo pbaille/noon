@@ -75,11 +75,11 @@
                          (mk (par s0 [o1 s1] s2 s3)))))
     (testing "diatonic no duplicates"
       (is (t/frozen :diatonic-drops
-            (par d0 d1 d2 d3)
-            (sf_ (concat-scores (h/drops _ :inversions true)))))
+                    (par d0 d1 d2 d3)
+                    (sf_ (concat-scores (h/drops _ :inversions true)))))
       (is (t/frozen :diatonic-drops-no-inversions
-            (par d0 d1 d2 d3)
-            (sf_ (concat-scores (h/drops _))))))
+                    (par d0 d1 d2 d3)
+                    (sf_ (concat-scores (h/drops _))))))
     (testing "with two tonic"
       (is (t/frozen :drops-2-tonics
                     (par s0 s1 s2 s3)
@@ -154,6 +154,23 @@
                   (nlin> 12 (transpose c1))
                   (h/align-contexts :structural :incremental)
                   (each tetrad h/simple-chord)))))
+
+(deftest parsed-updates
+  (testing "lin"
+    (is (t/frozen :parsed-updates
+                  (h/lin :IM7 :VIIm7b5 :III7 :VI7 :IIm7 :II7 :V7sus4 :V7b9omit1)
+                  (chans (each (par s0 s1 s2 s3))
+                         [(patch :ocarina) o1
+                          (each [(mixtup s0 s1 s2 s3)
+                                 (shuftup s0 (one-of s3- s2- s1- s1 s2 s3))])])
+                  (dup 2)))
+
+    (is (t/frozen :parsed-updates2
+                  (h/tup :IM7 :V/III7 :IIIm7 :bIIIM7 :V/V7sus4 :bVI7#11omit5 :V7sus4 :bIIM7)
+                  (chans (each [(par s0 s2 s3) (mixtup s0 s1 s2)])
+                         [(patch :acoustic-bass) C-2 t-round])
+                  (dup 2)
+                  (adjust 16)))))
 
 
 (comment
