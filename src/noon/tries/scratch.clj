@@ -329,3 +329,40 @@
                    (dup 2)))
 
          )
+
+(comment
+  (play (h/upd :altered.s2367)
+        (par s0 s1 s2 s3))
+
+  (play (h/lin :Imelm.s2367 :Valt.s2367)
+        (par s0 s1 s2 s3)
+        (dup 2))
+
+  (play (h/upd :s2367)
+        (h/lin :Imelm :Valt)
+        #_(h/align-contexts :s)
+        (par s0 s1 s2 s3)
+        (dup 2))
+
+  (play (h/upd :s2367)
+        (par s0 s1 s2 s3)
+        (dup 2))
+
+  (play (h/lin :IM7 :VIIm7b5 :III7 :VI7 :IIm7 :II7 :V7sus4 :V7b9omit1)
+        (chans (each (par s0 s1 s2 s3))
+               [(patch :ocarina) o1
+                (each [(mixtup s0 s1 s2 s3)
+                       (shuftup s0 (one-of s3- s2- s1- s1 s2 s3))])])
+        (dup 2)
+        (options {:midi true
+                  :filename "test/trash/hupd1"}))
+
+  (play (h/tup :IM7 :V/III7 :IIIm7 :bIIIM7 :V/V7sus4 :bVI7#11omit5 :V7sus4 :bIIM7)
+        (chans (each [(par s0 s2 s3) (mixtup s0 s1 s2)])
+               [(patch :acoustic-bass) C-2 t-round])
+        (dup 2)
+        (adjust 16))
+
+  (->> (mk (h/upd :V7b9omit1) (lin s0 s1 s2 s3 s4))
+       (sort-by :position)
+       (map pitch-value)))
