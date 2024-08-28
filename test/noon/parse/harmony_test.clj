@@ -42,7 +42,16 @@
              (list [:degree [:sharp] [:four]]
                    [:structure
                     [:structure/base [:triad/diminished]]
-                    [:structure/modifiers]]))))
+                    [:structure/modifiers]])))
+
+      (testing "secondary degrees"
+        (is (= (parse :V/II.7b9)
+               (list [:secondary-degree
+                      [:degree [:natural] [:five]]
+                      [:degree [:natural] [:two]]]
+                     [:structure
+                      [:structure/base [:tetrad/dominant]]
+                      [:structure/modifiers [:structure.modifier/degree [:bemol] [:second]]]])))))
 
     (testing "tetrads"
 
@@ -147,7 +156,7 @@
 
 (defn upd [& xs]
   (h/upd h/hc0
-         (apply p/interpret xs)))
+         (h/rebase (apply p/interpret xs))))
 
 (deftest interpretation
 
