@@ -104,7 +104,28 @@
              (list [:root [:C] [:natural]]
                    [:structure
                     [:structure/base [:tetrad/major-seventh]]
-                    [:structure/modifiers [:structure.modifier/augmented]]])))))
+                    [:structure/modifiers [:structure.modifier/augmented]]])))
+
+      (is (= (parse :V/II.7b9)
+             (list [:secondary-degree
+                    [:degree [:natural] [:five]]
+                    [:degree [:natural] [:two]]]
+                   [:structure
+                    [:structure/base [:tetrad/dominant]]
+                    [:structure/modifiers [:structure.modifier/degree [:bemol] [:second]]]])))
+
+      (is (= (parse :V7b9omit1)
+             (list [:degree [:natural] [:five]]
+                   [:structure
+                    [:structure/base [:tetrad/dominant]]
+                    [:structure/modifiers
+                     [:structure.modifier/degree [:bemol] [:second]]
+                     [:structure.modifier/omission [:omit1]]]]))))
+
+    (testing "structure-shorthand"
+
+      (is (= (parse :s2367)
+             (list [:structure/shorthand "2" "3" "6" "7"])))))
 
   (testing "modes"
 
