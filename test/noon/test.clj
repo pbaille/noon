@@ -44,8 +44,8 @@
   (let [[id updates] (if (keyword? x)
                        [x xs]
                        [nil (cons x xs)])]
-    `(frozen ~id
-             (noon.score/mk ~@updates))))
+    `(frozen* ~id
+              (noon.score/mk ~@updates))))
 
 (comment (macroexpand '(freezm (s/lin s/d0 s/d1)))
          (freezm (s/lin s/d0 s/d1)))
