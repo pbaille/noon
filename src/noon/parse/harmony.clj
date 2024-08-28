@@ -14,7 +14,7 @@
     (defn parse
       "Parse `x` according to `harmony.bnf`, return a sequence of parse results."
       [x]
-      (insta/parse parser (name x))))
+      (insta/parse parser (str x))))
 
 (do :parsed-leaf-convertion
 
@@ -127,6 +127,7 @@
          :structure/modifiers
          :mode/alterations) (mapv parsed-tree->update content)
         :degree (degree-update x2 x1)
+        :secondary-degree (mapv parsed-tree->update (reverse content))
         :root (h/root (pitch-offset x1 x2))
         :structure/base (base-structure-update x1)
         :mode/base (h/scale x1)
@@ -138,8 +139,8 @@
         :structure/shorthand (h/structure (mapv string-digit->scale-idx content))))
 
     (defn interpret [& xs]
-      (h/rebase (mapv parsed-tree->update
-                      (mapcat parse xs)))))
+      (h/->hc-update (mapv parsed-tree->update
+                           (mapcat parse xs)))))
 
 (comment :tries
 
@@ -186,4 +187,6 @@
            (parse "ionian+#2")
            (parse "ionian#2")
            (parse :s123)
-           (parse :V7b9omit1)))
+           (parse :V7b9omit1)
+
+           (parse :V/II.7b9)))
