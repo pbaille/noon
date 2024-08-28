@@ -26,8 +26,13 @@
 
 (do :parsed-update
 
+    (defn ->pitch-update [x]
+      (cond (keyword? x) (ph/interpret x)
+            (vector? x) (h/chain-update (mapv ->pitch-update x))
+            :else x))
+
     (defn upd [& xs]
-      (let [u (apply ph/interpret xs)]
+      (let [u (h/rebase (h/chain-update (mapv ->pitch-update xs)))]
         (n/ef_ (update _ :pitch u))))
 
     (u/defn* lin
