@@ -228,7 +228,7 @@
                   (update ctx :position
                           (fn [{:as p :keys [t s]}]
 
-                            (if (or contains-tonic? s)
+                            (if (or contains-tonic? s) ;; if :s offset is present we don't make the :d layer adjustment
                               (-> (assoc p :t 0)
                                   (update :s safe-add (* structure-size t)))
                               (-> (assoc p :t 0)
