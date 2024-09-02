@@ -170,10 +170,29 @@
                   (chans (each [(par s0 s2 s3) (mixtup s0 s1 s2)])
                          [(patch :acoustic-bass) C-2 t-round])
                   (dup 2)
-                  (adjust 16)))))
+                  (adjust 16))))
 
+  (is (= (mk (h/upd :EM7) (par s0 s1 s2 s3))
+         (mk (root :E) tetrad C0 (par s0 s1 s2 s3))))
+
+  (testing "mixed parsed, unparsed, event-update, score-update"
+    (is (= (mk (h/upd (dup 2) :E7sus4 vel2))
+           #{{:patch [0 4], :channel 0,
+              :pitch {:scale [0 2 4 5 7 9 10], :structure [0 3 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s -2, :d 0, :c 1}},
+              :voice 0, :duration 1, :position 1, :velocity 21, :track 0}
+             {:position 0, :channel 0, :track 0, :duration 1,
+              :pitch {:scale [0 2 4 5 7 9 10], :structure [0 3 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s -2, :d 0, :c 1}},
+              :velocity 21, :voice 0, :patch [0 4]}}))))
 
 (comment
+
+  (play (h/upd :Emix :7sus413 :omit1)
+        (chans [(patch :acoustic-bass) C-2 t-round (dupt 4)]
+               [(shuftup s0 s1 s2 s3)
+                (each (shuftup (par _ s3) (par s1 s2)))
+                (tup _ s1- s2-)
+                (each (vel-humanize 10))])
+        (adjust 8))
 
   (defmacro log [x & xs]
     `(noon.score/sfn ~x (noon.score/pp ~@xs) ~x))
