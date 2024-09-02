@@ -1,8 +1,8 @@
-<top> = top/structure | top/mode
+<top> = colon? (secondary-degree | degree | root)? (top/structure | top/mode)
 
-<top/structure> = colon? (secondary-degree | degree | root)? separator? (structure | structure/shorthand)?
+<top/structure> = separator? (structure | structure/shorthand)?
 
-<top/mode> = colon? (secondary-degree | degree | root)? separator? mode (separator structure/shorthand)?
+<top/mode> = separator? mode (separator structure/shorthand)?
 
 (* MISC ---------------------------------------------------------------------------------------- *)
 
@@ -77,7 +77,7 @@ structure/base = tetrad/major-seventh / tetrad/diminished-seventh / tetrad/minor
   triad/minor = <'m'>
   triad/major = <'M'>
 
-structure/modifiers = structure.modifier/augmented? structure/modifier* structure.modifier/augmented?
+structure/modifiers = structure.modifier/augmented? structure/modifier* structure.modifier/augmented? structure.modifier/bass?
 
   <structure/modifier> = separator? (structure.modifier/omission | structure.modifier/degree)
 
@@ -89,6 +89,7 @@ structure.modifier/omission = (omit1 | omit3 | omit5)
 
 structure.modifier/augmented = <'+'>
 structure.modifier/degree = alteration mode-degree
+structure.modifier/bass = <'/'> degree-digit
 
 structure/shorthand = <'s'> degree-digit+
   <degree-digit> = '1' | '2' | '3' | '4' | '5' | '6' | '7'
