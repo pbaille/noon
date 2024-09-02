@@ -3,7 +3,8 @@
             [instaparse.core :as insta]
             [noon.constants :as constants]
             [noon.harmony :as h]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [noon.utils.misc :as u]))
 
 (do :parser
 
@@ -96,6 +97,15 @@
       [(degree-alteration-update degree alteration)
        (h/structure-add (scale-degree->scale-idx degree))])
 
+    (defn bass-update [scale-idx]
+      [(h/structure-add scale-idx)
+       (fn [harmonic-context]
+         (let [struct (:structure harmonic-context)
+               chromatic-val (get (:scale harmonic-context) scale-idx)
+               degree-offset (u/index-of struct scale-idx)]
+           (h/upd harmonic-context (h/inversion (if (> chromatic-val 6)
+                                                  (- degree-offset (count struct))
+                                                  degree-offset)))))])
     (defn base-structure-update [structure]
       (let [type (keyword (namespace structure))
             structure-name (keyword (name structure))
@@ -133,6 +143,7 @@
         :mode/base (h/scale x1)
         :structure.modifier/degree (structure-addition-update x2 x1)
         :structure.modifier/omission (h/structure-remove (omission->removed-scale-idx x1))
+        :structure.modifier/bass (bass-update (string-digit->scale-idx (first content)))
         :mode.alteration/degree (degree-alteration-update x2 x1)
         :mode.alteration/augmented-fifth (degree-alteration-update :fifth :sharp)
         :structure.modifier/augmented (structure-addition-update :fifth :sharp)
@@ -189,4 +200,7 @@
            (parse :s123)
            (parse :V7b9omit1)
 
-           (parse :V/II.7b9)))
+           (parse :V/II.7b9)
+
+           (?? "E7b9/3")
+           (?? "E7b9/5")))
