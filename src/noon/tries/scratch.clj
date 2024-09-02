@@ -353,15 +353,16 @@
                [(patch :ocarina) o1
                 (each [(mixtup s0 s1 s2 s3)
                        (shuftup s0 (one-of s3- s2- s1- s1 s2 s3))])])
-        (dup 2)
-        (options {:midi true
-                  :filename "test/trash/hupd1"}))
+        (dup 2))
 
   (play (h/tup :IM7 :V/III7 :IIIm7 :bIIIM7 :V/V7sus4 :bVI7#11omit5 :V7sus4 :bIIM7)
         (chans (each [(par s0 s2 s3) (mixtup s0 s1 s2)])
                [(patch :acoustic-bass) C-2 t-round])
         (dup 2)
         (adjust 16))
+
+  (play (h/lin :I [:II :V7] :V7 :I)
+        (tup s0 s1 s2 s3))
 
   (->> (mk (h/upd :V7b9omit1) (lin s0 s1 s2 s3 s4))
        (sort-by :position)
