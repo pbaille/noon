@@ -27,13 +27,12 @@
 (do :parsed-update
 
     (defn ->pitch-update [x]
-      (cond (keyword? x) (ph/interpret x)
-            (vector? x) (h/chain-update (mapv ->pitch-update x))
+      (cond (keyword? x) (let [u (h/rebase (ph/interpret x))] (n/ef_ (update _ :pitch u)))
+            (vector? x) (mapv ->pitch-update x)
             :else x))
 
     (defn upd [& xs]
-      (let [u (h/rebase (h/chain-update (mapv ->pitch-update xs)))]
-        (n/ef_ (update _ :pitch u))))
+      (mapv ->pitch-update xs))
 
     (u/defn* lin
       "Build an update similarly to `noon.score/lin` but interpret keywords using `noon.parse.harmony`."
