@@ -40,7 +40,7 @@ degree = alteration roman-degree
   sixth = <'6' | '13'>
   seventh = <'7'>
 
-secondary-degree = degree <'/'> degree
+secondary-degree = degree <'/' | 'of'> degree
 
 
 (* ROOT ---------------------------------------------------------------------------------------- *)
@@ -77,7 +77,7 @@ structure/base = tetrad/major-seventh / tetrad/diminished-seventh / tetrad/minor
   triad/minor = <'m'>
   triad/major = <'M'>
 
-structure/modifiers = structure.modifier/augmented? structure/modifier* structure.modifier/augmented? structure.modifier/bass?
+structure/modifiers = structure.modifier/augmented? structure/modifier* structure.modifier/augmented? (separator? structure.modifier/bass)?
 
   <structure/modifier> = separator? (structure.modifier/omission | structure.modifier/degree)
 
@@ -89,7 +89,12 @@ structure.modifier/omission = (omit1 | omit3 | omit5)
 
 structure.modifier/augmented = <'+'>
 structure.modifier/degree = alteration mode-degree
-structure.modifier/bass = <'/'> degree-digit
+
+structure.modifier/bass = (<'/'> | <'bass'> | <'on'>) structure.modifier.bass/content
+  <structure.modifier.bass/content> = structure.modifier.bass/degree | structure.modifier.bass/degree-digit | structure.modifier.bass/pitch-class
+  structure.modifier.bass/degree-digit = degree-digit
+  structure.modifier.bass/degree = alteration roman-degree
+  structure.modifier.bass/pitch-class = pitch-class alteration
 
 structure/shorthand = <'s'> degree-digit+
   <degree-digit> = '1' | '2' | '3' | '4' | '5' | '6' | '7'
