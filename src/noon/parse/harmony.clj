@@ -29,6 +29,25 @@
         :six :A
         :seven :B))
 
+    (defn roman-degree->scale-idx [v]
+      (case v
+        :one 0
+        :two 1
+        :three 2
+        :four 3
+        :five 4
+        :six 5
+        :seven 7))
+
+    (defn roman-degree->scale-degree [v]
+      (case v
+        :two :second
+        :three :third
+        :four :fourth
+        :five :fifth
+        :six :sixth
+        :seven :seventh))
+
     (defn scale-degree->natural-pitch-class [v]
       (case v
         :second :D
@@ -97,7 +116,7 @@
       [(degree-alteration-update degree alteration)
        (h/structure-add (scale-degree->scale-idx degree))])
 
-    (defn bass-update [scale-idx]
+    (defn scale-idx->bass-update [scale-idx]
       [(h/structure-add scale-idx)
        (fn [harmonic-context]
          (let [struct (:structure harmonic-context)
@@ -106,6 +125,32 @@
            (h/upd harmonic-context (h/inversion (if (> chromatic-val 6)
                                                   (- degree-offset (count struct))
                                                   degree-offset)))))])
+
+    (defn pitch-class->bass-update
+      [natural-pitch-class alteration]
+      (fn [harmonic-context]
+        (let [origin (:origin harmonic-context)
+              root-pitch-class (constants/pitch->pitch-class origin)
+              bass-pitch-class (pitch-offset natural-pitch-class alteration)
+              {d-dist :d c-dist :c} (merge-with - bass-pitch-class root-pitch-class)
+              degree-idx (if (neg? d-dist) (+ d-dist 7) d-dist)
+              c-offset (if (neg? c-dist) (+ c-dist 12) c-dist)]
+          (h/upd harmonic-context
+                 (h/degree-alteration degree-idx c-offset)
+                 (scale-idx->bass-update degree-idx)))))
+
+    (defn bass-update [[type & content]]
+      (case type
+        :structure.modifier.bass/degree-digit
+        (scale-idx->bass-update (string-digit->scale-idx (first content)))
+        :structure.modifier.bass/degree
+        (let [[[alteration] [degree]] content]
+          [(structure-addition-update (roman-degree->scale-degree degree) alteration)
+           (scale-idx->bass-update (roman-degree->scale-idx degree))])
+        :structure.modifier.bass/pitch-class
+        (let [[[natural-pitch-class] [alteration]] content]
+          (pitch-class->bass-update natural-pitch-class alteration))))
+
     (defn base-structure-update [structure]
       (let [type (keyword (namespace structure))
             structure-name (keyword (name structure))
@@ -143,7 +188,7 @@
         :mode/base (h/scale x1)
         :structure.modifier/degree (structure-addition-update x2 x1)
         :structure.modifier/omission (h/structure-remove (omission->removed-scale-idx x1))
-        :structure.modifier/bass (bass-update (string-digit->scale-idx (first content)))
+        :structure.modifier/bass (bass-update (first content))
         :mode.alteration/degree (degree-alteration-update x2 x1)
         :mode.alteration/augmented-fifth (degree-alteration-update :fifth :sharp)
         :structure.modifier/augmented (structure-addition-update :fifth :sharp)
@@ -200,7 +245,29 @@
            (parse :s123)
            (parse :V7b9omit1)
 
-           (parse :V/II.7b9)
+           (= (parse :C7bass2)
+              (parse :C7.bass2)
+              (parse :C7on2)
+              (parse :C7.on2))
+           (= (parse :C7bassD)
+              (parse :C7/D)
+              (parse :C7onD))
+           (= (parse :C7bassbII)
+              (parse :C7.bassbII)
+              (parse :C7/bII)
+              (parse :C7onbII)
+              (parse :C7.onbII))
+
+           (= (parse :V/II.7b9)
+              (parse :VofII.7b9))
 
            (?? "E7b9/3")
-           (?? "E7b9/5")))
+           (= (?? "E7b9/5")
+              (?? :E7b9bass5)
+              (?? :E7b9.bass5)
+              (?? :E7b9.on5)
+              (?? :E7b9on5))
+
+           (= (?? :C7/bII)
+              (?? :C7/Db)
+              (?? :C7b9bass2))))
