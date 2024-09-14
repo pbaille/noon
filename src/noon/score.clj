@@ -1460,7 +1460,7 @@
 
         (defn connect-by
           {:doc (str "Build an update that use `f` to join successive score's chunks.\n"
-                     "- Chunks the score with `noon.score/chunk-score` accordingly to `by`, resulting ina a list of scores.\n"
+                     "- Chunks the score with `noon.score/chunk-score` accordingly to `by`, resulting in a list of scores.\n"
                      "- Iterates this sorted list by pair, applying `f` to each one producing a new score.\n"
                      "- all those scores are merged together.")
            :tags [:traversing]}
