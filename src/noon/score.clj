@@ -90,6 +90,10 @@
 
     (do :views
 
+        (defn event->pitch
+          [e]
+          (h/hc->pitch (:pitch e)))
+
         (defn pitch-value
           [e]
           (h/hc->chromatic-value (:pitch e)))
