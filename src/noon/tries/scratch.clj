@@ -361,9 +361,41 @@
         (dup 2)
         (adjust 16))
 
-  (play (h/lin :I [:II :V7] :V7 :I)
-        (tup s0 s1 s2 s3))
+  (play (h/lin :I [:II :V7] :V/V7 [vel1 :V7] :I)
+        (each (tup s0 s1 s2 s3)))
+
+  (mk (h/upd [vel1 :I]))
 
   (->> (mk (h/upd :V7b9omit1) (lin s0 s1 s2 s3 s4))
        (sort-by :position)
-       (map pitch-value)))
+       (map pitch-value))
+
+  )
+
+(comment :fractal-harmony-xp
+
+         (defn fract [n f g]
+           (let [pol-seq (interleave (repeat f) (repeat g))]
+             (if (odd? n)
+               (tup* (take n pol-seq))
+               (tup* (concat (take (- n 2) pol-seq) (list f f))))))
+
+         (play (scale :harmonic-minor)
+               {:pol 1}
+               (fract 3 _ {:pol (mul -1)})
+               (each (fract 4 _ {:pol (mul -1)}))
+               (parts {:pol 1} _
+                      {:pol -1} (degree -1))
+               (each [(one-of s0 s1 s2) (shuftup s0 s2)])
+               (tup s0 s2 s1)
+               (adjust 12))
+
+         (play (scale :eolian)
+               (fract 3 _ (h/upd :V7omit1))
+               (tup _ s2-)
+               (chans [(patch :choirs) (each (par s0 s1 s2))]
+                      [o1
+                       (each (fract 4 _ (h/upd :V7omit1) ))
+                       (each (tup s0 s2 s4))
+                       (m/connect 3)])
+               (adjust 36)))
