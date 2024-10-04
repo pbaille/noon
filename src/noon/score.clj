@@ -962,7 +962,7 @@
       (sf_ (reduce map-update _ updates)))
 
     (defn* lin
-      {:doc "Feed each transformations with the current score and concatenate the results."
+      {:doc "Apply each `update` to the received score and concatenate the results."
        :tags [:base :linear]}
       [updates]
       (sf_ (concat-scores
@@ -1505,7 +1505,7 @@
 
     (def MIDI_DEFAULT_OPTIONS
       {:bpm 60
-       :tracks {0 :chorium}})
+       :tracks {0 :default}})
 
     (def MIDI_DIRECTORIES
       {:default "generated"

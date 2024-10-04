@@ -825,15 +825,11 @@ Experimenting interleaving passing notes
 
 (defn connect-with2 [f]
   (connect-by :position
-              (fn [from to]
-                (let [{:keys [scale structure origin]} (:pitch from)
-                      target-pitch (:pitch to)]
+              (fn [chunk1 chunk2]
+                (let [from (first chunk1)
+                      to (first chunk2)]
                   (update-score #{(assoc from :position 0)}
-                                [(lin _ [(ef_ (assoc _ :pitch target-pitch))
-                                         (rescale scale)
-                                         (restructure structure)
-                                         (reorigin origin)
-                                         f])
+                                [(lin _ [(repitch (event->pitch to)) f])
                                  (adjust from)])))))
 
 (comment
@@ -842,6 +838,9 @@ Experimenting interleaving passing notes
         (connect-with d1-))
   (play (lin d0 [IIb mixolydian])
         (connect-with2 d-floor))
+  (mk (lin d0 [IIb mixolydian])
+      (connect-with2 _))
+  (mk (lin d0 [IIb mixolydian]))
   (play (lin d0 d-floor)))
 
 ;; This is difficult... to be continued
