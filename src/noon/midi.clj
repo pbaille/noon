@@ -384,17 +384,15 @@
             (.loadAllInstruments sy bank)
             sy))
 
-        (def get-chorium-synth
-          (memoize (fn [] (init-synth (SOUNDFONTS :chorium)))))
+        (def synths* (atom {}))
 
-        (def get-squid-synth
-          (memoize (fn [] (init-synth (SOUNDFONTS :squid)))))
-
-        (def get-airfont-synth
-          (memoize (fn [] (init-synth (SOUNDFONTS :airfont)))))
-
-        (def get-fluid-synth
-          (memoize (fn [] (init-synth (SOUNDFONTS :fluid)))))
+        (defn get-soundfont-synth [name-kw]
+          (or (get @synths* name-kw)
+              (if-let [soundfont-path (SOUNDFONTS name-kw)]
+                (let [synth (init-synth soundfont-path)]
+                  (swap! synths* assoc name-kw synth)
+                  synth)
+                (u/throw* "Unknown soundbank: " name-kw))))
 
         (defn init-soundfont-sequencer [synth]
           (let [sq (MidiSystem/getSequencer false)]
@@ -403,17 +401,8 @@
              (.getReceiver synth))
             sq))
 
-        (defn new-chorium-sequencer []
-          (init-soundfont-sequencer (get-chorium-synth)))
-
-        (defn new-squid-sequencer []
-          (init-soundfont-sequencer (get-squid-synth)))
-
-        (defn new-airfont-sequencer []
-          (init-soundfont-sequencer (get-airfont-synth)))
-
-        (defn new-fluid-sequencer []
-          (init-soundfont-sequencer (get-fluid-synth))))
+        (defn new-soundfont-sequencer [name-kw]
+          (init-soundfont-sequencer (get-soundfont-synth name-kw))))
 
     (do :external-device
 
@@ -455,10 +444,7 @@
 (defn new-sequencer [x]
   (case x
     :default (new-midi-sequencer true)
-    :chorium (new-chorium-sequencer)
-    :airfont (new-airfont-sequencer)
-    :squid (new-squid-sequencer)
-    :fluid (new-fluid-sequencer)
+    (:chorium :airfont :squid :fluid) (new-soundfont-sequencer x)
     (:bus1 :bus2 :bus3 :bus4) (new-virtual-output-sequencer x)
     (if (instance? Sequencer x)
       x
