@@ -318,7 +318,8 @@
 
          (noon {:play true
                 :midi true
-                :filename "test/trash/secondary-dominants"}
+                :filename "test/trash/secondary-dominants"
+                :tracks {0 :chorium}}
                (mk (structure :tetrad)
                    (rep 6 (degree 3))
                    (each (tup secondary-dominant same))
