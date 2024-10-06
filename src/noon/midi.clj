@@ -2,7 +2,8 @@
   (:require [noon.utils.misc :as u]
             [clojure.string :as str]
             [clojure.java.io :as io]
-            [clojure.data.codec.base64 :as b64])
+            [clojure.data.codec.base64 :as b64]
+            [clj-http.client :as http])
   (:import (java.io File)
            (java.nio ByteBuffer)
            (java.util Arrays)
@@ -371,14 +372,42 @@
 
     (do :soundfont
 
-        (def SOUNDFONTS
-          {:chorium "midi/soundfonts/choriumreva.sf2"
-           :squid "midi/soundfonts/squid.sf2"
-           :airfont "midi/soundfonts/airfont_340.sf2"
-           :fluid "midi/soundfonts/FluidR3_GM.sf2"})
+        (def SOUNDFONTS_S3_BASE_URL
+          "https://pbaille-noon.s3.eu-west-3.amazonaws.com/soundfonts/")
 
-        (defn init-synth [sf2-path]
-          (let [bank (MidiSystem/getSoundbank (resource->buffered-input-stream (io/resource sf2-path)))
+        (def SOUNDFONTS_LOCAL_PATH
+          "midi/soundfonts/")
+
+        (def SOUNDFONTS_SF2_FILES
+          {:chorium "choriumreva.sf2"
+           :squid "squid.sf2"
+           :airfont "airfont_340.sf2"
+           :fluid "FluidR3_GM.sf2"})
+
+        (defn download-soundfont [soundfont-kw]
+          (let [file (SOUNDFONTS_SF2_FILES soundfont-kw)
+                url (str SOUNDFONTS_S3_BASE_URL file)
+                target-path (str SOUNDFONTS_LOCAL_PATH file)
+                response (http/get url {:as :stream})
+                target-file (io/file "resources/" target-path)]
+            (when-not (.exists (.getParentFile target-file))
+              (.mkdirs (.getParentFile target-file)))
+            (with-open [in (:body response)
+                        out (io/output-stream target-file)]
+              (io/copy in out))
+            (println (str soundfont-kw " soundfont succesfully saved."))
+            (io/resource target-path)))
+
+        (defn soundfont-resource [name-kw]
+          (if-let [sf2-file (get SOUNDFONTS_SF2_FILES name-kw)]
+            (or (io/resource (str SOUNDFONTS_LOCAL_PATH sf2-file))
+                (do (println "Soundfont is not loccaly available, downloading it...")
+                    (download-soundfont name-kw)))
+            (u/throw* "Unknown soundfont: " name-kw
+                      "\nshould be one of:\n" (keys SOUNDFONTS_SF2_FILES))))
+
+        (defn init-synth [sf2-resource]
+          (let [bank (MidiSystem/getSoundbank (resource->buffered-input-stream sf2-resource))
                 sy (MidiSystem/getSynthesizer)]
             (.open sy)
             (.loadAllInstruments sy bank)
@@ -388,8 +417,8 @@
 
         (defn get-soundfont-synth [name-kw]
           (or (get @synths* name-kw)
-              (if-let [soundfont-path (SOUNDFONTS name-kw)]
-                (let [synth (init-synth soundfont-path)]
+              (if-let [soundfont-resource (soundfont-resource name-kw)]
+                (let [synth (init-synth soundfont-resource)]
                   (swap! synths* assoc name-kw synth)
                   synth)
                 (u/throw* "Unknown soundbank: " name-kw))))
