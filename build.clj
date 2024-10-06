@@ -1,5 +1,6 @@
 (ns build
-  (:require [clojure.tools.build.api :as b]))
+  (:require [clojure.tools.build.api :as b]
+            [clojure.java.io :as io]))
 
 (def lib 'pbaille/noon)
 (def version-tic (b/git-count-revs nil))
@@ -11,7 +12,14 @@
 (def basis (delay (b/create-basis {:project "deps.edn"})))
 
 (defn clean [_]
-  (b/delete {:path "target"}))
+  ;; Delete the entire target directory
+  (b/delete {:path "target"})
+  ;; Remove files from the specific soundfonts directory
+  (let [soundfonts-dir (io/file "resources/midi/soundfonts")]
+    (when (.exists soundfonts-dir)
+      (doseq [file (.listFiles soundfonts-dir)]
+        (when (.isFile file)
+          (.delete file))))))
 
 (defn jar [_]
   (b/write-pom {:class-dir class-dir
