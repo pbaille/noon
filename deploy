@@ -1,0 +1,22 @@
+#!/bin/bash
+
+   # Exit immediately if any command fails
+   set -e
+
+   # Step 0: Clean the target directory
+   echo "Cleaning target directory..."
+   clj -T:build clean
+
+   # Step 1: Generate the Maven POM file from the deps.edn
+   echo "Generating POM file..."
+   clj -Spom
+
+   # Step 2: Build the JAR using `tools.build`
+   echo "Building JAR..."
+   clj -T:build jar
+
+   # Step 3: Deploy the artifact
+   echo "Deploying artifact..."
+   clj -X:deploy
+
+   echo "Build, cleanup, and deployment complete."

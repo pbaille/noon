@@ -4,7 +4,7 @@
   <packaging>jar</packaging>
   <groupId>org.clojars.pbaille</groupId>
   <artifactId>noon</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1-SNAPSHOT</version>
   <name>noon</name>
   <licenses>
     <license>
@@ -27,6 +27,11 @@
       <groupId>clj-fuzzy</groupId>
       <artifactId>clj-fuzzy</artifactId>
       <version>0.4.1</version>
+    </dependency>
+    <dependency>
+      <groupId>clj-http</groupId>
+      <artifactId>clj-http</artifactId>
+      <version>3.13.0</version>
     </dependency>
     <dependency>
       <groupId>instaparse</groupId>
