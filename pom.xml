@@ -6,6 +6,12 @@
   <artifactId>noon</artifactId>
   <version>0.1.0</version>
   <name>noon</name>
+  <licenses>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
   <dependencies>
     <dependency>
       <groupId>org.clojure</groupId>

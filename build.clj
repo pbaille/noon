@@ -2,9 +2,10 @@
   (:require [clojure.tools.build.api :as b]))
 
 (def lib 'pbaille/noon)
-(def version (format "0.1.%s" (b/git-count-revs nil)))
+(def version-tic (b/git-count-revs nil))
+(def version "0.1.0")
 (def class-dir "target/classes")
-(def jar-file (format "target/%s-%s.jar" (name lib) version))
+(def jar-file (str "target/noon-" version ".jar"))
 
 ;; delay to defer side effects (artifact downloads)
 (def basis (delay (b/create-basis {:project "deps.edn"})))
