@@ -2,4 +2,4 @@
 
 A library to compose MIDI music.
 
-[[file:src/noon/doc/intro.clj][tutorial]]
+[[file:src/noon/doc/guide.org][guide]]
