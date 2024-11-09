@@ -977,7 +977,7 @@ Structural steps are targeting chord notes. By default the harmony is set to C M
 (play (s-step 2)) ; ascending fifth
 #+end_src
 
-As other steps corresponding vars are defined:
+As other steps, corresponding vars are defined:
 
 #+begin_src clojure :proll
 (play s1)
