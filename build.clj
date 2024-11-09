@@ -4,10 +4,9 @@
 
 (def lib 'pbaille/noon)
 (def version-tic (b/git-count-revs nil))
-(def version "0.1.1-SNAPSHOT")
+(def version "0.1.2-SNAPSHOT")
 (def class-dir "target/classes")
 (def jar-file (str "target/noon-" version ".jar"))
-
 ;; delay to defer side effects (artifact downloads)
 (def basis (delay (b/create-basis {:project "deps.edn"})))
 
@@ -31,3 +30,11 @@
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
           :jar-file jar-file}))
+
+(defn install [_]
+  (jar nil)
+  (b/install {:basis basis
+              :lib lib
+              :version version
+              :jar-file jar-file
+              :class-dir class-dir}))
