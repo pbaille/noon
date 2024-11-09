@@ -159,6 +159,55 @@
                  "src/noon/doc/guide.clj"
                  "src/noon/doc/guide.clj"))
 
+(defn split-org-file
+  "Split a large org file into multiple files based on heading levels.
+   Creates separate files for subtrees at the specified level and replaces
+   them with links in the main file."
+  [input-file output-dir max-level]
+  (let [lines (str/split-lines (slurp input-file))
+        base-name (str/replace (last (str/split input-file #"/")) #"\.org$" "")]
+    
+    (loop [remaining-lines lines
+           current-file []
+           current-path output-dir
+           file-counter 1
+           result []]
+      
+      (if-let [line (first remaining-lines)]
+        (if-let [{:keys [level title]} (parse-org-headline line)]
+          (if (> level max-level)
+            ;; Continue accumulating lines for current subtree
+            (recur (rest remaining-lines)
+                   (conj current-file line)
+                   current-path
+                   file-counter
+                   result)
+            ;; Create new file for this subtree
+            (let [file-name (format "%s-%03d.org" base-name file-counter)
+                  full-path (str current-path "/" file-name)
+                  link-line (format "* [[./%s][%s]]" file-name title)]
+              
+              ;; Write accumulated content if any
+              (when (seq current-file)
+                (spit full-path (str/join "\n" current-file)))
+              
+              (recur (rest remaining-lines)
+                     [line]
+                     current-path
+                     (inc file-counter)
+                     (conj result link-line))))
+          
+          ;; Not a headline, accumulate line
+          (recur (rest remaining-lines)
+                 (conj current-file line)
+                 current-path
+                 file-counter
+                 result))
+        
+        ;; Write main file with links
+        (spit (str output-dir "/" base-name ".org")
+              (str/join "\n" result)))))
+
 (defn build-all []
   (build-clj-examples)
   (build-clj-guide)
