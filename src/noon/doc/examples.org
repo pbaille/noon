@@ -365,7 +365,7 @@ Building good rythmic melodies is not easy.
 Here, I will try to start from target notes and fill the holes between them.
 
 #+begin_src clojure :results silent
-(play eolian
+(play aeolian
       (lin s0 s2 s1 s0))
 #+end_src
 
@@ -397,7 +397,7 @@ How to fill between the notes of this simple line?
              (conj (last sorted))))))
 
 ;; trying it on a basic structural line
-(play eolian
+(play aeolian
       (lin s0 s2 s1 s0)
       fill-diatonically)
 #+end_src
@@ -428,7 +428,7 @@ Let's generalise to other layers:
              (conj (last sorted))))))
 
 ;; The same as in previous example
-(play eolian
+(play aeolian
       (lin s0 s2 s1 s0)
       (fill-line :c))
 
@@ -496,7 +496,7 @@ Let's build a function that leverage that to fill subsequent notes in a melodic 
                  #{(last sorted)} (partition 2 1 sorted)))))
 
 (play harmonic-minor
-      (lin I [VI lydianb7] V IV [II phrygian3] [V eolian] [IIb lydian])
+      (lin I [VI lydianb7] V IV [II phrygian3] [V aeolian] [IIb lydian])
       (h/align-contexts :s)
       (m/$lin [(lin s0 s2 s2- s4) (maybe [rev s2])])
       (lin _ s1 s1- _)
@@ -510,7 +510,7 @@ The =connect= function is now available in =noon.lib.melody=
 
 #+begin_src clojure :results silent
 (play harmonic-minor
-      (lin I [VI lydianb7] V IV [II phrygian3] [V eolian] [IIb lydian])
+      (lin I [VI lydianb7] V IV [II phrygian3] [V aeolian] [IIb lydian])
       (h/align-contexts :s)
       (m/$lin [(lin s0 s2 s2- s4) (maybe [rev s2])])
       (lin _ s1 s1- _)
@@ -781,7 +781,7 @@ Experimenting interleaving passing notes
       (lin s0 s1 s2)
       (connect-with (tup d1- d1)))
 
-(play [eolian dur:2]
+(play [aeolian dur:2]
       (lin s0 s2 s4)
       (lin s0 s1 s2)
       (connect-with (shuflin d1 c1-)))
@@ -961,7 +961,7 @@ Experimenting interleaving passing notes
 ;; in this first example we are just using each to decorate our skeleton line
 ;; but it do not "connect" the subsequent notes, it just decorate them.
 (play (patch :electric-piano-1)
-      eolian
+      aeolian
       (nlin> 6 s1)
       (each (tup _ c1- [s1 c1-] _)))
 
@@ -974,7 +974,7 @@ Experimenting interleaving passing notes
 ;; It works well but it lacks flexibility
 ;; (we want to be able to achieve similar result regardless of the skeleton line)
 (play (patch :electric-piano-1)
-      dur2 eolian
+      dur2 aeolian
       (nlin> 4 s1)
       (each (tup
              ;; decoration
@@ -997,7 +997,7 @@ Experimenting interleaving passing notes
 
 (play (patch :electric-piano-1)
       dur2
-      eolian (nlin> 4 s3)
+      aeolian (nlin> 4 s3)
       (scan :position 2 1
             (fn [[a b]]
               (let [start (first a)
@@ -1020,7 +1020,7 @@ Experimenting interleaving passing notes
 ;; slight variation of the previous snippet, but using the 'in-place function which is more self explanatory.
 
 (play (patch :electric-piano-1)
-      eolian
+      aeolian
       (nlin> 8 [(degree 4) s1-])
       (scan :position 2 1 (fn [[a b]]
                             (let [start (first a)
@@ -1273,7 +1273,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
       R- (transpose c3)
       R+ (transpose c3-)
       M (transpose c6)]
-  (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)])
+  (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian aeolian)])
         (h/align-contexts :d)
         (chans [(patch :aahs) (each (par s0 s1 s2))]
                [(patch :ocarina) o1 (each (shuftup s2- s1- s0 s1 s2 s3))]
@@ -1292,7 +1292,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
       M (transpose c6)
       tup1 (mixtup s2- s1- s0 s1 s2 s3)
       tup2 (mixtup s2- s1- s0 s1 s2 s3)]
-  (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)
+  (play (rep 8 [(one-of L- L+) (maybe R- R+ M) (one-of ionian aeolian)
                 (maybe dur2 dur:2)])
         (h/align-contexts :d)
         (chans [(patch :aahs)
@@ -1313,8 +1313,8 @@ Some attempts to implement or illustrate various musical ideas using noon.
       R+ (transpose c3-)
       M (transpose c6)
 
-      base [(pr/rand-nth [R- R+ M]) (pr/rand-nth [ionian eolian])]
-      rand-color [(maybe R- R+ M) (one-of ionian eolian)]
+      base [(pr/rand-nth [R- R+ M]) (pr/rand-nth [ionian aeolian])]
+      rand-color [(maybe R- R+ M) (one-of ionian aeolian)]
       tup1 (mixtup s2- s1- s0 s1 s2 s3)
       tup2 (mixtup s2- s1- s0 s1 s2 s3)]
   (play base
@@ -1411,7 +1411,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
         (chans (lin* (map s-step base))
                [o1- (lin* (map s-step voice1))]
                [o1 (lin* (map s-step voice2))])
-        [eolian
+        [aeolian
          (lin _ (degree -1))
          (lin _ s1)
          (lin _ [(degree 3) s1-])
@@ -1465,7 +1465,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
                       (filter #(= 3 (count %)))
                       (pr/rand-nth))]
   (play [dur3
-         eolian
+         aeolian
          (lin _ (degree -1))
          (lin _ s1)
          (lin _ [(degree 3) s1-])
@@ -1493,7 +1493,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
                             r l)))]
   (vsl/noon {:play true}
             (mk [dur3
-                 eolian
+                 aeolian
                  (lin _ (degree -1))
                  (lin _ s1)
                  (lin _ [(degree 3) s1-])
