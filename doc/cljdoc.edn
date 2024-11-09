@@ -1,8 +1,20 @@
 {:cljdoc.doc/tree
- [["Guide" {:file "guide/noon/elements/top-form.md"}]
-  ["Elements" 
-   ["Harmony" {:file "guide/noon/elements/harmony.md"}]
-   ["Transformations" {:file "guide/noon/elements/transformations-2.md"}]]
+ [["Guide" {:file "guide/noon/motivation/index.md"}
+  ["Motivation" {:file "guide/noon/motivation/index.md"}]
+  ["Elements" {:file "guide/noon/elements/index.md"}
+   ["Building Blocks" {:file "guide/noon/elements/building-blocks.md"}]
+   ["Top Form" {:file "guide/noon/elements/top-form.md"}]
+   ["Transformations 1" {:file "guide/noon/elements/transformations-1.md"}]
+   ["Transformations 2" {:file "guide/noon/elements/transformations-2.md"}]
+   ["Polyphony" {:file "guide/noon/elements/polyphony.md"}]
+   ["Mapping" {:file "guide/noon/elements/mapping.md"}]
+   ["Dynamism" {:file "guide/noon/elements/dynamism.md"}]
+   ["Non Determinism" {:file "guide/noon/elements/non-determinism.md"}]
+   ["Harmony" {:file "guide/noon/elements/harmony.md"}]]
+  ["Composing" {:file "guide/noon/composing/index.md"}
+   ["Melody" {:file "guide/noon/composing/melody.md"}]
+   ["Rythmn" {:file "guide/noon/composing/rythmn.md"}]
+   ["Harmony" {:file "guide/noon/composing/harmony.md"}]]
   ["Utils"
    ["Contour" {:file "guide/noon/utils/contour.md"}]
    ["Euclidean" {:file "guide/noon/utils/euclidean-sums.md"}]]
