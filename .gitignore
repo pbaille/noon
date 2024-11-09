@@ -18,3 +18,8 @@ vsl/*
 /test/frozen/temp/
 /.clj-kondo/.lock
 .dir-locals.el
+/.clj-kondo/babashka/
+/.clj-kondo/http-kit/
+/.clj-kondo/instaparse/
+/.clj-kondo/rewrite-clj/
+/.clj-kondo/taoensso/
