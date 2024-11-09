@@ -9,6 +9,7 @@
             [noon.utils.misc :as u]
             [noon.utils.pseudo-random :as pr]
             [noon.constants :as nc]
+            [noon.midi :as midi]
             [noon.vst.vsl :as vsl :refer [vsl]]
             [clojure.math.combinatorics :as comb]
             [clojure.test :refer [deftest testing is]]
@@ -118,7 +119,7 @@
          (= 1 (count _))
          (str
            (quote
-             user-b6c0269e-9f4d-4abd-b725-e48b64cc8983/chromatic-double-passing)
+             user-a1eaf59e-ba2d-4dbf-89d6-d981cdab28df/chromatic-double-passing)
            "works only on single note scores"))
        (let [target (first _)
              d-suroundings (nh/diatonic-suroundings (:pitch target))
@@ -224,14 +225,12 @@
 (defn connect-with2
   [f]
   (connect-by :position
-              (fn [from to]
-                (let [{:keys [scale structure origin]} (:pitch from)
-                      target-pitch (:pitch to)]
+              (fn [chunk1 chunk2]
+                (let [from (first chunk1)
+                      to (first chunk2)]
                   (update-score #{(assoc from :position 0)}
-                                [(lin _
-                                      [(ef_ (assoc _ :pitch target-pitch))
-                                       (rescale scale) (restructure structure)
-                                       (reorigin origin) f]) (adjust from)])))))
+                                [(lin _ [(repitch (event->pitch to)) f])
+                                 (adjust from)])))))
 (def decorate
   (sf_ (let [sorted (sort-by :position _)]
          (reduce (fn [s [n1 n2]]
@@ -635,13 +634,13 @@
                                                vel4]))])]))))))))
     (testing "Melodic experiments"
       (testing "Target notes"
-        (is (noon.test/frozen* nil (noon.score/mk eolian (lin s0 s2 s1 s0))))
+        (is (noon.test/frozen* nil (noon.score/mk aeolian (lin s0 s2 s1 s0))))
         (is (noon.test/frozen*
               nil
-              (noon.score/mk eolian (lin s0 s2 s1 s0) fill-diatonically)))
+              (noon.score/mk aeolian (lin s0 s2 s1 s0) fill-diatonically)))
         (is (noon.test/frozen*
               nil
-              (noon.score/mk eolian (lin s0 s2 s1 s0) (fill-line :c))))
+              (noon.score/mk aeolian (lin s0 s2 s1 s0) (fill-line :c))))
         (is (noon.test/frozen* nil
                                (noon.score/mk dur:2
                                               harmonic-minor
@@ -663,7 +662,7 @@
             nil
             (noon.score/mk
               harmonic-minor
-              (lin I [VI lydianb7] V IV [II phrygian3] [V eolian] [IIb lydian])
+              (lin I [VI lydianb7] V IV [II phrygian3] [V aeolian] [IIb lydian])
               (h/align-contexts :s)
               (m/$lin [(lin s0 s2 s2- s4) (maybe [rev s2])])
               (lin _ s1 s1- _)
@@ -675,7 +674,7 @@
             nil
             (noon.score/mk
               harmonic-minor
-              (lin I [VI lydianb7] V IV [II phrygian3] [V eolian] [IIb lydian])
+              (lin I [VI lydianb7] V IV [II phrygian3] [V aeolian] [IIb lydian])
               (h/align-contexts :s)
               (m/$lin [(lin s0 s2 s2- s4) (maybe [rev s2])])
               (lin _ s1 s1- _)
@@ -835,7 +834,7 @@
                                                 (lin s0 s1 s2)
                                                 (connect-with (tup d1- d1)))))
           (is (noon.test/frozen* nil
-                                 (noon.score/mk [eolian dur:2]
+                                 (noon.score/mk [aeolian dur:2]
                                                 (lin s0 s2 s4)
                                                 (lin s0 s1 s2)
                                                 (connect-with (shuflin d1
@@ -938,14 +937,14 @@
         (testing "scanning"
           (is (noon.test/frozen* nil
                                  (noon.score/mk (patch :electric-piano-1)
-                                                eolian
+                                                aeolian
                                                 (nlin> 6 s1)
                                                 (each (tup _ c1- [s1 c1-] _)))))
           (is (noon.test/frozen* nil
                                  (noon.score/mk
                                    (patch :electric-piano-1)
                                    dur2
-                                   eolian
+                                   aeolian
                                    (nlin> 4 s1)
                                    (each (tup _ [s2 c1-] c1- _ s2 [s1 d1])))))
           (is
@@ -954,7 +953,7 @@
               (noon.score/mk
                 (patch :electric-piano-1)
                 dur2
-                eolian
+                aeolian
                 (nlin> 4 s3)
                 (scan :position 2
                       1 (fn [[a b]]
@@ -973,7 +972,7 @@
             (noon.test/frozen*
               nil
               (noon.score/mk (patch :electric-piano-1)
-                             eolian
+                             aeolian
                              (nlin> 8 [(degree 4) s1-])
                              (scan :position 2
                                    1 (fn [[a b]]
@@ -1131,7 +1130,7 @@
                     M (transpose c6)]
                 (noon.score/mk
                   (rep 8
-                       [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)])
+                       [(one-of L- L+) (maybe R- R+ M) (one-of ionian aeolian)])
                   (h/align-contexts :d)
                   (chans [(patch :aahs) (each (par s0 s1 s2))]
                          [(patch :ocarina) o1
@@ -1150,7 +1149,7 @@
                   tup2 (mixtup s2- s1- s0 s1 s2 s3)]
               (noon.score/mk
                 (rep 8
-                     [(one-of L- L+) (maybe R- R+ M) (one-of ionian eolian)
+                     [(one-of L- L+) (maybe R- R+ M) (one-of ionian aeolian)
                       (maybe dur2 dur:2)])
                 (h/align-contexts :d)
                 (chans [(patch :aahs) (each [add2 (par s0 s1 s2 s3)])
@@ -1167,8 +1166,8 @@
                   R- (transpose c3)
                   R+ (transpose c3-)
                   M (transpose c6)
-                  base [(pr/rand-nth [R- R+ M]) (pr/rand-nth [ionian eolian])]
-                  rand-color [(maybe R- R+ M) (one-of ionian eolian)]
+                  base [(pr/rand-nth [R- R+ M]) (pr/rand-nth [ionian aeolian])]
+                  rand-color [(maybe R- R+ M) (one-of ionian aeolian)]
                   tup1 (mixtup s2- s1- s0 s1 s2 s3)
                   tup2 (mixtup s2- s1- s0 s1 s2 s3)]
               (noon.score/mk
@@ -1264,7 +1263,7 @@
                 (chans (lin* (map s-step base))
                        [o1- (lin* (map s-step voice1))]
                        [o1 (lin* (map s-step voice2))])
-                [eolian (lin _ (degree -1)) (lin _ s1) (lin _ [(degree 3) s1-])
+                [aeolian (lin _ (degree -1)) (lin _ s1) (lin _ [(degree 3) s1-])
                  (lin _ (transpose c3-))]
                 ($by :channel (connect-with (probs {void 5, d1 1, d1- 1})))))))
         (is (noon.test/frozen*
@@ -1274,7 +1273,7 @@
                                     (filter (fn* [%1] (= 3 (count %1))))
                                     (pr/rand-nth))]
                 (noon.score/mk
-                  [dur3 eolian (lin _ (degree -1)) (lin _ s1)
+                  [dur3 aeolian (lin _ (degree -1)) (lin _ s1)
                    (lin _ [(degree 3) s1-]) (lin _ [s1 (transpose c3-)])]
                   (patch :electric-piano-1)
                   (each (! (let [[v1 v2 v3] (pr/shuffle [v1 v2 v3])]
@@ -1300,7 +1299,7 @@
                                                         (tup _ d1- d1 _)))])
                               r
                               l)))]
-              (mk [dur3 eolian (lin _ (degree -1)) (lin _ s1)
+              (mk [dur3 aeolian (lin _ (degree -1)) (lin _ s1)
                    (lin _ [(degree 3) s1-]) (lin _ [s1 (transpose c3-)])]
                   (each (! (let [[a b c] (pr/shuffle [(f r1 l1) (f r2 l2)
                                                       (f r3 l3)])]
