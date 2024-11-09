@@ -1,4 +1,4 @@
-{:cljdoc.doc/tree [["Guide" {}
+{:cljdoc.doc/tree [["Guide" {:file "doc/guide/noon/guide.md"}
                     ["Motivation" {:file "doc/guide/noon/motivation/index.md"}]
                     ["Elements" {}
                      ["Building Blocks" {:file "doc/guide/noon/elements/building-blocks.md"}]
