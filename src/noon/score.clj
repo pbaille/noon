@@ -1562,9 +1562,10 @@
                                         :track-idx->sequencer (or tracks (constantly :default))
                                         :data (midifiable-score score))]
 
-         (when @sequencer*
-           ((:stop @sequencer*))
-           ((:close @sequencer*)))
+         (try (when @sequencer*
+                ((:stop @sequencer*))
+                ((:close @sequencer*)))
+              (catch Exception _ nil))
 
          (reset! sequencer* multi-sequencer)
 
