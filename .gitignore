@@ -19,3 +19,6 @@ vsl/*
 .aider/*
 .aider.conf.yml
 /.aider.tags.cache.v3/
+/target/
+/test/data/
+/test/trash/
