@@ -1,26 +1,17 @@
 {:cljdoc.doc/tree
- [["Guide"
-   {:file "guide/noon/elements/top-form.md"}
-   ["Elements"
-    {:file "guide/noon/elements/harmony.md"}
-    {:file "guide/noon/elements/transformations-2.md"}]
+ [["Guide" {:file "guide/noon/elements/top-form.md"}]
+  ["Elements" 
+   ["Harmony" {:file "guide/noon/elements/harmony.md"}]
+   ["Transformations" {:file "guide/noon/elements/transformations-2.md"}]]
+  ["Utils"
+   ["Contour" {:file "guide/noon/utils/contour.md"}]
+   ["Euclidean" {:file "guide/noon/utils/euclidean-sums.md"}]]
+  ["VST"
+   ["General MIDI" {:file "guide/noon/vst/general-midi.md"}]]
+  ["Tests"
+   ["Harmony" {:file "guide/noon/tests/harmony.md"}]
+   ["Melody" {:file "guide/noon/tests/melody.md"}]
+   ["Score" {:file "guide/noon/tests/score.md"}]
    ["Utils"
-    ["Contour"
-     {:file "guide/noon/utils/contour.md"}]
-    ["Euclidean"
-     {:file "guide/noon/utils/euclidean-sums.md"}]]
-   ["VST"
-    ["General MIDI"
-     {:file "guide/noon/vst/general-midi.md"}]]
-   ["Tests"
-    ["Harmony"
-     {:file "guide/noon/tests/harmony.md"}]
-    ["Melody"
-     {:file "guide/noon/tests/melody.md"}]
-    ["Score"
-     {:file "guide/noon/tests/score.md"}]
-    ["Utils"
-     ["Chance"
-      {:file "guide/noon/tests/utils/chance.md"}]
-     ["Contour"
-      {:file "guide/noon/tests/utils/contour.md"}]]]]]}
+    ["Chance" {:file "guide/noon/tests/utils/chance.md"}]
+    ["Contour" {:file "guide/noon/tests/utils/contour.md"}]]]]}
