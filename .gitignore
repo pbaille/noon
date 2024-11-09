@@ -5,10 +5,9 @@
 /midi/soundfonts/
 /emacs/compiled/
 /emacs/xp/
-/.clj-kondo/.cache
-/.clj-kondo/inline-configs/
-/.clj-kondo/org.clj-commons/
-/.clj-kondo/potemkin/
+/.clj-kondo/*
+!/.clj-kondo/hooks
+!/.clj-kondo/config.edn
 /.lsp
 /notation/samples/
 /data/chromaphone-banks.edn
@@ -16,10 +15,4 @@
 vsl/*
 .git.bfg-report
 /test/frozen/temp/
-/.clj-kondo/.lock
 .dir-locals.el
-/.clj-kondo/babashka/
-/.clj-kondo/http-kit/
-/.clj-kondo/instaparse/
-/.clj-kondo/rewrite-clj/
-/.clj-kondo/taoensso/
