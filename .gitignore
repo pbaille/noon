@@ -16,3 +16,6 @@ vsl/*
 .git.bfg-report
 /test/frozen/temp/
 .dir-locals.el
+.aider/*
+.aider.conf.yml
+/.aider.tags.cache.v3/
