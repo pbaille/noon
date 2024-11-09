@@ -1,1 +1,16 @@
-{:cljdoc.doc/tree []}
+{:cljdoc.doc/tree [["Guide" {}
+                    ["Motivation" {:file "doc/guide/noon/motivation/index.md"}]
+                    ["Elements" {}
+                     ["Building Blocks" {:file "doc/guide/noon/elements/building-blocks.md"}]
+                     ["Top Form" {:file "doc/guide/noon/elements/top-form.md"}]
+                     ["Transformations 1" {:file "doc/guide/noon/elements/transformations-1.md"}]
+                     ["Transformations 2" {:file "doc/guide/noon/elements/transformations-2.md"}]
+                     ["Polyphony" {:file "doc/guide/noon/elements/polyphony.md"}]
+                     ["Mapping" {:file "doc/guide/noon/elements/mapping.md"}]
+                     ["Dynamism" {:file "doc/guide/noon/elements/dynamism.md"}]
+                     ["Non Determinism" {:file "doc/guide/noon/elements/non-determinism.md"}]
+                     ["Harmony" {:file "doc/guide/noon/elements/harmony.md"}]]
+                    ["Composing" {}
+                     ["Melody" {:file "doc/guide/noon/composing/melody.md"}]
+                     ["Rythmn" {:file "doc/guide/noon/composing/rythmn.md"}]
+                     ["Harmony" {:file "doc/guide/noon/composing/harmony.md"}]]]]]}
