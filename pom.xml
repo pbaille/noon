@@ -4,7 +4,7 @@
   <packaging>jar</packaging>
   <groupId>org.clojars.pbaille</groupId>
   <artifactId>noon</artifactId>
-  <version>0.1.1-SNAPSHOT</version>
+  <version>0.1.2-SNAPSHOT</version>
   <name>noon</name>
   <licenses>
     <license>
