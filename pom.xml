@@ -6,6 +6,13 @@
   <artifactId>noon</artifactId>
   <version>0.1.2-SNAPSHOT</version>
   <name>noon</name>
+  <description>A Clojure library for algorithmic music composition</description>
+  <url>https://github.com/pbaille/noon</url>
+  <scm>
+    <url>https://github.com/pbaille/noon</url>
+    <connection>scm:git:git://github.com/pbaille/noon.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/pbaille/noon.git</developerConnection>
+  </scm>
   <licenses>
     <license>
       <name>Apache-2.0</name>
