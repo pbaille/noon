@@ -1,18 +1,4 @@
 
-# Table of Contents
-
-1.  [Top form](#org9a9e68f)
-    1.  [Options](#org678b216)
-        1.  [Musescore options](#orgf2ebc82)
-        2.  [mp3 export](#orge5f7c32)
-    2.  [score](#orgac0cc36)
-    3.  [shorthands](#orgdfb5344)
-        1.  [`noon.score/play`](#orgdc133ab)
-        2.  [`noon.score/write`](#org12d28c3)
-
-
-<a id="org9a9e68f"></a>
-
 # Top form
 
 `noon.score/noon` is the top level form of the library.
@@ -27,8 +13,6 @@ Here a minimal example:
      ;; calling mk without argument just build the default score (middle C)
      (mk))
 
-
-<a id="org678b216"></a>
 
 ## Options
 
@@ -84,8 +68,6 @@ In addition to those soundfonts, you can send the output of noon to any output d
           (mk (par s0 s1 s2)))
 
 
-<a id="orgf2ebc82"></a>
-
 ### Musescore options
 
 If you have [musecore](https://musescore.org/en) installed on your machine, you can emit music XML and pdf score.
@@ -97,8 +79,6 @@ If you have [musecore](https://musescore.org/en) installed on your machine, you 
     write the score pdf file.
 
 
-<a id="orge5f7c32"></a>
-
 ### mp3 export
 
 It is possible to create an mp3 file by passing this option:
@@ -107,8 +87,6 @@ It is possible to create an mp3 file by passing this option:
 
 [FFmpeg](https://ffmpeg.org/) and [FluidSynth](https://www.fluidsynth.org/) have to be installed on your machine.
 
-
-<a id="orgac0cc36"></a>
 
 ## score
 
@@ -124,14 +102,10 @@ Those transformations are applied in order to the default score.
     '(mk transformation1 transformation2 ...)
 
 
-<a id="orgdfb5344"></a>
-
 ## shorthands
 
 As a convenience, some thin `noon.score/noon` wrappers are defined:
 
-
-<a id="orgdc133ab"></a>
 
 ### `noon.score/play`
 
@@ -147,8 +121,6 @@ More concretly:
     (play dur2
           (tup s0 s1 s2 s3))
 
-
-<a id="org12d28c3"></a>
 
 ### `noon.score/write`
 

@@ -1,13 +1,4 @@
 
-# Table of Contents
-
-1.  [Polyphony](#org9f5ece3)
-    1.  [Channels](#orgf25a884)
-    2.  [Tracks](#org7c7824c)
-
-
-<a id="org9f5ece3"></a>
-
 # Polyphony
 
 As we have seen, we can parallelize things with the `par` function.
@@ -43,8 +34,6 @@ Like `lin` and `tup`, `par` has its accumulative counterpart:
           (par> c0 c7 c7 c7 c7 c7)) ; piling perfect fifths.
 
 
-<a id="orgf25a884"></a>
-
 ## Channels
 
 the `chans` function is doing the same thing as `par` except that it put each element on a separate MIDI channel.
@@ -67,8 +56,6 @@ We can achieve the same thing as the first expression of the section using `par`
                [(chan 1) c3]
                [(chan 2) c7]))
 
-
-<a id="org7c7824c"></a>
 
 ## Tracks
 

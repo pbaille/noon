@@ -1,27 +1,6 @@
 
-# Table of Contents
-
-1.  [Transformations 2](#orgcdfab93)
-    1.  [Intervals 1](#org76ad7ed)
-        1.  [Steps](#org2ff9b3c)
-        2.  [Octaves](#org38504ab)
-    2.  [lin](#org41fa5f1)
-    3.  [tup](#org12fe326)
-    4.  [dup](#org360be86)
-    5.  [rep](#orgca42423)
-    6.  [fit](#org8667d08)
-    7.  [nlin](#org8558bb5)
-    8.  [ntup](#org5f758c1)
-    9.  [lin>](#org7d0311c)
-    10. [tup>](#orga3996a8)
-
-
-<a id="orgcdfab93"></a>
-
 # Transformations 2
 
-
-<a id="org76ad7ed"></a>
 
 ## Intervals 1
 
@@ -29,8 +8,6 @@ It is now time to brings intervals into the equation, pitches were nice for intr
 
 In noon there is two types of intervals: **steps** and **shifts**.
 
-
-<a id="org2ff9b3c"></a>
 
 ### Steps
 
@@ -97,8 +74,6 @@ The 2 most common types of steps are chromatic steps and diatonic steps
         There is 2 more type of steps: **structural** and **tonic**, but we will see them later.
 
 
-<a id="org38504ab"></a>
-
 ### Octaves
 
 Paraphrasing wiki:
@@ -115,8 +90,6 @@ The nuance will appear more clearly later&#x2026; Until then, let see how to use
 
     (play o2-) ; 2 octaves down in var notation
 
-
-<a id="org41fa5f1"></a>
 
 ## lin
 
@@ -137,8 +110,6 @@ Let see what happens here:
 3.  Then this 3 notes score is passed to each member of the second `lin` expression, each one transposing it from the indicated chromatic interval.
 
 
-<a id="org12fe326"></a>
-
 ## tup
 
 `tup` stands for tuplet and is analogous to `lin` but keep the duration of the given score unchanged.
@@ -152,16 +123,12 @@ Like `lin` it can of course be chained with other transformations, as an example
     (play (tup c0 c2 c4 c7) (tup c0 c3) (rep 3 c4-))
 
 
-<a id="org360be86"></a>
-
 ## dup
 
 `dup` stands for duplicate and let you repeat a score n times.
 
     (play (tup c0 c3 c6 c9) (dup 3))
 
-
-<a id="orgca42423"></a>
 
 ## rep
 
@@ -179,8 +146,6 @@ You can remove the input score at the start of the result by giving an extra arg
 
     (play (rep 3 o1 :skip-first))
 
-
-<a id="org8667d08"></a>
 
 ## fit
 
@@ -202,8 +167,6 @@ A fitted version of `dup` also exists under the name `dupt`
     (play (tup d0 d3 d6 d7) (dupt 3))
 
 
-<a id="org8558bb5"></a>
-
 ## nlin
 
 concat the results of the given transformation n times
@@ -215,8 +178,6 @@ it is the same thing as:
     (play (tup d0 d1 d2 d3) (dup 4))
 
 
-<a id="org5f758c1"></a>
-
 ## ntup
 
 the fitted version of `nlin`
@@ -224,16 +185,12 @@ the fitted version of `nlin`
     (play (ntup 4 (tup d0 d1 d2 d3)))
 
 
-<a id="org7d0311c"></a>
-
 ## lin>
 
 `lin>` stands for accumulative concatenation, it accumulates the given transformations concatenating the intermediate results.
 
     (play (lin> c0 c2 c2 c2 c2 c2 c2))
 
-
-<a id="orga3996a8"></a>
 
 ## tup>
 

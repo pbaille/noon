@@ -1,17 +1,4 @@
 
-# Table of Contents
-
-1.  [Non determinism](#org50d8546)
-    1.  [one-of](#org7b58599)
-    2.  [maybe](#orgbf7d698)
-    3.  [probs](#org7815b55)
-    4.  [any-that](#orga9b4745)
-    5.  [!](#org677be64)
-    6.  [Shuffling](#org9a0044d)
-
-
-<a id="org50d8546"></a>
-
 # Non determinism
 
 It is quite fun to insert a bit of randomness in our scores.
@@ -23,8 +10,6 @@ It is quite fun to insert a bit of randomness in our scores.
 We can use some great available tools like `test.check.generators` to handle non determinism. That being said, some commonly used non-deterministic functions are available directly.
 
 
-<a id="org7b58599"></a>
-
 ## one-of
 
 `one-of` picks randomly one of the given transformations and apply it.
@@ -33,8 +18,6 @@ We can use some great available tools like `test.check.generators` to handle non
 
     (play dur:8 (rep 50 (one-of c1 c1-)))
 
-
-<a id="orgbf7d698"></a>
 
 ## maybe
 
@@ -47,8 +30,6 @@ We can use some great available tools like `test.check.generators` to handle non
     (play dur:8 (rep 50 (maybe c1 c1-))) ; you can notice melodic repetitions unlike with the corresponding one-of example.
 
 
-<a id="org7815b55"></a>
-
 ## probs
 
 `probs` gives you more control over the probability of occurence of the given transformations.
@@ -57,8 +38,6 @@ We can use some great available tools like `test.check.generators` to handle non
 
     (play dur:4 (rep 24 (probs {c1 6, c6- 1, (par c0 o1-) 1})))
 
-
-<a id="orga9b4745"></a>
 
 ## any-that
 
@@ -74,8 +53,6 @@ A melody of 60 notes using the 6 given intervals but remaining in the given pitc
 The `within-pitch-bounds?` is just a score transformation that return the score unchanged if it is within the given bounds, else it returns `nil`. Any function of this kind can be used has first argument to `any-that`.
 
 
-<a id="org677be64"></a>
-
 ## !
 
 the `!` macro can be useful to deal with raw non deterministic expressions. here the docstring:
@@ -86,8 +63,6 @@ the `!` macro can be useful to deal with raw non deterministic expressions. here
 
     (play (nlin 4 (tup* (shuffle [d0 d2 d4 d6])))) ; without the bang the shuffle expression is executed only one time.
 
-
-<a id="org9a0044d"></a>
 
 ## Shuffling
 

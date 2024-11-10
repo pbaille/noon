@@ -1,4 +1,5 @@
-{:cljdoc.doc/tree [["Noon" {:file "doc/noon.md" :title "Noon"}
+{:cljdoc/languages ["clj"]
+ :cljdoc.doc/tree [["Noon" {:file "doc/noon.md" :title "Noon"}
                     ["Motivation" {:file "doc/noon/motivation.md" :title "Motivation"}]
                     ["Elements" {:file "doc/noon/elements.md" :title "Elements"}
                      ["Building Blocks" {:file "doc/noon/elements/building-blocks.md" :title "Building Blocks"}]

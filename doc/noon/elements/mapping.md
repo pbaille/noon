@@ -1,11 +1,4 @@
 
-# Table of Contents
-
-1.  [Mapping](#org6c681f4)
-
-
-<a id="org6c681f4"></a>
-
 # Mapping
 
 All the transformations we&rsquo;ve seen so far are acting on a score to produce another score, but sometimes what we need is to apply a transformation on each event of a score, for this we are using the `each` function.

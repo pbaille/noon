@@ -1,17 +1,6 @@
 
-# Table of Contents
-
-1.  [Building blocks](#orgb112e4b)
-    1.  [Events](#orge0fc496)
-    2.  [Score](#org3c21226)
-
-
-<a id="orgb112e4b"></a>
-
 # Building blocks
 
-
-<a id="orge0fc496"></a>
 
 ## Events
 
@@ -23,8 +12,6 @@ It is represented using a clojure map
 
     DEFAULT_EVENT
 
-
-<a id="org3c21226"></a>
 
 ## Score
 

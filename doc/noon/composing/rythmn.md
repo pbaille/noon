@@ -1,25 +1,8 @@
 
-# Table of Contents
-
-1.  [Rythmn](#org2290498)
-    1.  [Simple](#org4c7b4f7)
-    2.  [Generation](#org63a1a19)
-        1.  [gen-tup](#orgf888b41)
-        2.  [Examples](#orgb58dd40)
-    3.  [Transformation](#org8fb9f45)
-        1.  [noon.lib.melody](#org207dac8)
-        2.  [r/rotation](#org197442d)
-        3.  [r/permutation](#orgd350e72)
-
-
-<a id="org2290498"></a>
-
 # Rythmn
 
 So far we havn&rsquo;t discuss rythmn so much, let see what we have at our disposal to deal with it.
 
-
-<a id="org4c7b4f7"></a>
 
 ## Simple
 
@@ -51,14 +34,10 @@ There is a function to help writing a rythmn this way:
 Writing those kind of rythmns is not the funniest thing to do of course, let see how we can generate and transform rythmns.
 
 
-<a id="org63a1a19"></a>
-
 ## Generation
 
 The main tool we have at our disposal to create a rythmn is the noon.lib.melody/gen-tup
 
-
-<a id="orgf888b41"></a>
 
 ### gen-tup
 
@@ -73,8 +52,6 @@ options:
   durations: the multiples of `resolution` that we are allowed to use (fractionals allowed).
   shifted: the possibility for the generated tup to not begin on beat.
 
-
-<a id="orgb58dd40"></a>
 
 ### Examples
 
@@ -198,14 +175,10 @@ Fancy variation:
       (adjust {:duration 32})))
 
 
-<a id="org8fb9f45"></a>
-
 ## Transformation
 
 Once we have written or generated a rythmn we may want to make it evolve, here is some functions that can help.
 
-
-<a id="org207dac8"></a>
 
 ### noon.lib.melody
 
@@ -219,8 +192,6 @@ We can use the previously seen functions from `noon.lib.melody` to permute or ro
        (r/gen-tup 12 5 :euclidean)
        (rep 8 (probs {(m/permutation :rand) 1, (m/rotation :rand) 3}))]))
 
-
-<a id="org197442d"></a>
 
 ### r/rotation
 
@@ -270,8 +241,6 @@ Unlike `noon.lib.melody/rotation` this function do not operates on a note basis
           [(patch :woodblock) (r/durtup 2 1 1 4) (r/rotation :rand-sub 4)])
          (dup 4))
 
-
-<a id="orgd350e72"></a>
 
 ### r/permutation
 
