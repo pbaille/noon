@@ -1,4 +1,5 @@
 (ns noon.doc.utils
+  {:no-doc true}
   (:require [noon.score :as n]
             [noon.harmony :as h]
             [clojure.pprint :as pprint]))

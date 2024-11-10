@@ -423,7 +423,8 @@
                               (list 'def
                                     (with-meta (symbol (name k))
                                       {:tags [:event-update :alias :harmonic]
-                                       :doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))})
+                                       :doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))
+                                       :no-doc true})
                                     (list wrapper v)))))
 
                 (-def-wrapped structure noon.constants/structures)
@@ -452,10 +453,12 @@
                                [(list 'def (with-meta (symbol (str prefix n))
                                              {:doc (str "Step up "
                                                         n " " name " " (if (> n 1) "steps" "step") ".")
+                                              :no-doc true
                                               :tags [:event-update :harmonic]})
                                       (list f n))
                                 (list 'def (with-meta (symbol (str prefix n "-"))
                                              {:doc (str "Step down " n " " name " " (if (> n 1) "steps" "step") ".")
+                                              :no-doc true
                                               :tags [:event-update :harmonic]})
                                       (list f (list `- n)))])
                              (range 1 max))))
@@ -472,6 +475,7 @@
                                [(list 'def (with-meta (symbol (str prefix n))
                                              {:doc (str "Shift up "
                                                         n " " name (when (> n 1) "s") ".")
+                                              :no-doc true
                                               :tags [:event-update :harmonic]})
                                       (list f n))
                                 (list 'def (with-meta (symbol (str prefix n "-"))
@@ -487,6 +491,7 @@
                         (concat (for [[n v] (map vector '[I II III IV V VI VII] (range))]
                                   (list 'def (with-meta n
                                                {:doc (str "Go to degree " n)
+                                                :no-doc true
                                                 :tags [:event-update :harmonic]})
                                         (degree v)))
                                 (for [[degree-sym degree-val] (map vector '[I II III IV V VI VII] (range))
@@ -494,6 +499,7 @@
                                   (let [[dn dv an av] [degree-sym degree-val alteration-sym alteration-val]]
                                     (list 'def (with-meta (symbol (str dn an))
                                                  {:doc (str "Go to degree " an dn)
+                                                  :no-doc true
                                                   :tags [:event-update :harmonic]})
                                           `[(transpose ~av) (degree ~dv)]))))))
 

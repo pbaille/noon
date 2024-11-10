@@ -3,12 +3,12 @@
             [instaparse.core :as insta]
             [noon.constants :as constants]
             [noon.harmony :as h]
-            [clojure.string :as str]
             [noon.utils.misc :as u]))
 
 (do :parser
 
     (def parser
+      "Instaparse parser for harmonic symbols."
       (insta/parser (slurp (io/resource "harmony.bnf"))
                     :allow-namespaced-nts true))
 
@@ -19,7 +19,7 @@
 
 (do :parsed-leaf-convertion
 
-    (defn roman-degree->natural-pitch-class [v]
+    (defn- roman-degree->natural-pitch-class [v]
       (case v
         :one :C
         :two :D
@@ -29,7 +29,7 @@
         :six :A
         :seven :B))
 
-    (defn roman-degree->scale-idx [v]
+    (defn- roman-degree->scale-idx [v]
       (case v
         :one 0
         :two 1
@@ -39,7 +39,7 @@
         :six 5
         :seven 7))
 
-    (defn roman-degree->scale-degree [v]
+    (defn- roman-degree->scale-degree [v]
       (case v
         :two :second
         :three :third
@@ -48,7 +48,7 @@
         :six :sixth
         :seven :seventh))
 
-    (defn scale-degree->natural-pitch-class [v]
+    (defn- scale-degree->natural-pitch-class [v]
       (case v
         :second :D
         :third :E
@@ -57,7 +57,7 @@
         :sixth :A
         :seventh :B))
 
-    (defn alteration->chromatic-offset [v]
+    (defn- alteration->chromatic-offset [v]
       (case v
         :double-bemol -2
         :bemol -1
@@ -65,7 +65,7 @@
         :sharp 1
         :double-sharp 2))
 
-    (defn scale-degree->scale-idx [v]
+    (defn- scale-degree->scale-idx [v]
       (case v
         :second 1
         :third 2
@@ -74,13 +74,13 @@
         :sixth 5
         :seventh 6))
 
-    (defn omission->removed-scale-idx [v]
+    (defn- omission->removed-scale-idx [v]
       (case v
         :omit1 0
         :omit3 2
         :omit5 4))
 
-    (defn string-digit->scale-idx [v]
+    (defn- string-digit->scale-idx [v]
       (get {"1" 0
             "2" 1
             "3" 2
@@ -91,11 +91,11 @@
 
 (do :parsed-tree->update
 
-    (defn pitch-offset [natural-pitch-class alteration]
+    (defn- pitch-offset [natural-pitch-class alteration]
       (-> (constants/get-pitch-class natural-pitch-class)
           (update :c + (alteration->chromatic-offset alteration))))
 
-    (defn degree-update [degree alteration]
+    (defn- degree-update [degree alteration]
       (let [offset (pitch-offset (roman-degree->natural-pitch-class degree) alteration)
             degree-shift (if (> (:c offset) 6)
                            (- (:d offset) 7)
@@ -106,17 +106,17 @@
                    (h/degree-alteration (:d offset) (:c offset)))
                  (h/degree degree-shift)))))
 
-    (defn degree-alteration-update [degree alteration]
+    (defn- degree-alteration-update [degree alteration]
       (let [c-val (:c (-> (scale-degree->natural-pitch-class degree)
                           (pitch-offset alteration)))
             scale-idx (scale-degree->scale-idx degree)]
         (h/degree-alteration scale-idx c-val)))
 
-    (defn structure-addition-update [degree alteration]
+    (defn- structure-addition-update [degree alteration]
       [(degree-alteration-update degree alteration)
        (h/structure-add (scale-degree->scale-idx degree))])
 
-    (defn scale-idx->bass-update [scale-idx]
+    (defn- scale-idx->bass-update [scale-idx]
       [(h/structure-add scale-idx)
        (fn [harmonic-context]
          (let [struct (:structure harmonic-context)
@@ -126,7 +126,7 @@
                                                   (- degree-offset (count struct))
                                                   degree-offset)))))])
 
-    (defn pitch-class->bass-update
+    (defn- pitch-class->bass-update
       [natural-pitch-class alteration]
       (fn [harmonic-context]
         (let [origin (:origin harmonic-context)
@@ -139,7 +139,7 @@
                  (h/degree-alteration degree-idx c-offset)
                  (scale-idx->bass-update degree-idx)))))
 
-    (defn bass-update [[type & content]]
+    (defn- bass-update [[type & content]]
       (case type
         :structure.modifier.bass/degree-digit
         (scale-idx->bass-update (string-digit->scale-idx (first content)))
@@ -151,7 +151,7 @@
         (let [[[natural-pitch-class] [alteration]] content]
           (pitch-class->bass-update natural-pitch-class alteration))))
 
-    (defn base-structure-update [structure]
+    (defn- base-structure-update [structure]
       (let [type (keyword (namespace structure))
             structure-name (keyword (name structure))
             structure-update
@@ -174,7 +174,7 @@
                     :minor-major-seventh [[:third :bemol] [:fifth :natural] [:seventh :natural]]))]
         (vec (cons structure-update degree-updates))))
 
-    (defn parsed-tree->update
+    (defn- parsed-tree->update
       [[type & [[x1] [x2] :as content]]]
       (case type
         (:mode
@@ -194,7 +194,9 @@
         :structure.modifier/augmented (structure-addition-update :fifth :sharp)
         :structure/shorthand (h/structure (mapv string-digit->scale-idx content))))
 
-    (defn interpret [& xs]
+    (defn interpret
+      "Parse `xs` and turn the parse-tree into an harmonic update."
+      [& xs]
       (h/->hc-update (mapv parsed-tree->update
                            (mapcat parse xs)))))
 
