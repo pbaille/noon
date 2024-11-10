@@ -1,13 +1,13 @@
 
 # Table of Contents
 
-1.  [Dynamism](#org3c0d9ff)
-    1.  [Star functions](#orgffa98b7)
-    2.  [Map functions](#org7f2848d)
-    3.  [Examples](#orgaa6499e)
+1.  [Dynamism](#org9eca46d)
+    1.  [Star functions](#org7b3159c)
+    2.  [Map functions](#orgc96dbaa)
+    3.  [Examples](#org07a96c3)
 
 
-<a id="org3c0d9ff"></a>
+<a id="org9eca46d"></a>
 
 # Dynamism
 
@@ -16,7 +16,7 @@ For now our scores are pretty static, and don&rsquo;t use the power of clojure m
 There is a bunch of things to know in order to ease things.
 
 
-<a id="orgffa98b7"></a>
+<a id="org7b3159c"></a>
 
 ## Star functions
 
@@ -35,7 +35,7 @@ or
 It ease things a bit when using clojure to generate arguments of those functions. Avoiding to write `apply` everywhere.
 
 
-<a id="org7f2848d"></a>
+<a id="orgc96dbaa"></a>
 
 ## Map functions
 
@@ -44,7 +44,7 @@ maps can be used to compose event transformations
     (play {:velocity (fn [x] (/ x 2)), :duration (fn [x] (* x 2))})
 
 
-<a id="orgaa6499e"></a>
+<a id="org07a96c3"></a>
 
 ## Examples
 

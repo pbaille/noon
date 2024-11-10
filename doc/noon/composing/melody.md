@@ -1,39 +1,39 @@
 
 # Table of Contents
 
-1.  [Melody](#org6b0ade8)
-    1.  [Bounding](#orga7243a5)
-        1.  [within-pitch-bounds?](#org3e99abd)
-    2.  [Rotations](#orgd155efe)
-        1.  [Example](#org72764b0)
-        2.  [Forms](#orgcb58737)
-        3.  [Chords](#org06560df)
-    3.  [Permutations](#org388748e)
-        1.  [Forms](#org312cf01)
-        2.  [Example](#org8de9128)
-        3.  [Options](#org670df59)
-    4.  [Mixed example](#org5aeddc2)
-    5.  [Contour](#org1b4304b)
-        1.  [contour](#orgf0441b0)
-        2.  [Demo](#org002dd21)
-    6.  [Line](#org96064c6)
+1.  [Melody](#orge466ea2)
+    1.  [Bounding](#orge7ad9ea)
+        1.  [within-pitch-bounds?](#org6bf65e5)
+    2.  [Rotations](#org59e018d)
+        1.  [Example](#orgcde3ea2)
+        2.  [Forms](#orgad3093b)
+        3.  [Chords](#orgba4be1b)
+    3.  [Permutations](#org827ccee)
+        1.  [Forms](#org8d6f3fb)
+        2.  [Example](#orgdf557af)
+        3.  [Options](#org9d8c9c9)
+    4.  [Mixed example](#org6d4c793)
+    5.  [Contour](#org32b92ad)
+        1.  [contour](#org2569835)
+        2.  [Demo](#org752b897)
+    6.  [Line](#orgb476582)
 
 
-<a id="org6b0ade8"></a>
+<a id="orge466ea2"></a>
 
 # Melody
 
 Let see some ways to deal with melodies.
 
 
-<a id="orga7243a5"></a>
+<a id="orge7ad9ea"></a>
 
 ## Bounding
 
 One of the most common things we want to be able to control when generating melodies is the range.
 
 
-<a id="org3e99abd"></a>
+<a id="org6bf65e5"></a>
 
 ### within-pitch-bounds?
 
@@ -61,21 +61,21 @@ The `fst-that` form takes a test and any number of update that will be tried in 
 Random melodies are nice at first but can quickly become boring. It is often more pleasing to develop one or more ideas gradually via simple transformations.
 
 
-<a id="orgd155efe"></a>
+<a id="org59e018d"></a>
 
 ## Rotations
 
 Rotating a melody is a way to evolve it while preserving its identity.
 
 
-<a id="org72764b0"></a>
+<a id="orgcde3ea2"></a>
 
 ### Example
 
     (play (fit (rep 8 d1)) (m/rotation 3))
 
 
-<a id="orgcb58737"></a>
+<a id="orgad3093b"></a>
 
 ### Forms
 
@@ -104,7 +104,7 @@ Find or pick an element within a sequence &rsquo;s.
         (member s <:rand|:random>) picks a random member
 
 
-<a id="org06560df"></a>
+<a id="orgba4be1b"></a>
 
 ### Chords
 
@@ -113,14 +113,14 @@ Not only pure melodies can be rotated, if we feed chords into the `rotation` tra
     (play (fit (rep 8 d1)) (each (par d0 d3 d6)) (m/rotation 1/4))
 
 
-<a id="org388748e"></a>
+<a id="org827ccee"></a>
 
 ## Permutations
 
 Another way to transform a melody while preserving a bit of its identity is to permute it. But for long melody, a random permutation can make it so distant to the original that it miss the point. For this reason, permutations are ordered and requested by complexity (similarity degree with the original)
 
 
-<a id="org312cf01"></a>
+<a id="org8d6f3fb"></a>
 
 ### Forms
 
@@ -139,7 +139,7 @@ Like the rotation function, the `permutation` function uses a &rsquo;member-pick
     (m/permutation [1/4 -1/4]) ; a not too much similar nor different permutation
 
 
-<a id="org8de9128"></a>
+<a id="orgdf557af"></a>
 
 ### Example
 
@@ -158,7 +158,7 @@ Like the rotation function, the `permutation` function uses a &rsquo;member-pick
        (m/permutation -1/4))))
 
 
-<a id="org670df59"></a>
+<a id="org9d8c9c9"></a>
 
 ### Options
 
@@ -201,7 +201,7 @@ Like the rotation function, the `permutation` function uses a &rsquo;member-pick
     TODO
 
 
-<a id="org5aeddc2"></a>
+<a id="org6d4c793"></a>
 
 ## Mixed example
 
@@ -228,7 +228,7 @@ In the following example you can get a sense of the effect of deriving a melody 
      (append [d2- (transpose c3)] [d2 (transpose c3-)] same))
 
 
-<a id="org1b4304b"></a>
+<a id="org32b92ad"></a>
 
 ## Contour
 
@@ -249,7 +249,7 @@ For instance those different melodies are all sharing the same contour: [0 2 1 2
 You can clearly hear the similarity between those
 
 
-<a id="orgf0441b0"></a>
+<a id="org2569835"></a>
 
 ### contour
 
@@ -278,7 +278,7 @@ a map that may contain some of those keys:
     The amount of shrinking or growing we want to apply to the score.
 
 
-<a id="org002dd21"></a>
+<a id="org752b897"></a>
 
 ### Demo
 
@@ -329,7 +329,7 @@ One of the similar scores between those shrinked by 2 diatonic step and those ex
      (m/contour :similar {:extent [-2 3], :layer :d}))
 
 
-<a id="org96064c6"></a>
+<a id="orgb476582"></a>
 
 ## Line
 

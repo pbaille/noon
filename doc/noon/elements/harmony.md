@@ -1,36 +1,36 @@
 
 # Table of Contents
 
-1.  [Harmony](#org6513081)
-    1.  [Intervals 2](#orgbc36a82)
-        1.  [Steps](#org879a0e3)
-    2.  [Implementation](#org3b2ab6c)
-    3.  [Shifts](#org3cd3472)
-    4.  [Tonality](#orga922afc)
-        1.  [scale](#org99411c4)
-        2.  [structure](#org33a42a0)
-        3.  [origin](#orgd869f16)
-        4.  [root](#orgfbb1056)
-        5.  [transpose](#org732fcc9)
-        6.  [rebase](#orgb07f010)
-        7.  [degree](#org070660f)
+1.  [Harmony](#org2d598c0)
+    1.  [Intervals 2](#org25354a8)
+        1.  [Steps](#orgbb806f7)
+    2.  [Implementation](#org7b815f0)
+    3.  [Shifts](#org3106a4e)
+    4.  [Tonality](#org8b13dfd)
+        1.  [scale](#org3b228fc)
+        2.  [structure](#org9cbaa8a)
+        3.  [origin](#org25099eb)
+        4.  [root](#orgd25b7c0)
+        5.  [transpose](#orgb1a147d)
+        6.  [rebase](#orgb67a0bc)
+        7.  [degree](#org1ea04a6)
 
 
-<a id="org6513081"></a>
+<a id="org2d598c0"></a>
 
 # Harmony
 
 It is time to enter more deeply into the harmonic system. In this part we will see how to deal with scales, modes, chords, modulations and more&#x2026;
 
 
-<a id="orgbc36a82"></a>
+<a id="org25354a8"></a>
 
 ## Intervals 2
 
 So far we&rsquo;ve seen 3 types of intervals, chromatic steps, diatonic steps and octaves (aka tonic shifts). Let see the two remaining kinds of steps.
 
 
-<a id="org879a0e3"></a>
+<a id="orgbb806f7"></a>
 
 ### Steps
 
@@ -91,7 +91,7 @@ So far we&rsquo;ve seen 3 types of intervals, chromatic steps, diatonic steps an
             (play (rep 3 t1) (each (tup> s0 s1 s1 d1-)))
 
 
-<a id="org3b2ab6c"></a>
+<a id="org7b815f0"></a>
 
 ## Implementation
 
@@ -130,7 +130,7 @@ The :position key holds a map with the 4 layers indexes
     :c ; chromatic
 
 
-<a id="org3cd3472"></a>
+<a id="org3106a4e"></a>
 
 ## Shifts
 
@@ -153,12 +153,12 @@ In the first expression (the shift) we have transposed the score (a E0 note) by 
 In practice, apart for octaves, shifts are not used so often, thats the reason why they don&rsquo;t have defined vars as steps have. They are mainly used in more complex harmonic operations (voice leading etc&#x2026;).
 
 
-<a id="orga922afc"></a>
+<a id="org8b13dfd"></a>
 
 ## Tonality
 
 
-<a id="org99411c4"></a>
+<a id="org3b228fc"></a>
 
 ### scale
 
@@ -171,7 +171,7 @@ By default the major scale is used, but it can be changed. Most of the known sca
     (mk harmonic-minor) ; sets scale to harmonic-minor
 
 
-<a id="org33a42a0"></a>
+<a id="org9cbaa8a"></a>
 
 ### structure
 
@@ -184,7 +184,7 @@ By default we use the triad structure (tonic, third, fifth), but it can be chang
     (mk sus47) ; set-structure-to-sus47
 
 
-<a id="orgd869f16"></a>
+<a id="org25099eb"></a>
 
 ### origin
 
@@ -201,7 +201,7 @@ We can use the `origin` function to change this
         (play (lin (origin :C0) (origin :E0) (origin :G#0)) (each (rup 6 s1)))
 
 
-<a id="orgfbb1056"></a>
+<a id="orgd25b7c0"></a>
 
 ### root
 
@@ -221,7 +221,7 @@ For instance if the origin is on `C0`, `(root :B)` will put the origin on `B-1` 
          (rep 4 s1))
 
 
-<a id="org732fcc9"></a>
+<a id="orgb1a147d"></a>
 
 ### transpose
 
@@ -230,7 +230,7 @@ the transpose update takes an interval or a position and use it to update the or
     (play (scale :lydianb7) (rup 6 d2) (rep 4 (transpose c3-)))
 
 
-<a id="orgb07f010"></a>
+<a id="orgb67a0bc"></a>
 
 ### rebase
 
@@ -251,7 +251,7 @@ The `rebase` function can take several harmonic context transformations.
     (mk (rebase (root :E) (scale :mixolydianb6)))
 
 
-<a id="org070660f"></a>
+<a id="org1ea04a6"></a>
 
 ### degree
 

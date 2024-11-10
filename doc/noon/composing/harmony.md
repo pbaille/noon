@@ -1,23 +1,23 @@
 
 # Table of Contents
 
-1.  [Harmony](#org6b6f85c)
-    1.  [Voicings](#org04086a8)
-        1.  [Inversions](#org91c9eeb)
-        2.  [Drops](#org4cae1f8)
-    2.  [Chord progressions](#org77d7e58)
-        1.  [Voice leading](#org02b49f9)
-        2.  [Melodies](#orgd7bfe5b)
+1.  [Harmony](#org28a0526)
+    1.  [Voicings](#orgc22a241)
+        1.  [Inversions](#org237f02a)
+        2.  [Drops](#orga43205b)
+    2.  [Chord progressions](#org68ec94f)
+        1.  [Voice leading](#org3f4d7a0)
+        2.  [Melodies](#orgd8828f2)
 
 
-<a id="org6b6f85c"></a>
+<a id="org28a0526"></a>
 
 # Harmony
 
 Within the lib.harmony module you will find some tools to deal with chords.
 
 
-<a id="org04086a8"></a>
+<a id="orgc22a241"></a>
 
 ## Voicings
 
@@ -38,7 +38,7 @@ Or dropped (drop 2)
 and many other ways&#x2026;
 
 
-<a id="org91c9eeb"></a>
+<a id="org237f02a"></a>
 
 ### Inversions
 
@@ -64,7 +64,7 @@ But it is not always the case with more complex chords
      (rep 4 (h/inversion 2)))
 
 
-<a id="org4cae1f8"></a>
+<a id="orga43205b"></a>
 
 ### Drops
 
@@ -110,14 +110,14 @@ Here some common drops:
             (play (patch :vibraphone) tetrad (par s0 s1 s2 s3) (h/drop [0 1/2]))
 
 
-<a id="org77d7e58"></a>
+<a id="org68ec94f"></a>
 
 ## Chord progressions
 
 A chord progression is simply a succession of different chords, cyclic or not.
 
 
-<a id="org02b49f9"></a>
+<a id="org3f4d7a0"></a>
 
 ### Voice leading
 
@@ -166,7 +166,7 @@ It works on any voicings.
 The voice-led function is quite resource consuming and remain to be optimized&#x2026;
 
 
-<a id="orgd7bfe5b"></a>
+<a id="orgd8828f2"></a>
 
 ### Melodies
 

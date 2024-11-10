@@ -1,12 +1,12 @@
 
 # Table of Contents
 
-1.  [Polyphony](#org348fe66)
-    1.  [Channels](#org04f96b8)
-    2.  [Tracks](#org3bca872)
+1.  [Polyphony](#org9f5ece3)
+    1.  [Channels](#orgf25a884)
+    2.  [Tracks](#org7c7824c)
 
 
-<a id="org348fe66"></a>
+<a id="org9f5ece3"></a>
 
 # Polyphony
 
@@ -43,7 +43,7 @@ Like `lin` and `tup`, `par` has its accumulative counterpart:
           (par> c0 c7 c7 c7 c7 c7)) ; piling perfect fifths.
 
 
-<a id="org04f96b8"></a>
+<a id="orgf25a884"></a>
 
 ## Channels
 
@@ -68,7 +68,7 @@ We can achieve the same thing as the first expression of the section using `par`
                [(chan 2) c7]))
 
 
-<a id="org3bca872"></a>
+<a id="org7c7824c"></a>
 
 ## Tracks
 

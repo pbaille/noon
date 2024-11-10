@@ -1,25 +1,25 @@
 
 # Table of Contents
 
-1.  [Transformations 1](#org5b44f47)
-    1.  [Pitches](#org9fa5486)
-    2.  [Durations](#org8f55721)
-    3.  [Velocities](#orgdabadf0)
-    4.  [Composition](#org6ba9967)
-    5.  [Concatenation](#orgb2656b9)
-    6.  [Superposition](#orgdd6f7b7)
-    7.  [Sounds](#org0581ae8)
-    8.  [Channels](#org3a923ae)
+1.  [Transformations 1](#org3353ab6)
+    1.  [Pitches](#org7696d2a)
+    2.  [Durations](#org376d752)
+    3.  [Velocities](#orgf4774c5)
+    4.  [Composition](#org3c259d1)
+    5.  [Concatenation](#org6e07535)
+    6.  [Superposition](#org2a21af2)
+    7.  [Sounds](#org01231f9)
+    8.  [Channels](#orgbc0d095)
 
 
-<a id="org5b44f47"></a>
+<a id="org3353ab6"></a>
 
 # Transformations 1
 
 There is a bunch of transformations available, let&rsquo;s see the basics.
 
 
-<a id="org9fa5486"></a>
+<a id="org7696d2a"></a>
 
 ## Pitches
 
@@ -41,7 +41,7 @@ Pitches are not often used as is, we will prefer more relative constructs like i
 But it may be a little overwhelming to start with, so for now we will use them to introduce the basics building blocks of the system.
 
 
-<a id="org8f55721"></a>
+<a id="org376d752"></a>
 
 ## Durations
 
@@ -64,7 +64,7 @@ Those 3 forms return a transformation that can be used in `mk` or `play`
     (play (dur 1/4))
 
 
-<a id="orgdabadf0"></a>
+<a id="orgf4774c5"></a>
 
 ## Velocities
 
@@ -89,7 +89,7 @@ Like for duration there is also a more flexible form:
     (play (vel (fn [x] (/ x 2)))) ; divide the current velocity by 2 (by default the velocity is 80)
 
 
-<a id="org6ba9967"></a>
+<a id="org3c259d1"></a>
 
 ## Composition
 
@@ -106,7 +106,7 @@ The `play` and the `mk` functions, when given several arguments are doing exactl
     (play F#-1 dur4) ; is the same as (play [F#-1 dur4])
 
 
-<a id="orgb2656b9"></a>
+<a id="org6e07535"></a>
 
 ## Concatenation
 
@@ -123,7 +123,7 @@ The `lin` function takes an arbitrary number of transformations and concatenate 
                C1))
 
 
-<a id="orgdd6f7b7"></a>
+<a id="org2a21af2"></a>
 
 ## Superposition
 
@@ -140,7 +140,7 @@ A pianissimo, double duration, Csus4 chord:
           (par C0 F0 G0))
 
 
-<a id="org0581ae8"></a>
+<a id="org01231f9"></a>
 
 ## Sounds
 
@@ -159,7 +159,7 @@ You can look at what is available here
     noon.vst.general-midi/summary
 
 
-<a id="org3a923ae"></a>
+<a id="orgbc0d095"></a>
 
 ## Channels
 

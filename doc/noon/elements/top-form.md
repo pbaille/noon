@@ -1,17 +1,17 @@
 
 # Table of Contents
 
-1.  [Top form](#org8a67e18)
-    1.  [Options](#orgfba9b2a)
-        1.  [Musescore options](#orgb75ecb9)
-        2.  [mp3 export](#org00d49a2)
-    2.  [score](#orgdfbda27)
-    3.  [shorthands](#orgf54b1ce)
-        1.  [`noon.score/play`](#orga7caf4a)
-        2.  [`noon.score/write`](#orgf7967e6)
+1.  [Top form](#org9a9e68f)
+    1.  [Options](#org678b216)
+        1.  [Musescore options](#orgf2ebc82)
+        2.  [mp3 export](#orge5f7c32)
+    2.  [score](#orgac0cc36)
+    3.  [shorthands](#orgdfb5344)
+        1.  [`noon.score/play`](#orgdc133ab)
+        2.  [`noon.score/write`](#org12d28c3)
 
 
-<a id="org8a67e18"></a>
+<a id="org9a9e68f"></a>
 
 # Top form
 
@@ -28,7 +28,7 @@ Here a minimal example:
      (mk))
 
 
-<a id="orgfba9b2a"></a>
+<a id="org678b216"></a>
 
 ## Options
 
@@ -84,7 +84,7 @@ In addition to those soundfonts, you can send the output of noon to any output d
           (mk (par s0 s1 s2)))
 
 
-<a id="orgb75ecb9"></a>
+<a id="orgf2ebc82"></a>
 
 ### Musescore options
 
@@ -97,7 +97,7 @@ If you have [musecore](https://musescore.org/en) installed on your machine, you 
     write the score pdf file.
 
 
-<a id="org00d49a2"></a>
+<a id="orge5f7c32"></a>
 
 ### mp3 export
 
@@ -108,7 +108,7 @@ It is possible to create an mp3 file by passing this option:
 [FFmpeg](https://ffmpeg.org/) and [FluidSynth](https://www.fluidsynth.org/) have to be installed on your machine.
 
 
-<a id="orgdfbda27"></a>
+<a id="orgac0cc36"></a>
 
 ## score
 
@@ -124,14 +124,14 @@ Those transformations are applied in order to the default score.
     '(mk transformation1 transformation2 ...)
 
 
-<a id="orgf54b1ce"></a>
+<a id="orgdfb5344"></a>
 
 ## shorthands
 
 As a convenience, some thin `noon.score/noon` wrappers are defined:
 
 
-<a id="orga7caf4a"></a>
+<a id="orgdc133ab"></a>
 
 ### `noon.score/play`
 
@@ -148,7 +148,7 @@ More concretly:
           (tup s0 s1 s2 s3))
 
 
-<a id="orgf7967e6"></a>
+<a id="org12d28c3"></a>
 
 ### `noon.score/write`
 

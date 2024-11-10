@@ -1,17 +1,17 @@
 
 # Table of Contents
 
-1.  [Building blocks](#org33d7b9f)
-    1.  [Events](#org8dda9af)
-    2.  [Score](#org93f19c2)
+1.  [Building blocks](#orgb112e4b)
+    1.  [Events](#orge0fc496)
+    2.  [Score](#org3c21226)
 
 
-<a id="org33d7b9f"></a>
+<a id="orgb112e4b"></a>
 
 # Building blocks
 
 
-<a id="org8dda9af"></a>
+<a id="orge0fc496"></a>
 
 ## Events
 
@@ -24,7 +24,7 @@ It is represented using a clojure map
     DEFAULT_EVENT
 
 
-<a id="org93f19c2"></a>
+<a id="org3c21226"></a>
 
 ## Score
 

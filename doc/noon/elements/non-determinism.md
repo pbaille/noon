@@ -1,16 +1,16 @@
 
 # Table of Contents
 
-1.  [Non determinism](#orga3485a6)
-    1.  [one-of](#org019a190)
-    2.  [maybe](#org46cf1ec)
-    3.  [probs](#orgf49ae55)
-    4.  [any-that](#org7cdcf58)
-    5.  [!](#org4ec0286)
-    6.  [Shuffling](#orgaa21d71)
+1.  [Non determinism](#org50d8546)
+    1.  [one-of](#org7b58599)
+    2.  [maybe](#orgbf7d698)
+    3.  [probs](#org7815b55)
+    4.  [any-that](#orga9b4745)
+    5.  [!](#org677be64)
+    6.  [Shuffling](#org9a0044d)
 
 
-<a id="orga3485a6"></a>
+<a id="org50d8546"></a>
 
 # Non determinism
 
@@ -23,7 +23,7 @@ It is quite fun to insert a bit of randomness in our scores.
 We can use some great available tools like `test.check.generators` to handle non determinism. That being said, some commonly used non-deterministic functions are available directly.
 
 
-<a id="org019a190"></a>
+<a id="org7b58599"></a>
 
 ## one-of
 
@@ -34,7 +34,7 @@ We can use some great available tools like `test.check.generators` to handle non
     (play dur:8 (rep 50 (one-of c1 c1-)))
 
 
-<a id="org46cf1ec"></a>
+<a id="orgbf7d698"></a>
 
 ## maybe
 
@@ -47,7 +47,7 @@ We can use some great available tools like `test.check.generators` to handle non
     (play dur:8 (rep 50 (maybe c1 c1-))) ; you can notice melodic repetitions unlike with the corresponding one-of example.
 
 
-<a id="orgf49ae55"></a>
+<a id="org7815b55"></a>
 
 ## probs
 
@@ -58,7 +58,7 @@ We can use some great available tools like `test.check.generators` to handle non
     (play dur:4 (rep 24 (probs {c1 6, c6- 1, (par c0 o1-) 1})))
 
 
-<a id="org7cdcf58"></a>
+<a id="orga9b4745"></a>
 
 ## any-that
 
@@ -74,7 +74,7 @@ A melody of 60 notes using the 6 given intervals but remaining in the given pitc
 The `within-pitch-bounds?` is just a score transformation that return the score unchanged if it is within the given bounds, else it returns `nil`. Any function of this kind can be used has first argument to `any-that`.
 
 
-<a id="org4ec0286"></a>
+<a id="org677be64"></a>
 
 ## !
 
@@ -87,7 +87,7 @@ the `!` macro can be useful to deal with raw non deterministic expressions. here
     (play (nlin 4 (tup* (shuffle [d0 d2 d4 d6])))) ; without the bang the shuffle expression is executed only one time.
 
 
-<a id="orgaa21d71"></a>
+<a id="org9a0044d"></a>
 
 ## Shuffling
 
