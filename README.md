@@ -5,4 +5,4 @@
 
 A library to compose MIDI music.
 
-[guide](file:src/noon/doc/guide.org)
+[guide](https://github.com/pbaille/noon/blob/main/src/noon/doc/guide.org)
