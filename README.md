@@ -8,3 +8,5 @@
 A library to compose MIDI music.
 
 [guide](https://github.com/pbaille/noon/blob/main/src/noon/doc/guide.org)
+
+https://pbaille-noon.s3.eu-west-3.amazonaws.com/media/noon+vsl+example.mov
