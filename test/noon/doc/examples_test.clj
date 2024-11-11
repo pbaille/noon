@@ -9,7 +9,6 @@
             [noon.utils.misc :as u]
             [noon.utils.pseudo-random :as pr]
             [noon.constants :as nc]
-            [noon.midi :as midi]
             [noon.vst.vsl :as vsl :refer [vsl]]
             [clojure.math.combinatorics :as comb]
             [clojure.test :refer [deftest testing is]]
@@ -119,7 +118,7 @@
          (= 1 (count _))
          (str
            (quote
-             user-a1eaf59e-ba2d-4dbf-89d6-d981cdab28df/chromatic-double-passing)
+             user-5b369e6a-892b-4a59-ae92-710911ddcd6d/chromatic-double-passing)
            "works only on single note scores"))
        (let [target (first _)
              d-suroundings (nh/diatonic-suroundings (:pitch target))
@@ -1459,22 +1458,22 @@
                   bass [(patch :acoustic-bass) (each t2-)]
                   vibe [(patch :vibraphone) vel5 t1 (each (par s0 s1 s2 s3))
                         h/voice-led]
-                  lead1 (ntup> (* n-bars 12)
-                               (any-that (within-pitch-bounds? :C0 :C3)
-                                         d1
-                                         d1-
-                                         d3
-                                         d3-
-                                         d4
-                                         d4-))
-                  lead2 [(repeat-while
-                           (within-time-bounds? 0 (* n-bars 10))
-                           (append [start-from-last
-                                    (any-that (within-pitch-bounds? :C-1 :C2)
-                                              (rep 3 d3 :skip-first)
-                                              (rep 3 d3- :skip-first)
-                                              d1
-                                              d1-)])) (adjust 1)]
+                  _lead1 (ntup> (* n-bars 12)
+                                (any-that (within-pitch-bounds? :C0 :C3)
+                                          d1
+                                          d1-
+                                          d3
+                                          d3-
+                                          d4
+                                          d4-))
+                  _lead2 [(repeat-while
+                            (within-time-bounds? 0 (* n-bars 10))
+                            (append [start-from-last
+                                     (any-that (within-pitch-bounds? :C-1 :C2)
+                                               (rep 3 d3 :skip-first)
+                                               (rep 3 d3- :skip-first)
+                                               d1
+                                               d1-)])) (adjust 1)]
                   lead4 [(tup (mixtup s0 s1 s2 s3) (mixtup s2 s3 s4 s5))
                          (rup n-bars
                               (probs {(m/permutation [0 1/2]) 2,

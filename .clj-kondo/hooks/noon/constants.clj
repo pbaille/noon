@@ -83,7 +83,7 @@
        (range (count scale))))
 
     (def major-modes
-      (zipmap [:ionian :dorian :phrygian :lydian :mixolydian :eolian :locrian]
+      (zipmap [:ionian :dorian :phrygian :lydian :mixolydian :aeolian :locrian]
               (scale-modes major-scale-vals)))
 
     (def melodic-minor-modes
@@ -114,7 +114,7 @@
        :phry :phrygian
        :lyd :lydian
        :mix :mixolydian
-       :eol :eolian
+       :eol :aeolian
        :loc :locrian
        :melm :melodic-minor
        :phry6 :phrygian6
@@ -138,7 +138,7 @@
        :phrygian [1 4 3 6 2 5]
        :lydian [3 6 2 5 1 4]
        :mixolydian [6 3 2 5 1 4]
-       :eolian  [5 1 4 2 6 3]
+       :aeolian  [5 1 4 2 6 3]
        :locrian [4 1 6 5 2 3]
 
        :melodic-minor [6 2 5 1 4 3]

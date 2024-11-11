@@ -11,7 +11,6 @@
             [noon.utils.misc :as u]
             [noon.utils.pseudo-random :as pr]
             [noon.constants :as nc]
-            [noon.midi :as midi]
             [noon.vst.vsl :as vsl :refer [vsl]]
             [clojure.math.combinatorics :as comb]))
 #+end_src
@@ -1772,11 +1771,11 @@ One more shredding experiment
 
       ;; alternate leads
 
-      lead1 (ntup> (* n-bars 12)
+      _lead1 (ntup> (* n-bars 12)
                    (any-that (within-pitch-bounds? :C0 :C3)
                              d1 d1- d3 d3- d4 d4-))
 
-      lead2 [(repeat-while (within-time-bounds? 0 (* n-bars 10))
+      _lead2 [(repeat-while (within-time-bounds? 0 (* n-bars 10))
                (append [start-from-last
                         (any-that (within-pitch-bounds? :C-1 :C2)
                                   (rep 3 d3 :skip-first)

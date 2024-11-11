@@ -1,7 +1,8 @@
 (ns org-utils
   (:require [clojure.string :as str]
             [zprint.core :as z]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [clojure.pprint :as pp]))
 
 "Utils for converting org files to clojure files (regular and test)"
 
@@ -196,5 +197,5 @@
 
 (defn build-cljdoc-tree []
   (spit "doc/cljdoc.edn"
-        (with-out-str (clojure.pprint/pprint {:cljdoc/languages ["clj"]
-                                              :cljdoc.doc/tree [(build-doc-tree "doc/Noon")]}))))
+        (with-out-str (pp/pprint {:cljdoc/languages ["clj"]
+                                  :cljdoc.doc/tree [(build-doc-tree "doc/Noon")]}))))
