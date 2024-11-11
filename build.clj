@@ -4,7 +4,7 @@
 
 (def lib 'pbaille/noon)
 (def version-tic (b/git-count-revs nil))
-(def version "0.1.2-SNAPSHOT")
+(def version "0.1.2")
 (def class-dir "target/classes")
 (def jar-file (str "target/noon-" version ".jar"))
 ;; delay to defer side effects (artifact downloads)
