@@ -525,8 +525,8 @@
               (cons 'do
                     (mapcat
                      (fn [_]
-                       [(list 'def (symbol (str prefix _)) (list f _))
-                        (list 'def (symbol (str prefix _ "-")) (list f (list `- _)))])
+                       [(list 'def (with-meta (symbol (str prefix _)) {:no-doc true}) (list f _))
+                        (list 'def (with-meta (symbol (str prefix _ "-")) {:no-doc true}) (list f (list `- _)))])
                      (range 1 max))))
 
             (defsteps "c" 37 c-step)

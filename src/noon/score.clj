@@ -294,17 +294,20 @@
                               (list 'do
                                     (list 'def (with-meta (symbol (str "dur" i))
                                                  {:doc (str "Multiply event duration by " i)
-                                                  :tags [:event-update :alias :temporal]})
+                                                  :tags [:event-update :alias :temporal]
+                                                  :no-doc true})
                                           `(dur (mul ~i)))
                                     (list 'def (with-meta (symbol (str "dur:" i))
                                                  {:doc (str "Divide event duration by " i)
-                                                  :tags [:event-update :alias :temporal]})
+                                                  :tags [:event-update :alias :temporal]
+                                                  :no-doc true})
                                           `(dur (div ~i)))))
                             (for [n (range 2 12)
                                   d (range 2 12)]
                               (list 'def (with-meta (symbol (str "dur" n ":" d))
                                            {:doc (str "Multiply event duration by " n "/" d)
-                                            :tags [:event-update :alias :temporal]})
+                                            :tags [:event-update :alias :temporal]
+                                            :no-doc true})
                                     `(dur (mul (/ ~n ~d))))))))
             (-def-durations)
 
@@ -316,7 +319,8 @@
                       (let [v (int (* i (/ 127 12)))]
                         (list 'def (with-meta (symbol (str "vel" i))
                                      {:doc (str "Set event velocity to " v)
-                                      :tags [:event-update :alias]})
+                                      :tags [:event-update :alias]
+                                      :no-doc true})
                               `(vel ~v))))))
             (-def-velocities)
 
@@ -325,7 +329,8 @@
                     (for [i (range 0 16)]
                       (list 'def (with-meta (symbol (str "chan" i))
                                    {:doc (str "Set event midi channel to " i)
-                                    :tags [:event-update :alias]})
+                                    :tags [:event-update :alias]
+                                    :no-doc true})
                             `(chan ~i)))))
             (-def-channels)
 
@@ -334,7 +339,8 @@
                     (for [i (range 0 16)]
                       (list 'def (with-meta (symbol (str "track" i))
                                    {:doc (str "Set event midi channel to " i)
-                                    :tags [:event-update :alias]})
+                                    :tags [:event-update :alias]
+                                    :no-doc true})
                             `(track ~i)))))
             (-def-tracks))
 
@@ -480,7 +486,8 @@
                                       (list f n))
                                 (list 'def (with-meta (symbol (str prefix n "-"))
                                              {:doc (str "Shift down " n " " name (when (> n 1) "s") ".")
-                                              :tags [:event-update :harmonic]})
+                                              :tags [:event-update :harmonic]
+                                              :no-doc true})
                                       (list f (list `- n)))])
                              (range 1 max))))
 
