@@ -10,4 +10,6 @@
          build-clj-examples {:requires ([org-utils]),
                              :task (org-utils/build-clj-examples)}
          build-all {:requires ([org-utils]),
-                    :task (org-utils/build-all)}}}
+                    :task (org-utils/build-all)}
+         build-cljdoc-tree {:requires ([org-utils]),
+                            :task (org-utils/build-cljdoc-tree)}}}

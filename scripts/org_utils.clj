@@ -172,27 +172,29 @@
       (str/replace "_" " ")))    ; replace underscore with space
 
 (defn build-doc-tree [dir-path]
-  (let [root (io/file dir-path)]
+  (let [root (io/file dir-path)
+        ]
     (letfn [(process-file [file]
-              (let [rel-path (-> (.getPath file)
-                                 (str/replace (str dir-path "/") ""))
-                    title (file->title (.getName file))]
-                [title {:file rel-path}]))
+              (let [title (file->title (.getName file))]
+                [title {:file (.getPath file)}]))
 
             (process-dir [dir]
               (let [files (sort-by #(.getName %) (.listFiles dir))
                     index-file (io/file (str (.getPath dir) ".md"))
                     subdirs (filter #(.isDirectory %) files)
-                    index-file? (set (map (fn [d] (str (.getName d) ".md")) subdirs))
-                    md-files (filter #(and (.isFile %)
-                                           (.endsWith (.getName %) ".md")
-                                           (not (index-file? (.getName %))))
-                                     files)]
-                (clojure.pprint/pprint {:dirs subdirs :files md-files})
+                    index-file-name? (set (map (fn [d] (str (.getName d) ".md")) subdirs))]
+                #_(clojure.pprint/pprint {:dirs subdirs :index-file index-file})
                 (vec (concat (process-file index-file)
-                             (map process-dir subdirs)
-                             (map process-file md-files)))))]
+                             (keep (fn [f]
+                                     (cond
+                                       (.isDirectory f) (process-dir f)
+                                       (and (.isFile f)
+                                            (not (index-file-name? (.getName f)))) (process-file f)))
+                                   files)))))]
 
       (process-dir root))))
 
-(build-doc-tree "doc/guide/Noon")
+(defn build-cljdoc-tree []
+  (spit "doc/cljdoc.edn"
+        (with-out-str (clojure.pprint/pprint {:cljdoc/languages ["clj"]
+                                              :cljdoc.doc/tree [(build-doc-tree "doc/Noon")]}))))

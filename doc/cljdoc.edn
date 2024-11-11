@@ -1,17 +1,25 @@
-{:cljdoc/languages ["clj"]
- :cljdoc.doc/tree [["Noon" {:file "doc/noon.md" :title "Noon"}
-                    ["Motivation" {:file "doc/noon/motivation.md" :title "Motivation"}]
-                    ["Elements" {:file "doc/noon/elements.md" :title "Elements"}
-                     ["Building Blocks" {:file "doc/noon/elements/building-blocks.md" :title "Building Blocks"}]
-                     ["Top Form" {:file "doc/noon/elements/top-form.md" :title "Top Form"}]
-                     ["Transformations 1" {:file "doc/noon/elements/transformations-1.md" :title "Transformations 1"}]
-                     ["Transformations 2" {:file "doc/noon/elements/transformations-2.md" :title "Transformations 2"}]
-                     ["Polyphony" {:file "doc/noon/elements/polyphony.md" :title "Polyphony"}]
-                     ["Mapping" {:file "doc/noon/elements/mapping.md" :title "Mapping"}]
-                     ["Dynamism" {:file "doc/noon/elements/dynamism.md" :title "Dynamism"}]
-                     ["Non Determinism" {:file "doc/noon/elements/non-determinism.md" :title "Non Determinism"}]
-                     ["Harmony" {:file "doc/noon/elements/harmony.md" :title "Harmony"}]]
-                    ["Composing" {:file "doc/noon/composing.md" :title "Composing"}
-                     ["Melody" {:file "doc/noon/composing/melody.md" :title "Melody"}]
-                     ["Rythmn" {:file "doc/noon/composing/rythmn.md" :title "Rythmn"}]
-                     ["Harmony" {:file "doc/noon/composing/harmony.md" :title "Harmony"}]]]]}
+{:cljdoc/languages ["clj"],
+ :cljdoc.doc/tree
+ [["Noon"
+   {:file "doc/Noon.md"}
+   ["Motivation" {:file "doc/Noon/01-Motivation.md"}]
+   ["Elements"
+    {:file "doc/Noon/02-Elements.md"}
+    ["Building blocks"
+     {:file "doc/Noon/02-Elements/01-Building_blocks.md"}]
+    ["Top form" {:file "doc/Noon/02-Elements/02-Top_form.md"}]
+    ["Transformations 1"
+     {:file "doc/Noon/02-Elements/03-Transformations_1.md"}]
+    ["Transformations 2"
+     {:file "doc/Noon/02-Elements/04-Transformations_2.md"}]
+    ["Polyphony" {:file "doc/Noon/02-Elements/05-Polyphony.md"}]
+    ["Mapping" {:file "doc/Noon/02-Elements/06-Mapping.md"}]
+    ["Dynamism" {:file "doc/Noon/02-Elements/07-Dynamism.md"}]
+    ["Non determinism"
+     {:file "doc/Noon/02-Elements/08-Non_determinism.md"}]
+    ["Harmony" {:file "doc/Noon/02-Elements/09-Harmony.md"}]]
+   ["Composing"
+    {:file "doc/Noon/03-Composing.md"}
+    ["Melody" {:file "doc/Noon/03-Composing/01-Melody.md"}]
+    ["Rythmn" {:file "doc/Noon/03-Composing/02-Rythmn.md"}]
+    ["Harmony" {:file "doc/Noon/03-Composing/03-Harmony.md"}]]]]}
