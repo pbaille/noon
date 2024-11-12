@@ -9,11 +9,7 @@
 !/.clj-kondo/hooks
 !/.clj-kondo/config.edn
 /.lsp
-/notation/samples/
-/data/chromaphone-banks.edn
-.calva/output-window/output.calva-repl
 vsl/*
-.git.bfg-report
 /test/frozen/temp/
 .dir-locals.el
 .aider/*
