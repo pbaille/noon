@@ -179,6 +179,11 @@ It is possible to create an mp3 file by passing this option:
 
 =:mp3 true=
 
+#+begin_src clojure :export-audio t
+(noon {:mp3 true}
+      (mk (tup s0 s1 s2)))
+#+end_src
+
 [[https://ffmpeg.org/][FFmpeg]] and [[https://www.fluidsynth.org/][FluidSynth]] have to be installed on your machine.
 
 **** score

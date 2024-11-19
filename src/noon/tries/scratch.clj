@@ -400,3 +400,56 @@
                        (each (tup s0 s2 s4))
                        (m/connect 3)])
                (adjust 36)))
+
+(comment :simple-triad-motive
+
+         (play
+          aeolian
+          (h/lin :Im :VIIo :Im :IIIo :IVm :#IVo :Vsus4 :VIIo)
+          (h/align-contexts :s)
+          (lin s0 s1 s0 s1-)
+          (chans [(patch :acoustic-bass) (each t-round o2-)]
+                 [(patch :choir) vel4 (each (par s0 s2 s4))]
+                 [(patch :ocarina) (each [(maybe s1 s1-)
+                                          (one-of (tup s0 [s2 (lin d1 s0)] s1 s0 s1)
+                                                  (tup s2 [s0 (lin c1- s0)] s1 s2 s1))])]))
+
+         (play
+          dur2
+          aeolian
+          (h/lin :Im :VIIo :Im :IIIo [:IVm :aeolian] :#IVo :Vsus4 :VIIo)
+          (h/align-contexts :s)
+          (lin s0 s1 s0 s1-)
+          (chans [(patch :acoustic-bass) (each t-round o2-)]
+                 [(patch :choir) vel4 (each (tup (par s0 s2 [s4 d1]) (par s0 s2 s4)))]))
+
+         (swap! options* assoc-in [:tracks 0] :chorium)
+
+         (play
+          dur2
+          aeolian
+          (h/lin :Im :VIIo :Im :IIIo [:IVm :aeolian] :#IVo :Vsus4 :VIIo)
+          (h/align-contexts :s)
+          (lin s0 s1 s0 s1-)
+          (chans [(patch :choir) vel5 (each t-round o2-)]
+                 [(patch :choir) vel5 (each (par (tup (par s0 [s2 d1] s4) (par s0 s2 s4))
+                                                 [vel4
+                                                  (par s6 s8)
+                                                  (shuftup s0 s1 s2)]))]))
+
+         (play
+          dur2
+          aeolian
+          (h/lin :Im :bVI :Vsus4 :VIIo :IIIo :IVm :Im :bII :Vsus4 :VIIo)
+          (h/align-contexts :s)
+          (lin s0 s1 s0 s1-)
+          (chans [(patch :choir) vel5 (each t-round o2-)]
+                 [(patch :choir) vel5 (each (par (tup (par s0 [s2 d1] s4) (par s0 s2 s4))
+                                                 [vel4
+                                                  (par s6 s8)
+                                                  (shuftup s0 s1 s2)]))]
+                 [(patch :harp) vel4
+                  (each o1
+                        [(shuftup s0 s1 s2 s3 s4 s5)
+                         (mixtup s0 s2- s2)]
+                        (vel-humanize 10))])))
