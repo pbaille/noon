@@ -12,7 +12,7 @@
 (def instruments
   (->> (edn/read-string (slurp (io/resource "data/GM.edn")))
        (mapv (fn [i] (-> (update i :group u/str->keyword)
-                        (assoc :key (name->key (:name i))))) )))
+                         (assoc :key (name->key (:name i))))))))
 
 (def groups
   (into {}
@@ -45,4 +45,15 @@
            (play dur2
                  [o1- (rup 7 d1)
                   (lin same (k (par s0 s2 s4)))]
-                 (lin* (map patch (map (partial + 56) (range 24)))))))
+                 (lin* (map patch (map (partial + 56) (range 24))))))
+
+  (defn instrument-key [name]
+    (-> (str/replace name #"\((.*)\)" "$1")
+        (str/lower-case)
+        (str/replace #" " "_")
+        (str/replace #"-" "_")))
+
+  (spit "resources/data/instruments.edn"
+        (with-out-str (clojure.pprint/pprint (->> (edn/read-string (slurp (io/resource "data/GM.edn")))
+                                                  (mapv (fn [i] [(:val i) (instrument-key (:name i))]))
+                                                  (into {}))))))
