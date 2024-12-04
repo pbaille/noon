@@ -1,6 +1,7 @@
 (ns noon.harmony
   (:require [noon.utils.misc :as u :refer [t t?]]
-            [noon.constants :as constants]))
+            [noon.constants :as constants])
+  #?(:cljs (:require-macros [noon.harmony :refer [-def-wrapped defsteps]])))
 
 (do :impl
 
@@ -521,13 +522,13 @@
             (def d0 d-trim)
             (def c0 (c-step 0))
 
-            (defmacro defsteps [prefix max f]
-              (cons 'do
-                    (mapcat
-                     (fn [_]
-                       [(list 'def (with-meta (symbol (str prefix _)) {:no-doc true}) (list f _))
-                        (list 'def (with-meta (symbol (str prefix _ "-")) {:no-doc true}) (list f (list `- _)))])
-                     (range 1 max))))
+            #?(:clj (defmacro defsteps [prefix max f]
+               (cons 'do
+                     (mapcat
+                      (fn [_]
+                        [(list 'def (with-meta (symbol (str prefix _)) {:no-doc true}) (list f _))
+                         (list 'def (with-meta (symbol (str prefix _ "-")) {:no-doc true}) (list f (list `- _)))])
+                      (range 1 max)))))
 
             (defsteps "c" 37 c-step)
             (defsteps "d" 22 d-step)
@@ -954,12 +955,12 @@
 
 (do :defs
 
-    (defmacro -def-wrapped [wrapper m]
-      (cons 'do (for [[k v] (eval m)]
-                  (list 'def
-                        (with-meta (symbol (name k))
-                          {:doc (str "Change the :" wrapper " of received context to " k ".")})
-                        (list wrapper v)))))
+    #?(:clj (defmacro -def-wrapped [wrapper m]
+       (cons 'do (for [[k v] (eval m)]
+                   (list 'def
+                         (with-meta (symbol (name k))
+                           {:doc (str "Change the :" wrapper " of received context to " k ".")})
+                         (list wrapper v))))))
 
     (-def-wrapped structure constants/structures)
 

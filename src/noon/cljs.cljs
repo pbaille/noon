@@ -2,14 +2,20 @@
   (:require [noon.utils.misc :as u]
             [noon.utils.pseudo-random :as pr]
             [noon.utils.chance :as ch]
-            #_[noon.score :as n]))
+            [noon.score :as n]))
 
 (defn ^:export init []
-  (js/console.log "loading noon cljs"))
+  (js/console.log "loading noon cljs")
+  (println (n/mk (n/tup n/s0 n/s1))))
 
-(defn my-identity-fn
+#_(defn my-identity-fn
   {:doc (str "my" " identity" " fn")}
   [x] x)
+
+
+
+
+
 
 (comment
   (pr/rand)

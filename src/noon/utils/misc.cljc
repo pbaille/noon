@@ -9,7 +9,8 @@
                     [clojure.data.codec.base64 :as b64])
      :cljs (:require [cljs.pprint :as pprint]))
   #?(:clj (:import (java.io ByteArrayOutputStream ObjectOutputStream ObjectInputStream))
-     :cljs (:require-macros [noon.utils.misc :refer [defn* template f_ >_ defreduction]])))
+     :cljs (:require-macros [noon.utils.misc :refer [defn* template f_ >_ defreduction
+                                                     reduction]])))
 
 (do :numbers
 
@@ -337,26 +338,26 @@
             (defn copy-file [file name]
               (fs/copy file name))))
 
-#?(:clj (do :more-macros
+(do :more-macros
 
-            (defn hm->defs
+    #?(:clj (defn hm->defs
               "takes an hashmap of type (named x) -> any, and def all in the given ns"
               [ns hm]
               (doseq [[sym val] hm]
-                (intern ns (symbol (name sym)) val)))
+                (intern ns (symbol (name sym)) val))))
 
-            (defn reduction
-              "Turn a binary fn 'f into a variadic function that use 'f and reduce to produce a result,
+    (defn reduction
+      "Turn a binary fn 'f into a variadic function that use 'f and reduce to produce a result,
        shortcircuiting on first nil intermediate result"
-              [f]
-              (fn [this & xs]
-                (reduce (fn [this x]
-                          (if this
-                            (f this x)
-                            (reduced nil)))
-                        this xs)))
+      [f]
+      (fn [this & xs]
+        (reduce (fn [this x]
+                  (if this
+                    (f this x)
+                    (reduced nil)))
+                this xs)))
 
-            (defmacro defreduction
+    #?(:clj (defmacro defreduction
               [name x & xs]
               (let [[doc [argv & body]]
                     (if (string? x) [x xs] [nil (cons x xs)])]
