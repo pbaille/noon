@@ -11,6 +11,9 @@
 
   (swap! options* assoc :tracks {0 :chorium})
 
+  (spit "simple-tup.edn"
+        (str (midifiable-score (mk (tup s0 s1 s2)))))
+
   (play vel2 dur2
         (lin* (map reroot [:C :Eb :F# :A]))
         (each (tup (rebase V (structure :sus47))
@@ -413,6 +416,22 @@
                  [(patch :ocarina) (each [(maybe s1 s1-)
                                           (one-of (tup s0 [s2 (lin d1 s0)] s1 s0 s1)
                                                   (tup s2 [s0 (lin c1- s0)] s1 s2 s1))])]))
+         '[:export-to-cljs
+           (mapv (fn [e]
+                   (-> e
+                       (update :position float)
+                       (update :duration float)))
+                 (numerify-pitches
+                  (mk
+                   aeolian
+                   (h/lin :Im :VIIo :Im :IIIo :IVm :#IVo :Vsus4 :VIIo)
+                   (h/align-contexts :s)
+                   (lin s0 s1 s0 s1-)
+                   (chans [(patch :acoustic-bass) (each t-round o2-)]
+                          [(patch :choir) vel4 (each (par s0 s2 s4))]
+                          [(patch :ocarina) (each [(maybe s1 s1-)
+                                                   (one-of (tup s0 [s2 (lin d1 s0)] s1 s0 s1)
+                                                           (tup s2 [s0 (lin c1- s0)] s1 s2 s1))])]))))]
 
          (play
           dur2

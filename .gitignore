@@ -18,3 +18,5 @@ vsl/*
 /target/
 /test/data/
 /test/trash/
+/.cljdoc-preview/
+/.git.bfg-report/
