@@ -1,6 +1,6 @@
 (ns noon.utils.euclidean-sums
   (:require [noon.utils.misc :as u :refer [f_ >_]]
-            [clojure.core :as c]))
+            #_[clojure.core :as c]))
 
 (defn euclidean-sum [n d]
   (>_ (mapv (f_ [(* _ d) n]) (range n))

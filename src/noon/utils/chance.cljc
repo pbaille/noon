@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [keep])
   (:require [clojure.walk :as walk]
             [noon.utils.misc :as u]
-            [noon.utils.pseudo-random :as pr]))
+            [noon.utils.pseudo-random :as pr])
+  #?(:cljs (:require-macros [noon.utils.chance :refer [gen defgen defcoll]])))
 
 (do :base
 
@@ -209,7 +210,7 @@
          (sample 20 (seqof coin :max-size 6))
          (sample 10 cube)
          (sample 10 (rep (dice 12) 2))
-         (sample 10 (vecof dice :size 4))
+         (sample 10 (vecof dice {:size 4}))
          (sample 10 (tup coin (nat 5 10)))
          (sample 10 (mapof (one-of :a :b :c) coin))
          (sample 10 (vecof coin {:max-size 5})))

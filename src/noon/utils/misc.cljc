@@ -1,12 +1,15 @@
 (ns noon.utils.misc
   (:refer-clojure :exclude [abs])
-  (:require [clojure.string :as str]
-            [me.raynes.fs :as fs]
-            [backtick :as bt]
-            [clojure.pprint :as pprint]
-            [clj-commons.byte-streams :as bs]
-            [clojure.data.codec.base64 :as b64])
-  (:import (java.io ByteArrayOutputStream ObjectOutputStream ObjectInputStream)))
+  (:require [clojure.string :as str])
+
+  #?(:clj (:require [clojure.pprint :as pprint]
+                    [me.raynes.fs :as fs]
+                    [backtick :as bt]
+                    [clj-commons.byte-streams :as bs]
+                    [clojure.data.codec.base64 :as b64])
+     :cljs (:require [cljs.pprint :as pprint]))
+  #?(:clj (:import (java.io ByteArrayOutputStream ObjectOutputStream ObjectInputStream))
+     :cljs (:require-macros [noon.utils.misc :refer [defn* template f_ >_ defreduction]])))
 
 (do :numbers
 
@@ -117,7 +120,8 @@
            (pp ~@xs)))
 
     (defn throw* [& xs]
-      (throw (Exception. (apply str xs))))
+      #?(:clj (throw (Exception. (apply str xs)))
+         :cljs (throw (js/Error. (apply str xs)))))
 
     (defmacro prob [& xs]
       `(let [ret# ~(last xs)]
@@ -173,59 +177,59 @@
       ([flag] (partial flagged? flag))
       ([flag value] (get (meta value) flag))))
 
-(do :macros
+#?(:clj (do :macros
 
-    (do :utils
+            (do :utils
 
-        (defn parse-defn [[name x & xs]]
-          (let [[doc [x & xs]] (if (string? x) [x xs] [nil (cons x xs)])
-                [attrs body] (if (map? x) [x xs] [nil (cons x xs)])
-                arities (if (vector? (first body)) (list body) body)]
-            {:name name
-             :doc doc
-             :attrs attrs
-             :arities arities})))
+                (defn parse-defn [[name x & xs]]
+                  (let [[doc [x & xs]] (if (string? x) [x xs] [nil (cons x xs)])
+                        [attrs body] (if (map? x) [x xs] [nil (cons x xs)])
+                        arities (if (vector? (first body)) (list body) body)]
+                    {:name name
+                     :doc doc
+                     :attrs attrs
+                     :arities arities})))
 
-    (defmacro defn*
-      "Like defn but last argument is bound variadicaly.
+            (defmacro defn*
+              "Like defn but last argument is bound variadicaly.
        it defines two functions,
        - one that binds the last ARGV pattern to variadic arguments.
        - one (postfixed by *) that expect it as a seq.
        This is somehow analogous to #'list and #'list*"
-      [& form]
-      (let [{:keys [name doc attrs arities]} (parse-defn form)
-            applied-name (symbol (str name "*"))
-            [argv & body] (first arities)
-            variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
-        `(do (defn ~applied-name
-               ~@(if doc [doc])
-               ~@(if attrs [attrs])
-               ~argv
-               ~@body)
-             (defn ~name
-               ~@(if doc [doc])
-               ~@(if attrs [attrs])
-               ~variadic-argv
-               (~applied-name ~@argv)))))
+              [& form]
+              (let [{:keys [name doc attrs arities]} (parse-defn form)
+                    applied-name (symbol (str name "*"))
+                    [argv & body] (first arities)
+                    variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
+                `(do (defn ~applied-name
+                       ~@(if doc [doc])
+                       ~@(if attrs [attrs])
+                       ~argv
+                       ~@body)
+                     (defn ~name
+                       ~@(if doc [doc])
+                       ~@(if attrs [attrs])
+                       ~variadic-argv
+                       (~applied-name ~@argv)))))
 
-    (defmacro template
-      {:clj-kondo/ignore true}
-      [x]
-      `(bt/template ~x))
+            (defmacro template
+              {:clj-kondo/ignore true}
+              [x]
+              `(bt/template ~x))
 
-    (defmacro >_
-      "shorthand for (as-> x _ ...)"
-      [seed & forms]
-      `(as-> ~seed ~'_ ~@forms))
+            (defmacro >_
+              "shorthand for (as-> x _ ...)"
+              [seed & forms]
+              `(as-> ~seed ~'_ ~@forms))
 
-    (defmacro f_
-      "Unary lambda with threading body.
+            (defmacro f_
+              "Unary lambda with threading body.
    arity 1: simple unary lambda with arg bound to _
    arity 2+: shorthand for: (fn [x] (as-> x _ ...))."
-      ([ret]
-       `(fn [~'_] ~ret))
-      ([x & xs]
-       `(fn [x#] (>_ x# ~x ~@xs)))))
+              ([ret]
+               `(fn [~'_] ~ret))
+              ([x & xs]
+               `(fn [x#] (>_ x# ~x ~@xs))))))
 
 (do :colls
 
@@ -298,79 +302,79 @@
       (if-let [[x & xs] (seq xs)]
         (cons (f x) (lazy-seq (lazy-map xs f))))))
 
-(do :files&paths
+#?(:clj (do :files&paths
 
-    (defn parse-file-path [n]
-      (if n
-        (let [xs (str/split n #"/")
-              filename (last xs)
-              directory (str/join "/" (butlast xs))
-              [file-barename & extensions] (str/split filename #"\.")]
-          (->> {:fullname n
-                :directory directory
-                :filename filename
-                :extension (str/join "." extensions)
-                :file-barename file-barename}
-               (filter (comp seq val))
-               (into {})))))
+            (defn parse-file-path [n]
+              (if n
+                (let [xs (str/split n #"/")
+                      filename (last xs)
+                      directory (str/join "/" (butlast xs))
+                      [file-barename & extensions] (str/split filename #"\.")]
+                  (->> {:fullname n
+                        :directory directory
+                        :filename filename
+                        :extension (str/join "." extensions)
+                        :file-barename file-barename}
+                       (filter (comp seq val))
+                       (into {})))))
 
-    (defn ensure-directory [x]
-      (when-not (fs/exists? x)
-        (fs/mkdirs x)))
+            (defn ensure-directory [x]
+              (when-not (fs/exists? x)
+                (fs/mkdirs x)))
 
-    (comment
-      (parse-file-path "a/bc/d/efg.h")
-      (parse-file-path nil)
-      (ensure-directory "generated/history")
-      (ensure-file "generated/history/one.bob"))
+            (comment
+              (parse-file-path "a/bc/d/efg.h")
+              (parse-file-path nil)
+              (ensure-directory "generated/history")
+              (ensure-file "generated/history/one.bob"))
 
-    (defn ensure-file [name]
-      (when-not (fs/exists? name)
-        (let [{:keys [directory]} (parse-file-path name)]
-          (fs/mkdirs directory)
-          (fs/create (fs/file name)))))
+            (defn ensure-file [name]
+              (when-not (fs/exists? name)
+                (let [{:keys [directory]} (parse-file-path name)]
+                  (fs/mkdirs directory)
+                  (fs/create (fs/file name)))))
 
-    (defn copy-file [file name]
-      (fs/copy file name)))
+            (defn copy-file [file name]
+              (fs/copy file name))))
 
-(do :more-macros
+#?(:clj (do :more-macros
 
-    (defn hm->defs
-      "takes an hashmap of type (named x) -> any, and def all in the given ns"
-      [ns hm]
-      (doseq [[sym val] hm]
-        (intern ns (symbol (name sym)) val)))
+            (defn hm->defs
+              "takes an hashmap of type (named x) -> any, and def all in the given ns"
+              [ns hm]
+              (doseq [[sym val] hm]
+                (intern ns (symbol (name sym)) val)))
 
-    (defn reduction
-      "Turn a binary fn 'f into a variadic function that use 'f and reduce to produce a result,
+            (defn reduction
+              "Turn a binary fn 'f into a variadic function that use 'f and reduce to produce a result,
        shortcircuiting on first nil intermediate result"
-      [f]
-      (fn [this & xs]
-        (reduce (fn [this x]
-                  (if this
-                    (f this x)
-                    (reduced nil)))
-                this xs)))
+              [f]
+              (fn [this & xs]
+                (reduce (fn [this x]
+                          (if this
+                            (f this x)
+                            (reduced nil)))
+                        this xs)))
 
-    (defmacro defreduction
-      [name x & xs]
-      (let [[doc [argv & body]]
-            (if (string? x) [x xs] [nil (cons x xs)])]
-        `(def ~name
-           ~@(if doc [doc])
-           (reduction (fn ~argv ~@body))))))
+            (defmacro defreduction
+              [name x & xs]
+              (let [[doc [argv & body]]
+                    (if (string? x) [x xs] [nil (cons x xs)])]
+                `(def ~name
+                   ~@(if doc [doc])
+                   (reduction (fn ~argv ~@body)))))))
 
-(do :serialisation
+#?(:clj (do :serialisation
 
-    (defn serialize-to-base64 [obj]
-      (let [baos (ByteArrayOutputStream.)
-            oos (ObjectOutputStream. baos)]
-        (.writeObject oos obj)
-        (.close oos)
-        (let [bytes (.toByteArray baos)]
-          (String. (b64/encode bytes)))))
+            (defn serialize-to-base64 [obj]
+              (let [baos (ByteArrayOutputStream.)
+                    oos (ObjectOutputStream. baos)]
+                (.writeObject oos obj)
+                (.close oos)
+                (let [bytes (.toByteArray baos)]
+                  (String. (b64/encode bytes)))))
 
-    (defn unserialize-from-base64 [s]
-      (let [bytes (b64/decode (.getBytes s))
-            ois (ObjectInputStream. (bs/to-input-stream bytes))]
-        (.readObject ois))))
+            (defn unserialize-from-base64 [s]
+              (let [bytes (b64/decode (.getBytes s))
+                    ois (ObjectInputStream. (bs/to-input-stream bytes))]
+                (.readObject ois)))))

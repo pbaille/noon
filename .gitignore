@@ -20,3 +20,6 @@ vsl/*
 /test/trash/
 /.cljdoc-preview/
 /.git.bfg-report/
+/node_modules/
+/.shadow-cljs/
+/public/js/*

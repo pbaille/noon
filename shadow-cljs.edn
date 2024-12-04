@@ -1,0 +1,11 @@
+{:deps {:aliases [:cljs]}
+
+ :nrepl {:port 9000}
+
+ :builds {:main
+          {:target :browser
+           :modules {:main {:init-fn noon.cljs/init
+                            #_:reload-fn #_midi-cljs.core/reload}}
+           :devtools {:http-root "public"
+                      :http-port 8999
+                      :preloads [devtools.preload]}}}}

@@ -1,16 +1,15 @@
 (ns noon.vst.general-midi
-  (:require [clojure.edn :as edn]
-            [noon.utils.misc :as u]
+  (:require [noon.utils.misc :as u]
             [clojure.string :as str]
             [clj-fuzzy.metrics :as fm]
-            [clojure.java.io :as io]
-            [noon.utils.pseudo-random :as pr]))
+            [noon.utils.pseudo-random :as pr]
+            [noon.data.GM :as GM]))
 
 (defn name->key [name]
   (u/str->keyword (str/replace name #"\((.*)\)" "$1")))
 
 (def instruments
-  (->> (edn/read-string (slurp (io/resource "data/GM.edn")))
+  (->> GM/instruments
        (mapv (fn [i] (-> (update i :group u/str->keyword)
                          (assoc :key (name->key (:name i))))))))
 

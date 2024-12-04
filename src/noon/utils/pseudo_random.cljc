@@ -4,25 +4,31 @@
    it is valuable to be able to capture the seed of randomnes in order to reproduce at a later point."
   (:refer-clojure :exclude [rand rand-nth rand-int shuffle])
   (:require [noon.utils.misc :as u]
-            [clojure.core :as core]))
+            [clojure.core :as core])
+  #?(:cljs (:require [prando :as Prando]))
+  #?(:cljs (:require-macros [noon.utils.pseudo-random :refer [with-rand]])))
+
+(def MAX_LONG #?(:clj Long/MAX_VALUE :cljs js/Number.MAX_SAFE_INTEGER))
 
 ;; from clojure.data.generators
 
 (def random*
-  (atom (java.util.Random.
-         (Math/floor (* (core/rand) Long/MAX_VALUE)))))
+  (atom #?(:clj (java.util.Random.
+                 (Math/floor (* (core/rand) MAX_LONG)))
+           :cljs (new Prando (Math/floor (* (core/rand) MAX_LONG))))))
 
-(defmacro with-rand [s & exprs]
-  `(let [r# ~s]
-     (reset! random* (cond (number? r#) (java.util.Random. r#)
-                           (string? r#) (u/unserialize-from-base64 r#)
-                           (instance? java.util.Random r#) r#))
-     ~@exprs))
+#?(:clj (defmacro with-rand [s & exprs]
+          `(let [r# ~s]
+             (reset! random* (cond (number? r#) (java.util.Random. r#)
+                                   (string? r#) (u/unserialize-from-base64 r#)
+                                   (instance? java.util.Random r#) r#))
+             ~@exprs)))
 
 (defn rand
   "Generate a float between 0 and 1 based on random*"
   (^double []
-   (.nextFloat @random*))
+   #?(:clj (.nextFloat @random*)
+      :cljs (.next @random*)))
   (^double [max]
    (* max (rand))))
 
@@ -38,9 +44,12 @@
 (defn rand-int-between
   "Uniform distribution from lo (inclusive) to hi (exclusive).
    Defaults to range of Java long."
-  (^long [] (.nextLong @random*))
-  (^long [lo hi] {:pre [(< lo hi)]}
-                 (clojure.core/long (Math/floor (+ lo (* (.nextDouble @random*) (- hi lo)))))))
+  (^long [] #?(:clj (.nextLong @random*)
+               :cljs (.nextInt @random* js/Number.MIN_SAFE_INTEGER js/Number.MAX_SAFE_INTEGER)))
+  (^long [lo hi]
+   {:pre [(< lo hi)]}
+   #?(:clj (clojure.core/long (Math/floor (+ lo (* (.nextDouble @random*) (- hi lo)))))
+      :cljs (int (rand-between lo hi)))))
 
 (defn rand-nth [xs]
   (nth xs (rand-int-between 0 (count xs))))
