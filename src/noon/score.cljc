@@ -204,26 +204,26 @@
 
         (defn dur
           "Builds a :duration event-update based on `x`."
-          {#_:tags #_[:event-update :temporal]}
+          {:tags [:event-update :temporal]}
           [x]
           (map->efn {:duration x}))
 
         (do :velocity
             (defn vel
               "Builds a :velocity event-update based on `x`."
-              {#_:tags #_[:event-update]}
+              {:tags [:event-update]}
               [x]
               (ef_ (update _ :velocity
                            (fn [v] (->7bits-natural (m/value-merge v x))))))
 
             (defn vel+
               "Builds an event update that adds `n` to :velocity value"
-              #_{:tags [:event-update]}
+              {:tags [:event-update]}
               [n] (vel (add n)))
 
             (defn vel-
               "Builds an event update that substract `n` to :velocity value"
-              #_{:tags [:event-update]}
+              {:tags [:event-update]}
               [n] (vel (sub n)))
 
             (defn vel-humanize
@@ -239,7 +239,7 @@
 
             (defn chan
               "Builds a :velocity event-update based on `x`."
-              #_{:tags [:event-update]}
+              {:tags [:event-update]}
               [x]
               (ef_ (update _ :channel
                            (fn [v] (->4bits-natural (m/value-merge v x))))))
@@ -299,19 +299,19 @@
                                   (list 'do
                                         (list 'def (with-meta (symbol (str "dur" i))
                                                      {;:doc (str "Multiply event duration by " i)
-                                                      #_:tags #_[:event-update :alias :temporal]
+                                                      :tags [:event-update :alias :temporal]
                                                       :no-doc true})
                                               `(dur (mul ~i)))
                                         (list 'def (with-meta (symbol (str "dur:" i))
                                                      {;:doc (str "Divide event duration by " i)
-                                                      #_:tags #_[:event-update :alias :temporal]
+                                                      :tags [:event-update :alias :temporal]
                                                       :no-doc true})
                                               `(dur (div ~i)))))
                                 (for [n (range 2 12)
                                       d (range 2 12)]
                                   (list 'def (with-meta (symbol (str "dur" n ":" d))
                                                {;:doc (str "Multiply event duration by " n "/" d)
-                                                #_:tags #_[:event-update :alias :temporal]
+                                                :tags [:event-update :alias :temporal]
                                                 :no-doc true})
                                         `(dur (mul (/ ~n ~d)))))))))
         (-def-durations)
@@ -324,7 +324,7 @@
                           (let [v (int (* i (/ 127 12)))]
                             (list 'def (with-meta (symbol (str "vel" i))
                                          {;:doc (str "Set event velocity to " v)
-                                          #_:tags #_[:event-update :alias]
+                                          :tags [:event-update :alias]
                                           :no-doc true})
                                   `(vel ~v)))))))
         (-def-velocities)
@@ -334,7 +334,7 @@
                         (for [i (range 0 16)]
                           (list 'def (with-meta (symbol (str "chan" i))
                                        {;:doc (str "Set event midi channel to " i)
-                                        #_:tags #_[:event-update :alias]
+                                        :tags [:event-update :alias]
                                         :no-doc true})
                                 `(chan ~i))))))
         (-def-channels)
@@ -344,7 +344,7 @@
                         (for [i (range 0 16)]
                           (list 'def (with-meta (symbol (str "track" i))
                                        {;:doc (str "Set event midi channel to " i)
-                                        #_:tags #_[:event-update :alias]
+                                        :tags [:event-update :alias]
                                         :no-doc true})
                                 `(track ~i))))))
         (-def-tracks))
@@ -365,7 +365,7 @@
                                            "\n\n  doc:\n\n  "
                                            (:doc (meta (resolve original-sym))
                                                  "undocumented"))
-                                     {#_:tags #_[:event-update :alias :harmonic]}
+                                     {:tags [:event-update :alias :harmonic]}
                                      [~'& xs#]
                                      (let [u# (apply ~(symbol "noon.harmony" (name x)) xs#)]
                                        (map->efn
@@ -383,7 +383,7 @@
                                                               "\n\ndoc:\n\n"
                                                               (:doc (meta (resolve original-sym))
                                                                     "undocumented"))
-                                                #_:tags #_[:event-update :alias :harmmonic]})
+                                                :tags [:event-update :alias :harmmonic]})
                                         `(map->efn
                                           {:pitch
                                            (fn [ctx#]
@@ -412,7 +412,7 @@
 
         (defn transpose
           "Transpose the pitch origin of all events by the given update."
-          #_{:tags [:event-update :harmonic]}
+          {:tags [:event-update :harmonic]}
           [f]
           (assert (event-update? f) "transpose only takes event-update")
           (ef_ (let [new-origin (h/hc->pitch (:pitch (f ((position 0) _))))]
@@ -420,7 +420,7 @@
 
         (defn rebase
           "Applies the given transformations while preserving pitch."
-          #_{:tags [:event-update :harmonic]}
+          {:tags [:event-update :harmonic]}
           [& fs]
           (ef_
            (reduce #(%2 %1) _
@@ -433,7 +433,7 @@
                       (cons 'do (for [[k v] (eval m)]
                                   (list 'def
                                         (with-meta (symbol (name k))
-                                          {#_:tags #_[:event-update :alias :harmonic]
+                                          {:tags [:event-update :alias :harmonic]
                                         ;:doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))
                                            :no-doc true})
                                         (list wrapper v))))))
@@ -465,12 +465,12 @@
                                              {#_:doc #_(str "Step up "
                                                             n " " name " " (if (> n 1) "steps" "step") ".")
                                               :no-doc true
-                                              #_:tags #_[:event-update :harmonic]})
+                                              :tags [:event-update :harmonic]})
                                       (list f n))
                                 (list 'def (with-meta (symbol (str prefix n "-"))
                                              {#_:doc #_(str "Step down " n " " name " " (if (> n 1) "steps" "step") ".")
                                               :no-doc true
-                                              #_:tags #_[:event-update :harmonic]})
+                                              :tags [:event-update :harmonic]})
                                       (list f (list `- n)))])
                              (range 1 max)))))
 
@@ -487,11 +487,11 @@
                                              {#_:doc #_(str "Shift up "
                                                             n " " name (when (> n 1) "s") ".")
                                               :no-doc true
-                                              #_:tags #_[:event-update :harmonic]})
+                                              :tags [:event-update :harmonic]})
                                       (list f n))
                                 (list 'def (with-meta (symbol (str prefix n "-"))
                                              {#_:doc #_(str "Shift down " n " " name (when (> n 1) "s") ".")
-                                              #_:tags #_[:event-update :harmonic]
+                                              :tags [:event-update :harmonic]
                                               :no-doc true})
                                       (list f (list `- n)))])
                              (range 1 max)))))
@@ -1127,7 +1127,7 @@
         (sf_ (fit-score _ opts))))
 
     (defn in-place
-      #_{:doc (str "Turn the given update `u` into an update that reposition received score to position zero before applying `u` to it. "
+      {#_:doc #_(str "Turn the given update `u` into an update that reposition received score to position zero before applying `u` to it. "
                  "The resulting score is then adjusted to its initial duration and shifted to its original position. "
                  "This is useful when you need to scan update a score. "
                  "It is similar to what the `noon.score/each` function is doing.")
@@ -1251,14 +1251,14 @@
                                        {:position (sub (:position (ffirst taken)))}))))))
 
             (defn trim
-              #_{:doc (str "Build and update that removes everything before `beg` and after `end` from the received score. "
+              {#_:doc #_(str "Build and update that removes everything before `beg` and after `end` from the received score. "
                          "(triming overlapping durations).")
                :tags [:temporal :selective]}
               [beg end]
               (sf_ (trim-score _ (or beg 0) (or end (score-duration _)))))
 
             (defn only-between
-              #_{:doc (str "Use `f` to update the subscore delimited by `beg` and `end` positions. "
+              {#_:doc #_(str "Use `f` to update the subscore delimited by `beg` and `end` positions. "
                          "Leave other events unchanged.")
                :tags [:temporal :selective]}
               [beg end f]
@@ -1269,7 +1269,7 @@
     (do :checks
 
         (defn within-bounds?
-          #_{:doc (str "Build a check update (one that can return nil or the score unchanged) "
+          {#_:doc #_(str "Build a check update (one that can return nil or the score unchanged) "
                      "succeed if `event-fn` applied to each event is between `min` and `max`.")
            :tags [:check :bounding]}
           [event-fn min max]
@@ -1278,7 +1278,7 @@
                            s))))
 
         (defn within-time-bounds?
-          #_{:doc (str "Build a check update (one that can return nil or the score unchanged) "
+          {#_:doc #_(str "Build a check update (one that can return nil or the score unchanged) "
                      "Succeed if all its events are between `start` and `end`.")
            :tags [:check :temporal]}
           [start end]
@@ -1288,7 +1288,7 @@
                   (<= (score-duration s) end)))))
 
         (defn within-pitch-bounds?
-          #_{:doc (str "Build a check update (one that can return nil or the score unchanged)"
+          {#_:doc #_(str "Build a check update (one that can return nil or the score unchanged)"
                      "Succeed if all pitches are between `min` and `max`."
                      "`min` and `max` should be 'pitchable' (pitch map | pitch keyword | int).")
            :tags [:check :harmonic]}
@@ -1305,7 +1305,7 @@
     (do :non-determinism
 
         (defmacro !
-          #_{:doc (str "Takes a non deterministic `expression` resulting in a score update."
+          {#_:doc #_(str "Takes a non deterministic `expression` resulting in a score update."
                      "Returns a score update that wraps the `expression` so that it is evaluated each time the update is called.")
            :tags [:non-deterministic]}
           [expression]
@@ -1391,7 +1391,7 @@
           [n update] (tup>* (repeat n update)))
 
         (defn fill
-          #_{:doc (str "Fill the score using a `tup` of `update` of size (score-duration / `resolution`)"
+          {#_:doc #_(str "Fill the score using a `tup` of `update` of size (score-duration / `resolution`)"
                      "`resolution` should be an exact multiple of received score's duration.")
            :tags [:temporal :multiplicative]}
           [resolution update]
@@ -1402,7 +1402,7 @@
                  (update-score _ (ntup n update)))))
 
         (defn fill>
-          #_{:doc (str "Fill the score using an accumulative `tup>` of `update` of size (score-duration / `resolution`)"
+          {#_:doc #_(str "Fill the score using an accumulative `tup>` of `update` of size (score-duration / `resolution`)"
                      "`resolution` should be an exact multiple of received score's duration.")
            :tags [:temporal :multiplicative]}
           [resolution update]
@@ -1475,7 +1475,7 @@
                          :else (concat-scores scores))))))
 
         (defn connect-by
-          #_{:doc (str "Build an update that use `f` to join successive score's chunks.\n"
+          {#_:doc #_(str "Build an update that use `f` to join successive score's chunks.\n"
                      "- Chunks the score with `noon.score/chunk-score` accordingly to `by`, resulting in a list of scores.\n"
                      "- Iterates this sorted list by pair, applying `f` to each one producing a new score.\n"
                      "- all those scores are merged together.")
@@ -1487,7 +1487,7 @@
                          (last chunks) (partition 2 1 chunks)))))
 
         (defn scan
-          #_{:doc (str "Chunk the score using the `by` function. "
+          {#_:doc #_(str "Chunk the score using the `by` function. "
                      "Chunks are partitioned by `size` and stepped by `step`. "
                      "`f` is applied to each chunks partition and should return a single score. "
                      "Resulting scores are merged together.")
@@ -1503,7 +1503,7 @@
                      (merge-scores)))))
 
         (defn scan>
-          #_{:doc (str "Accumulative scan. "
+          {#_:doc #_(str "Accumulative scan. "
                      "Use `f` to accumulatively update time slices of given `size` of the score, stepping by `step`.")
            :tags [:temporal :accumulative :iterative]}
           ([size f]
