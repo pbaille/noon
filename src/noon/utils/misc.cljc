@@ -178,59 +178,59 @@
       ([flag] (partial flagged? flag))
       ([flag value] (get (meta value) flag))))
 
-#?(:clj (do :macros
+(do :macros
 
-            (do :utils
+   (do :utils
 
-                (defn parse-defn [[name x & xs]]
-                  (let [[doc [x & xs]] (if (string? x) [x xs] [nil (cons x xs)])
-                        [attrs body] (if (map? x) [x xs] [nil (cons x xs)])
-                        arities (if (vector? (first body)) (list body) body)]
-                    {:name name
-                     :doc doc
-                     :attrs attrs
-                     :arities arities})))
+       (defn parse-defn [[name x & xs]]
+         (let [[doc [x & xs]] (if (string? x) [x xs] [nil (cons x xs)])
+               [attrs body] (if (map? x) [x xs] [nil (cons x xs)])
+               arities (if (vector? (first body)) (list body) body)]
+           {:name name
+            :doc doc
+            :attrs attrs
+            :arities arities})))
 
-            (defmacro defn*
-              "Like defn but last argument is bound variadicaly.
+   (defmacro defn*
+     "Like defn but last argument is bound variadicaly.
        it defines two functions,
        - one that binds the last ARGV pattern to variadic arguments.
        - one (postfixed by *) that expect it as a seq.
        This is somehow analogous to #'list and #'list*"
-              [& form]
-              (let [{:keys [name doc attrs arities]} (parse-defn form)
-                    applied-name (symbol (str name "*"))
-                    [argv & body] (first arities)
-                    variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
-                `(do (defn ~applied-name
-                       ~@(if doc [doc])
-                       ~@(if attrs [attrs])
-                       ~argv
-                       ~@body)
-                     (defn ~name
-                       ~@(if doc [doc])
-                       ~@(if attrs [attrs])
-                       ~variadic-argv
-                       (~applied-name ~@argv)))))
+     [& form]
+     (let [{:keys [name doc attrs arities]} (parse-defn form)
+           applied-name (symbol (str name "*"))
+           [argv & body] (first arities)
+           variadic-argv (vec (concat (butlast argv) ['& (last argv)]))]
+       `(do (defn ~applied-name
+              ~@(if doc [doc])
+              ~@(if attrs [attrs])
+              ~argv
+              ~@body)
+            (defn ~name
+              ~@(if doc [doc])
+              ~@(if attrs [attrs])
+              ~variadic-argv
+              (~applied-name ~@argv)))))
 
-            (defmacro template
-              {:clj-kondo/ignore true}
-              [x]
-              `(bt/template ~x))
+   (defmacro template
+     {:clj-kondo/ignore true}
+     [x]
+     `(bt/template ~x))
 
-            (defmacro >_
-              "shorthand for (as-> x _ ...)"
-              [seed & forms]
-              `(as-> ~seed ~'_ ~@forms))
+   (defmacro >_
+     "shorthand for (as-> x _ ...)"
+     [seed & forms]
+     `(as-> ~seed ~'_ ~@forms))
 
-            (defmacro f_
-              "Unary lambda with threading body.
+   (defmacro f_
+     "Unary lambda with threading body.
    arity 1: simple unary lambda with arg bound to _
    arity 2+: shorthand for: (fn [x] (as-> x _ ...))."
-              ([ret]
-               `(fn [~'_] ~ret))
-              ([x & xs]
-               `(fn [x#] (>_ x# ~x ~@xs))))))
+     ([ret]
+      `(fn [~'_] ~ret))
+     ([x & xs]
+      `(fn [x#] (>_ x# ~x ~@xs)))))
 
 (do :colls
 
