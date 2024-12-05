@@ -297,8 +297,9 @@
                     (h/origin {:c 64 :d 37}))
              {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 37, :c 64}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
-      (is (thrown? Exception (h/upd (h/hc)
-                                    (h/origin "pouet"))))
+      (is (thrown? #?(:clj Exception :cljs js/Error)
+                   (h/upd (h/hc)
+                          (h/origin "pouet"))))
       (is (= (h/upd (h/hc)
                     (h/scale :dorian))
              (h/upd (h/hc)
@@ -307,8 +308,9 @@
                     (h/scale "dorian"))
              {:scale [0 2 3 5 7 9 10], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}))
 
-      (is (thrown? Exception (h/upd (h/hc)
-                                    (h/scale "durian"))))
+      (is (thrown? #?(:clj Exception :cljs js/Error)
+                   (h/upd (h/hc)
+                          (h/scale "durian"))))
 
       (is (= (h/upd (h/hc)
                     (h/scale :dorian))
@@ -354,8 +356,9 @@
 
       (is (= (h/upd (h/hc) nil) (h/hc)))
 
-      (is (thrown? Exception (h/upd (h/hc)
-                                    :anything))))
+      (is (thrown? #?(:clj Exception :cljs js/Error)
+                   (h/upd (h/hc)
+                          :anything))))
 
     (testing "extras"
 

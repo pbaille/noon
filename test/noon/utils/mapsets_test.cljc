@@ -63,7 +63,7 @@
             #{{:a 1} {:a 2 :b 3}})
            #{{:a 3} {:b 3, :a 4}}))
 
-    (is (thrown? Exception (m/->upd nil))))
+    (is (thrown? #?(:clj Exception :cljs js/Error) (m/->upd nil))))
 
   (testing "split split-upd and shrink"
     (is (= (m/split #{{:a 1} {:a 2} {:a 3} {:a 4}}

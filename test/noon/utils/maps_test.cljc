@@ -63,8 +63,8 @@
            {:a 2}))
     (is (= (upd {:a 1} {:p identity})
            {:a 1}))
-    (is (thrown? java.lang.Exception (upd {} nil)))
-    (is (thrown? java.lang.Exception (upd {} 1)))))
+    (is (thrown? #?(:clj Exception :cljs js/Error) (upd {} nil)))
+    (is (thrown? #?(:clj Exception :cljs js/Error) (upd {} 1)))))
 
 (deftest test-check
 

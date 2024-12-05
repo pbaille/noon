@@ -13,7 +13,8 @@
          (list 3 4 1 2)))
   (is (= (pr/with-rand 0
            (s/shuffle-no-rep [1 2 3 2 4 5 3 4]))
-         (list 3 5 2 1 2 4 3 4)))
+         #?(:cljs (list 3 4 2 4 1 2 3 5)
+            :clj (list 3 5 2 1 2 4 3 4))))
   (is (every? (fn [xs] (every? (partial apply not=) (partition 2 1 xs)))
               (repeatedly 10 #(s/shuffle-no-rep [1 2 3 2 4 5 3 4])))))
 
@@ -35,8 +36,10 @@
          (list 3 4 1 2)))
   (is (= (s/rotation [1 2 3 4] -2)
          (list 3 4 1 2)))
-  (is (= (s/rotation [1 2 3 4] 1/4)
-         (list 2 3 4 1)))
+  #?(:clj (is (= (s/rotation [1 2 3 4] 1/4)
+                 (list 2 3 4 1)))
+     :cljs (is (= (s/rotation [1 2 3 4] 0.25)
+                  (list 2 3 4 1))))
   (is (= (pr/with-rand 0 (s/rotation [1 2 3 4] :rand))
          (list 3 4 1 2)))
   (is (= (s/partitions [1 2 3 4 5 6])
@@ -112,14 +115,16 @@
          (list 3 4 1 2)))
   (is (= (pr/with-rand 2
            (s/permutation [1 2 3 4] :rand))
-         [2 1 4 3]))
+         #?(:cljs [1 4 2 3]
+            :clj [2 1 4 3])))
   (is (= (s/permutation [1 2 3 4] -1)
          [4 3 2 1]))
   (is (= (s/permutation [1 2 3 4] 0.5)
          [4 3 1 2]))
   (is (= (pr/with-rand 0
            (s/permutation [1 2 3 4] [0.25 0.5]))
-         (list 1 2 4 3)))
+         #?(:cljs (list 4 2 3 1)
+            :clj (list 1 2 4 3))))
   (is (= (s/permutation [1 2 3 4] -1 {:grade 1})
          [4 1 2 3]))
   (is (= (s/permutation [1 2 3 4 5 6] -1 {:split-sizes [2 3]})

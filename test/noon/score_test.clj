@@ -1,6 +1,6 @@
 (ns noon.score-test
-  (:use noon.score)
-  (:require [clojure.test :as t :refer [deftest testing is]]
+  (:require [noon.score :refer :all]
+            [clojure.test :as t :refer [deftest testing is]]
             [noon.utils.pseudo-random :as pr]
             [noon.utils.chance :as g]
             [noon.utils.misc :as u]))
