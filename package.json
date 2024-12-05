@@ -3,6 +3,8 @@
     "shadow-cljs": "^2.28.20"
   },
   "dependencies": {
-    "prando": "^6.0.1"
+    "prando": "^6.0.1",
+    "smplr": "^0.15.1",
+    "tone": "^15.0.4"
   }
 }
