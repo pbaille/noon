@@ -1,16 +1,20 @@
 (ns noon.parse.harmony
-  (:require [clojure.java.io :as io]
+  (:require #_[clojure.java.io :as io]
             [instaparse.core :as insta]
             [noon.constants :as constants]
             [noon.harmony :as h]
-            [noon.utils.misc :as u]))
+            [noon.utils.misc :as u]
+            [noon.parse.harmony-grammar :as grammar]))
 
 (do :parser
 
+    #_(def parser
+        "Instaparse parser for harmonic symbols."
+        (insta/parser (slurp (io/resource "harmony.bnf"))
+                      :allow-namespaced-nts true))
     (def parser
       "Instaparse parser for harmonic symbols."
-      (insta/parser (slurp (io/resource "harmony.bnf"))
-                    :allow-namespaced-nts true))
+      (insta/parser grammar/grammar :allow-namespaced-nts true))
 
     (defn parse
       "Parse `x` according to `harmony.bnf`, return a sequence of parse results."

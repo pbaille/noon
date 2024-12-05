@@ -80,12 +80,12 @@
         (fn? x) (x s)
         :else (u/throw* `member "unexpected argument: " x)))
 
-(do :member-tries
-    (member (range 6) [1/4 -1/4])
-    (seq-section (range 6) [1/4 -1/4])
-    (member (range 6) -1/4)
-    (member (range 6) 1/4)
-    (member (range 6) -1))
+(comment :member-tries
+         (member (range 6) [1/4 -1/4])
+         (seq-section (range 6) [1/4 -1/4])
+         (member (range 6) -1/4)
+         (member (range 6) 1/4)
+         (member (range 6) -1))
 
 ;; transformations -----
 

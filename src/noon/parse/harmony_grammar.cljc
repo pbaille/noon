@@ -1,3 +1,5 @@
+(def grammar
+  "
 <top> = colon? (secondary-degree | degree | root)? (top/structure | top/mode)
 
 <top/structure> = separator? (structure | structure/shorthand)?
@@ -128,3 +130,5 @@ mode/base = ionian | dorian | phrygian | mixolydian | lydian | aeolian | locrian
 mode/alterations = mode.alteration/augmented-fifth? <separator?> mode.alteration/degree* mode.alteration/augmented-fifth?
   mode.alteration/augmented-fifth = <'+'>
   mode.alteration/degree = alteration mode-degree
+
+")
