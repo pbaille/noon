@@ -12,17 +12,22 @@
 
 ;; from clojure.data.generators
 
-(def random*
-  (atom #?(:clj (java.util.Random.
-                 (Math/floor (* (core/rand) MAX_LONG)))
-           :cljs (new Prando (Math/floor (* (core/rand) MAX_LONG))))))
+(defn create-random [x]
+  #?(:clj (cond (number? x) (java.util.Random. x)
+                (string? x) (u/unserialize-from-base64 x)
+                (instance? java.util.Random x) x
+                :else (java.util.Random. (Math/floor (* (core/rand) MAX_LONG))))
+     :cljs (if (number? x)
+             (new Prando x)
+             (new Prando (Math/floor (* (core/rand) MAX_LONG))))))
 
-#?(:clj (defmacro with-rand [s & exprs]
-          `(let [r# ~s]
-             (reset! random* (cond (number? r#) (java.util.Random. r#)
-                                   (string? r#) (u/unserialize-from-base64 r#)
-                                   (instance? java.util.Random r#) r#))
-             ~@exprs)))
+(def random*
+  (atom (create-random nil)))
+
+(defmacro with-rand [s & exprs]
+  `(let [r# ~s]
+     (reset! random* (create-random r#))
+     ~@exprs))
 
 (defn rand
   "Generate a float between 0 and 1 based on random*"
@@ -45,7 +50,7 @@
   "Uniform distribution from lo (inclusive) to hi (exclusive).
    Defaults to range of Java long."
   (^long [] #?(:clj (.nextLong @random*)
-               :cljs (.nextInt @random* js/Number.MIN_SAFE_INTEGER js/Number.MAX_SAFE_INTEGER)))
+               :cljs ^long (.nextInt @random* js/Number.MIN_SAFE_INTEGER js/Number.MAX_SAFE_INTEGER)))
   (^long [lo hi]
    {:pre [(< lo hi)]}
    #?(:clj (clojure.core/long (Math/floor (+ lo (* (.nextDouble @random*) (- hi lo)))))
