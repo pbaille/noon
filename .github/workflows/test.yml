@@ -9,19 +9,33 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install Clojure tools
+      uses: DeLaGuardo/setup-clojure@12.1
+      with:
+        cli: latest
+        bb: latest
+        shadow-cljs: latest
+        
+    - name: Install npm dependencies
+      run: npm install
+        
+    - name: Run CLJ tests
+      run: clojure -M:test
       
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-          
-      - name: Install Clojure tools
-        uses: DeLaGuardo/setup-clojure@12.1
-        with:
-          cli: latest
-          
-      - name: Run tests
-        run: clojure -M:test
+    - name: Run CLJS tests
+      run: npx shadow-cljs compile test && node out/node-tests.js
