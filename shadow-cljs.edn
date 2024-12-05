@@ -8,4 +8,6 @@
                             :reload-fn midi-cljs.core/reload}}
            :devtools {:http-root "public"
                       :http-port 8999
-                      :preloads [devtools.preload]}}}}
+                      :preloads [devtools.preload]}}
+          :test {:target :node-test
+                 :output-to "out/node-tests.js"}}}
