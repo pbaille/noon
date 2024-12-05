@@ -91,7 +91,8 @@
     (defn normalise-event
       "Puts time related dimensions of a note into their identity values.
        Useful in many time streching transformations"
-      [x])
+      [x]
+      (assoc x :position 0 :duration 1))
 
     (do :views
 
