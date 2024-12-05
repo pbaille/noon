@@ -4,7 +4,7 @@
    it is valuable to be able to capture the seed of randomnes in order to reproduce at a later point."
   (:refer-clojure :exclude [rand rand-nth rand-int shuffle])
   (:require [clojure.core :as core])
-  #?(:clj [noon.utils.misc :as u]
+  #?(:clj (:require [noon.utils.misc :as u])
      :cljs (:require ["prando" :as Prando]))
   #?(:cljs (:require-macros [noon.utils.pseudo-random :refer [with-rand]])))
 
