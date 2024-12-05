@@ -9,7 +9,7 @@
             [noon.utils.maps :as m]
             [noon.utils.chance :as g]
             [noon.utils.pseudo-random :as pr]
-            [clojure.string :as str]
+            #_[clojure.string :as str]
             [noon.midi :as midi])
   #?(:clj (:require [noon.externals :as externals])
      :cljs (:require-macros [noon.score :refer [sfn efn ef_ sf_
@@ -112,14 +112,14 @@
 
         "An event-update is a function that takes an event and return an event."
 
-        #?(:clj (defmacro efn
-                  "just a tagged lambda that represents an event update function"
-                  [arg & body]
-                  `(t :event-update
-                      (fn [~arg] ~@body))))
+        (defmacro efn
+          "just a tagged lambda that represents an event update function"
+          [arg & body]
+          `(t :event-update
+              (fn [~arg] ~@body)))
 
-        #?(:clj (defmacro ef_ [& body]
-                  `(efn ~'_ ~@body)))
+        (defmacro ef_ [& body]
+          `(efn ~'_ ~@body))
 
         (def event-update?
           (t? :event-update))
@@ -294,60 +294,60 @@
 ;; defines some duration update vars
 ;; d2 ... d11 to multiply it
 ;; d:2 ... d:11 to divide it
-        #?(:clj (defmacro -def-durations []
-                  (cons 'do
-                        (concat (for [i (range 2 12)]
-                                  (list 'do
-                                        (list 'def (with-meta (symbol (str "dur" i))
-                                                     {;:doc (str "Multiply event duration by " i)
-                                                      :tags [:event-update :alias :temporal]
-                                                      :no-doc true})
-                                              `(dur (mul ~i)))
-                                        (list 'def (with-meta (symbol (str "dur:" i))
-                                                     {;:doc (str "Divide event duration by " i)
-                                                      :tags [:event-update :alias :temporal]
-                                                      :no-doc true})
-                                              `(dur (div ~i)))))
-                                (for [n (range 2 12)
-                                      d (range 2 12)]
-                                  (list 'def (with-meta (symbol (str "dur" n ":" d))
-                                               {;:doc (str "Multiply event duration by " n "/" d)
-                                                :tags [:event-update :alias :temporal]
-                                                :no-doc true})
-                                        `(dur (mul (/ ~n ~d)))))))))
+        (defmacro -def-durations []
+          (cons 'do
+                (concat (for [i (range 2 12)]
+                          (list 'do
+                                (list 'def (with-meta (symbol (str "dur" i))
+                                             {:doc (str "Multiply event duration by " i)
+                                              :tags [:event-update :alias :temporal]
+                                              :no-doc true})
+                                      `(dur (mul ~i)))
+                                (list 'def (with-meta (symbol (str "dur:" i))
+                                             {:doc (str "Divide event duration by " i)
+                                              :tags [:event-update :alias :temporal]
+                                              :no-doc true})
+                                      `(dur (div ~i)))))
+                        (for [n (range 2 12)
+                              d (range 2 12)]
+                          (list 'def (with-meta (symbol (str "dur" n ":" d))
+                                       {:doc (str "Multiply event duration by " n "/" d)
+                                        :tags [:event-update :alias :temporal]
+                                        :no-doc true})
+                                `(dur (mul (/ ~n ~d))))))))
         (-def-durations)
 
 ;; defines 12 levels of velocity from 10 to 127
 ;; as v1 ... v12
-        #?(:clj (defmacro -def-velocities []
-                  (cons 'do
-                        (for [i (range 1 13)]
-                          (let [v (int (* i (/ 127 12)))]
-                            (list 'def (with-meta (symbol (str "vel" i))
-                                         {;:doc (str "Set event velocity to " v)
-                                          :tags [:event-update :alias]
-                                          :no-doc true})
-                                  `(vel ~v)))))))
+        (defmacro -def-velocities []
+          (cons 'do
+                (for [i (range 1 13)]
+                  (let [v (int (* i (/ 127 12)))]
+                    (list 'def (with-meta (symbol (str "vel" i))
+                                 {:doc (str "Set event velocity to " v)
+                                  :tags [:event-update :alias]
+                                  :no-doc true})
+                          `(vel ~v))))))
         (-def-velocities)
 
-        #?(:clj (defmacro -def-channels []
-                  (cons 'do
-                        (for [i (range 0 16)]
-                          (list 'def (with-meta (symbol (str "chan" i))
-                                       {;:doc (str "Set event midi channel to " i)
-                                        :tags [:event-update :alias]
-                                        :no-doc true})
-                                `(chan ~i))))))
+        (defmacro -def-channels []
+          (cons 'do
+                (for [i (range 0 16)]
+                  (list 'def (with-meta (symbol (str "chan" i))
+                               {:doc (str "Set event midi channel to " i)
+                                :tags [:event-update :alias]
+                                :no-doc true})
+                        `(chan ~i)))))
         (-def-channels)
 
-        #?(:clj (defmacro -def-tracks []
-                  (cons 'do
-                        (for [i (range 0 16)]
-                          (list 'def (with-meta (symbol (str "track" i))
-                                       {;:doc (str "Set event midi channel to " i)
-                                        :tags [:event-update :alias]
-                                        :no-doc true})
-                                `(track ~i))))))
+        (defmacro -def-tracks []
+          (cons 'do
+                (for [i (range 0 16)]
+                  (list 'def (with-meta (symbol (str "track" i))
+                               {:doc (str "Set event midi channel to " i)
+                                :tags [:event-update :alias]
+                                :no-doc true})
+                        `(track ~i)))))
         (-def-tracks))
 
     (do :pitch
@@ -379,11 +379,11 @@
                   `(do ~@(map (fn [x]
                                 (let [original-sym (symbol "noon.harmony" (name x))]
                                   (list 'def (with-meta x
-                                               {#_:doc #_(str "Updates the :pitch value of the received event using "
-                                                              original-sym
-                                                              "\n\ndoc:\n\n"
-                                                              (:doc (meta (resolve original-sym))
-                                                                    "undocumented"))
+                                               {:doc (str "Updates the :pitch value of the received event using "
+                                                          original-sym
+                                                          "\n\ndoc:\n\n"
+                                                          (:doc (meta (resolve original-sym))
+                                                                "undocumented"))
                                                 :tags [:event-update :alias :harmmonic]})
                                         `(map->efn
                                           {:pitch
@@ -430,14 +430,14 @@
 
         (do :defs
 
-            #?(:clj (defmacro -def-wrapped [wrapper m]
-                      (cons 'do (for [[k v] (eval m)]
-                                  (list 'def
-                                        (with-meta (symbol (name k))
-                                          {:tags [:event-update :alias :harmonic]
-                                        ;:doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))
-                                           :no-doc true})
-                                        (list wrapper v))))))
+            (defmacro -def-wrapped [wrapper m]
+              (cons 'do (for [[k v] (eval m)]
+                          (list 'def
+                                (with-meta (symbol (name k))
+                                  {:tags [:event-update :alias :harmonic]
+                                   :doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))
+                                   :no-doc true})
+                                (list wrapper v)))))
 
             (-def-wrapped structure noon.constants/structures)
 
@@ -458,57 +458,57 @@
             (def s0 (s-step 0))
             (def t0 (t-step 0))
 
-            #?(:clj (defmacro -def-steps [name prefix max f]
-                      (cons 'do
-                            (mapcat
-                             (fn [n]
-                               [(list 'def (with-meta (symbol (str prefix n))
-                                             {#_:doc #_(str "Step up "
-                                                            n " " name " " (if (> n 1) "steps" "step") ".")
-                                              :no-doc true
-                                              :tags [:event-update :harmonic]})
-                                      (list f n))
-                                (list 'def (with-meta (symbol (str prefix n "-"))
-                                             {#_:doc #_(str "Step down " n " " name " " (if (> n 1) "steps" "step") ".")
-                                              :no-doc true
-                                              :tags [:event-update :harmonic]})
-                                      (list f (list `- n)))])
-                             (range 1 max)))))
+            (defmacro -def-steps [name prefix max f]
+              (cons 'do
+                    (mapcat
+                     (fn [n]
+                       [(list 'def (with-meta (symbol (str prefix n))
+                                     {:doc (str "Step up "
+                                                    n " " name " " (if (> n 1) "steps" "step") ".")
+                                      :no-doc true
+                                      :tags [:event-update :harmonic]})
+                              (list f n))
+                        (list 'def (with-meta (symbol (str prefix n "-"))
+                                     {:doc (str "Step down " n " " name " " (if (> n 1) "steps" "step") ".")
+                                      :no-doc true
+                                      :tags [:event-update :harmonic]})
+                              (list f (list `- n)))])
+                     (range 1 max))))
 
             (-def-steps "chromatic" "c" 37 c-step)
             (-def-steps "diatonic" "d" 22 d-step)
             (-def-steps "structural" "s" 13 s-step)
             (-def-steps "tonic" "t" 13 t-step)
 
-            #?(:clj (defmacro -def-shifts [name prefix max f]
-                      (cons 'do
-                            (mapcat
-                             (fn [n]
-                               [(list 'def (with-meta (symbol (str prefix n))
-                                             {#_:doc #_(str "Shift up "
-                                                            n " " name (when (> n 1) "s") ".")
-                                              :no-doc true
-                                              :tags [:event-update :harmonic]})
-                                      (list f n))
-                                (list 'def (with-meta (symbol (str prefix n "-"))
-                                             {#_:doc #_(str "Shift down " n " " name (when (> n 1) "s") ".")
-                                              :tags [:event-update :harmonic]
-                                              :no-doc true})
-                                      (list f (list `- n)))])
-                             (range 1 max)))))
+            (defmacro -def-shifts [name prefix max f]
+              (cons 'do
+                    (mapcat
+                     (fn [n]
+                       [(list 'def (with-meta (symbol (str prefix n))
+                                     {:doc (str "Shift up "
+                                                n " " name (when (> n 1) "s") ".")
+                                      :no-doc true
+                                      :tags [:event-update :harmonic]})
+                              (list f n))
+                        (list 'def (with-meta (symbol (str prefix n "-"))
+                                     {:doc (str "Shift down " n " " name (when (> n 1) "s") ".")
+                                      :tags [:event-update :harmonic]
+                                      :no-doc true})
+                              (list f (list `- n)))])
+                     (range 1 max))))
 
             (-def-shifts "octave" "o" 9 (fn [i] (t-shift i :forced))))
 
-        #?(:clj (defmacro -def-degrees []
-                  (cons 'do
-                        (concat (for [[n v] (map vector '[I II III IV V VI VII] (range))]
-                                  (list 'def n
-                                        `(degree ~v)))
-                                (for [[degree-sym degree-val] (map vector '[I II III IV V VI VII] (range))
-                                      [alteration-sym alteration-val] [["#" `c1] ["b" `c1-]]]
-                                  (let [[dn dv an av] [degree-sym degree-val alteration-sym alteration-val]]
-                                    (list 'def (symbol (str dn an))
-                                          `[(transpose ~av) (degree ~dv)])))))))
+        (defmacro -def-degrees []
+          (cons 'do
+                (concat (for [[n v] (map vector '[I II III IV V VI VII] (range))]
+                          (list 'def n
+                                `(degree ~v)))
+                        (for [[degree-sym degree-val] (map vector '[I II III IV V VI VII] (range))
+                              [alteration-sym alteration-val] [["#" `c1] ["b" `c1-]]]
+                          (let [[dn dv an av] [degree-sym degree-val alteration-sym alteration-val]]
+                            (list 'def (symbol (str dn an))
+                                  `[(transpose ~av) (degree ~dv)]))))))
 
         (-def-degrees)))
 
@@ -1514,128 +1514,131 @@
                           (update-score s (only-between from (+ from size) f)))
                         _ (range 0 (score-duration _) step)))))))
 
-#?(:clj
-   (do :midi
+#?(:cljs (do (defn play-cljs [& xs]
+               (let [score (apply mk xs)]
+                 (midi/play (numerify-pitches score)))))
 
-       (def MIDI_DEFAULT_OPTIONS
-         {:bpm 60
-          :tracks {0 :default}})
+   :clj (do :midi
 
-       (def MIDI_DIRECTORIES
-         {:default "generated"
-          :history "generated/history"})
+            (def MIDI_DEFAULT_OPTIONS
+              {:bpm 60
+               :tracks {0 :default}})
 
-       (def options* (atom MIDI_DEFAULT_OPTIONS))
+            (def MIDI_DIRECTORIES
+              {:default "generated"
+               :history "generated/history"})
 
-       (def sequencer* (atom nil))
+            (def options* (atom MIDI_DEFAULT_OPTIONS))
 
-       (def history* (atom ()))
+            (def sequencer* (atom nil))
 
-       (defn gen-filename [& [dir]]
-         (let [name (System/currentTimeMillis)]
-           (if dir
-             (str dir "/" name)
-             name)))
+            (def history* (atom ()))
 
-       (defn midifiable-score [score]
-         (vec (-> score numerify-pitches dedupe-patches-and-control-changes)))
+            (defn gen-filename [& [dir]]
+              (let [name (System/currentTimeMillis)]
+                (if dir
+                  (str dir "/" name)
+                  name)))
 
-       (defn options [& {:as options}]
-         (sf_ (vary-meta _ assoc ::options options)))
+            (defn midifiable-score [score]
+              (vec (-> score numerify-pitches dedupe-patches-and-control-changes)))
 
-       (defn score->midi-bytes [bpm score]
-         (-> (midi/new-sequence (score-track-count score) bpm)
-             (midi/add-events (midifiable-score score))
-             (midi/get-midi-bytes)))
+            (defn options [& {:as options}]
+              (sf_ (vary-meta _ assoc ::options options)))
 
-       (defn output-files [{:keys [filename midi pdf xml mp3]}]
-         (let [{:keys [directory file-barename]
-                :or {directory (MIDI_DIRECTORIES :default)
-                     file-barename (gen-filename)}} (u/parse-file-path filename)
-               base (str directory "/" file-barename)]
-           (u/ensure-directory directory)
-           (merge
-            {:source-file (str base ".noon")
-             :seed-file (str base ".seed")}
-            (when (or midi mp3 pdf xml) {:midi-file (str base ".mid")})
-            (when (or pdf xml) {:xml-file (str base ".xml")})
-            (when pdf {:pdf-file (str base ".pdf")})
-            (when mp3 {:mp3-file (str base ".mp3")}))))
+            (defn score->midi-bytes [bpm score]
+              (-> (midi/new-sequence (score-track-count score) bpm)
+                  (midi/add-events (midifiable-score score))
+                  (midi/get-midi-bytes)))
 
-       (defn noon
-         ([score]
-          (noon {} score))
-         ([opts score]
-          (let [{:as options
-                 :keys [tracks bpm play source]} (merge @options* opts (-> score meta ::options))
+            (defn output-files [{:keys [filename midi pdf xml mp3]}]
+              (let [{:keys [directory file-barename]
+                     :or {directory (MIDI_DIRECTORIES :default)
+                          file-barename (gen-filename)}} (u/parse-file-path filename)
+                    base (str directory "/" file-barename)]
+                (u/ensure-directory directory)
+                (merge
+                 {:source-file (str base ".noon")
+                  :seed-file (str base ".seed")}
+                 (when (or midi mp3 pdf xml) {:midi-file (str base ".mid")})
+                 (when (or pdf xml) {:xml-file (str base ".xml")})
+                 (when pdf {:pdf-file (str base ".pdf")})
+                 (when mp3 {:mp3-file (str base ".mp3")}))))
 
-                {:as files
-                 :keys [midi-file source-file seed-file]} (output-files options)
+            (defn noon
+              ([score]
+               (noon {} score))
+              ([opts score]
+               (let [{:as options
+                      :keys [tracks bpm play source]} (merge @options* opts (-> score meta ::options))
 
-                multi-sequencer (midi/midi :bpm bpm
-                                           :track-idx->sequencer (or tracks (constantly :default))
-                                           :data (midifiable-score score))]
+                     {:as files
+                      :keys [midi-file source-file seed-file]} (output-files options)
 
-            (try (when @sequencer*
-                   ((:stop @sequencer*))
-                   ((:close @sequencer*)))
-                 (catch Exception _ nil))
+                     multi-sequencer (midi/midi :bpm bpm
+                                                :track-idx->sequencer (or tracks (constantly :default))
+                                                :data (midifiable-score score))]
 
-            (reset! sequencer* multi-sequencer)
+                 (try (when @sequencer*
+                        ((:stop @sequencer*))
+                        ((:close @sequencer*)))
+                      (catch Exception _ nil))
 
-            (if play
-              ((:play @sequencer*)))
+                 (reset! sequencer* multi-sequencer)
 
-            (if midi-file
-              ((:write @sequencer*) midi-file))
+                 (if play
+                   ((:play @sequencer*)))
 
-            (externals/handle-externals files)
+                 (if midi-file
+                   ((:write @sequencer*) midi-file))
 
-            (when source
-              (spit source-file source)
-              (spit seed-file (u/serialize-to-base64 @pr/random*)))
+                 (externals/handle-externals files)
 
-            (swap! history* conj files)
+                 (when source
+                   (spit source-file source)
+                   (spit seed-file (u/serialize-to-base64 @pr/random*)))
 
-            (with-meta files {:score score}))))
+                 (swap! history* conj files)
 
-       (defmacro write [opts & xs]
-         `(noon (merge {:midi true
-                        :source '~&form}
-                       ~opts)
-                (mk ~@xs)))
+                 (with-meta files {:score score}))))
 
-       (defmacro play [& xs]
-         `(noon {:filename ~(gen-filename (MIDI_DIRECTORIES :history))
-                 :source '~&form
-                 :midi true
-                 :play true}
-                (mk ~@xs)))
+            (defmacro write [opts & xs]
+              `(noon (merge {:midi true
+                             :source '~&form}
+                            ~opts)
+                     (mk ~@xs)))
 
-       (defmacro stop []
-         `(if-let [sq# @sequencer*]
-            ((:close sq#))))
+            (defmacro play [& xs]
+              `(noon {:filename ~(gen-filename (MIDI_DIRECTORIES :history))
+                      :source '~&form
+                      :midi true
+                      :play true}
+                     (mk ~@xs)))
 
-       (comment
-         (let [s (-> (midi/new-state :bpm 60 :n-tracks 1 :sequencer (midi/init-device-sequencer midi/iac-bus-1-output-device))
-                     (midi/add-events (midifiable-score (mk (tup s0 s1 s2))))
-                     :sequencer)]
-           (midi/show-sequencer s)
-           (midi/show-sequence s))
-         (noon {;:midi true
-                :play true
-                :sequencer (midi/init-device-sequencer midi/iac-bus-1-output-device)}
-               (mk (mixtup s0 s2 s4) (mixtup d0 d1 d2 d3)))
-         (noon {:sequencer (midi/init-soundfont-sequencer (midi/SOUNDFONTS :chorium))}
-               (mk (mixtup s0 s2 s4) (mixtup d0 d1 d2 d3)))
-         (.open @sequencer*)
-         (midi/restart-sequencer @sequencer*)
-         (midi/show-sequencer @sequencer*)
-         (midi/display-sequence-details @sequencer*)
-         (.start @sequencer*)
-         (play (ntup> 7 d2))
-         (show
-          (mk (patch :vibraphone)
-              (tup d0 d1 d2)
-              (tup same (patch :flute))))
-         (write {} (tup d0 d1)))))
+            (defmacro stop []
+              `(if-let [sq# @sequencer*]
+                 ((:close sq#))))
+
+            (comment
+              (let [s (-> (midi/new-state :bpm 60 :n-tracks 1 :sequencer (midi/init-device-sequencer midi/iac-bus-1-output-device))
+                          (midi/add-events (midifiable-score (mk (tup s0 s1 s2))))
+                          :sequencer)]
+                (midi/show-sequencer s)
+                (midi/show-sequence s))
+              (noon {;:midi true
+                     :play true
+                     :sequencer (midi/init-device-sequencer midi/iac-bus-1-output-device)}
+                    (mk (mixtup s0 s2 s4) (mixtup d0 d1 d2 d3)))
+              (noon {:sequencer (midi/init-soundfont-sequencer (midi/SOUNDFONTS :chorium))}
+                    (mk (mixtup s0 s2 s4) (mixtup d0 d1 d2 d3)))
+              (.open @sequencer*)
+              (midi/restart-sequencer @sequencer*)
+              (midi/show-sequencer @sequencer*)
+              (midi/display-sequence-details @sequencer*)
+              (.start @sequencer*)
+              (play (ntup> 7 d2))
+              (show
+               (mk (patch :vibraphone)
+                   (tup d0 d1 d2)
+                   (tup same (patch :flute))))
+              (write {} (tup d0 d1)))))
