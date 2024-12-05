@@ -1,3 +1,5 @@
+(ns noon.parse.harmony-grammar)
+
 (def grammar
   "
 <top> = colon? (secondary-degree | degree | root)? (top/structure | top/mode)
