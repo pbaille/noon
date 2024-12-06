@@ -8,6 +8,8 @@
                             :reload-fn noon.client.core/reload}}
            :devtools {:http-root "public"
                       :http-port 8999
-                      :preloads [devtools.preload]}}
+                      :preloads [devtools.preload]}
+           :output-dir "public/js"
+           :asset-path "js"}
           :test {:target :node-test
                  :output-to "out/node-tests.js"}}}
