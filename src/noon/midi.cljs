@@ -1,4 +1,5 @@
 (ns noon.midi
+  "WIP, many features are missing compared to clj version"
   (:require [clojure.string :as str]
             ["tone" :as Tone]
             ["smplr" :refer [Soundfont]]
