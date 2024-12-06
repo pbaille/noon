@@ -27,6 +27,6 @@
                         binaryage/devtools {:mvn/version "1.0.0"}
                         stylefy/stylefy {:mvn/version "3.2.0"}
                         stylefy/generic-dom {:mvn/version "3.0.0"}
-                        uic/uic {:local/root "/Users/pierrebaille/Code/WIP/uic"}
+                        #_uic/uic #_{:local/root "/Users/pierrebaille/Code/WIP/uic"}
                         com.pitch/uix.core {:mvn/version "1.2.0"}
                         com.pitch/uix.dom {:mvn/version "1.2.0"}}}}}
