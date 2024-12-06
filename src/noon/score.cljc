@@ -1514,7 +1514,8 @@
                           (update-score s (only-between from (+ from size) f)))
                         _ (range 0 (score-duration _) step)))))))
 
-#?(:cljs (do (defn play-cljs [& xs]
+#?(:cljs (do (defn play* [& xs]
+               (println "noon play")
                (let [score (apply mk xs)]
                  (midi/play (numerify-pitches score)))))
 
@@ -1620,6 +1621,18 @@
                  ((:close sq#))))
 
             (comment
+              (defn spit-user-ns []
+                (spit "src/noon/user.cljc"
+                      (u/pretty-str `(~'ns noon.user
+                                       (:require [noon.score :refer ~(vec (keep (fn [[n v]]
+                                                                                  (if (-> (meta v) :ns str (= "noon.score"))
+                                                                                    n))
+                                                                                (ns-publics *ns*)))]
+                                                 [noon.lib.harmony :as ~'h]
+                                                 [noon.lib.melody :as ~'m]
+                                                 [noon.lib.rythmn :as ~'r])))))
+
+              (spit-user-ns)
               (let [s (-> (midi/new-state :bpm 60 :n-tracks 1 :sequencer (midi/init-device-sequencer midi/iac-bus-1-output-device))
                           (midi/add-events (midifiable-score (mk (tup s0 s1 s2))))
                           :sequencer)]

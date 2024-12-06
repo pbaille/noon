@@ -15,4 +15,4 @@
   (.resume audio-ctx)
   (println :score
            (n/mk (n/tup n/s0 n/s1)))
-  (n/play-cljs (n/tup n/s0 n/s1)))
+  (n/play* (n/tup n/s0 n/s1)))
