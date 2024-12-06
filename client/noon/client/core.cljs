@@ -10,7 +10,10 @@
 (defonce root (uix.dom/create-root (js/document.getElementById "app")))
 
 (defn render []
-  (uix.dom/render-root ($ ui/code-editor {:source "(tup s0 s1 s2)"}) root))
+  (uix.dom/render-root
+   ($ ui/code-editor {:source "(tup s0 s1 s2)"
+                      :resume-audio-ctx (fn [_] (.resume audio-ctx))})
+   root))
 
 (defn ^:dev/after-load reload []
   (.resume audio-ctx)

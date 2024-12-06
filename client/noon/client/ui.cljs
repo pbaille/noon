@@ -5,7 +5,8 @@
             ["@nextjournal/lang-clojure" :refer [clojure]]))
 
 
-(defui code-editor [{:keys [source]}]
+(defui code-editor [{:keys [source
+                            resume-audio-ctx]}]
   (let [[source set-source] (uix/use-state source)]
     ($ :div
        ($ CodeMirror
@@ -13,8 +14,10 @@
            :on-change (fn [x] (set-source x))
            :extensions #js [(clojure)]})
        ($ :button
-          {:on-click (fn [_] (eval/evaluate-string (str "(play-score (mk " source "))")
-                                                   (fn [{:keys [value]}]
-                                                     (println value))
-                                                   {:ns 'noon.client.user}))}
+          {:on-click (fn [_]
+                       (resume-audio-ctx)
+                       (eval/evaluate-string (str "(play-score (mk " source "))")
+                                             (fn [{:keys [value]}]
+                                               (println value))
+                                             {:ns 'noon.client.user}))}
           "eval"))))
