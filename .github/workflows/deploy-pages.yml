@@ -38,8 +38,7 @@ jobs:
         uses: DeLaGuardo/setup-clojure@12.1
         with:
           cli: latest
-          shadow-cljs: latest
-          
+
       - name: Install dependencies
         run: npm install
         

@@ -29,8 +29,7 @@ jobs:
       with:
         cli: latest
         bb: latest
-        shadow-cljs: latest
-        
+
     - name: Install npm dependencies
       run: npm install
         
