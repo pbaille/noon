@@ -1,15 +1,9 @@
 (ns noon.client.core
-  (:require [noon.score :as n]
-            [noon.lib.harmony :as h]
-            [noon.lib.melody :as m]
-            [noon.lib.rythmn :as r]
-            [noon.client.ui :as ui]
+  (:require [noon.client.ui :as ui]
             [uix.core :refer [$]]
             [uix.dom]
             [stylefy.core :as stylefy]
-            [stylefy.generic-dom :as gdom]
-            [uic.component :refer [c]]
-            [uic.state :as s :refer [signal sub dbf effect event]]))
+            [stylefy.generic-dom :as gdom]))
 
 (def ^:export audio-ctx (new js/AudioContext))
 
