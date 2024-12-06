@@ -10,11 +10,7 @@
         instaparse/instaparse {:mvn/version "1.5.0"}
         clj-http/clj-http {:mvn/version "3.13.0"}}
  :aliases
- {:cljs {:extra-paths ["client"]
-         :extra-deps {org.clojure/clojurescript {:mvn/version "1.11.132"}
-                      thheller/shadow-cljs {:mvn/version "2.28.19"}
-                      binaryage/devtools {:mvn/version "1.0.0"}}}
-  :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
+ {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
           :ns-default build}
   :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "0.2.2"}}
            :exec-fn deps-deploy.deps-deploy/deploy
@@ -24,4 +20,13 @@
          :extra-deps {io.github.cognitect-labs/test-runner
                       {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
          :main-opts ["-m" "cognitect.test-runner"]
-         :exec-fn cognitect.test-runner.api/test}}}
+         :exec-fn cognitect.test-runner.api/test}
+  :client {:extra-paths ["client"]
+           :extra-deps {org.clojure/clojurescript {:mvn/version "1.11.132"}
+                        thheller/shadow-cljs {:mvn/version "2.28.19"}
+                        binaryage/devtools {:mvn/version "1.0.0"}
+                        stylefy/stylefy {:mvn/version "3.2.0"}
+                        stylefy/generic-dom {:mvn/version "3.0.0"}
+                        uic/uic {:local/root "/Users/pierrebaille/Code/WIP/uic"}
+                        com.pitch/uix.core {:mvn/version "1.2.0"}
+                        com.pitch/uix.dom {:mvn/version "1.2.0"}}}}}
