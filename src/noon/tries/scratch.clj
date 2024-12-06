@@ -4,8 +4,7 @@
             [noon.lib.melody :as m]
             [noon.lib.rythmn :as r]
             [noon.utils.pseudo-random :as pr]
-            [noon.harmony :as nh]
-            [noon.score :as n]))
+            [noon.harmony :as nh]))
 
 (comment
 
