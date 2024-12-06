@@ -13,8 +13,8 @@
            :on-change (fn [x] (set-source x))
            :extensions #js [(clojure)]})
        ($ :button
-          {:on-click (fn [_] (eval/evaluate-string (str "(play* " source ")")
+          {:on-click (fn [_] (eval/evaluate-string (str "(play-score (mk " source "))")
                                                    (fn [{:keys [value]}]
                                                      (println value))
-                                                   {:ns 'noon.user}))}
+                                                   {:ns 'noon.client.user}))}
           "eval"))))
