@@ -1683,7 +1683,7 @@
 
                 (defn spit-user-ns []
                   (let [{:keys [refered aliased]} (get-refered-varsyms)]
-                    (spit "client/noon/client/user.cljc"
+                    (spit "client/noon/client/user.cljs"
                           `(~'ns noon.client.user
                                  (:require [noon.lib.harmony :as ~'h]
                                            [noon.lib.melody :as ~'m]
