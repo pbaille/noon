@@ -1,13 +1,13 @@
 (ns noon.utils.misc
   (:refer-clojure :exclude [abs])
-  (:require [clojure.string :as str])
-
-  #?(:clj (:require [clojure.pprint :as pprint]
+  #?(:clj (:require [clojure.string :as str]
+                    [clojure.pprint :as pprint]
                     [me.raynes.fs :as fs]
                     [backtick :as bt]
                     [clj-commons.byte-streams :as bs]
                     [clojure.data.codec.base64 :as b64])
-     :cljs (:require [cljs.pprint :as pprint]))
+     :cljs (:require [clojure.string :as str]
+                     [cljs.pprint :as pprint]))
   #?(:clj (:import (java.io ByteArrayOutputStream ObjectOutputStream ObjectInputStream))
      :cljs (:require-macros [noon.utils.misc :refer [defn* template f_ >_ defreduction
                                                      reduction]])))
