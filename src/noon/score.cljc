@@ -1683,18 +1683,12 @@
 
                 (defn spit-user-ns []
                   (let [{:keys [refered aliased]} (get-refered-varsyms)]
-                    (println "writing user ns: "
-                             (u/pretty-str `(~'ns noon.client.user
-                                               (:require [noon.score :refer [~@refered ~@aliased]]
-                                                         [noon.lib.harmony :as ~'h]
-                                                         [noon.lib.melody :as ~'m]
-                                                         [noon.lib.rythmn :as ~'r]))))
                     (spit "client/noon/client/user.cljc"
-                          (u/pretty-str `(~'ns noon.client.user
-                                               (:require [noon.score :refer [~@refered ~@aliased]]
-                                                         [noon.lib.harmony :as ~'h]
-                                                         [noon.lib.melody :as ~'m]
-                                                         [noon.lib.rythmn :as ~'r]))))))
+                          `(~'ns noon.client.user
+                                 (:require [noon.lib.harmony :as ~'h]
+                                           [noon.lib.melody :as ~'m]
+                                           [noon.lib.rythmn :as ~'r]
+                                           [noon.score :refer [~@refered ~@aliased]])))))
 
                 #_(spit-user-ns))
 
