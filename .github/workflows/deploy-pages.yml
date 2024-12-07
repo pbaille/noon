@@ -46,7 +46,7 @@ jobs:
         run: clojure -M scripts/generate_user_ns.clj
         
       - name: Build with shadow-cljs
-        run: npx shadow-cljs compile client
+        run: npx shadow-cljs compile bootstrap client
         
       - name: Setup Pages
         uses: actions/configure-pages@v4
