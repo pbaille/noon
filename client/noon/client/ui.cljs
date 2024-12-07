@@ -20,4 +20,14 @@
                                              (fn [{:keys [value]}]
                                                (println value))
                                              {:ns 'noon.client.user}))}
-          "eval"))))
+          "eval")
+       ($ :button
+          {:on-click (fn [_]
+                       (resume-audio-ctx)
+                       (eval/simple-try))}
+          "bootstrap test")
+       ($ :button
+          {:on-click (fn [_]
+                       (resume-audio-ctx)
+                       (eval/simple-try2))}
+          "bootstrap test noon.user"))))

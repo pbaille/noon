@@ -24,3 +24,4 @@ vsl/*
 /.shadow-cljs/
 /public/js/*
 /public/bootstrap/
+/client/noon/client/user.cljs
