@@ -1670,7 +1670,7 @@
 
             (do :spit-user-ns
                 (defn get-refered-varsyms []
-                  (->> (ns-publics *ns*)
+                  (->> (ns-publics 'noon.score)
                        (map (fn [[n v]] [n (meta v)]))
                        (filter (fn [[n meta]] (-> (:ns meta) str (= "noon.score"))))
                        (reduce (fn [ret [n meta]]
@@ -1683,6 +1683,12 @@
 
                 (defn spit-user-ns []
                   (let [{:keys [refered aliased]} (get-refered-varsyms)]
+                    (println "writing user ns: "
+                             (u/pretty-str `(~'ns noon.client.user
+                                               (:require [noon.score :refer [~@refered ~@aliased]]
+                                                         [noon.lib.harmony :as ~'h]
+                                                         [noon.lib.melody :as ~'m]
+                                                         [noon.lib.rythmn :as ~'r]))))
                     (spit "client/noon/client/user.cljc"
                           (u/pretty-str `(~'ns noon.client.user
                                                (:require [noon.score :refer [~@refered ~@aliased]]
