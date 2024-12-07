@@ -96,8 +96,8 @@
       (doseq [f @stop-fns*] (f)))
 
     (defn play [noon-data]
-      (println "playing js " noon-data)
-      (js/console.log Tone)
+      #_(println "playing js " noon-data)
+      #_(js/console.log Tone)
       (let [patch->events (group-by :patch noon-data)]
         (.then (js/Promise.all
                 (mapv (fn [[[_bank instrument] events]]
@@ -108,7 +108,7 @@
                       patch->events))
 
                (fn [xs]
-                 (js/console.log "instruments " xs)
+                 #_(js/console.log "instruments " xs)
                  (let [t0 (.now Tone)]
                    (mapv (fn [[instrument events]]
                            (doseq [{:as _note :keys [channel pitch velocity duration position]} events]
