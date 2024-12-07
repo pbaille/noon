@@ -1672,7 +1672,7 @@
                 (defn get-refered-varsyms []
                   (->> (ns-publics 'noon.score)
                        (map (fn [[n v]] [n (meta v)]))
-                       (filter (fn [[n meta]] (-> (:ns meta) str (= "noon.score"))))
+                       (filter (fn [[_ meta]] (-> (:ns meta) str (= "noon.score"))))
                        (reduce (fn [ret [n meta]]
                                  (let [tags (set (:tags meta))]
                                    (if (seq tags)

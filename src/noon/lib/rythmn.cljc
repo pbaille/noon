@@ -3,7 +3,6 @@
             [noon.utils.euclidean-sums :as eucl]
             [noon.utils.sequences :as s]
             [noon.utils.misc :as u]
-            [clojure.core :as c]
             [noon.utils.pseudo-random :as pr]))
 
 (do :impl
