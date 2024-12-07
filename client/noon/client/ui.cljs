@@ -24,10 +24,15 @@
        ($ :button
           {:on-click (fn [_]
                        (resume-audio-ctx)
-                       (eval/simple-try))}
-          "bootstrap test")
+                       (eval/eval-noon source))}
+          "eval2")
        ($ :button
           {:on-click (fn [_]
                        (resume-audio-ctx)
-                       (eval/simple-try2))}
-          "bootstrap test noon.user"))))
+                       (eval/init))}
+          "init")
+       ($ :button
+          {:on-click (fn [_]
+                       (resume-audio-ctx)
+                       (eval/simple-play-test))}
+          "test"))))

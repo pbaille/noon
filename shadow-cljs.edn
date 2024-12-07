@@ -17,6 +17,7 @@
 
           :bootstrap {:target :bootstrap
                       :output-dir "public/bootstrap"
+                      :asset-path "bootstrap"
                       :exclude #{cljs.js instaparse.core instaparse.gll instaparse.abnf}
                       :entries [cljs.js noon.score noon.lib.melody noon.lib.harmony noon.lib.rythmn]
                       :macros []}
