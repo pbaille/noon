@@ -11,6 +11,7 @@
                       :preloads [devtools.preload]}
            :output-dir "public/js"
            :asset-path "js"
-           :compiler-options {:output-feature-set :es8}}
+           :compiler-options {:optimizations :simple
+                              :output-feature-set :es8}}
           :test {:target :node-test
                  :output-to "out/node-tests.js"}}}
