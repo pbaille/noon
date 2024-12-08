@@ -42,15 +42,9 @@ jobs:
       - name: Install dependencies
         run: npm install
         
-      - name: Generate user namespace
-        run: clojure -M scripts/generate_user_ns.clj
-        
       - name: Build with shadow-cljs
         run: npx shadow-cljs compile bootstrap client
 
-      - name: List build output
-        run: ls -R public/
-        
       - name: Setup Pages
         uses: actions/configure-pages@v4
         

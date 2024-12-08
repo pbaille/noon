@@ -1668,30 +1668,6 @@
               `(if-let [sq# @sequencer*]
                  ((:close sq#))))
 
-            (do :spit-user-ns
-                (defn get-refered-varsyms []
-                  (->> (ns-publics 'noon.score)
-                       (map (fn [[n v]] [n (meta v)]))
-                       (filter (fn [[_ meta]] (-> (:ns meta) str (= "noon.score"))))
-                       (reduce (fn [ret [n meta]]
-                                 (let [tags (set (:tags meta))]
-                                   (if (seq tags)
-                                     (cond (tags :alias) (update ret :aliased conj n)
-                                           :else (update ret :refered conj n))
-                                     ret)))
-                               {:refered [] :aliased []})))
-
-                (defn spit-user-ns []
-                  (let [{:keys [refered aliased]} (get-refered-varsyms)]
-                    (spit "client/noon/client/user.cljs"
-                          `(~'ns noon.client.user
-                                 (:require [noon.lib.harmony :as ~'h]
-                                           [noon.lib.melody :as ~'m]
-                                           [noon.lib.rythmn :as ~'r]
-                                           [noon.score :refer [~@refered ~@aliased]])))))
-
-                #_(spit-user-ns))
-
             (comment
               (let [s (-> (midi/new-state :bpm 60 :n-tracks 1 :sequencer (midi/init-device-sequencer midi/iac-bus-1-output-device))
                           (midi/add-events (midifiable-score (mk (tup s0 s1 s2))))
