@@ -5,11 +5,13 @@
                     [me.raynes.fs :as fs]
                     [backtick :as bt]
                     [clj-commons.byte-streams :as bs]
-                    [clojure.data.codec.base64 :as b64])
+                    [clojure.data.codec.base64 :as b64]
+                    [zprint.core :as zp])
      :cljs (:require [clojure.string :as str]
-                     [cljs.pprint :as pprint]))
+                     [cljs.pprint :as pprint]
+                     [zprint.core :as zp]))
   #?(:clj (:import (java.io ByteArrayOutputStream ObjectOutputStream ObjectInputStream))
-     :cljs (:require-macros [noon.utils.misc :refer [defn* template f_ >_ defreduction
+     :cljs (:require-macros [noon.utils.misc :refer [source-str defn* template f_ >_ defreduction
                                                      reduction]])))
 
 (do :numbers
@@ -139,7 +141,11 @@
           (keyword)))
 
     (defn pretty-str [x]
-      (with-out-str (pprint/pprint x))))
+      (with-out-str (pprint/pprint x)))
+
+    (defmacro source-str
+      [x]
+      (zp/zprint-str x)))
 
 (do :metadata
 

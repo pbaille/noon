@@ -8,7 +8,8 @@
         org.clj-commons/byte-streams {:mvn/version "0.3.4"}
         org.clojure/data.codec {:mvn/version "0.1.1"}
         instaparse/instaparse {:mvn/version "1.5.0"}
-        clj-http/clj-http {:mvn/version "3.13.0"}}
+        clj-http/clj-http {:mvn/version "3.13.0"}
+        zprint/zprint {:mvn/version "1.2.9"}}
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
           :ns-default build}
