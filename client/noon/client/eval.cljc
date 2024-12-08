@@ -29,7 +29,7 @@
 
              (defn init []
                (boot/init compile-state-ref
-                          {:path "/bootstrap"}
+                          {:path "/noon/bootstrap"}
                           (fn []
                             (evaluate-string "
 (ns noon.client.user
