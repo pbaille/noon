@@ -15,11 +15,5 @@
                               :output-feature-set :es8
                               :output-wrapper false}}
 
-          :bootstrap {:target :bootstrap
-                      :output-dir "public/bootstrap"
-                      :asset-path "bootstrap"
-                      :exclude #{cljs.js instaparse.core instaparse.gll instaparse.abnf}
-                      :entries [cljs.js noon.score noon.lib.melody noon.lib.harmony noon.lib.rythmn]
-                      :macros []}
           :test {:target :node-test
                  :output-to "out/node-tests.js"}}}

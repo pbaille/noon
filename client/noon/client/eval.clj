@@ -1,5 +1,8 @@
 (ns noon.client.eval
-  (:require [noon.score]))
+  (:require [noon.score]
+            [noon.lib.harmony]
+            [noon.lib.melody]
+            [noon.lib.rythmn]))
 
 (defn get-refered-varsyms []
   (->> (ns-publics 'noon.score)
@@ -20,3 +23,24 @@
                           [noon.lib.melody :as ~'m]
                           [noon.lib.rythmn :as ~'r]
                           [noon.score :as ~'n :refer [~@refered ~@aliased]])))))
+
+(defmacro primitive-map []
+  (let [{:keys [refered aliased]} (get-refered-varsyms)]
+    (into {}
+          (map (fn [s]
+                 [(list 'quote s) (symbol "noon.score" (name s))])
+               (concat refered aliased)))))
+
+(defmacro sci-namespace [ns-sym]
+  (println (->> (ns-publics ns-sym)
+       (map (fn [[n v]] [n (meta v)]))
+       (keep (fn [[n meta]] (let [ns-str (str (:ns meta))]
+                              (when (= ns-str (name ns-sym))
+                                [(list 'quote n) (symbol ns-str (name n))]))))
+       (into {})))
+  (->> (ns-publics ns-sym)
+       (map (fn [[n v]] [n (meta v)]))
+       (keep (fn [[n meta]] (let [ns-str (str (:ns meta))]
+                              (when (= ns-str (name ns-sym))
+                                [(list 'quote n) (symbol ns-str (name n))]))))
+       (into {})))

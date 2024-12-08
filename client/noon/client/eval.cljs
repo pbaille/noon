@@ -1,34 +1,17 @@
 (ns noon.client.eval
   (:require
-   [cljs.env :as env]
-   [cljs.js]
-   [shadow.cljs.bootstrap.browser :as boot])
-  (:require-macros [noon.client.eval :refer [user-ns-str]]))
+   [noon.score]
+   [noon.lib.harmony]
+   [noon.lib.melody]
+   [noon.lib.rythmn]
+   [sci.core :as sci])
+  (:require-macros [noon.client.eval :refer [sci-namespace primitive-map]]))
 
-(defonce compile-state-ref (env/default-compiler-env))
+(defn sci-eval [x]
+  (sci/eval-string x {:namespaces {'user (primitive-map)
+                                   'h (sci-namespace noon.lib.harmony)
+                                   'm (sci-namespace noon.lib.melody)
+                                   'r (sci-namespace noon.lib.rythmn)}}))
 
-(defn evaluate-string [expr cb & {:as opts}]
-  (cljs.js/eval-str
-   compile-state-ref
-   (str expr)
-   "[test]"
-   (merge {:eval cljs.js/js-eval
-           :load (partial boot/load compile-state-ref)}
-          opts)
-   cb))
-
-(defn play-noon [source]
-  (evaluate-string (str "(play-score (mk " source "))")
-                   println
-                   {:ns 'noon.client.user}))
-
-(defn eval-noon [source]
-  (evaluate-string source
-                   println
-                   {:ns 'noon.client.user}))
-
-(defn init []
-  (boot/init compile-state-ref
-             {:path "bootstrap"}
-             (fn []
-               (evaluate-string (user-ns-str) println))))
+(defn sci-play [x]
+  (sci-eval (str "(play-score (mk " x "))")))

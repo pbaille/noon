@@ -30,4 +30,5 @@
                         stylefy/generic-dom {:mvn/version "3.0.0"}
                         #_uic/uic #_{:local/root "/Users/pierrebaille/Code/WIP/uic"}
                         com.pitch/uix.core {:mvn/version "1.2.0"}
-                        com.pitch/uix.dom {:mvn/version "1.2.0"}}}}}
+                        com.pitch/uix.dom {:mvn/version "1.2.0"}
+                        org.babashka/sci {:mvn/version "0.9.44"}}}}}
