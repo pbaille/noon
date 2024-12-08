@@ -17,13 +17,13 @@
           opts)
    cb))
 
-(defn eval-noon [source]
+(defn play-noon [source]
   (evaluate-string (str "(play-score (mk " source "))")
                    println
                    {:ns 'noon.client.user}))
 
-(defn simple-play-test []
-  (evaluate-string (str '(play-score (mk (let [x s2] (tup s0 s1 x)))))
+(defn eval-noon [source]
+  (evaluate-string source
                    println
                    {:ns 'noon.client.user}))
 

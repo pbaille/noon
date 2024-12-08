@@ -88,7 +88,7 @@
 
     (defn get-instrument [instrument-name]
       (.-load (Soundfont. (.-_context (.-context Tone))
-                          #js {:instrument instrument-name :kit "FluidR3_GM"})))
+                          #js {:instrument instrument-name #_:kit #_"FluidR3_GM"})))
 
     (defn stop-midi []
       (println "stopping midi")

@@ -19,4 +19,4 @@
                 (:require [noon.lib.harmony :as ~'h]
                           [noon.lib.melody :as ~'m]
                           [noon.lib.rythmn :as ~'r]
-                          [noon.score :refer [~@refered ~@aliased]])))))
+                          [noon.score :as ~'n :refer [~@refered ~@aliased]])))))

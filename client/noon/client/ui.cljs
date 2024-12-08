@@ -13,8 +13,12 @@
           {:value source
            :on-change (fn [x] (set-source x))
            :extensions #js [(clojure)]})
+       #_($ :button
+          {:on-click (fn [_]
+                       (eval/eval-noon source))}
+          "eval")
        ($ :button
           {:on-click (fn [_]
                        (resume-audio-ctx)
-                       (eval/eval-noon source))}
-          "eval"))))
+                       (eval/play-noon source))}
+          "play"))))
