@@ -1,5 +1,6 @@
 (ns noon.client.core
-  (:require [noon.client.ui :as ui]
+  (:require [noon.client.eval :as eval]
+            [noon.client.ui :as ui]
             [uix.core :refer [$]]
             [uix.dom]
             [stylefy.core :as stylefy]
@@ -25,4 +26,5 @@
 (defn ^:export init []
   (stylefy/init {:dom (gdom/init)})
   (.resume audio-ctx)
+  (eval/init)
   (render))

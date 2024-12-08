@@ -16,23 +16,5 @@
        ($ :button
           {:on-click (fn [_]
                        (resume-audio-ctx)
-                       (eval/evaluate-string (str "(play-score (mk " source "))")
-                                             (fn [{:keys [value]}]
-                                               (println value))
-                                             {:ns 'noon.client.user}))}
-          "eval")
-       ($ :button
-          {:on-click (fn [_]
-                       (resume-audio-ctx)
                        (eval/eval-noon source))}
-          "eval2")
-       ($ :button
-          {:on-click (fn [_]
-                       (resume-audio-ctx)
-                       (eval/init))}
-          "init")
-       ($ :button
-          {:on-click (fn [_]
-                       (resume-audio-ctx)
-                       (eval/simple-play-test))}
-          "test"))))
+          "eval"))))
