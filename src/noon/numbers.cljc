@@ -38,9 +38,18 @@
       (min 65535)))
 
 (defn ->4bits-natural
-      "MIDI sometimes deals with natural between 0 and 16,
+  "MIDI sometimes deals with natural between 0 and 16,
        this function coerce its input to this range."
-      [x]
-      (-> (->int x)
-          (max 0)
-          (min 15)))
+  [x]
+  (-> (->int x)
+      (max 0)
+      (min 15)))
+
+(defn float-equal?
+  [a b & {:keys [epsilon] :or {epsilon 1e-5}}]
+  (< (abs (- a b)) epsilon))
+
+(defn is-multiple? [a b & [epsilon]]
+  (let [epsilon (or epsilon 1e-5)]
+    (or (< (abs (rem a b)) epsilon)
+        (< (- b  (rem a b)) epsilon))))

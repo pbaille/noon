@@ -7,17 +7,21 @@
             [noon.utils.maps :as m]
             [noon.utils.chance :as g]
             [noon.utils.pseudo-random :as pr]
-            [noon.midi :as midi]
+            [noon.constants :as constants]
             [noon.numbers :as nums :refer [add sub mul div]])
   #?(:cljs (:require-macros [noon.events :refer [efn ef_ -def-durations -def-velocities -def-channels -def-tracks
                                                  import-wrap-harmony-update-constructors import-wrap-harmony-updates
                                                  -def-wrapped -def-steps -def-shifts -def-degrees]])))
 
 (def DEFAULT_EVENT
-  (assoc midi/DEFAULT_NOTE
-         :pitch h/DEFAULT_HARMONIC_CONTEXT
-         :voice 0
-         :patch [0 4]))
+  {:position 0
+   :duration 1
+   :channel 0
+   :track 0
+   :velocity 80
+   :pitch h/DEFAULT_HARMONIC_CONTEXT
+   :voice 0
+   :patch [0 4]})
 
 (defn normalise-event
   "Puts time related dimensions of a note into their identity values.
@@ -71,8 +75,11 @@
             (map? x) (map->efn x)
             (vector? x) (if-let [updates (u/?keep ->event-update x)]
                           (chain-event-updates updates))
-            (and (g/gen? x)
-                 (->event-update (g/realise x))) (ef_ ((->event-update (g/realise x)) _))))
+            (g/gen? x) (ef_ (let [v (g/realise x)]
+                              (if-let [f (->event-update v)]
+                                (f _)
+                                (u/throw* "The non deterministic value was expected to realise to something that can cast to event-update: "
+                                          v))))))
 
     (defn event-matcher [f] (t :event-matcher f))
 
@@ -231,7 +238,7 @@
            `key` is the control-change code, and `val` is the value for it."
       {:tags [:event-update]}
       [key val]
-      (if-let [code (midi/cc-code key)]
+      (if-let [code (constants/cc-code key)]
         (map->efn {:cc {code (fn [v]
                                (let [v (m/value-merge v val)]
                                  (cond

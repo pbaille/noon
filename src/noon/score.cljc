@@ -315,12 +315,16 @@
     (defn ->score-update
       "Turn 'x into a score-update if possible."
       [x]
-      (if-let [event-update (events/->event-update x)]
-        (sf_ (map-event-update _ event-update))
-        (cond (score-update? x) x
-              (vector? x) (chain-score-updates x)
-              (g/gen? x) (if (->score-update (g/realise x))
-                           (sf_ ((->score-update (g/realise x)) _))))))
+      (if (g/gen? x)
+        (sf_ (let [v (g/realise x)]
+               (if-let [f (->score-update v)]
+                 (f _)
+                 (u/throw* "The non deterministic value was expected to realise to something that can cast to score-update: "
+                           v))))
+        (if-let [event-update (events/->event-update x)]
+          (sf_ (map-event-update _ event-update))
+          (cond (score-update? x) x
+                (vector? x) (chain-score-updates x)))))
 
     (defn ->score-update!
       "Strict version of `noon.score/->score-update`, it throws if `x` is not convertible."

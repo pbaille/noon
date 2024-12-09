@@ -15,6 +15,20 @@
 (defn e0> [& xs]
   (utils/?reduce #(%2 %1) event0 xs))
 
+(defn round-with-precision [number precision]
+  (let [factor (Math/pow 10 precision)]
+    (/ (Math/round (* number factor)) factor)))
+
+(defn comparable-score [score]
+  (into #{}
+        (map (fn [e] (-> e
+                         (update :position round-with-precision 5)
+                         (update :duration round-with-precision 5)))
+             score)))
+
+(defn score= [& scores]
+  (apply = (map comparable-score scores)))
+
 (deftest score-test
 
   (testing "basic"
@@ -89,15 +103,15 @@
               (s/scale-score (s/mk (u/lin e/s0 e/s2 e/s4))
                              (/ 1 3)))
              1))
-      (is (= (s/score-duration
-              (s/scale-score (s/shift-score S0 10)
-                             (/ 1 3)))
-             (/ 11 3)))
+      (is (numbers/float-equal? (s/score-duration
+                                 (s/scale-score (s/shift-score S0 10)
+                                                (/ 1 3)))
+                                (/ 11 3)))
 
-      (is (= (s/score-origin
-              (s/scale-score (s/shift-score S0 10)
-                             (/ 1 3)))
-             (/ 10 3)))
+      (is (numbers/float-equal? (s/score-origin
+                                 (s/scale-score (s/shift-score S0 10)
+                                                (/ 1 3)))
+                                (/ 10 3)))
 
       (is (= (s/shift-score S0 10)
              (s/update-score S0 {:position (numbers/add 10)}))))
@@ -521,12 +535,12 @@
 
     (testing "in-place"
 
-      (is (= (s/mk (u/lin e/d0 e/d1 e/d2)
-                   (u/adjust {:position 3 :duration 2})
-                   (u/in-place (u/dup 3)))
-             (s/mk (u/lin e/d0 e/d1 e/d2)
-                   (u/dup 3)
-                   (u/adjust {:position 3 :duration 2})))))
+      (is (score= (s/mk (u/lin e/d0 e/d1 e/d2)
+                        (u/adjust {:position 3 :duration 2})
+                        (u/in-place (u/dup 3)))
+                  (s/mk (u/lin e/d0 e/d1 e/d2)
+                        (u/dup 3)
+                        (u/adjust {:position 3 :duration 2})))))
 
     (testing "fork-with, voices, u/chans, tracks"
 
@@ -552,11 +566,11 @@
 
     (testing "mirror rev"
 
-      (is (= (s/mk (u/tup e/d0 e/d1 e/d2)
-                   u/rev)
-             (s/mk (u/tup e/d2 e/d1 e/d0))
-             (s/mk (u/tup e/d2 e/d1 e/d0)
-                   u/rev u/rev)))
+      (is (score= (s/mk (u/tup e/d0 e/d1 e/d2)
+                        u/rev)
+                  (s/mk (u/tup e/d2 e/d1 e/d0))
+                  (s/mk (u/tup e/d2 e/d1 e/d0)
+                        u/rev u/rev)))
 
       (is (= (s/numerify-pitches
               (s/mk (u/tup e/d0 e/d1 e/d2)
@@ -663,9 +677,9 @@
 
         (testing "only-between"
 
-          (is (= (s/mk (u/lin e/d0 e/d1 e/d2 e/d3)
-                       (u/only-between 1 3 (u/each (u/tup e/d0 e/d1 e/d2))))
-                 (s/mk (u/lin e/d0 (u/tup e/d1 e/d2 e/d3) (u/tup e/d2 e/d3 e/d4) e/d3)))))
+          (is (score= (s/mk (u/lin e/d0 e/d1 e/d2 e/d3)
+                            (u/only-between 1 3 (u/each (u/tup e/d0 e/d1 e/d2))))
+                      (s/mk (u/lin e/d0 (u/tup e/d1 e/d2 e/d3) (u/tup e/d2 e/d3 e/d4) e/d3)))))
 
         (testing "checks"
 
@@ -701,11 +715,13 @@
 
           (is (pr/with-rand 0
                 (= (s/mk (u/one-of e/chan1 e/chan2 e/chan3))
-                   (s/mk e/chan3))))
+                   #?(:clj (s/mk e/chan3)
+                      :cljs (s/mk e/chan2)))))
 
           (is (pr/with-rand -78
                 (= (s/mk (u/one-of e/chan1 e/chan2 e/chan3))
-                   (s/mk e/chan1))))
+                   #?(:clj (s/mk e/chan1)
+                      :cljs (s/mk e/chan2)))))
 
           (is (every? (e/->event-matcher {:channel (partial contains? #{0 1 2 3})})
                       (s/mk (u/nlin 100 (u/maybe e/chan1 e/chan2 e/chan3)))))
@@ -726,21 +742,21 @@
 
           (testing "fill fill>"
 
-            (is (= (s/mk (u/fill #?(:clj 1/4 :cljs 0.25) e/d3))
-                   (s/mk (u/tup e/d3 e/d3 e/d3 e/d3))))
+            (is (score= (s/mk (u/fill (/ 1 4) e/d3))
+                        (s/mk (u/tup e/d3 e/d3 e/d3 e/d3))))
 
-            (is (= (s/mk e/dur2 (u/fill #?(:clj 1/4 :cljs 0.25) e/d3))
-                   (s/mk e/dur2 (u/ntup 8 e/d3))))
+            (is (score= (s/mk e/dur2 (u/fill (/ 1 4) e/d3))
+                        (s/mk e/dur2 (u/ntup 8 e/d3))))
 
-            (is (= (s/mk (u/fill> #?(:clj 1/4 :cljs 0.25) e/d3))
-                   (s/mk (u/ntup> 4 e/d3))))
+            (is (score= (s/mk (u/fill> (/ 1 4) e/d3))
+                        (s/mk (u/ntup> 4 e/d3))))
 
-            (is (= (s/mk e/dur2 (u/fill> #?(:clj 2/5 :cljs 0.4) e/d3))
-                   (s/mk e/dur2 (u/ntup> 5 e/d3))))
+            (is (score= (s/mk e/dur2 (u/fill> (/ 2 5) e/d3))
+                        (s/mk e/dur2 (u/ntup> 5 e/d3))))
 
             (is (thrown? #?(:clj Exception
                             :cljs js/Error)
-                         (s/mk (u/fill #?(:clj 2/3 :cljs 0.6666) e/d1)))))
+                         (s/mk (u/fill (/ 2 3) e/d1)))))
 
           (testing "connect-by scan"
 

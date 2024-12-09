@@ -8,7 +8,8 @@
             [noon.utils.pseudo-random :as pr]
             [noon.utils.chance :as g]
             [noon.utils.misc :as u :refer [f_ defn*]]
-            [noon.harmony :as h]))
+            [noon.harmony :as h])
+  #?(:cljs (:require-macros [noon.updates :refer [!]])))
 
 (def ^{:doc "Identity transformation"
        :tags [:base :score-update]}
@@ -485,11 +486,15 @@
                  `resolution` should be an exact multiple of received score's duration."
        :tags [:incubator :score-update-builder :temporal :multiplicative]}
       [resolution update]
-      (sf_ (let [sdur (score/score-duration _)
-                 n (quot sdur resolution)]
-             (if-not (zero? (rem sdur resolution))
-               (u/throw* `fill> " resolution should be a multiple of score length "))
-             (score/update-score _ (ntup> n update)))))
+      (sf_ (let [sdur (score/score-duration _)]
+             (if-not #?(:clj (zero? (rem sdur resolution))
+                        :cljs (numbers/is-multiple? sdur resolution))
+               (u/throw* `fill> " resolution should be a multiple of score length "
+                         {:score-duration sdur :rem (rem sdur resolution)
+                          :resolution resolution}))
+             (score/update-score _ (ntup> #?(:clj (quot sdur resolution)
+                                             :cljs (int (Math/round (/ sdur resolution))))
+                                          update)))))
 
     (defn $by
       {:doc "Splits the score according to the return of `event->group` applied to each event.
