@@ -24,8 +24,8 @@
    :patch [0 4]})
 
 (defn normalise-event
-  "Puts time related dimensions of a note into their identity values.
-       Useful in many time streching transformations"
+  "Puts time related dimensions of a note into their default values.
+   Useful in many time streching transformations"
   [x]
   (assoc x :position 0 :duration 1))
 
@@ -90,10 +90,10 @@
 
     (defn ->event-matcher
       "turn `x` into an event-matcher.
-           An event-matcher is a function from event to boolean.
-           If `x` is an event-update, the result of applying it to the received event should be
-           equal to the received event in order for it to indicate a match.
-           In other cases `x` is passed as second argument to `noon.utils.maps/match`"
+       An event-matcher is a function from event to boolean.
+       If `x` is an event-update, the result of applying it to the received event should be
+       equal to the received event in order for it to indicate a match.
+       In other cases `x` is passed as second argument to `noon.utils.maps/match`"
       [x]
       (cond (event-matcher? x) x
             (event-update? x) (event-update->event-matcher x)
@@ -103,10 +103,10 @@
 
     (defn midi-val
       "Build a midi value (int between 0 and 127) from `x`.
-           `x` can be either:
-           - an integer, that will be constrained to 0-127 range.
-           - a float or a rational, that will be scaled to the 0-127 range.
-           - :min or :max keywords that will map to 0 and 127 respectively."
+       `x` can be either:
+       - an integer, that will be constrained to 0-127 range.
+       - a float or a rational, that will be scaled to the 0-127 range.
+       - :min or :max keywords that will map to 0 and 127 respectively."
       [x]
       (cond
         (int? x) (-> x (min 127) (max 0))
@@ -118,14 +118,14 @@
 
     (defn humanize
       "Build a function that humanize a midi value (int between 0 and 127).
-           Options are:
-           - :max-step is the maximum step that can occur in either directions.
-             its value can be:
-             - a natural number, which represent the maximum step value in either direction
-             - a rational or float, which indicates the size of maximun step relatively to the allowed value range (see :bounds option).
-             - nil, indicating that any step can be made within specified :bounds (default to the whole midi value range 0-127)
-           - :bounds is a vector of the form [min-value max-value] that constrain input and output of the created update.
-             the two value it contains can be any valid `noon.score/midi-val` argument (natural, rational,float or :min and :max keywords)"
+       Options are:
+       - :max-step is the maximum step that can occur in either directions.
+         its value can be:
+         - a natural number, which represent the maximum step value in either direction
+         - a rational or float, which indicates the size of maximun step relatively to the allowed value range (see :bounds option).
+         - nil, indicating that any step can be made within specified :bounds (default to the whole midi value range 0-127)
+       - :bounds is a vector of the form [min-value max-value] that constrain input and output of the created update.
+         the two value it contains can be any valid `noon.score/midi-val` argument (natural, rational,float or :min and :max keywords)"
       [& {:keys [max-step bounds]}]
       (let [[min-val max-val] (mapv midi-val (or bounds [0 127]))
             bound (fn [x] (-> x (min max-val) (max min-val)))
@@ -169,7 +169,7 @@
 
         (defn vel-humanize
           "Build an event update that humanize the :velocity value.
-               please refer to the `noon.score/humanize` doc."
+           please refer to the `noon.score/humanize` doc."
           [max-step & [bounds]]
           (let [f (humanize {:bounds bounds :max-step max-step})]
             (ef_ (update _ :velocity f))))
@@ -235,7 +235,7 @@
 
     (defn cc
       "Build an event-update that adds the given control change to the received event.
-           `key` is the control-change code, and `val` is the value for it."
+       `key` is the control-change code, and `val` is the value for it."
       {:tags [:event-update]}
       [key val]
       (if-let [code (constants/cc-code key)]
@@ -270,8 +270,8 @@
 
     (defmacro -def-durations
       "Defines some duration update vars
-           d2 ... d11 to multiply it
-           d:2 ... d:11 to divide it"
+       d2 ... d11 to multiply it
+       d:2 ... d:11 to divide it"
       []
       (cons 'do
             (concat (for [i (range 2 12)]
@@ -371,15 +371,15 @@
                           xs))))
 
     (import-wrap-harmony-update-constructors
-         ;; positions
+     ;; positions
      position s-position d-position c-position
 
-         ;; intervals
+     ;; intervals
      t-step s-step d-step c-step
      t-shift s-shift d-shift c-shift
      layer-step layer-shift
 
-         ;; context tweaks
+     ;; context tweaks
      origin scale structure degree root inversion
      repitch rescale restructure reorigin reroot redegree)
 
