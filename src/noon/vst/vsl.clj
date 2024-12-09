@@ -1,5 +1,6 @@
 (ns noon.vst.vsl
-  (:require [noon.score :as n]
+  (:require [noon.control :as control]
+            [noon.events :as events]
             [noon.utils.misc :as u]))
 
 (def TRACKS
@@ -162,13 +163,13 @@
 
 (defn instrument [instrument-name]
   (if-let [{:keys [category channel track]} (INSTRUMENTS instrument-name)]
-    (n/ef_ (merge _ {:track track :channel channel :vsl {:category category :instrument instrument-name}}))
+    (events/ef_ (merge _ {:track track :channel channel :vsl {:category category :instrument instrument-name}}))
     (if (nil? instrument-name)
-      (n/ef_ _)
+      (events/ef_ _)
       (u/throw* "vsl-instrument: unknown instrument: " instrument-name))))
 
 (defn patch [patch-name]
-  (n/efn e (if-let [{:keys [instrument]} (get e :vsl)]
+  (events/efn e (if-let [{:keys [instrument]} (get e :vsl)]
              (if-let [program-changes (get-in INSTRUMENTS [instrument :patches patch-name])]
                (or (-> (assoc e :pc program-changes)
                        (update :vsl assoc :patch patch-name))
@@ -183,9 +184,9 @@
   ([instrument-name patch-name]
    (let  [patch-upd (patch patch-name)
           instrument-upd (instrument instrument-name)]
-     (n/ef_ (-> _ instrument-upd patch-upd)))))
+     (events/ef_ (-> _ instrument-upd patch-upd)))))
 
 (defn noon [options score]
-  (n/noon (merge {:tracks TRACKS}
-                 options)
-          score))
+  (control/noon (merge {:tracks TRACKS}
+                       options)
+                score))

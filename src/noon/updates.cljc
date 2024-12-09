@@ -1,7 +1,7 @@
 (ns noon.updates
   "Score updates and update-builders"
   (:refer-clojure :exclude [iter])
-  (:require [noon.score :as score :refer [sf_]]
+  (:require [noon.score :as score :refer [sfn sf_]]
             [noon.events :as events]
             [noon.numbers :as numbers]
             [noon.constants :as constants]
@@ -282,11 +282,11 @@
 
     (def ^{:doc "Return a one event score, holding the lowest pitch of the received score."
            :tags [:score-update :selective :harmonic]}
-      min-pitch (min-by score/pitch-value))
+      min-pitch (min-by events/pitch-value))
 
     (def ^{:doc "Return a one event score, holding the highest pitch of the received score."
            :tags [:score-update :selective :harmonic]}
-      max-pitch (max-by score/pitch-value))
+      max-pitch (max-by events/pitch-value))
 
     (do :time
 
@@ -385,7 +385,7 @@
       {:doc "Takes a non deterministic `expression` resulting in a score update.Returns a score update that wraps the `expression` so that it is evaluated each time the update is called."
        :tags [:score-update-builder :non-deterministic]}
       [expression]
-      `(vary-meta (sfn score# (update-score score# ~expression))
+      `(vary-meta (sfn score# (score/update-score score# ~expression))
                   assoc :non-deterministic true))
 
     (defn* one-of

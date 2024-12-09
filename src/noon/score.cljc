@@ -3,17 +3,13 @@
   (:refer-clojure :exclude [iter])
   (:require [clojure.core :as c]
             [noon.harmony :as h]
-            [noon.vst.index :as vst]
-            [noon.constants :as constants]
-            [noon.utils.misc :as u :refer [t t? f_ defn*]]
-            [noon.utils.maps :as m]
+            [noon.events :as events]
+            [noon.utils.misc :as u :refer [t t?]]
             [noon.utils.chance :as g]
-            [noon.utils.pseudo-random :as pr]
-            [noon.midi :as midi])
-  #?(:clj (:require [noon.externals :as externals])
-     :cljs (:require-macros [noon.score :refer [sfn sf_ e->s !]])))
+            [noon.numbers :as numbers])
+  #?(:cljs (:require-macros [noon.score :refer [sfn sf_ e->s !]])))
 
-(def score0 #{DEFAULT_EVENT})
+(def score0 #{events/DEFAULT_EVENT})
 
 (defn score
   "Build a score from `x`.
@@ -70,7 +66,7 @@
     (defn pitch-value-bounds
       "Return a vector of min and max chromatic pitch values of the given score."
       [x]
-      (let [ps (map pitch-value x)]
+      (let [ps (map events/pitch-value x)]
         [(apply min ps) (apply max ps)])))
 
 (do :transformations
@@ -86,14 +82,14 @@
       "Scale score timing by given ratio."
       [score ratio]
       (map-event-update score
-                        (map->efn {:duration (mul ratio)
-                                   :position (mul ratio)})))
+                        (events/map->efn {:duration (numbers/mul ratio)
+                                          :position (numbers/mul ratio)})))
 
     (defn shift-score
       "Shift all position by the given offset."
       [score offset]
       (map-event-update score
-                        (map->efn {:position (add offset)})))
+                        (events/map->efn {:position (numbers/add offset)})))
 
     (defn fit-score
       "Fit a score into a note scaling and shifting it
@@ -126,7 +122,7 @@
                                         (:duration e)))))))
 
     (defn filter-score [score f]
-      (set (filter (->event-matcher f) score)))
+      (set (filter (events/->event-matcher f) score)))
 
     (defn trim-score
       "Removes everything before `beg` and after `end` from `score`.
@@ -293,7 +289,7 @@
        this is intended to help a bit."
       [score]
       (mapv (fn [{:as event :keys [position duration]}]
-              (into [(pitch-value event) duration position]))
+              (into [(events/pitch-value event) duration position]))
             (sort-score :position score))))
 
 (do :score-update
@@ -319,7 +315,7 @@
     (defn ->score-update
       "Turn 'x into a score-update if possible."
       [x]
-      (if-let [event-update (->event-update x)]
+      (if-let [event-update (events/->event-update x)]
         (sf_ (map-event-update _ event-update))
         (cond (score-update? x) x
               (vector? x) (chain-score-updates x)
@@ -336,12 +332,12 @@
       "Convert `x` to a score-checker if possible.
        A score-checker is a score-update that can return the score unchanged or nil indicating failure."
       [x]
-      (if (or (event-matcher? x)
-              (event-update? x)
+      (if (or (events/event-matcher? x)
+              (events/event-update? x)
               (map? x))
 
         (sfn s
-             (if (every? (->event-matcher x) s) s))
+             (if (every? (events/->event-matcher x) s) s))
 
         (if-let [update (->score-update x)]
           (sfn s (let [s' (update s)]
@@ -357,8 +353,8 @@
           (u/throw* `->score-checker! " not convertible: " x)))
 
     (defn chain-score-updates [updates]
-      (if-let [updates (?keep ->score-update updates)]
-        (sf_ (?reduce #(%2 %1) _ updates))
+      (if-let [updates (u/?keep ->score-update updates)]
+        (sf_ (u/?reduce #(%2 %1) _ updates))
         (u/throw* `chain-score-updates " bad argument: " updates)))
 
     (defn map-score-update
@@ -399,13 +395,13 @@
        then merge unselected events into the updated subscore.
        see `noon.score/->event-matcher` for exact semantics of event matching."
       [score event-matcher update]
-      (let [grouped (group-by (->event-matcher event-matcher) score)
+      (let [grouped (group-by (events/->event-matcher event-matcher) score)
             common (set (get grouped false))
             updated (update-score (get grouped true) update)]
         (into common updated)))
 
     (defn map-update [score update]
-      (if-let [event-update (->event-update update)]
+      (if-let [event-update (events/->event-update update)]
         (map-event-update score event-update)
         (if-let [score-update (->score-update update)]
           (map-score-update score score-update)

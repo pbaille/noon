@@ -1,7 +1,9 @@
 (ns noon.lib.harmony
   "Harmony related utilities"
   (:refer-clojure :exclude [drop])
-  (:require [noon.score :as n]
+  (:require [noon.score :as score]
+            [noon.events :as events]
+            [noon.updates :as updates]
             [noon.harmony :as h]
             [noon.constants :as nc]
             [noon.utils.misc :as u]
@@ -22,12 +24,12 @@
     (defn in-bounds
       "Check if the score `s` is within given pitch `bounds`."
       [bounds s]
-      (bounds-gte bounds (n/pitch-value-bounds s))))
+      (bounds-gte bounds (score/pitch-value-bounds s))))
 
 (do :parsed-update
 
     (defn ->pitch-update [x]
-      (cond (keyword? x) (let [u (h/rebase (ph/interpret x))] (n/ef_ (update _ :pitch u)))
+      (cond (keyword? x) (let [u (h/rebase (ph/interpret x))] (events/ef_ (update _ :pitch u)))
             (vector? x) (mapv ->pitch-update x)
             :else x))
 
@@ -37,12 +39,12 @@
     (u/defn* lin
       "Build an update similarly to `noon.score/lin` but interpret keywords using `noon.parse.harmony`."
       [xs]
-      (n/lin* (map upd xs)))
+      (updates/lin* (map upd xs)))
 
     (u/defn* tup
       "Build an update similarly to `noon.score/tup` but interpret keywords using `noon.parse.harmony`."
       [xs]
-      (n/tup* (map upd xs))))
+      (updates/tup* (map upd xs))))
 
 (do :voicings
 
@@ -92,29 +94,29 @@
                  If some notes have the same pitch class, it can produce unisons."
            :tags [:harmonic :voicing]}
       closed
-      (n/sf_ (let [[[v1 bass] & others]
-                   (sort (map (juxt n/pitch-value identity) _))]
-               (->> others
-                    (map (fn [[v note]]
-                           ((n/t-shift (quot (c/- v1 v) 12)) note)))
-                    (into #{bass})))))
+      (score/sf_ (let [[[v1 bass] & others]
+                       (sort (map (juxt events/pitch-value identity) _))]
+                   (->> others
+                        (map (fn [[v note]]
+                               ((events/t-shift (quot (c/- v1 v) 12)) note)))
+                        (into #{bass})))))
 
     (def ^{:doc "Put a chord into closed position.
                  Starting at bass note, bring every other notes as close as possible above it."
            :tags [:harmonic :voicing]}
       closed-no-unison
-      (n/sf_ (let [[[v1 bass] & others]
-                   (sort (map (juxt n/pitch-value identity) _))]
-               (loop [ret #{bass} pitch-values #{v1} notes others]
-                 (if-let [[[v note] & notes] (seq notes)]
-                   (letfn [(looop [n]
-                             (let [pitch-value (n/pitch-value n)]
-                               (if (contains? pitch-values pitch-value)
-                                 (looop (n/o1 n))
-                                 [n pitch-value])))]
-                     (let [[n v] (looop ((n/t-shift (quot (c/- v1 v) 12)) note))]
-                       (recur (conj ret n) (conj pitch-values v) notes)))
-                   ret)))))
+      (score/sf_ (let [[[v1 bass] & others]
+                       (sort (map (juxt events/pitch-value identity) _))]
+                   (loop [ret #{bass} pitch-values #{v1} notes others]
+                     (if-let [[[v note] & notes] (seq notes)]
+                       (letfn [(looop [n]
+                                 (let [pitch-value (events/pitch-value n)]
+                                   (if (contains? pitch-values pitch-value)
+                                     (looop (events/o1 n))
+                                     [n pitch-value])))]
+                         (let [[n v] (looop ((events/t-shift (quot (c/- v1 v) 12)) note))]
+                           (recur (conj ret n) (conj pitch-values v) notes)))
+                       ret)))))
 
     (def ^{:doc "Computes all possible drops of the given score (that is supposed to represent a chord).
                  The :inversions option can be given to include inversions and their drops."}
@@ -123,7 +125,7 @@
                 (loop [ret #{} drop abstract-drop octave 0 idx->notes contour-idx->notes]
                   (if-let [[current-octave & upper-octaves] (seq drop)]
                     (if-let [[idx & current-octave] (seq current-octave)]
-                      (recur (conj ret ((n/t-shift octave) (first (get idx->notes idx))))
+                      (recur (conj ret ((events/t-shift octave) (first (get idx->notes idx))))
                              (cons current-octave upper-octaves)
                              octave
                              (update idx->notes idx rest))
@@ -137,8 +139,8 @@
          (fn [s & {:keys [inversions]}]
            (assert (c/< (count s) 8)
                    "cannot drop more than 7 notes")
-           (let [notes (vec (sort-by n/pitch-value (closed s)))
-                 contour (uc/contour (map n/pitch-value notes))
+           (let [notes (vec (sort-by events/pitch-value (closed s)))
+                 contour (uc/contour (map events/pitch-value notes))
                  contour-idx->notes (contour-idx->notes contour notes)]
              (map (fn [abstract-drop]
                     (concrete-drop abstract-drop contour-idx->notes))
@@ -150,7 +152,7 @@
        refer to `noon.utils.sequences/member` for complete documentation"
       {:tags [:harmonic :voicing]}
       [x]
-      (n/sf_ (s/member (drops _ :inversions false) x)))
+      (score/sf_ (s/member (drops _ :inversions false) x)))
 
     (def ^{:doc "compute downward and upward inversion of the given chord (score).
                  return a map containing
@@ -164,7 +166,7 @@
           (self s [0 127]))
          ([s bounds]
           (let [size (count s)
-                pitch-values (sort (set (map n/pitch-value (closed s))))
+                pitch-values (sort (set (map events/pitch-value (closed s))))
 
                 neighbourhoods (->> (-> (cons (- (last pitch-values) 12) pitch-values)
                                         (u/snoc (+ 12 (first pitch-values))))
@@ -176,7 +178,7 @@
                                     (into {}))
 
                 get-neighbourhood (fn [n]
-                                    (get neighbourhoods (n/pitch-class-value n)))
+                                    (get neighbourhoods (score/pitch-class-value n)))
                 shift (fn [dir x]
                         (set (map (fn [n]
                                     (update n :pitch
@@ -199,7 +201,7 @@
        - positive `x` picks the nth upward inversion."
       {:tags [:harmonic :voicing]}
       [n]
-      (n/sf_
+      (score/sf_
        (cond (zero? n) _
              (pos? n) (nth (:upward (inversions _)) n)
              :else (nth (:downward (inversions _)) (- n)))))
@@ -211,7 +213,7 @@
       [s {:as _opts :keys [bounds]}]
       (let [check (partial in-bounds bounds)]
         (mapcat (fn [{:keys [self upward downward]}]
-                  (let [self-bounds (n/pitch-value-bounds self)]
+                  (let [self-bounds (score/pitch-value-bounds self)]
                     (concat (if (bounds-gte bounds self-bounds) [self])
                             (if (>= (bounds 1) (self-bounds 1))
                               (->> upward (drop-while (complement check)) (take-while check)))
@@ -223,15 +225,15 @@
     (defn pitch-values
       "Returns a sorted vector of all pitch-values in chord (score)."
       [chord]
-      (vec (sort (map n/pitch-value chord))))
+      (vec (sort (map events/pitch-value chord))))
 
     (def ^{:doc "Apply voice leading to the received score."
            :tags [:harmonic :voicing]}
       voice-led
       (letfn [(voice-leading-score
                 [a b]
-                (let [vas (map n/pitch-value a)
-                      vbs (map n/pitch-value b)
+                (let [vas (map events/pitch-value a)
+                      vbs (map events/pitch-value b)
                       best-moves (concat (map (fn [va] (first (sort (map (partial u/dist va) vbs)))) vas)
                                          (map (fn [vb] (first (sort (map (partial u/dist vb) vas)))) vbs))]
                   [(/ (reduce + best-moves)
@@ -240,18 +242,18 @@
 
               (voice-lead2
                 [a b]
-                (let [[mina maxa] (n/pitch-value-bounds a)
+                (let [[mina maxa] (score/pitch-value-bounds a)
                       candidates (voicings b {:bounds [(- mina VOICE_LEADING_MAX_SHIFT)
                                                        (+ maxa VOICE_LEADING_MAX_SHIFT)]})]
                   (first
                    (sort-by (partial voice-leading-score a)
                             candidates))))]
 
-        (n/sf_ (let [[x1 & xs :as _groups] (map (comp set val) (sort-by key (group-by :position _)))]
-                 (loop [ret [x1] todo xs]
-                   (if-let [[x & xs] (seq todo)]
-                     (recur (conj ret (voice-lead2 (peek ret) x)) xs)
-                     (reduce into #{} ret))))))))
+        (score/sf_ (let [[x1 & xs :as _groups] (map (comp set val) (sort-by key (group-by :position _)))]
+                     (loop [ret [x1] todo xs]
+                       (if-let [[x & xs] (seq todo)]
+                         (recur (conj ret (voice-lead2 (peek ret) x)) xs)
+                         (reduce into #{} ret))))))))
 
 (defn align-contexts
   "align successive harmonic contexts based on the given 'layer:
@@ -264,14 +266,14 @@
   ([] (align-contexts :structural :incremental))
   ([layer] (align-contexts layer :incremental))
   ([layer mode]
-   (n/sf_ (let [[x1 & xs] (sort-by :position _)]
-            (loop [ret [x1] todo xs]
-              (if-let [[x & xs] (seq todo)]
-                (let [aligned (h/align layer
-                                       (:pitch (case mode :incremental (peek ret) :static x1))
-                                       (:pitch x))]
-                  (recur (conj ret (assoc x :pitch aligned)) xs))
-                (set ret)))))))
+   (score/sf_ (let [[x1 & xs] (sort-by :position _)]
+                (loop [ret [x1] todo xs]
+                  (if-let [[x & xs] (seq todo)]
+                    (let [aligned (h/align layer
+                                           (:pitch (case mode :incremental (peek ret) :static x1))
+                                           (:pitch x))]
+                      (recur (conj ret (assoc x :pitch aligned)) xs))
+                    (set ret)))))))
 
 (defn- connect-trimmed-chunks
   "Put several score chunks back together by merging them into one and connecting splitted events back.
@@ -296,7 +298,7 @@
                         candidate? (select-keys fw [:track :channel :voice])]
                     (if-let [bw (some (fn [x]
                                         (and (m/match x candidate?)
-                                             (or forced (= (n/pitch-value x) (n/pitch-value fw)))
+                                             (or forced (= (events/pitch-value x) (events/pitch-value fw)))
                                              (= (:position x) (+ (:position fw) (:duration fw)))
                                              x))
                                       bws)]
@@ -322,14 +324,14 @@
    accordingly to their position and duration."
   {:tags [:harmonic :zipping :grid]}
   [grid content]
-  (n/sf_ (let [g (n/update-score _ grid)
-               c (n/update-score _ content)]
-           (->> (map (fn [[position [{:keys [duration pitch]}]]]
-                       (n/update-score c
-                              [(n/trim position (+ position duration))
-                               {:pitch (h/hc+ pitch)}]))
-                     (sort-by key (group-by :position g)))
-                (connect-trimmed-chunks)))))
+  (score/sf_ (let [g (score/update-score _ grid)
+                   c (score/update-score _ content)]
+               (->> (map (fn [[position [{:keys [duration pitch]}]]]
+                           (score/update-score c
+                                           [(updates/trim position (+ position duration))
+                                            {:pitch (h/hc+ pitch)}]))
+                         (sort-by key (group-by :position g)))
+                    (connect-trimmed-chunks)))))
 
 (u/defn* grid
   "Build an update that applies an harmonic grid to the received score.
@@ -339,35 +341,35 @@
    All harmonies are applied accordingly to their position and duration."
   {:tags [:harmonic :zipping :grid]}
   [xs]
-  (harmonic-zip (n/k (n/chain* xs)) n/same))
+  (harmonic-zip (updates/k (updates/chain* xs)) updates/same))
 
 (u/defn* grid-zipped
   "zip the current score (which should represent an harmonic grid)
    to the resulting of applying 'xs updates to a fresh score."
   {:tags [:harmonic :zipping :grid]}
   [xs]
-  (n/sf_ (->> (n/k (dissoc (first _) :position :duration :pitch)
-                   (n/chain* xs))
-              (harmonic-zip n/same)
-              (n/update-score _))))
+  (score/sf_ (->> (updates/k (dissoc (first _) :position :duration :pitch)
+                             (updates/chain* xs))
+                  (harmonic-zip updates/same)
+                  (score/update-score _))))
 
 (defn modal-structure
   "Build an event update that change the harmonic structure of the received event to its N (`size`) most characteristic degrees.
    The table of degree priority for known modes is available as `noon.constants/degree-priority`."
   {:tags [:harmonic :chord]}
   [size]
-  (n/ef_ (if-let [s (some-> _ :pitch :scale nc/scale->mode-keyword nc/degree-priority)]
-           (update _ :pitch  h/upd (h/structure (vec (sort (take size s)))))
-           _)))
+  (events/ef_ (if-let [s (some-> _ :pitch :scale nc/scale->mode-keyword nc/degree-priority)]
+                (update _ :pitch  h/upd (h/structure (vec (sort (take size s)))))
+                _)))
 
 (def ^{:doc "Build a structural chord on top of received event."
        :tags [:event-update :chord :harmonic]}
   simple-chord
-  (n/sfn score
-         (->> score
-              (map (fn [e] (let [structure-size (-> e :pitch :structure count)]
-                             (n/update-score #{e} (n/par* (mapv n/s-step (range structure-size)))))))
-              (n/merge-scores))))
+  (score/sfn score
+             (->> score
+                  (map (fn [e] (let [structure-size (-> e :pitch :structure count)]
+                                 (score/update-score #{e} (updates/par* (mapv events/s-step (range structure-size)))))))
+                  (score/merge-scores))))
 
 (comment :tries
 

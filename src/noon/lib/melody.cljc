@@ -1,12 +1,15 @@
 (ns noon.lib.melody
   "Utilities to deal with melodic development"
-  (:require [noon.score :as n]
+  (:require [noon.score :as score]
             [noon.utils.contour :as c]
             [noon.utils.sequences :as s]
             [noon.utils.misc :as u]
             [noon.harmony :as h]
             [clojure.math.combinatorics :as comb]
-            [noon.utils.pseudo-random :as pr]))
+            [noon.utils.pseudo-random :as pr]
+            [noon.numbers :as numbers]
+            [noon.updates :as updates]
+            [noon.events :as events]))
 
 (do :help
 
@@ -37,13 +40,13 @@
       (->> (layer-split layer s)
            (sort-by :position)
            (map (fn [{:keys [score position]}]
-                  (n/shift-score score (- position))))))
+                  (score/shift-score score (- position))))))
 
     (defn sorted-position-splits [s]
       (->> (group-by :position s)
            (sort-by key)
            (map (fn [[position events]]
-                  (n/shift-score (set events) (- position)))))))
+                  (score/shift-score (set events) (- position)))))))
 
 (do :permutations-rotations
 
@@ -58,14 +61,14 @@
          (rotation x {})))
       ([pick {:as options :keys [layer layers]}]
        (let [layers (or layers (if layer (list layer)))]
-         (n/sf_ (n/concat-scores
-                 (if-let [nxt-layers (next layers)]
-                   (map (rotation pick (assoc options :layers nxt-layers))
-                        (sorted-layer-splits (first layers) _))
-                   (s/rotation (if layers
-                                 (sorted-layer-splits (last layers) _)
-                                 (sorted-position-splits _))
-                               pick)))))))
+         (score/sf_ (score/concat-scores
+                     (if-let [nxt-layers (next layers)]
+                       (map (rotation pick (assoc options :layers nxt-layers))
+                            (sorted-layer-splits (first layers) _))
+                       (s/rotation (if layers
+                                     (sorted-layer-splits (last layers) _)
+                                     (sorted-position-splits _))
+                                   pick)))))))
 
     (defn permutation
       "Build an update that permutes notes of the received score."
@@ -78,14 +81,14 @@
          (permutation x {})))
       ([pick {:as options :keys [layer layers]}]
        (let [layers (or layers (if layer (list layer)))]
-         (n/sf_ (n/concat-scores
-                 (if-let [nxt-layers (next layers)]
-                   (map (permutation pick (assoc options :layers nxt-layers))
-                        (sorted-layer-splits (first layers) _))
-                   (s/permutation (if layers
-                                    (sorted-layer-splits (last layers) _)
-                                    (sorted-position-splits _))
-                                  pick options))))))))
+         (score/sf_ (score/concat-scores
+                     (if-let [nxt-layers (next layers)]
+                       (map (permutation pick (assoc options :layers nxt-layers))
+                            (sorted-layer-splits (first layers) _))
+                       (s/permutation (if layers
+                                        (sorted-layer-splits (last layers) _)
+                                        (sorted-position-splits _))
+                                      pick options))))))))
 
 (do :contour
 
@@ -105,28 +108,28 @@
 
     (defn contour-change [layer f]
 
-      (n/sfn s
-             (assert (apply = (map (fn [e] (dissoc (:pitch e) :position)) s))
-                     "For now, only mono harmony scores are supported here")
+      (score/sfn s
+                 (assert (apply = (map (fn [e] (dissoc (:pitch e) :position)) s))
+                         "For now, only mono harmony scores are supported here")
 
-             (let [layer (or layer (score-lowest-layer s))
-                   layer-converter (partial h/down-to-layer layer)
-                   splits (sort-by :position (layer-split layer s))
-                   idxs (map :layer-idx splits)
-                   contour (mapv (n/sub (apply min idxs)) idxs)
-                   new-contour (f contour)
+                 (let [layer (or layer (score-lowest-layer s))
+                       layer-converter (partial h/down-to-layer layer)
+                       splits (sort-by :position (layer-split layer s))
+                       idxs (map :layer-idx splits)
+                       contour (mapv (numbers/sub (apply min idxs)) idxs)
+                       new-contour (f contour)
 
-                   deltas (mapv - new-contour contour)
-                   position-key (layer-kw->position-key layer)]
-               (n/concat-scores
-                (map-indexed (fn [i {:keys [position score]}]
-                               (->> score
-                                    (map (fn [e]
-                                           (-> (update e :pitch layer-converter)
-                                               (update :position - position)
-                                               (update-in [:pitch :position position-key] + (deltas i)))))
-                                    (into #{})))
-                             splits)))))
+                       deltas (mapv - new-contour contour)
+                       position-key (layer-kw->position-key layer)]
+                   (score/concat-scores
+                    (map-indexed (fn [i {:keys [position score]}]
+                                   (->> score
+                                        (map (fn [e]
+                                               (-> (update e :pitch layer-converter)
+                                                   (update :position - position)
+                                                   (update-in [:pitch :position position-key] + (deltas i)))))
+                                        (into #{})))
+                                 splits)))))
 
     (defn contour
       "changing the melodic contour of a score.
@@ -173,28 +176,28 @@
        4. else go to step 1."
       {:tags [:linear :melodic]}
       [connect step done? finish]
-      (n/sf_ (let [nxt (n/concat-score _ (n/update-score (connect _) step))]
-               (cond (empty? nxt) nil
-                     (done? nxt) (n/update-score nxt finish)
-                     :else (recur nxt)))))
+      (score/sf_ (let [nxt (score/concat-score _ (score/update-score (connect _) step))]
+                   (cond (empty? nxt) nil
+                         (done? nxt) (score/update-score nxt finish)
+                         :else (recur nxt)))))
 
     (defn simple-line
       "A simple way to create a line of given 'length using the given 'step"
       {:tags [:linear :melodic]}
       [length step]
-      (n/sf_ (let [last-event (fn [s] (-> (sort-by :position s) last))
-                   {:as _connection dur :duration} (last-event _)
-                   normalise (fn [e] (assoc e :position 0 :duration dur))
-                   connect (fn [s] (-> (last-event s) normalise hash-set))
-                   total-duration (* dur length)
-                   done? (fn [s] (> (n/score-duration s) total-duration))]
-               (n/update-score _ (line connect step done? (n/trim 0 total-duration))))))
+      (score/sf_ (let [last-event (fn [s] (-> (sort-by :position s) last))
+                       {:as _connection dur :duration} (last-event _)
+                       normalise (fn [e] (assoc e :position 0 :duration dur))
+                       connect (fn [s] (-> (last-event s) normalise hash-set))
+                       total-duration (* dur length)
+                       done? (fn [s] (> (score/score-duration s) total-duration))]
+                   (score/update-score _ (line connect step done? (updates/trim 0 total-duration))))))
 
     (defn simple-tupline
       "tuped version of `noon.lib.melody/simple-line`"
       {:tags [:linear :melodic]}
       [len step]
-      (n/fit (simple-line len step))))
+      (updates/fit (simple-line len step))))
 
 (do :connect
 
@@ -227,7 +230,7 @@
        Intermediate step notes are selected in priority on the lowest harmonic layer."
       {:tags [:melodic]}
       [& connection-sizes]
-      (n/connect-by :position (simple-connection connection-sizes))))
+      (updates/connect-by :position (simple-connection connection-sizes))))
 
 (defn stup
   "build a tup of steps on the specified layer
@@ -235,7 +238,7 @@
      layer: :c | :d | :s | :t
      steps: a sequence of ints."
   [layer steps]
-  (n/tup* (map (partial n/layer-step layer) steps)))
+  (updates/tup* (map (partial events/layer-step layer) steps)))
 
 (defn stup>
   "build a tup of successive steps on the specified layer
@@ -243,7 +246,7 @@
      layer: :c | :d | :s | :t
      steps: a sequence of ints."
   [layer steps]
-  (n/tup>* (map (partial n/layer-step layer) steps)))
+  (updates/tup>* (map (partial events/layer-step layer) steps)))
 
 (defn gen-line
   "Generate a tuple by generating a contour, producing lines from it and picking one.
@@ -253,8 +256,8 @@
    - :grow, a vector [min-grow max-grow] that is used to grow the generated contour.
    - :pick, a member-pick argument used to pick one line from generated ones. (default :rand)"
   [opts]
-  (n/tup* (map (partial n/layer-step (:layer opts :d))
-             (c/gen-line opts))))
+  (updates/tup* (map (partial events/layer-step (:layer opts :d))
+                     (c/gen-line opts))))
 
 (defn step-seqs
   "Return a collection of step sequences according to given options.
@@ -297,58 +300,58 @@
   ([{:as options
      :keys [layer]}]
    (if-let [step-seq (first (step-seqs options))]
-     (n/tup>* (map (partial n/layer-step layer)
-                   step-seq))))
+     (updates/tup>* (map (partial events/layer-step layer)
+                         step-seq))))
   ([layer length delta & {:as options}]
    (gen-tup (assoc options :layer layer :length length :delta delta))))
 
 (def ^{:doc "Join successive pitch repetitions for each :track/:channel/:voice subscore."
        :tags [:temporal :melodic]}
   connect-repetitions
-  (n/$by (juxt :track :channel :voice)
-         (n/sf_ (let [[e1 & todo] (sort-by :position _)]
-                  (loop [[last-note & prev-notes :as ret] (list e1)
-                         todo todo]
-                    (if-let [[e & todo] (seq todo)]
-                      (if (and (= (n/pitch-value e) (n/pitch-value last-note))
-                               (= (dissoc e :position :duration :pitch)
-                                  (dissoc last-note :position :duration :pitch)))
-                        (recur (cons (update last-note :duration + (:duration e))
-                                     prev-notes)
-                               todo)
-                        (recur (cons e ret) todo))
-                      (set ret)))))))
+  (updates/$by (juxt :track :channel :voice)
+               (score/sf_ (let [[e1 & todo] (sort-by :position _)]
+                            (loop [[last-note & prev-notes :as ret] (list e1)
+                                   todo todo]
+                              (if-let [[e & todo] (seq todo)]
+                                (if (and (= (events/pitch-value e) (events/pitch-value last-note))
+                                         (= (dissoc e :position :duration :pitch)
+                                            (dissoc last-note :position :duration :pitch)))
+                                  (recur (cons (update last-note :duration + (:duration e))
+                                               prev-notes)
+                                         todo)
+                                  (recur (cons e ret) todo))
+                                (set ret)))))))
 
 (do :incubator
 
     (def ^{:doc "Returns the given score if it is a 1 voice line with no holes or superpositions."
            :tags [:check :temporal :melodic]}
       line?
-      (n/sf_ (if (and (= (n/score-duration _)
-                         (reduce + (map :duration _)))
-                      (let [xs (sort-by :position _)
-                            [p1 :as ps] (map :position xs)]
-                        (= ps (reductions + p1 (butlast (map :duration xs))))))
-               _)))
+      (score/sf_ (if (and (= (score/score-duration _)
+                             (reduce + (map :duration _)))
+                          (let [xs (sort-by :position _)
+                                [p1 :as ps] (map :position xs)]
+                            (= ps (reductions + p1 (butlast (map :duration xs))))))
+                   _)))
 
     (def ^{:doc "Fill melodic holes by extending each note to the start position of the following one in.
                  It operates on each :track/channel/voice sub scores."
            :tags [:temporal :melodic]}
       legato
-      (n/$by (juxt :track :channel :voice)
-             (n/sf_ (->> (conj _ {:position (n/score-duration _)})
-                         (group-by :position)
-                         (sort-by key)
-                         (partition 2 1)
-                         (reduce (fn [score [[p1 xs] [p2 _]]]
-                                   (into score (map #(assoc % :duration (- p2 p1)) xs)))
-                                 #{})))))
+      (updates/$by (juxt :track :channel :voice)
+                   (score/sf_ (->> (conj _ {:position (score/score-duration _)})
+                                   (group-by :position)
+                                   (sort-by key)
+                                   (partition 2 1)
+                                   (reduce (fn [score [[p1 xs] [p2 _]]]
+                                             (into score (map #(assoc % :duration (- p2 p1)) xs)))
+                                           #{})))))
 
     (u/defn* $lin
       "'mapcat for score, works only on lines."
       [xs]
-      (n/sf_ (if (line? _)
-               (n/concat-scores
-                (map (fn [e]
-                       ((n/lin* xs) #{(assoc e :position 0)}))
-                     (n/sort-score :position _)))))))
+      (score/sf_ (if (line? _)
+                   (score/concat-scores
+                    (map (fn [e]
+                           ((updates/lin* xs) #{(assoc e :position 0)}))
+                         (score/sort-score :position _)))))))

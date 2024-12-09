@@ -1,9 +1,12 @@
 (ns noon.lib.rythmn
-  (:require [noon.score :as n]
+  (:require [noon.score :as score]
             [noon.utils.euclidean-sums :as eucl]
             [noon.utils.sequences :as s]
             [noon.utils.misc :as u]
-            [noon.utils.pseudo-random :as pr]))
+            [noon.utils.pseudo-random :as pr]
+            [noon.updates :as updates]
+            [noon.numbers :as numbers]
+            [noon.events :as events]))
 
 (do :impl
 
@@ -19,33 +22,33 @@
       "returns a sequence of forward time shifts by 'increment preserving the original score duration.
        the shifting stops when the last event goes out of score."
       [score increment]
-      (let [duration (n/score-duration score)
+      (let [duration (score/score-duration score)
             last-event (last (sort-by :position score))]
         (map (fn [shift]
-               (n/update-score (n/shift-score score shift)
-                               (n/trim 0 duration)))
+               (score/update-score (score/shift-score score shift)
+                                   (updates/trim 0 duration)))
              (range 0 (:duration last-event) increment))))
 
     (defn rand-shift [resolution]
-      (n/sf_ (let [increment (/ (n/score-duration _) resolution)]
-               (pr/rand-nth (score-fw-shifts _ increment)))))
+      (score/sf_ (let [increment (/ (score/score-duration _) resolution)]
+                   (pr/rand-nth (score-fw-shifts _ increment)))))
 
     (defn slice-score
       "slice a score into n parts of equal duration."
       [score n]
-      (let [duration (n/score-duration score)
+      (let [duration (score/score-duration score)
             increment (/ duration n)
-            points (map (n/mul increment) (range 0 (inc n)))]
+            points (map (numbers/mul increment) (range 0 (inc n)))]
         (map (fn [[from to]]
-               (n/update-score score [(n/between from to) (n/trim from to)
-                                      (n/sf_ (if (empty? _) (n/mk n/vel0 {:duration increment :position from}) _))
-                                      (n/sf_ (n/shift-score _ (- from)))]))
+               (score/update-score score [(updates/between from to) (updates/trim from to)
+                                          (score/sf_ (if (empty? _) (score/mk events/vel0 {:duration increment :position from}) _))
+                                          (score/sf_ (score/shift-score _ (- from)))]))
              (partition 2 1 points)))))
 
 (do :basic
 
     (defn sum->tup [xs]
-      (n/tup* (map n/dur xs)))
+      (updates/tup* (map events/dur xs)))
 
     (u/defn* durtup
       "build a tup from some numbers"
@@ -61,15 +64,15 @@
           (rotation :rand-sub <n>) : split the score in 'n parts and rotate to a randomly picked one.
        "
       ([offset]
-       (n/sf_ (let [duration (n/score-duration _)]
-                (n/update-score _
-                       [(n/each {:position (fn [p] (mod (+ p offset) duration))})
-                        (n/trim 0 duration)]))))
+       (score/sf_ (let [duration (score/score-duration _)]
+                    (score/update-score _
+                                        [(updates/each {:position (fn [p] (mod (+ p offset) duration))})
+                                         (updates/trim 0 duration)]))))
       ([k arg]
        (case k
-         :relative (n/sf_ (n/update-score _ (rotation (* (n/score-duration _) arg))))
-         :rand-by (n/sf_ (n/update-score _ (rotation (pr/rand-nth (range 0 (n/score-duration _) arg)))))
-         :rand-sub (n/sf_ (n/update-score _ (rotation (* (pr/rand-nth (range 0 arg)) (/ (n/score-duration _) arg))))))))
+         :relative (score/sf_ (score/update-score _ (rotation (* (score/score-duration _) arg))))
+         :rand-by (score/sf_ (score/update-score _ (rotation (pr/rand-nth (range 0 (score/score-duration _) arg)))))
+         :rand-sub (score/sf_ (score/update-score _ (rotation (* (pr/rand-nth (range 0 arg)) (/ (score/score-duration _) arg))))))))
 
     (defn permutation
       "permute a score by time slices,
@@ -78,7 +81,7 @@
       ([n]
        (permutation n :random))
       ([n i]
-       (n/sf_ (n/concat-scores (s/permutation (slice-score _ n) i)))))
+       (score/sf_ (score/concat-scores (s/permutation (slice-score _ n) i)))))
 
     (do :euclidean
 
@@ -137,7 +140,7 @@
                  (pr/rand-nth (euclidean-tups resolution size))
                  (sum->tup (rand-sum resolution size durations)))]
          (if shifted
-           (n/chain t (rand-shift resolution))
+           (updates/chain t (rand-shift resolution))
            t))))
 
     (do :bintup
@@ -180,6 +183,6 @@
                        (eucl/euclidean-sum size resolution)
                        (rand-sum resolution size durations))
                  bins (sum->bins sum)]
-             (n/tup* (if shifted
-                       (pr/rand-nth (s/rotations bins))
-                       bins)))))))
+             (updates/tup* (if shifted
+                             (pr/rand-nth (s/rotations bins))
+                             bins)))))))
