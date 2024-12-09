@@ -307,7 +307,23 @@
 
     (defn lazy-map [xs f]
       (if-let [[x & xs] (seq xs)]
-        (cons (f x) (lazy-seq (lazy-map xs f))))))
+        (cons (f x) (lazy-seq (lazy-map xs f)))))
+
+    (defn ?reduce
+      "like `clojure.core/reduce` but short-circuits (returns nil) on first falsy result"
+      [f init xs]
+      (reduce (fn [a e]
+                (or (f a e) (reduced nil)))
+              init xs))
+
+    (defn ?keep
+      "like `clojure.core/map`, but if `f` returns nil for one element, the whole form returns nil."
+      [f xs]
+      (reduce (fn [ret e]
+                (if-let [v (f e)]
+                  (conj ret v)
+                  (reduced nil)))
+              [] xs)))
 
 #?(:clj (do :files&paths
 
