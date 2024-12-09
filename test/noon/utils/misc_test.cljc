@@ -206,7 +206,16 @@
     (is (= (u/index-of [1 2 :x 4] :x) 2))
     (is (= (u/index-of [:x  2 :x 4] :x) 0))
     (is (= (u/index-of [1 2 3 :x] :x) 3))
-    (is (not (u/index-of [1 2 3 4] :x)))))
+    (is (not (u/index-of [1 2 3 4] :x))))
+
+  (testing "?reduce"
+    (is (= (u/?reduce + 0 (range 5))
+           10))
+    (is (nil? (u/?reduce (fn [a e] (if (> e 2) (+ a e)))
+                         0 (range 5))))
+    (is (= (u/?reduce (fn [a e] (if (> e 2) (+ a e)))
+                      0 (range 3 6))
+           12))))
 
 (u/defreduction my-plus [x y] (+ x y))
 

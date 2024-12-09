@@ -7,7 +7,7 @@
             [noon.utils.misc :as u :refer [t t?]]
             [noon.utils.chance :as g]
             [noon.numbers :as numbers])
-  #?(:cljs (:require-macros [noon.score :refer [sfn sf_ e->s !]])))
+  #?(:cljs (:require-macros [noon.score :refer [sfn sf_ e->s]])))
 
 (def score0 #{events/DEFAULT_EVENT})
 
