@@ -2,10 +2,13 @@
 
 #+begin_src clojure
 (ns noon.doc.examples
-  (:use noon.score)
+  (:use noon.updates)
   (:require [noon.lib.melody :as m]
             [noon.lib.harmony :as h]
             [noon.lib.rythmn :as r]
+            [noon.events :as events :refer [ef_ efn]]
+            [noon.score :as score :refer [mk mk* sf_ sfn]]
+            [noon.output :as out :refer [noon play write]]
             [noon.harmony :as nh]
             [noon.utils.multi-val :as mv]
             [noon.utils.misc :as u]
@@ -377,8 +380,8 @@ How to fill between the notes of this simple line?
   (sf_ (let [sorted (sort-by :position _)
              couples (partition 2 1 sorted)]
          (-> (reduce (fn [ret [a b]]
-                       (let [va (pitch-value a)
-                             vb (pitch-value b)
+                       (let [va (events/pitch-value a)
+                             vb (events/pitch-value b)
                              direction (if (> va vb) :down :up)
                              cnt (loop [cnt 0 current (:pitch a)]
                                    (case direction
@@ -388,8 +391,8 @@ How to fill between the notes of this simple line?
                                      :down (if (<= (nh/hc->chromatic-value current) vb)
                                              cnt
                                              (recur (inc cnt) (nh/upd current (nh/d-step -1))))))]
-                         (concat-score ret
-                                       (update-score #{(assoc a :position 0)}
+                         (score/concat-score ret
+                                       (score/update-score #{(assoc a :position 0)}
                                                      (rup cnt (case direction :up d1 :down d1-))))))
                      #{}
                      couples)
@@ -411,16 +414,16 @@ Let's generalise to other layers:
   (sf_ (let [sorted (sort-by :position _)
              couples (partition 2 1 sorted)]
          (-> (reduce (fn [ret [a b]]
-                       (let [va (pitch-value a)
-                             vb (pitch-value b)
+                       (let [va (events/pitch-value a)
+                             vb (events/pitch-value b)
                              direction (if (> va vb) :down :up)
                              [check increment] (case direction :up [>= 1] :down [<= -1])
                              cnt (loop [cnt 0 current (:pitch a)]
                                    (if (check (nh/hc->chromatic-value current) vb)
                                      cnt
                                      (recur (inc cnt) (nh/upd current (nh/layer-step layer increment)))))]
-                         (concat-score ret
-                                       (update-score #{(assoc a :position 0)}
+                         (score/concat-score ret
+                                       (score/update-score #{(assoc a :position 0)}
                                                      (rup cnt (ef_ (update _ :pitch (nh/layer-step layer increment))))))))
                      #{}
                      couples)
@@ -461,7 +464,7 @@ Next step will be to have control over the number of notes between targets.
                                 (update :position - (* (inc i) duration))
                                 (assoc :duration duration))))
                      (into #{e}))))
-         (merge-scores))))
+         (score/merge-scores))))
 
 ;; It is a step in the right direction but it overlaps passing notes
 (play (lin _
@@ -621,7 +624,7 @@ A bunch of simplistic passing note examples
           d-suroundings (nh/diatonic-suroundings (:pitch target))
           c-space (get d-suroundings (case side :up 1 :down 0))
           step (case side :up 1 :down -1)]
-      (update-score _
+      (score/update-score _
                     (if (= c-space 2)
                       (tup (d-step step) (c-step step) same)
                       (tup (d-step step) (case side :up c1- :down d1) same))))))
@@ -650,9 +653,9 @@ Experimenting interleaving passing notes
                       (partition 2 1 nil (sort-by :position _)))))))
 
 (defn interleaved [& xs]
-  (sf_ (let [scores (map (partial update-score _) xs)
+  (sf_ (let [scores (map (partial score/update-score _) xs)
              counts (map count scores)
-             durations (map score-duration scores)]
+             durations (map score/score-duration scores)]
          (assert (apply = counts)
                  "interleaved scores should have same number of elements")
          (assert (apply = durations)
@@ -667,7 +670,7 @@ Experimenting interleaving passing notes
                           (update :at + duration)
                           (update :score into (map-indexed (fn [i n] (assoc n :position (+ at (* i shift)) :duration shift)) xs))))
                     {:score #{} :at 0}
-                    (apply map vector (map sort-score scores))))))))
+                    (apply map vector (map score/sort-score scores))))))))
 
 (play dur4
       (interleaved
@@ -718,7 +721,7 @@ Experimenting interleaving passing notes
                       (update :score conj (assoc n :position (:at state)))
                       (update :at + (:duration n))))
                 {:at 0 :score #{}}
-                (apply rand-interleaving (map (fn [u] (sort-by :position (update-score _ u))) xs))))))
+                (apply rand-interleaving (map (fn [u] (sort-by :position (score/update-score _ u))) xs))))))
 
 (defn n-firsts [n]
   (sf_ (->> (group-by :position _)
@@ -768,7 +771,7 @@ Experimenting interleaving passing notes
                 ;; but we assumes a monophonic scores so we only take care of first (and only) event of each chunk
                 (let [from (first chunk1)
                       to (first chunk2)]
-                  (update-score #{(assoc from :position 0)}
+                  (score/update-score #{(assoc from :position 0)}
                                 [(lin _ [(ef_ (assoc _ :pitch (:pitch to)))
                                          f])
                                  (adjust from)])))))
@@ -827,7 +830,7 @@ Experimenting interleaving passing notes
               (fn [chunk1 chunk2]
                 (let [from (first chunk1)
                       to (first chunk2)]
-                  (update-score #{(assoc from :position 0)}
+                  (score/update-score #{(assoc from :position 0)}
                                 [(lin _ [(repitch (event->pitch to)) f])
                                  (adjust from)])))))
 
@@ -992,7 +995,7 @@ Experimenting interleaving passing notes
   (sf_ (->> (chunk-score _ by)
             (partition size step)
             (map f)
-            (merge-scores))))
+            (score/merge-scores))))
 
 (play (patch :electric-piano-1)
       dur2
@@ -1001,7 +1004,7 @@ Experimenting interleaving passing notes
             (fn [[a b]]
               (let [start (first a)
                     {target-pitch :pitch} (first b)]
-                (update-score #{start}
+                (score/update-score #{start}
                               (each (tup _ [s2 c1-] c1- _ s2
                                          [(ef_ (assoc _ :pitch target-pitch)) d1])))))))
 
@@ -1012,8 +1015,8 @@ Experimenting interleaving passing notes
              "It is similar to what the `noon.score/each` function is doing.")}
   [u]
   (sf_ (let [score-origin (score-origin _)
-             score-duration (- (score-duration _) score-origin)]
-         (update-score (shift-score _ (- score-origin))
+             score-duration (- (score/score-duration _) score-origin)]
+         (score/update-score (score/shift-score _ (- score-origin))
                        [u (adjust {:position score-origin :duration score-duration})]))))
 
 ;; slight variation of the previous snippet, but using the 'in-place function which is more self explanatory.
@@ -1024,7 +1027,7 @@ Experimenting interleaving passing notes
       (scan :position 2 1 (fn [[a b]]
                             (let [start (first a)
                                   {target-pitch :pitch} (first b)]
-                              (update-score #{start}
+                              (score/update-score #{start}
                                             (in-place (tup _ [s2 c1-] c1- _ s2
                                                            [(ef_ (assoc _ :pitch target-pitch)) d1])))))))
 
@@ -1056,7 +1059,7 @@ Experimenting interleaving passing notes
    (scan> size size f))
   ([size step f]
    (sfn s (reduce (fn [s from]
-                    (update-score s (only-between from (+ from size) f)))
+                    (score/update-score s (only-between from (+ from size) f)))
                   s (range 0 (score-duration s) step)))))
 
 (play (nlin> 8 d1)
@@ -1093,7 +1096,7 @@ But it is not really what we want.
 (def decorate
   (sf_ (let [sorted (sort-by :position _)]
          (reduce (fn [s [n1 n2]]
-                   (into s (update-score #{n1 n2} (maybe (m/connect 1)))))
+                   (into s (score/update-score #{n1 n2} (maybe (m/connect 1)))))
                  #{(last sorted)} (partition 2 1 sorted)))))
 
 (play dur2
@@ -1221,7 +1224,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
   (e->s event
         (let [degree-count (-> event :pitch :scale count)
               degrees (first (mv/consume size (mv/mix* (range degree-count))))]
-          (update-score #{event} (tup* (mapv d-step degrees))))))
+          (score/update-score #{event} (tup* (mapv d-step degrees))))))
 
 #+end_src
 
@@ -1266,7 +1269,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 
 *** Bartok harmony axis
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (let [L- (transpose c5)
       L+ (transpose c5-)
       R- (transpose c3)
@@ -1282,8 +1285,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
         (lin _ s1 s1- _)))
 #+end_src
 
-
-#+begin_src clojure
+#+begin_src clojure :results silent
 (let [L- (transpose c5)
       L+ (transpose c5-)
       R- (transpose c3)
@@ -1304,8 +1306,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
         (lin _ s1 s1- _)))
 #+end_src
 
-
-#+begin_src clojure
+#+begin_src clojure :results silent
 (let [L- (transpose c5)
       _L+ (transpose c5-)
       R- (transpose c3)
@@ -1330,8 +1331,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
         (lin _ s1 [rev s1-] _)))
 #+end_src
 
-
-#+begin_src clojure
+#+begin_src clojure :results silent
 (let [initial [{:harmonic-coords [0 0]} melodic-minor sixth]
       up [{:harmonic-coords (fn [[x y]] [x (mod (inc y) 3)])} (transpose c5)]
       down [{:harmonic-coords (fn [[x y]] [x (mod (dec y) 3)])} (transpose c5-)]
@@ -1354,7 +1354,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (let [initial [lydian seventh]
       up (transpose c5)
       down (transpose c5-)
@@ -1382,7 +1382,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
                          (tup (one-of s1- s2) _) 1}))])
    ;; why not ?
    (lin _ s1 [up s1-] up)
-   (options :bpm 40 :xml true)))
+   (out/options :bpm 40 :xml true)))
 #+end_src
 
 *** Simple counterpoint
@@ -1545,7 +1545,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
                 (lin _ (transpose c3-))
                 ($by :channel (connect-with
                                (sf_ (->> (get-in choices [:ornamentation (:connection (first _))])
-                                         (update-score _))))))))
+                                         (score/update-score _))))))))
 
 '(let [[arpegios ornamentations harmonic-sequences articulations]
       (->> (complementarity-tree 3 3)
@@ -1594,7 +1594,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
                 (lin _ (transpose c3-))
                 ($by :channel (connect-with
                                (sf_ (->> (get-in choices [:ornamentation (:connection (first _))])
-                                         (update-score _))))))))
+                                         (score/update-score _))))))))
 #+end_src
 
 
@@ -1815,7 +1815,7 @@ One more shredding experiment
                              seq (sort-by key)
                              reverse (take n)
                              (map second) (reduce into #{}))]
-                  (update-score _ (start-from (score-origin _))))))
+                  (score/update-score _ (start-from (score/score-origin _))))))
 
 (let [n-bars 24
       choir [(patch :choir-aahs) vel5 (par> d3 d3 d3)]
@@ -1861,7 +1861,7 @@ One more shredding experiment
                                                   (m/contour :similar {:delta 0 :layer :d}))
                                         (one-of d1 d1-)
                                         (one-of d2 d2-))
-                              (sf_ (> (score-duration _) 1))
+                              (sf_ (> (score/score-duration _) 1))
                               (trim 0 1))
                       (vel-humanize 5 [40 80])])
               (chans [choir
@@ -1869,7 +1869,7 @@ One more shredding experiment
                       ($by :position [(! (one-of (r/gen-tup 8 3 :euclidean)
                                                  (r/gen-tup 8 3 :durations [2 3 4 5])))
                                       (sf_ (let [xs (-> (group-by :position _) seq sort vals)]
-                                             (reduce into #{} (map update-score xs (pr/shuffle [d0 d1 d1-])))))])]
+                                             (reduce into #{} (map score/update-score xs (pr/shuffle [d0 d1 d1-])))))])]
                      bass)))
         (adjust 180)))
 
@@ -1987,7 +1987,7 @@ Trying to produce vibrating textures by playing very fast note sequences.
 
 Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody derives using transposition, rotation and permutation.
 
-#+begin_src clojure :pp
+#+begin_src clojure :results silent
 (play (chans
 
        [(patch :vibraphone)
@@ -2011,7 +2011,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
 
 *** Bach prelude Cm melodic pattern
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play harmonic-minor
       (m/$lin (lin I IV I V))
       (h/align-contexts :s)
@@ -2022,8 +2022,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
       (dup 2))
 #+end_src
 
-
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play harmonic-minor
       (m/$lin (lin I IV I V))
       (h/align-contexts :s)
@@ -2035,7 +2034,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
 #+end_src
 
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play harmonic-minor
       dur2
       (lin _ (transpose c3) _)
@@ -2055,7 +2054,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
 
 *** Modal chords
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (let [rand-color (fn []
                    (let [k (pr/rand-nth [:lydian+ :lydian :ionian :dorian
                                          :melodic-minor :mixolydian :phrygian6])]
@@ -2074,7 +2073,6 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
 
 
 #+end_src
-
 
 #+begin_src clojure
 (defn possible-modes
@@ -2118,7 +2116,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
                              #_(each (probs {_ 4 (tup _ [vel4 (maybe s2- s3-)]) 1}))]))
       (lin _ [rev c3])
       (lin _ [rev c3-])
-      (options :bpm 30 :xml true :preview true))
+      (out/options :bpm 30 :xml true :preview true))
 #+end_src
 
 *** melodic development
@@ -2180,7 +2178,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
 An experiment around =noon.lib.rythmn/gen-bintup=
 The =gen-bintup= function is used to produce a bass line and a fast rythmic texture alternating between electric-piano and marimba.
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play dur6
       (lin [I dorian]
            [III mixolydian]
@@ -2213,7 +2211,7 @@ The =gen-bintup= function is used to produce a bass line and a fast rythmic text
 
 *** =noon.lib.harmony/grid=
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play dur3
       (nlin> 48 (one-of d1 d1-))
       (each (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
@@ -2229,7 +2227,7 @@ The =gen-bintup= function is used to produce a bass line and a fast rythmic text
               (h/align-contexts :d :static)))
 #+end_src
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (ntup> 24 (one-of d1 d1-))
       (each (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
                    [(patch :ocarina)
@@ -2252,7 +2250,7 @@ The =gen-bintup= function is used to produce a bass line and a fast rythmic text
       (adjust 60))
 #+end_src
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (chans [(patch :aahs) vel5 (par s0 s1 s2 s3)]
              [(patch :acoustic-bass) t2-])
       (h/grid (lin [I lydian (structure [2 3 5 6])]
@@ -2268,7 +2266,7 @@ The =gen-bintup= function is used to produce a bass line and a fast rythmic text
       (adjust 32))
 #+end_src
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (chans [(patch :aahs)
               vel6
               (rup 24 (any-that (within-pitch-bounds? :G-1 :G1)
@@ -2289,7 +2287,7 @@ The =gen-bintup= function is used to produce a bass line and a fast rythmic text
       (adjust 32))
 #+end_src
 
-#+begin_src clojure
+#+begin_src clojure :results silent
 (play (rup 128 (any-that (within-pitch-bounds? :C1 :C3)
                          s1 s2 s3 s1- s2- s3-))
       (chans (each (probs {_ 2
