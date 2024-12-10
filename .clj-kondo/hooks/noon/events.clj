@@ -16,32 +16,32 @@
         (concat (for [i (range 2 12)]
                   (list 'do
                         (list 'def (symbol (str "dur" i))
-                              `(noon.events/dur (noon.numbers/mul ~i)))
+                              `(noon.updates/dur (noon.numbers/mul ~i)))
                         (list 'def (symbol (str "dur:" i))
-                              `(noon.events/dur (noon.numbers/div ~i)))))
+                              `(noon.updates/dur (noon.numbers/div ~i)))))
                 (for [n (range 2 12)
                       d (range 2 12)]
                   (list 'def (symbol (str "dur" n ":" d))
-                        `(noon.events/dur (noon.numbers/mul (/ ~n ~d))))))))
+                        `(noon.updates/dur (noon.numbers/mul (/ ~n ~d))))))))
 
 (defmacro -def-velocities []
   (cons 'do
         (for [i (range 1 13)]
           (let [v (int (* i (/ 127 12)))]
             (list 'def (symbol (str "vel" i))
-                  `(noon.events/vel ~v))))))
+                  `(noon.updates/vel ~v))))))
 
 (defmacro -def-channels []
   (cons 'do
         (for [i (range 0 16)]
           (list 'def (symbol (str "chan" i))
-                `(noon.events/chan ~i)))))
+                `(noon.updates/chan ~i)))))
 
 (defmacro -def-tracks []
   (cons 'do
         (for [i (range 0 16)]
           (list 'def (symbol (str "track" i))
-                `(noon.events/track ~i)))))
+                `(noon.updates/track ~i)))))
 
 (defmacro -def-wrapped [type wrapper]
   (let [entries (case type
@@ -49,7 +49,7 @@
                   :structures constants/structures
                   :pitches constants/pitches)]
     (cons 'do (for [[k v] entries]
-                (list 'def (symbol (name k)) (list (symbol "noon.events" (name wrapper)) v))))))
+                (list 'def (symbol (name k)) (list (symbol "noon.updates" (name wrapper)) v))))))
 
 (defmacro -def-steps [name prefix max f]
   (cons 'do
@@ -75,9 +75,9 @@
   (cons 'do
         (concat (for [[n v] (map vector '[I II III IV V VI VII] (range))]
                   (list 'def n
-                        (list 'noon.events/degree v)))
+                        (list 'noon.updates/degree v)))
                 (for [[degree-sym degree-val] (map vector '[I II III IV V VI VII] (range))
-                      [alteration-sym alteration-val] [["#" 'noon.events/c1] ["b" 'noon.events/c1-]]]
+                      [alteration-sym alteration-val] [["#" 'noon.updates/c1] ["b" 'noon.updates/c1-]]]
                   (let [[dn dv an av] [degree-sym degree-val alteration-sym alteration-val]]
                     (list 'def (symbol (str dn an))
-                          `[(noon.events/transpose ~av) (noon.events/degree ~dv)]))))))
+                          `[(noon.updates/transpose ~av) (noon.updates/degree ~dv)]))))))
