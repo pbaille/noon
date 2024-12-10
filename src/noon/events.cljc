@@ -408,20 +408,22 @@
 
     (do :defs
 
-        (defmacro -def-wrapped [wrapper m]
-          (cons 'do (for [[k v] (eval m)]
-                      (list 'def
-                            (with-meta (symbol (name k))
-                              {:tags [:event-update :alias :harmonic]
-                               :doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))
-                               :no-doc true})
-                            (list wrapper v)))))
+        (defmacro -def-wrapped [type wrapper]
+          (let [entries (case type
+                          :modes constants/modes
+                          :structures constants/structures
+                          :pitches constants/pitches)]
+            (cons 'do (for [[k v] entries]
+                        (list 'def
+                              (with-meta (symbol (name k))
+                                {:tags [:event-update :alias :harmonic]
+                                 :doc (str "Alias for " (list (symbol "noon.score" (name wrapper)) v))
+                                 :no-doc true})
+                              (list wrapper v))))))
 
-        (-def-wrapped structure noon.constants/structures)
-
-        (-def-wrapped scale noon.constants/modes)
-
-        (-def-wrapped repitch noon.constants/pitches))
+        (-def-wrapped :structures structure)
+        (-def-wrapped :modes scale)
+        (-def-wrapped :pitches repitch))
 
     (do :intervals
 

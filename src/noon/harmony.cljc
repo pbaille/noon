@@ -1,7 +1,7 @@
 (ns noon.harmony
   (:require [noon.utils.misc :as u :refer [t t?]]
             [noon.constants :as constants])
-  #?(:cljs (:require-macros [noon.harmony :refer [defsteps]])))
+  #?(:cljs (:require-macros [noon.harmony :refer [-def-wrapped defsteps]])))
 
 (do :impl
 
@@ -955,9 +955,20 @@
 
 (do :defs
 
-      (constants/-def-wrapped :structures structure)
-      (constants/-def-wrapped :modes scale)
-      (constants/-def-wrapped :pitches origin))
+    (defmacro -def-wrapped [type wrapper]
+      (let [entries (case type
+                      :modes constants/modes
+                      :structures constants/structures
+                      :pitches constants/pitches)]
+        (cons 'do (for [[k v] entries]
+                    (list 'def
+                          (with-meta (symbol (name k))
+                            {:doc (str "Change the :" wrapper " of received context to " k ".")})
+                          (list wrapper v))))))
+
+    (-def-wrapped :structures structure)
+    (-def-wrapped :modes scale)
+    (-def-wrapped :pitches origin))
 
 (comment :tries
 
