@@ -1,5 +1,6 @@
 (ns noon.test
-  (:require [noon.score :as s]
+  (:require [noon.output :as output]
+            [noon.score :as score]
             [clojure.java.io :as io]
             [me.raynes.fs :as fs]
             [noon.utils.pseudo-random :as pr]
@@ -25,10 +26,10 @@
     (if (dir-exists? dir)
       (let [temp-dir (str FREEZE_DIR "/temp")]
         (fs/delete-dir temp-dir)
-        (s/noon (assoc options :filename (str temp-dir "/frozen"))
+        (output/noon (assoc options :filename (str temp-dir "/frozen"))
                 score)
         (dir-equal? dir temp-dir))
-      (s/noon options score))))
+      (output/noon options score))))
 
 (defmacro frozen*
   ([id score-evaluating-expr]
@@ -45,7 +46,7 @@
                        [x xs]
                        [nil (cons x xs)])]
     `(frozen* ~id
-              (noon.score/mk ~@updates))))
+              (score/mk ~@updates))))
 
 (comment (macroexpand '(freezm (s/lin s/d0 s/d1)))
          (freezm (s/lin s/d0 s/d1)))

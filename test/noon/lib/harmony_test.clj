@@ -1,8 +1,8 @@
 (ns noon.lib.harmony-test
-  (:use noon.score)
+  (:use noon.updates)
   (:require [noon.lib.harmony :as h]
             [clojure.test :refer [testing deftest is]]
-            [noon.score :as n]
+            [noon.score :as score :refer [sf_ mk]]
             [noon.test :as t]))
 
 (defn pitch-values= [& xs]
@@ -76,24 +76,24 @@
     (testing "diatonic no duplicates"
       (is (t/frozen :diatonic-drops
                     (par d0 d1 d2 d3)
-                    (sf_ (concat-scores (h/drops _ :inversions true)))))
+                    (sf_ (score/concat-scores (h/drops _ :inversions true)))))
       (is (t/frozen :diatonic-drops-no-inversions
                     (par d0 d1 d2 d3)
-                    (sf_ (concat-scores (h/drops _))))))
+                    (sf_ (score/concat-scores (h/drops _))))))
     (testing "with two tonic"
       (is (t/frozen :drops-2-tonics
                     (par s0 s1 s2 s3)
-                    (sf_ (concat-scores (h/drops _ :inversions true)))))
+                    (sf_ (score/concat-scores (h/drops _ :inversions true)))))
       (is (t/frozen :drops-2-tonics-no-inversions
                     (par s0 s1 s2 s3)
-                    (sf_ (concat-scores (h/drops _))))))
+                    (sf_ (score/concat-scores (h/drops _))))))
     (testing "with duplicates"
       (is (t/frozen :diatonic-drops-with-duplicates
                     (par d0 d4 d8 d11)
-                    (sf_ (concat-scores (h/drops _ :inversions true)))))
+                    (sf_ (score/concat-scores (h/drops _ :inversions true)))))
       (is (t/frozen :diatonic-drops-with-duplicates-no-inversions
                     (par d0 d1 d4 d8)
-                    (sf_ (concat-scores (h/drops _)))))))
+                    (sf_ (score/concat-scores (h/drops _)))))))
 
   (testing "inversions"
 
@@ -125,11 +125,11 @@
     (is (t/frozen :voicings1
                   tetrad
                   (par s0 s1 s2 s3)
-                  (sf_ (concat-scores (h/voicings _ {:bounds [48 84]})))))
+                  (sf_ (score/concat-scores (h/voicings _ {:bounds [48 84]})))))
     (testing "with duplicates"
       (is (t/frozen :voicings-with-duplicates
                     (par s0 s1 s2 s3)
-                    (sf_ (concat-scores (h/voicings _ {:bounds [48 84]})))))))
+                    (sf_ (score/concat-scores (h/voicings _ {:bounds [48 84]})))))))
 
   (testing "voice-led"
     (is (t/frozen :voice-leading1
@@ -233,20 +233,20 @@
          :midi true}
         (mk tetrad
             (par s0 s1 s2 s3 s4)
-            (sf_ (concat-scores (h/drops _ :inversions true)))))
+            (sf_ (score/concat-scores (h/drops _ :inversions true)))))
 
   (noon {:filename "test/data/inversions"
          :midi true}
         (mk tetrad
             (par s0 s1 s2 s3 s4)
             (sf_ (let [{:keys [upward downward self]} (h/inversions _ [40 80])]
-                   (concat-scores (concat (reverse (next downward)) [self] (next upward)))))))
+                   (score/concat-scores (concat (reverse (next downward)) [self] (next upward)))))))
 
   (noon {:filename "test/data/voicings"
          :midi true}
         (mk tetrad
             (par s0 s1 s2 s3)
-            (sf_ (concat-scores (h/voicings _ {:bounds [40 100]})))))
+            (sf_ (score/concat-scores (h/voicings _ {:bounds [40 100]})))))
 
   (h/shiftings (mk tetrad (par s0 s1 s2 s3))
                [40 100])

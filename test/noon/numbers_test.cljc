@@ -12,8 +12,8 @@
            2))
     (is (= ((n/mul 2) 1)
            2))
-    (is (= ((n/div 2) 1)
-           0.5))
+    (is (n/float-equal? ((n/div 2) 1)
+                        0.5))
 
     (is ((n/eq 1) 1))
     (is (not ((n/eq 1) 0)))

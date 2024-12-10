@@ -1,5 +1,5 @@
 (ns noon.lib.rythmn-test
-  (:use noon.score)
+  (:use noon.updates)
   (:require [noon.test :as t]
             [noon.lib.rythmn :as r]
             [clojure.test :refer [deftest testing is]]))

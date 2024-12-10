@@ -1,8 +1,9 @@
 (ns noon.lib.melody-test
-  (:use noon.score)
+  (:use noon.updates)
   (:require [noon.lib.melody :as m]
             [noon.test :as t]
             [clojure.test :refer [deftest testing is]]
+            [noon.score :as score :refer [mk]]
             [noon.utils.pseudo-random :as pr]))
 
 (deftest main

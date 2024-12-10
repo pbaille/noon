@@ -112,7 +112,7 @@
                                          {:doc (str "Multiply event duration by " i)
                                           :tags [:event-update :alias :temporal]
                                           :no-doc true})
-                                  `(noon.updates/dur (mul ~i)))
+                                  `(noon.updates/dur (noon.numbers/mul ~i)))
                             (list 'def (with-meta (symbol (str "dur:" i))
                                          {:doc (str "Divide event duration by " i)
                                           :tags [:event-update :alias :temporal]

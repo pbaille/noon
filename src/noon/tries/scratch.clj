@@ -1,8 +1,10 @@
 (ns noon.tries.scratch
-  (:use noon.score)
+  (:use noon.updates)
   (:require [noon.lib.harmony :as h]
             [noon.lib.melody :as m]
             [noon.lib.rythmn :as r]
+            [noon.score :as score :refer [mk]]
+            [noon.output :refer [play noon]]
             [noon.utils.pseudo-random :as pr]
             [noon.harmony :as nh]))
 
@@ -13,6 +15,7 @@
   (spit "simple-tup.edn"
         (str (midifiable-score (mk (tup s0 s1 s2)))))
 
+  (play (tup s0 s1))
   (play vel2 dur2
         (lin* (map reroot [:C :Eb :F# :A]))
         (each (tup (rebase V (structure :sus47))

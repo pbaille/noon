@@ -178,7 +178,7 @@
                                     (into {}))
 
                 get-neighbourhood (fn [n]
-                                    (get neighbourhoods (score/pitch-class-value n)))
+                                    (get neighbourhoods (events/pitch-class-value n)))
                 shift (fn [dir x]
                         (set (map (fn [n]
                                     (update n :pitch
