@@ -1,6 +1,8 @@
 (ns noon.client.eval
   (:require
    [noon.score]
+   [noon.updates]
+   [noon.output]
    [noon.lib.harmony]
    [noon.lib.melody]
    [noon.lib.rythmn]
