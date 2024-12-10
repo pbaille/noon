@@ -1,8 +1,12 @@
 (ns noon.client.examples
-  (:require [noon.utils.misc :as u]))
+  (:require [noon.utils.misc :as u]
+            [noon.score :as score]))
 
 (def examples
   {:trivial (u/source-str (tup s0 s1 s2))
+
+   :debug (u/source-str (sf_ (merge _ _)))
+
 
    :complex-tritonal
    (u/source-str (let [I (one-of [lydian+ (structure [2 3 4 5 6])] [melodic-minor (structure [1 2 4 5 6])])
@@ -47,9 +51,9 @@
 
    :canon
    (u/source-str (let [decorate (sf_ (let [sorted (sort-by :position _)]
-                                       (reduce (fn [s [n1 n2]]
-                                                 (into s (n/update-score #{n1 n2} (maybe (m/connect 1)))))
-                                               #{(last sorted)} (partition 2 1 sorted))))]
+                                             (reduce (fn [s [n1 n2]]
+                                                       (into s (score/update-score #{n1 n2} (maybe (m/connect 1)))))
+                                                     #{(last sorted)} (partition 2 1 sorted))))]
                    [dur2
                     (lin (shuftup s0 s1 s2 s3)
                          [(one-of s1 s1-) (shuftup s0 s1 s2 s3)])
@@ -57,8 +61,8 @@
                     (lin _ (s-shift 1) (s-shift -1) _)
                     (lin _ (s-shift 2))
                     (chans [(patch :ocarina) o1 (s-shift -1)]
-                           [(sf_ (n/shift-score _ 2))]
-                           [(patch :acoustic-bass) o2- (s-shift 1) (sf_ (n/shift-score _ 5))])
+                           [(sf_ (score/shift-score _ 2))]
+                           [(patch :acoustic-bass) o2- (s-shift 1) (sf_ (score/shift-score _ 5))])
                     (h/grid dur2
                             harmonic-minor
                             (lin I IV VII I [IV melodic-minor VII] IV [V harmonic-minor VII] VII)
