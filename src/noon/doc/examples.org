@@ -7,11 +7,12 @@
             [noon.lib.harmony :as h]
             [noon.lib.rythmn :as r]
             [noon.events :as events :refer [ef_ efn]]
-            [noon.score :as score :refer [mk mk* sf_ sfn]]
+            [noon.score :as score :refer [mk mk* sf_ sfn e->s]]
             [noon.output :as out :refer [noon play write]]
             [noon.harmony :as nh]
             [noon.utils.multi-val :as mv]
             [noon.utils.misc :as u]
+            [noon.numbers :refer [mul div add sub]]
             [noon.utils.pseudo-random :as pr]
             [noon.constants :as nc]
             [noon.vst.vsl :as vsl :refer [vsl]]
@@ -21,7 +22,7 @@
 Let's use the chorium soundfont:
 
 #+begin_src clojure :results silent
-(swap! options* assoc :tracks {0 :chorium})
+(swap! out/options* assoc :tracks {0 :chorium})
 #+end_src
 
 ** Harmonic experiments
@@ -471,7 +472,7 @@ Next step will be to have control over the number of notes between targets.
            [s2 (target :c 3 :up 1/4)]
            [s1- (target :d 3 :down 1/4)]
            [_ (target :c 3 :up 1/4)])
-      (options {:filename "test/trash/target"}))
+      (out/options {:filename "test/trash/target"}))
 #+end_src
 
 The problem here is that the precedent note overlaps the targeting notes.
@@ -831,7 +832,7 @@ Experimenting interleaving passing notes
                 (let [from (first chunk1)
                       to (first chunk2)]
                   (score/update-score #{(assoc from :position 0)}
-                                [(lin _ [(repitch (event->pitch to)) f])
+                                [(lin _ [(repitch (events/event->pitch to)) f])
                                  (adjust from)])))))
 
 (comment
@@ -1106,8 +1107,8 @@ But it is not really what we want.
       (lin _ (s-shift 1) (s-shift -1) _)
       (lin _ (s-shift 2))
       (chans [(patch :ocarina) o1 (s-shift -1)]
-             [(sf_ (shift-score _ 2))]
-             [(patch :acoustic-bass) o2- (s-shift 1) (sf_ (shift-score _ 5))])
+             [(sf_ (score/shift-score _ 2))]
+             [(patch :acoustic-bass) o2- (s-shift 1) (sf_ (score/shift-score _ 5))])
       (h/grid dur2
               harmonic-minor
               (lin I IV VII I [IV melodic-minor VII] IV [V harmonic-minor VII] VII)
