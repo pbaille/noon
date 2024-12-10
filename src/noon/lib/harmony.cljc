@@ -98,7 +98,7 @@
                        (sort (map (juxt events/pitch-value identity) _))]
                    (->> others
                         (map (fn [[v note]]
-                               ((events/t-shift (quot (c/- v1 v) 12)) note)))
+                               ((updates/t-shift (quot (c/- v1 v) 12)) note)))
                         (into #{bass})))))
 
     (def ^{:doc "Put a chord into closed position.
@@ -112,9 +112,9 @@
                        (letfn [(looop [n]
                                  (let [pitch-value (events/pitch-value n)]
                                    (if (contains? pitch-values pitch-value)
-                                     (looop (events/o1 n))
+                                     (looop (updates/o1 n))
                                      [n pitch-value])))]
-                         (let [[n v] (looop ((events/t-shift (quot (c/- v1 v) 12)) note))]
+                         (let [[n v] (looop ((updates/t-shift (quot (c/- v1 v) 12)) note))]
                            (recur (conj ret n) (conj pitch-values v) notes)))
                        ret)))))
 
@@ -125,7 +125,7 @@
                 (loop [ret #{} drop abstract-drop octave 0 idx->notes contour-idx->notes]
                   (if-let [[current-octave & upper-octaves] (seq drop)]
                     (if-let [[idx & current-octave] (seq current-octave)]
-                      (recur (conj ret ((events/t-shift octave) (first (get idx->notes idx))))
+                      (recur (conj ret ((updates/t-shift octave) (first (get idx->notes idx))))
                              (cons current-octave upper-octaves)
                              octave
                              (update idx->notes idx rest))
@@ -368,7 +368,7 @@
   (score/sfn score
              (->> score
                   (map (fn [e] (let [structure-size (-> e :pitch :structure count)]
-                                 (score/update-score #{e} (updates/par* (mapv events/s-step (range structure-size)))))))
+                                 (score/update-score #{e} (updates/par* (mapv updates/s-step (range structure-size)))))))
                   (score/merge-scores))))
 
 (comment :tries

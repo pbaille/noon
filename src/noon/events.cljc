@@ -2,13 +2,10 @@
   "Noon events are maps that represent a MIDI event.
    This ns is help to deal with such maps and defines some useful event updates (functions from event to event)"
   (:require [noon.harmony :as h]
-            [noon.vst.index :as vst]
             [noon.utils.misc :as u :refer [t t?]]
             [noon.utils.maps :as m]
             [noon.utils.chance :as g]
-            [noon.utils.pseudo-random :as pr]
-            [noon.constants :as constants]
-            [noon.numbers :as nums :refer [add sub mul div]])
+            [noon.constants :as constants])
   #?(:cljs (:require-macros [noon.events :refer [efn ef_ -def-durations -def-velocities -def-channels -def-tracks
                                                  import-wrap-harmony-update-constructors import-wrap-harmony-updates
                                                  -def-wrapped -def-steps -def-shifts -def-degrees]])))

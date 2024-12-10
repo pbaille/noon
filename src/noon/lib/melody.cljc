@@ -238,7 +238,7 @@
      layer: :c | :d | :s | :t
      steps: a sequence of ints."
   [layer steps]
-  (updates/tup* (map (partial events/layer-step layer) steps)))
+  (updates/tup* (map (partial updates/layer-step layer) steps)))
 
 (defn stup>
   "build a tup of successive steps on the specified layer
@@ -246,7 +246,7 @@
      layer: :c | :d | :s | :t
      steps: a sequence of ints."
   [layer steps]
-  (updates/tup>* (map (partial events/layer-step layer) steps)))
+  (updates/tup>* (map (partial updates/layer-step layer) steps)))
 
 (defn gen-line
   "Generate a tuple by generating a contour, producing lines from it and picking one.
@@ -256,7 +256,7 @@
    - :grow, a vector [min-grow max-grow] that is used to grow the generated contour.
    - :pick, a member-pick argument used to pick one line from generated ones. (default :rand)"
   [opts]
-  (updates/tup* (map (partial events/layer-step (:layer opts :d))
+  (updates/tup* (map (partial updates/layer-step (:layer opts :d))
                      (c/gen-line opts))))
 
 (defn step-seqs
@@ -300,7 +300,7 @@
   ([{:as options
      :keys [layer]}]
    (if-let [step-seq (first (step-seqs options))]
-     (updates/tup>* (map (partial events/layer-step layer)
+     (updates/tup>* (map (partial updates/layer-step layer)
                          step-seq))))
   ([layer length delta & {:as options}]
    (gen-tup (assoc options :layer layer :length length :delta delta))))

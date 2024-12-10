@@ -2,7 +2,7 @@
   "Score updates and update-builders"
   (:refer-clojure :exclude [iter])
   (:require [noon.score :as score :refer [sfn sf_]]
-            [noon.events :as events :refer [efn ef_]]
+            [noon.events :as events :refer [ef_]]
             [noon.numbers :as numbers]
             [noon.constants :as constants]
             [noon.utils.pseudo-random :as pr]
@@ -46,7 +46,7 @@
           "Build an event update that humanize the :velocity value.
            please refer to the `noon.score/humanize` doc."
           [max-step & [bounds]]
-          (let [f (events/humanize {:bounds bounds :max-step max-step})]
+          (let [f (numbers/humanize {:bounds bounds :max-step max-step})]
             (ef_ (update _ :velocity f))))
 
         (def ^{:tags [:event-update]} vel0

@@ -5,8 +5,7 @@
             [noon.utils.misc :as u]
             [noon.utils.pseudo-random :as pr]
             [noon.updates :as updates]
-            [noon.numbers :as numbers]
-            [noon.events :as events]))
+            [noon.numbers :as numbers]))
 
 (do :impl
 
@@ -41,14 +40,14 @@
             points (map (numbers/mul increment) (range 0 (inc n)))]
         (map (fn [[from to]]
                (score/update-score score [(updates/between from to) (updates/trim from to)
-                                          (score/sf_ (if (empty? _) (score/mk events/vel0 {:duration increment :position from}) _))
+                                          (score/sf_ (if (empty? _) (score/mk updates/vel0 {:duration increment :position from}) _))
                                           (score/sf_ (score/shift-score _ (- from)))]))
              (partition 2 1 points)))))
 
 (do :basic
 
     (defn sum->tup [xs]
-      (updates/tup* (map events/dur xs)))
+      (updates/tup* (map updates/dur xs)))
 
     (u/defn* durtup
       "build a tup from some numbers"

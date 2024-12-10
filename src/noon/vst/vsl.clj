@@ -1,5 +1,5 @@
 (ns noon.vst.vsl
-  (:require [noon.control :as control]
+  (:require [noon.output :as output]
             [noon.events :as events]
             [noon.utils.misc :as u]))
 
@@ -187,6 +187,6 @@
      (events/ef_ (-> _ instrument-upd patch-upd)))))
 
 (defn noon [options score]
-  (control/noon (merge {:tracks TRACKS}
+  (output/noon (merge {:tracks TRACKS}
                        options)
                 score))
