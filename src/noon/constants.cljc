@@ -1,8 +1,7 @@
 (ns noon.constants
   (:require [noon.utils.misc :as u]
             [clojure.math.combinatorics :as comb]
-            [clojure.string :as str])
-  #?(:cljs (:require-macros [noon.constants :refer [-def-wrapped]])))
+            [clojure.string :as str]))
 
 (def alt-sym->alt-val
   {"bb" -2
@@ -287,32 +286,6 @@
   (let [drem (second (u/divmod 7 d))
         amap (deg-alt-type drem)]
     (amap (- c (d->c d)))))
-
-
-(defmacro -def-wrapped [type wrapper]
-  (let [entries (case type
-                  :modes modes
-                  :structures structures
-                  :pitches pitches)]
-    (cons 'do (for [[k v] entries]
-                (list 'def
-                      (with-meta (symbol (name k))
-                        {:doc (str "Change the :" wrapper " of received context to " k ".")})
-                      (list wrapper v))))))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 (do :modes-categorisation-xp
