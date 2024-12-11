@@ -8,15 +8,25 @@ Leveraging clojure and functional programming powers in order to *generate, mani
 
 #+begin_src clojure
 (ns noon.doc.guide
+  ;; main building blocks
   (:use noon.updates)
   (:require
-    [noon.events :as events]
-    [noon.score :refer [mk]]
-    [noon.output :refer [noon options* play write]]
-    ;; lib
-    [noon.lib.harmony :as h]
-    [noon.lib.melody :as m]
-    [noon.lib.rythmn :as r]))
+
+   ;; entry points
+   [noon.score :refer [mk]]
+   [noon.output :refer [noon play #_write]]
+
+   ;; lib
+   [noon.lib.harmony :as h]
+   [noon.lib.melody :as m]
+   [noon.lib.rythmn :as r]
+
+   ;; extra deps (for low level explanations)
+   [noon.events :as events]
+   [noon.midi]
+   [noon.vst.general-midi]
+   [noon.constants]
+   [noon.utils.sequences :as seqs]))
 #+end_src
 
 ** Motivation
@@ -62,7 +72,7 @@ It can represent any MIDI event, a note, a control change etc...
 It is represented using a clojure map
 
 #+begin_src clojure :pp
-DEFAULT_EVENT
+events/DEFAULT_EVENT
 #+end_src
 
 **** Score
@@ -230,20 +240,20 @@ As a convenience, some thin =noon.output/noon= wrappers are defined:
 
 ***** =noon.output/play=
 
-#+begin_src clojure :noeval
-(play transformation1 transformation2 ...)
+#+begin_src clojure
+'(play transformation1 transformation2 ...)
 #+end_src
 
 Which is is roughly equivalent to:
 
-#+begin_src clojure :noeval
-(noon {:play true}
-      (mk transformation1 transformation2 ...))
+#+begin_src clojure
+'(noon {:play true}
+       (mk transformation1 transformation2 ...))
 #+end_src
 
 More concretly:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur2
       (tup s0 s1 s2 s3))
 #+end_src
