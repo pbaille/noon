@@ -17,6 +17,7 @@
             [clojure.math.combinatorics :as comb]
             [clojure.test :refer [deftest testing is]]
             [noon.test]))
+
 (def fill-diatonically
   "A very low level way to connect subsequent notes diatonically using `noon.harmony` directly.\n   It feels too complicated for such a simple thing..."
   (sf_
@@ -47,6 +48,7 @@
             #{}
             couples)
           (conj (last sorted))))))
+
 (defn fill-line
   "This evolution of fill-diatonically let the user specify the harmonic layer.\n   It is still relying on `noon.harmony` which is not great."
   [layer]
@@ -79,6 +81,7 @@
             #{}
             couples)
           (conj (last sorted))))))
+
 (defn target
   [layer size direction duration]
   (sfn score
@@ -96,6 +99,7 @@
                                    (assoc :duration duration))))
                         (into #{e}))))
             (score/merge-scores))))
+
 (defn connect
   [& sizes]
   (sf_
@@ -116,13 +120,14 @@
                                (butlast hcs)))))
         #{(last sorted)}
         (partition 2 1 sorted)))))
+
 (defn chromatic-double-passing
   [side]
   (sf_ (assert
          (= 1 (count _))
          (str
            (quote
-             user-fafc224c-d818-4b59-b6f2-aa773912f02f/chromatic-double-passing)
+             user-950b524e-877e-41be-9119-3511bfa344b8/chromatic-double-passing)
            "works only on single note scores"))
        (let [target (first _)
              d-suroundings (nh/diatonic-suroundings (:pitch target))
@@ -141,11 +146,13 @@
                                       :up c1-
                                       :down d1)
                                     same))))))
+
 (defn interpose-with
   [f]
   (sf_ (if (m/line? _)
          (set (mapcat (fn [[a b]] (if b ((f a b)) a))
                 (partition 2 1 nil (sort-by :position _)))))))
+
 (defn interleaved
   [& xs]
   (sf_
@@ -173,6 +180,7 @@
                                                    xs))))
                   {:score #{}, :at 0}
                   (apply map vector (map score/sort-score scores))))))))
+
 (defn interleaving
   [polarities a b]
   (loop [s []
@@ -185,17 +193,20 @@
                           1 [(first b) a (next b)])]
         (recur (conj s nxt) ps a' b'))
       s)))
+
 (defn rand-interleaving
   ([a b]
    (interleaving (pr/shuffle (concat (repeat (count a) 0) (repeat (count b) 1)))
                  a
                  b))
   ([a b & xs] (reduce rand-interleaving (rand-interleaving a b) xs)))
+
 (defn interleavings
   [a b]
   (reduce (fn [ret perm] (conj ret (interleaving perm a b)))
     []
     (comb/permutations (concat (repeat (count a) 0) (repeat (count b) 1)))))
+
 (u/defn*
   randomly-interleaved
   "randomly interleave the result of the given updates"
@@ -208,6 +219,7 @@
            {:at 0, :score #{}}
            (apply rand-interleaving
              (map (fn [u] (sort-by :position (score/update-score _ u))) xs))))))
+
 (defn n-firsts
   [n]
   (sf_ (->> (group-by :position _)
@@ -215,6 +227,7 @@
             (take n)
             (map second)
             (reduce into #{}))))
+
 (defn connect-with
   "use `f` to connect subsequent notes of a score."
   [f]
@@ -226,6 +239,7 @@
                                       [(lin _
                                             [(ef_ (assoc _ :pitch (:pitch to)))
                                              f]) (adjust from)])))))
+
 (defn connect-with2
   [f]
   (connect-by :position
@@ -236,14 +250,18 @@
                                       [(lin _
                                             [(repitch (events/event->pitch to))
                                              f]) (adjust from)])))))
+
 (def decorate
   (sf_ (let [sorted (sort-by :position _)]
          (reduce (fn [s [n1 n2]]
                    (into s (score/update-score #{n1 n2} (maybe (m/connect 1)))))
            #{(last sorted)}
            (partition 2 1 sorted)))))
+
 (def barry-harris (scale [0 2 4 5 7 8 9 11]))
+
 (def barry-harris2 [barry-harris (structure [0 2 4 7])])
+
 (def symetric-modes
   {:messian3 (scale [0 2 3 4 6 7 8 10 11]),
    :messian4 (scale [0 1 2 5 6 7 8 11]),
@@ -255,6 +273,7 @@
    :augm-half (scale [0 3 4 7 8 11]),
    :half-whole (scale [0 1 3 4 6 7 9 10]),
    :whole-half (scale [0 2 3 5 6 8 9 11])})
+
 (defn rand-structure
   [size]
   (ef_ (let [degree-count (-> _
@@ -263,6 +282,7 @@
                               count)
              degrees (first (mv/consume size (mv/mix* (range degree-count))))]
          ((structure (vec (sort degrees))) _))))
+
 (def rand-degree
   (ef_ (let [scale-size (-> _
                             :pitch
@@ -270,6 +290,7 @@
                             count)
              deg (pr/rand-nth (range 1 scale-size))]
          ((degree (pr/rand-nth [(- deg) deg])) _))))
+
 (defn rand-tup
   [size]
   (e->s event
@@ -279,6 +300,7 @@
                                count)
               degrees (first (mv/consume size (mv/mix* (range degree-count))))]
           (score/update-score #{event} (tup* (mapv d-step degrees))))))
+
 (defn complementarity-tree
   ([structure-size sequence-size]
    (let [elements (range structure-size)
@@ -309,12 +331,14 @@
                                                   structure-size
                                                   (disj perms child))]))
           (into {})))))
+
 (defn leaves-paths
   ([m] (leaves-paths m []))
   ([x at]
    (if (and (map? x) (not-empty x))
      (mapcat (fn [[k v]] (leaves-paths v (conj at k))) x)
      [at])))
+
 (def GIANT_STEPS
   (let [II [II {:degree :II}]
         V [V {:degree :V}]
@@ -327,6 +351,7 @@
     [tetrad
      (tup s1 [t2 s1] [t3 I dur2] [t2 II-V-I] II-V-I [t3 II-V-I] [t1 (lin II V)])
      (h/align-contexts :structural :static)]))
+
 (def ESP_fullgrid
   (let [common (lin [VII superlocrian dur2]
                     [I lydian dur2]
@@ -340,6 +365,7 @@
          (lin [VI dorian] [II lydianb7] [II dorian] [IIb lydianb7])
          common
          (lin [VIb lydianb7] [II dorian] (tup [VIb dorian] [IIb lydianb7]) I))))
+
 (def CYCLIC_EPISODE
   (let [a1 [dorian (rep 4 (transpose c3))]
         a2 [dorian (rep 4 (transpose c3-))]
@@ -353,6 +379,7 @@
           [(root :D) a2]
           [(root :G) c]
           [(root :Eb) d]) (dupt 4) (h/align-contexts :s :static)]))
+
 (defn last-n-positions
   "Limit the score to the n latest positions found."
   [n]
@@ -364,6 +391,7 @@
                     (map second)
                     (reduce into #{}))]
          (score/update-score _ (start-from (score/score-origin _))))))
+
 (defn possible-modes
   "given a chromatic degree (int between 0 an 11)\n   return possible modes"
   [cd modal-lvl least-priority]
@@ -374,6 +402,7 @@
                                  (contains? cd)))
                      modes)]
     candidates))
+
 (deftest main
   (testing "Noon experiments"
     (testing "Harmonic experiments"

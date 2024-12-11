@@ -127,7 +127,7 @@
                                                                      '([clojure.test :refer [deftest testing is]] [noon.test])))
                                                            reqs))))]
     (spit clj-file
-          (str/join "\n"
+          (str/join "\n\n"
                     (cons (list* 'ns (symbol (str (name ns) "-test"))
                                  (str "This file is generated from `" org-file "`")
                                  (map first (vals enriched-body)))
