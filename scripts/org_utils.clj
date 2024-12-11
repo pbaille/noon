@@ -268,7 +268,7 @@
       (org->edn guide-org-str)
       (split-section guide-org-str)))
 
-(defn build-edn-guide []
+(defn create-client-guide-ns []
   (spit "client/noon/client/guide.cljs"
         (str "(ns noon.client.guide)\n\n"
              "(def guide \n"

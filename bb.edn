@@ -7,6 +7,8 @@
                                :task (org-utils/build-examples-tests)}
          build-clj-guide {:requires ([org-utils]),
                           :task (org-utils/build-clj-guide)}
+         create-client-guide-ns {:requires ([org-utils]),
+                                 :task (org-utils/create-client-guide-ns)}
          build-clj-examples {:requires ([org-utils]),
                              :task (org-utils/build-clj-examples)}
          build-all {:requires ([org-utils]),
