@@ -20,39 +20,92 @@
   (and (ns-decl? x)
        (str/join "/" (cons src-path (str/split (second x) #"\.")))))
 
-(defn org->clj [org-file clj-file]
-  (let [s (slurp org-file)
-        lines (str/split-lines s)
-        tree (reduce (fn [{:as state :keys [level ret in-block]} line]
-                       (if (= :end line)
-                         (str ret (str/join (repeat level "]")))
-                         (let [prefix (str (when (pos? level) "\n ") (str/join (repeat level " ")))]
-                           (if-let [{headline-lvl :level title :title}
-                                    (parse-org-headline line)]
-                             (if (> headline-lvl level)
-                               {:level headline-lvl
-                                :ret (str ret prefix "[\"" title "\"")}
-                               (assoc state :ret
-                                      (str ret "\n"
-                                                 ;; closing
-                                           (str/join (repeat level " "))
-                                           (str/join (repeat (inc (- level headline-lvl)) "]"))
-                                           "\n\n"
-                                                 ;; opening
-                                           (str/join (repeat headline-lvl " "))
-                                           "[\"" title "\"")
-                                      :level headline-lvl))
-                             (cond (= "" line) (assoc state :ret (str ret "\n"))
-                                   (str/starts-with? line "#+begin_src clojure") (assoc state :in-block true)
-                                   (str/starts-with? line "#+end_src") (assoc state :in-block false)
-                                   in-block (assoc state :ret (str ret prefix line))
-                                   :else (assoc state :ret
-                                                (str ret prefix ";; " (str/replace line #"\n" (str prefix ";; ")))))))))
-                     {:level 0 :in-block false :ret "'"}
-                     (conj (vec lines)
-                           :end))
-        [_ ns-decl] (re-find #"(?s)#\+begin_src.*?\n(.*?)#\+end_src" s)]
-    (spit clj-file (str ns-decl "\n\n" tree))))
+(do :org->clj
+    (defn org->clj [org-file clj-file]
+      (let [s (slurp org-file)
+            lines (str/split-lines s)
+            tree (reduce (fn [{:as state :keys [level ret in-block]} line]
+                           (if (= :end line)
+                             (str ret (str/join (repeat level "]")))
+                             (let [prefix (str (when (pos? level) "\n ") (str/join (repeat level " ")))]
+                               (if-let [{headline-lvl :level title :title}
+                                        (parse-org-headline line)]
+                                 (if (> headline-lvl level)
+                                   {:level headline-lvl
+                                    :ret (str ret prefix "[\"" title "\"")}
+                                   (assoc state :ret
+                                          (str ret "\n"
+                                               ;; closing
+                                               (str/join (repeat level " "))
+                                               (str/join (repeat (inc (- level headline-lvl)) "]"))
+                                               "\n\n"
+                                               ;; opening
+                                               (str/join (repeat headline-lvl " "))
+                                               "[\"" title "\"")
+                                          :level headline-lvl))
+                                 (cond (= "" line) (assoc state :ret (str ret "\n"))
+                                       (str/starts-with? line "#+begin_src clojure") (assoc state :in-block true)
+                                       (str/starts-with? line "#+end_src") (assoc state :in-block false)
+                                       in-block (assoc state :ret (str ret prefix line))
+                                       :else (assoc state :ret
+                                                    (str ret prefix ";; " (str/replace line #"\n" (str prefix ";; ")))))))))
+                         {:level 0 :in-block false :ret "'"}
+                         (conj (vec lines)
+                               :end))
+            [_ ns-decl] (re-find #"(?s)#\+begin_src.*?\n(.*?)#\+end_src" s)]
+        (spit clj-file (str ns-decl "\n\n" tree))))
+
+    (defn org-str->clj-str
+      "Build a `clj-file` from an `org-file`
+  Assumes that the first code block of the org-file is a valid clojure ns form."
+      [org-str]
+
+      (let [lines (str/split-lines org-str)
+            tree (reduce (fn [{:as state :keys [level ret in-block]} line]
+                           (if (= :end line)
+                             (str ret (str/join (repeat level "]")))
+                             (let [prefix (str (when (pos? level) "\n ") (str/join (repeat level " ")))]
+                               (if-let [{headline-lvl :level title :title}
+                                        (parse-org-headline line)]
+                                 (if (> headline-lvl level)
+                                   {:level headline-lvl
+                                    :ret (str ret prefix "[\"" title "\"")}
+                                   (assoc state :ret
+                                          (str ret "\n"
+                                               ;; closing
+                                               (str/join (repeat level " "))
+                                               (str/join (repeat (inc (- level headline-lvl)) "]"))
+                                               "\n\n"
+                                               ;; opening
+                                               (str/join (repeat headline-lvl " "))
+                                               "[\"" title "\"")
+                                          :level headline-lvl))
+                                 (cond (= "" line) (assoc state :ret (str ret "\n"))
+                                       (str/starts-with? line "#+begin_src clojure") (assoc state :in-block true)
+                                       (str/starts-with? line "#+end_src") (assoc state :in-block false)
+                                       in-block (assoc state :ret (str ret prefix line))
+                                       :else (assoc state :ret
+                                                    (str ret #_prefix ";; " (str/replace line #"\n" (str #_prefix ";; ")))))))))
+                         {:level 0 :in-block false :ret ""}
+                         (conj (vec lines)
+                               :end))]
+        tree))
+
+    (defn org->clj2
+      "Build a `clj-file` from an `org-file`
+  Assumes that the first code block of the org-file is a valid clojure ns form."
+      [org-file clj-file]
+
+      (let [clj-str (org-str->clj-str (slurp org-file))
+            without-square-brackets (-> clj-str
+                                        (subs 0 (dec (count clj-str)))
+                                        (subs 1))
+            without-first-line (->> without-square-brackets
+                                    str/split-lines
+                                    rest
+                                    (str/join "\n"))]
+        (spit clj-file
+              without-first-line))))
 
 (defn org-file->clojure-expressions [org-file]
   (loop [blocks [] path [] block nil lines (str/split-lines (slurp org-file))]
@@ -148,29 +201,92 @@
                  "test/noon/doc/examples_test.clj"))
 
 (defn build-clj-examples []
-  (org->clj "src/noon/doc/examples.org"
-            "src/noon/doc/examples.clj")
+  (org->clj2 "src/noon/doc/examples.org"
+             "src/noon/doc/examples.clj")
   (z/zprint-file "src/noon/doc/examples.clj"
                  "src/noon/doc/examples.clj"
                  "src/noon/doc/examples.clj"))
 
 (defn build-clj-guide []
-  (org->clj "src/noon/doc/guide.org"
-            "src/noon/doc/guide.clj")
+  (org->clj2 "src/noon/doc/guide.org"
+             "src/noon/doc/guide.clj")
   (z/zprint-file "src/noon/doc/guide.clj"
                  "src/noon/doc/guide.clj"
                  "src/noon/doc/guide.clj"))
 
+(do :org->edn
+    "attempt 2"
+
+    (def code-block-regex
+      #"^(?s)#\+begin_src.*?\n(.*?)#\+end_src(.*)")
+
+    (defn split-code-block [s]
+      (if (seq? s)
+        (println s))
+      (when-let [[_ code remaining] (re-find code-block-regex s)]
+        [code remaining]))
+
+    (defn split-section [s]
+      (when-let [[l1 & lines] (seq (str/split-lines s))]
+        (when-let [parsed (parse-org-headline l1)]
+          (let [break? (fn [l] (re-find (re-pattern (str "^\\*{1," (:level parsed 1) "} ")) l))
+                content (take-while (complement break?) lines)
+                remaining (str/join "\n" (drop-while (complement break?) lines))]
+            [(assoc parsed :content (str/join "\n" content))
+             remaining]))))
+
+    (defn split-paragraph [s]
+      (let [lines (str/split-lines s)
+            break? (fn [l]
+                     (or (str/starts-with? l "*")
+                         (str/starts-with? l "#+begin")))
+            paragraph (str/join "\n" (take-while (complement break?) lines))
+            remaining (str/join "\n" (drop-while (complement break?) lines))]
+        (when (seq paragraph)
+          [(str/trim paragraph)
+           remaining])))
+
+    (defn org->edn [s]
+      (if (seq s)
+        (if-let [[code remaining] (split-code-block s)]
+          (cons [:code code]
+                (org->edn remaining))
+          (if-let [[section remaining] (split-section s)]
+            (cons (into [:section (:title section)]
+                        (org->edn (:content section)))
+                  (org->edn remaining))
+            (if-let [[paragraph remaining] (split-paragraph s)]
+              (if (seq paragraph)
+                (cons [:p paragraph] (org->edn remaining))
+                (org->edn remaining))
+              [])))
+        []))
+
+    (comment
+      (def guide-org-str (slurp "src/noon/doc/guide.org"))
+      (org->edn guide-org-str)
+      (split-section guide-org-str)))
+
+(defn build-edn-guide []
+  (spit "client/noon/client/guide.cljs"
+        (str "(ns noon.client.guide)\n\n"
+             "(def guide \n"
+             (org->edn "src/noon/doc/guide.org")
+             ")"))
+  (z/zprint-file "client/noon/client/guide.cljs"
+                 "client/noon/client/guide.cljs"
+                 "client/noon/client/guide.cljs"))
+
 (defn build-all []
   (build-clj-examples)
   (build-clj-guide)
-  (build-examples-tests))
+  (build-examples-tests))    ; replace underscore with space
 
 (defn file->title [filename]
   (-> filename
       (str/replace #"^\d+-" "")  ; remove digit prefix
       (str/replace #"\.md$" "")  ; remove .md extension
-      (str/replace "_" " ")))    ; replace underscore with space
+      (str/replace "_" " ")))
 
 (defn build-doc-tree [dir-path]
   (let [root (io/file dir-path)
