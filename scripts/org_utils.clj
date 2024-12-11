@@ -247,7 +247,7 @@
            remaining])))
 
     (defn org->edn [s]
-      (if (seq s)
+      (let [s (str/trim s)]
         (if-let [[code remaining] (split-code-block s)]
           (cons [:code code]
                 (org->edn remaining))
@@ -259,8 +259,9 @@
               (if (seq paragraph)
                 (cons [:p paragraph] (org->edn remaining))
                 (org->edn remaining))
-              [])))
-        []))
+              (if (seq s)
+                [[:as-is s]]
+                []))))))
 
     (comment
       (def guide-org-str (slurp "src/noon/doc/guide.org"))
@@ -271,7 +272,7 @@
   (spit "client/noon/client/guide.cljs"
         (str "(ns noon.client.guide)\n\n"
              "(def guide \n"
-             (org->edn "src/noon/doc/guide.org")
+             (vec (org->edn (slurp "src/noon/doc/guide.org")))
              ")"))
   (z/zprint-file "client/noon/client/guide.cljs"
                  "client/noon/client/guide.cljs"
