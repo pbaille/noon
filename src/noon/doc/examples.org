@@ -1878,6 +1878,7 @@ One more shredding experiment
 
 
 ** snippets
+
 *** textures 1
 
 Trying to produce vibrating textures by playing very fast note sequences.
@@ -2174,6 +2175,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
 
 
 ** Usage
+
 *** =noon.lib.rythmn/bintup=
 
 An experiment around =noon.lib.rythmn/gen-bintup=
