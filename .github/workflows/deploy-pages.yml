@@ -47,6 +47,20 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install Emacs
+        uses: purcell/setup-emacs@master
+        with:
+           version: 29.3
+
+      - name: Convert Org to Markdown
+        run: |
+          emacs -Q --batch \
+            --eval "(require 'org)" \
+            --eval "(require 'ox-md)" \
+            --find-file src/noon/doc/guide.org \
+            --eval '(org-md-export-to-markdown)' \
+            --kill
+
       - name: Build noon.client.guide namespace
         run: clojure -X:create-client-guide-ns
 
