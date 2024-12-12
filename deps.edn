@@ -9,7 +9,8 @@
         org.clojure/data.codec {:mvn/version "0.1.1"}
         instaparse/instaparse {:mvn/version "1.5.0"}
         clj-http/clj-http {:mvn/version "3.13.0"}
-        zprint/zprint {:mvn/version "1.2.9"}}
+        zprint/zprint {:mvn/version "1.2.9"}
+        commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
           :ns-default build}
@@ -28,7 +29,9 @@
                         binaryage/devtools {:mvn/version "1.0.0"}
                         stylefy/stylefy {:mvn/version "3.2.0"}
                         stylefy/generic-dom {:mvn/version "3.0.0"}
-                        #_uic/uic #_{:local/root "/Users/pierrebaille/Code/WIP/uic"}
+                        uic/uic {#_:local/root #_"/Users/pierrebaille/Code/WIP/uic"
+                                 :git/url "https://github.com/pbaille/uic.git"
+                                 :sha "da6897812fb944d0402e31343da21a7af408f58d"}
                         com.pitch/uix.core {:mvn/version "1.2.0"}
                         com.pitch/uix.dom {:mvn/version "1.2.0"}
                         org.babashka/sci {:mvn/version "0.9.44"}}}}}
