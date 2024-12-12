@@ -9,6 +9,7 @@
         org.clojure/data.codec {:mvn/version "0.1.1"}
         instaparse/instaparse {:mvn/version "1.5.0"}
         clj-http/clj-http {:mvn/version "3.13.0"}
+        ;; should be moved to dev
         zprint/zprint {:mvn/version "1.2.9"}
         commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}
  :aliases
