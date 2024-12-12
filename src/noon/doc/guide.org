@@ -146,6 +146,8 @@ The option map let you stay what you want to do with your score.
   3. =:fluid=
   4. =:airfont=
 
+example:
+
 #+begin_src clojure
 (noon {:play true
        :tracks {0 :chorium}} ;; try to change soundfont here
