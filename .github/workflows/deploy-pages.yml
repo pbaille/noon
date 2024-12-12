@@ -48,7 +48,7 @@ jobs:
         run: npm install
 
       - name: Build noon.client.guide namespace
-        run: clj -X:create-client-guide-ns
+        run: clojure -X:create-client-guide-ns
 
       - name: Build with shadow-cljs
         run: npx shadow-cljs release client
