@@ -8,13 +8,13 @@
    [noon.lib.rythmn]
    [noon.utils.misc]
    [sci.core :as sci]
-   [noon.client.sci-macros :as sci-macros])
+   [noon.client.sci-macros])
   (:require-macros [noon.client.eval :refer [sci-namespace]]))
 
 (def sci-ctx
   (sci/init
    {:namespaces {'user (merge (sci-namespace noon.updates)
-                              sci-macros/all
+                              (ns-publics 'noon.client.sci-macros)
                               {'mk #'noon.score/mk})
                  'noon.output (ns-publics 'noon.output)
                  'noon.score (sci-namespace noon.score)
@@ -32,9 +32,10 @@
 #_ (println sci-ctx)
 (defn sci-eval [x]
   #_(println sci-ctx)
-  (let [ret (sci/eval-string* sci-ctx x)]
-    (println "evaluated " ret)
-    ret))
+  (let [evaluation (try {:result (sci/eval-string* sci-ctx x)}
+                        (catch js/Error e {:error e}))]
+    (println (assoc evaluation :form x))
+    evaluation))
 
 (comment
   (println "ui")

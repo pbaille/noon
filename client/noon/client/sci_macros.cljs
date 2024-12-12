@@ -37,8 +37,16 @@
   [_ _ & xs]
   `(noon.output/play-score (noon.score/mk ~@xs)))
 
-(def all
+(defn noon
+  {:sci/macro true}
+  [_ _ opts score]
+  `(do ~@(when (:play opts) [`(noon.output/play-score ~score)])
+       ~@(when-let [unsupported-keys (seq (keys (dissoc opts :play)))]
+           [`(throw (js/Error. ~(str "Not supported noon options: " unsupported-keys)))])))
+
+#_(def all
   {'sf_ #'sf_ 'sfn #'sfn
    'ef_ #'ef_ 'efn #'efn
    '! #'!
-   'play #'play})
+   'play #'play
+   'noon #'noon})

@@ -34,13 +34,15 @@
                       :bg {:color [color {:a 0.2}]}
                       :color [color {:l 0.5}]
                       :p 1}
-              :on-click (fn [_] (set-return (str (eval/sci-eval source))))}
+              :on-click (fn [_] (set-return (eval/sci-eval source)))}
              (c icons/VscDebugLineByLine)))
        (when return
-         (sc {:border [2 [color {:a 0.2}]]
+         (sc {:bg {:color (if (:error return) [:red {:a 0.2}] [color {:a 0.2}])}
+              :border [2 [color {:a 0.2}]]
               :p [0.3 0.7]}
              (c CodeMirror
-                {:value return
+                {:value (str (or (:error return)
+                                 (:result return)))
                  :editable false
                  :extensions #js [(clojure)]
                  :basic-setup #js {:lineNumbers false
