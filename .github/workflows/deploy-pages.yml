@@ -57,6 +57,7 @@ jobs:
           emacs -Q --batch \
             --eval "(require 'org)" \
             --eval "(require 'ox-md)" \
+            --eval "(setq org-export-with-broken-links t org-export-with-toc nil org-md-headline-style 'atx org-export-headline-levels 10)" \
             --find-file src/noon/doc/guide.org \
             --eval '(org-md-export-to-markdown)' \
             --kill
