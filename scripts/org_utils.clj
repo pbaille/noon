@@ -3,7 +3,7 @@
             [zprint.core :as z]
             [clojure.java.io :as io]
             [clojure.pprint :as pp]
-            [me.raynes.fs :as fs]))
+            [commonmark-hiccup.core :as h]))
 
 "Utils for converting org files to clojure files (regular and test)"
 
@@ -308,53 +308,51 @@
         (with-out-str (pp/pprint {:cljdoc/languages ["clj"]
                                   :cljdoc.doc/tree [(build-doc-tree "doc/Noon")]}))))
 
-(comment :guide->md->hiccup
+(do :guide->md->hiccup
 
-         (require '[commonmark-hiccup.core :as h])
+    (defmethod h/node-properties org.commonmark.node.IndentedCodeBlock [node]
+      (h/property-map node))
 
-         (defmethod h/node-properties org.commonmark.node.IndentedCodeBlock [node]
-           (h/property-map node))
+    (defmethod h/node-properties org.commonmark.node.Code [node]
+      (h/property-map node))
 
-         (defmethod h/node-properties org.commonmark.node.Code [node]
-           (h/property-map node))
+    (def guide-md-filepath "src/noon/doc/guide.md")
 
-         (def guide-md-filepath "src/noon/doc/guide.md")
+    (defn md-str->noon-client-hiccup [md-str]
+      (let [with-h-index (map (fn [[k content :as elem]] (if (and (string? k) (re-matches #"h[1-9]" k))
+                                                           [(Integer/parseInt (subs k 1 2))
+                                                            content]
+                                                           elem))
+                              (h/markdown->hiccup md-str))
+            group-sections (fn self [elems]
+                             (if-let [[[h & _ :as x] & xs] (seq elems)]
+                               (cond
+                                 (int? h) (let [take? (fn [[k]] (or (not (int? k)) (< h k)))
+                                                content (take-while take? xs)
+                                                remaining (drop-while take? xs)]
+                                            (cons (concat (list '$ 'noon.client.ui/section
+                                                                {:level h :title (first (self [(first (second x))]))})
+                                                          (self content))
+                                                  (self remaining)))
 
-         (defn md-str->noon-client-hiccup [md-str]
-           (let [with-h-index (map (fn [[k content :as elem]] (if (and (string? k) (re-matches #"h[1-9]" k))
-                                                                [(Integer/parseInt (subs k 1 2))
-                                                                 content]
-                                                                elem))
-                                   (h/markdown->hiccup md-str))
-                 group-sections (fn self [elems]
-                                  (if-let [[[h & _ :as x] & xs] (seq elems)]
-                                    (cond
-                                      (int? h) (let [take? (fn [[k]] (or (not (int? k)) (< h k)))
-                                                     content (take-while take? xs)
-                                                     remaining (drop-while take? xs)]
-                                                 (cons (concat (list '$ 'noon.client.ui/section
-                                                                     {:level h :title (first (self [(first (second x))]))})
-                                                               (self content))
-                                                       (self remaining)))
+                                 (= :pre h) (cons (list '$ 'noon.client.ui/code-editor {:source (str/trim (second (second x)))})
+                                                  (self xs))
 
-                                      (= :pre h) (cons (list '$ 'noon.client.ui/code-editor {:source (str/trim (second (second x)))})
-                                                       (self xs))
+                                 (seq? (second x)) (cons (concat (list '$ h) (self (second x)))
+                                                         (self xs))
+                                 (seq? (nth x 2 nil)) (cons (concat (list '$ h (second x))
+                                                                    (self (nth x 2)))
+                                                            (self xs))
+                                 (vector? x) (cons (cons '$ x) (self xs))
+                                 :else (cons x (self xs)))
+                               ()))]
+        (vec (group-sections with-h-index))))
 
-                                      (seq? (second x)) (cons (concat (list '$ h) (self (second x)))
-                                                              (self xs))
-                                      (seq? (nth x 2 nil)) (cons (concat (list '$ h (second x))
-                                                                         (self (nth x 2)))
-                                                                 (self xs))
-                                      (vector? x) (cons (cons '$ x) (self xs))
-                                      :else (cons x (self xs)))
-                                    ()))]
-             (vec (group-sections with-h-index))))
+    (md-str->noon-client-hiccup (slurp "src/noon/doc/guide.md"))
 
-         (md-str->noon-client-hiccup (slurp "src/noon/doc/guide.md"))
-
-         (defn create-client-guide-ns []
-           (spit "client/noon/client/guide.cljs"
-                 (str "(ns noon.client.guide (:require [noon.client.ui] [uix.core :refer [$ defui]]))\n\n"
-                      "(defui guide [_]\n  "
-                      (seq (first (md-str->noon-client-hiccup (slurp guide-md-filepath))))
-                      ")"))))
+    (defn create-client-guide-ns []
+      (spit "client/noon/client/guide.cljs"
+            (str "(ns noon.client.guide (:require [noon.client.ui] [uix.core :refer [$ defui]]))\n\n"
+                 "(defui guide [_]\n  "
+                 (seq (first (md-str->noon-client-hiccup (slurp guide-md-filepath))))
+                 ")"))))
