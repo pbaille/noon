@@ -315,6 +315,9 @@
          (defmethod h/node-properties org.commonmark.node.IndentedCodeBlock [node]
            (h/property-map node))
 
+         (defmethod h/node-properties org.commonmark.node.Code [node]
+           (h/property-map node))
+
          (def guide-md-filepath "src/noon/doc/guide.md")
 
          (defn md-str->noon-client-hiccup [md-str]

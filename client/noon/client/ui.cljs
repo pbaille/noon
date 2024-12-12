@@ -7,8 +7,7 @@
             ["react-icons/vsc" :as icons]))
 
 
-(defui code-editor [{:keys [source
-                            resume-audio-ct]}]
+(defui code-editor [{:keys [source]}]
   (let [[source set-source] (uix/use-state source)
         [return set-return] (uix/use-state nil)
         color :light-skyblue]
