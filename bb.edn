@@ -1,6 +1,5 @@
 {:paths ["scripts"]
- :deps {zprint/zprint {:mvn/version "1.2.9"}
-        commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}
+ :deps {zprint/zprint {:mvn/version "1.2.9"}}
  :tasks {zprint {:requires ([zprint.main]),
                  :task (apply zprint.main/-main *command-line-args*)}
 
@@ -8,8 +7,6 @@
                                :task (org-utils/build-examples-tests)}
          build-clj-guide {:requires ([org-utils]),
                           :task (org-utils/build-clj-guide)}
-         create-client-guide-ns {:requires ([org-utils]),
-                                 :task (org-utils/create-client-guide-ns)}
          build-clj-examples {:requires ([org-utils]),
                              :task (org-utils/build-clj-examples)}
          build-all {:requires ([org-utils]),

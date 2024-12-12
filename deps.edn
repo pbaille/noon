@@ -10,8 +10,7 @@
         instaparse/instaparse {:mvn/version "1.5.0"}
         clj-http/clj-http {:mvn/version "3.13.0"}
         ;; should be moved to dev
-        zprint/zprint {:mvn/version "1.2.9"}
-        commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}
+        zprint/zprint {:mvn/version "1.2.9"}}
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
           :ns-default build}
@@ -35,4 +34,9 @@
                                  :sha "da6897812fb944d0402e31343da21a7af408f58d"}
                         com.pitch/uix.core {:mvn/version "1.2.0"}
                         com.pitch/uix.dom {:mvn/version "1.2.0"}
-                        org.babashka/sci {:mvn/version "0.9.44"}}}}}
+                        org.babashka/sci {:mvn/version "0.9.44"}}}
+
+  ;; building noon.client.guide.cljs file
+  :create-client-guide-ns {:extra-paths ["scripts"]
+                           :extra-deps {commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}
+                           :exec-fn create-client-guide-ns/create-client-guide-ns}}}
