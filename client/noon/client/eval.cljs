@@ -14,13 +14,19 @@
 (def sci-ctx
   (sci/init
    {:namespaces {'user (merge (sci-namespace noon.updates)
-                              sci-macros/all)
-                 'output (ns-publics 'noon.output)
-                 'score (sci-namespace noon.score)
+                              sci-macros/all
+                              {'mk #'noon.score/mk})
+                 'noon.output (ns-publics 'noon.output)
+                 'noon.score (sci-namespace noon.score)
                  'h (sci-namespace noon.lib.harmony)
                  'm (sci-namespace noon.lib.melody)
                  'r (sci-namespace noon.lib.rythmn)
-                 'noon.utils.misc (ns-publics 'noon.utils.misc)}
+                 'noon.utils.misc (ns-publics 'noon.utils.misc)
+                 'events (ns-publics 'noon.events)
+                 'noon.midi (ns-publics 'noon.midi)
+                 'noon.vst.general-midi (ns-publics 'noon.vst.general-midi)
+                 'noon.constants (ns-publics 'noon.constants)
+                 'noon.utils.sequences (ns-publics 'noon.utils.sequences)}
     :bindings {}}))
 
 #_ (println sci-ctx)
