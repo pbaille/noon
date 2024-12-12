@@ -1,6 +1,5 @@
 (ns noon.client.sci-macros
-  (:require [noon.score :as score]
-            [noon.utils.misc :refer [t]]))
+  (:require [noon.utils.misc :refer [t]]))
 
 (defn sfn
   {:sci/macro true}
@@ -30,10 +29,16 @@
   {:sci/macro true}
   [_ _ expression]
   (let [sym (gensym)]
-    `(vary-meta ~(sfn nil nil sym `(score/update-score ~sym ~expression))
+    `(vary-meta ~(sfn nil nil sym `(noon.score/update-score ~sym ~expression))
                      assoc :non-deterministic true)))
+
+(defn play
+  {:sci/macro true}
+  [_ _ & xs]
+  `(noon.output/play-score (noon.score/mk ~@xs)))
 
 (def all
   {'sf_ #'sf_ 'sfn #'sfn
    'ef_ #'ef_ 'efn #'efn
-   '! #'!})
+   '! #'!
+   'play #'play})
