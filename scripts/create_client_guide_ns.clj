@@ -40,7 +40,7 @@
                            ()))]
     (vec (group-sections with-h-index))))
 
-(md-str->noon-client-hiccup (slurp "src/noon/doc/guide.md"))
+#_(md-str->noon-client-hiccup (slurp "src/noon/doc/guide.md"))
 
 (defn create-client-guide-ns [& _]
   (spit "client/noon/client/guide.cljs"
