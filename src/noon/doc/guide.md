@@ -431,7 +431,7 @@ all diatonic steps from `d21` to `d21-` are available.
     
         (play dur:4 (lin d0 d2- d1- d3- d2- d4- d3- d5- d4-)) ; same downward
     
-    By default, we are in the C major scale, but of course it can be changed. (see [Harmony](#org89d5cf8) section)
+    By default, we are in the C major scale, but of course it can be changed. (see [Harmony](#org1f0f3a7) section)
     
     As a quick example, pretty self explanatory (but explained in more details later).
     
@@ -1230,27 +1230,27 @@ You can clearly hear the similarity between those
 
 :docstring
 
-changing the melodic contour of a score.
-
-forms:
-(contour :mirror <options>) : mirror the contour of the score.
-(contour :rotation <options>) : rotate the contour of the score.
-(contour :similar <options>) : get a different score with the same contour.
-
-<options>
-a map that may contain some of those keys:
-
-:layer : (all commands, default to score&rsquo;s lowest harmonic layer)
-    The harmonic layer on which the contour transformation is performed
-
-:pick | :nth : (:rotation and :similar commands, default to :random)
-    A &rsquo;member-pick (see \`member function) to select one particular outcome.
-
-:extent : (:similar command only)
-    A vector of min and max amount of deformation that we want to apply to the score.
-
-:delta : (:similar command only)
-    The amount of shrinking or growing we want to apply to the score.
+> changing the melodic contour of a score.
+> 
+> forms:
+> (contour :mirror <options>) : mirror the contour of the score.
+> (contour :rotation <options>) : rotate the contour of the score.
+> (contour :similar <options>) : get a different score with the same contour.
+> 
+> <options>
+> a map that may contain some of those keys:
+> 
+> :layer : (all commands, default to score&rsquo;s lowest harmonic layer)
+>     The harmonic layer on which the contour transformation is performed
+> 
+> :pick | :nth : (:rotation and :similar commands, default to :random)
+>     A &rsquo;member-pick (see \`member function) to select one particular outcome.
+> 
+> :extent : (:similar command only)
+>     A vector of min and max amount of deformation that we want to apply to the score.
+> 
+> :delta : (:similar command only)
+>     The amount of shrinking or growing we want to apply to the score.
 
 
 ##### Demo

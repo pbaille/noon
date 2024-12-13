@@ -1552,7 +1552,8 @@ You can clearly hear the similarity between those
 
 :docstring
 
-        changing the melodic contour of a score.
+#+begin_quote
+changing the melodic contour of a score.
 
         forms:
         (contour :mirror <options>) : mirror the contour of the score.
@@ -1573,6 +1574,7 @@ You can clearly hear the similarity between those
 
         :delta : (:similar command only)
             The amount of shrinking or growing we want to apply to the score.
+#+end_quote
 
 ***** Demo
 
