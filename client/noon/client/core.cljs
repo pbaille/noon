@@ -1,10 +1,10 @@
 (ns noon.client.core
   (:require [noon.client.ui :as ui]
             [uix.core :refer [$]]
+            [uic.component :refer [sc]]
             [uix.dom]
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]
-            [noon.client.examples :as ex]
             [noon.client.guide :as guide]))
 
 (def ^:export audio-ctx (new js/AudioContext))
@@ -13,15 +13,9 @@
 
 (defn render []
   (uix.dom/render-root
-   ($ :div
-      ($ guide/guide)
-      (map (fn [[k code]]
-             ($ :div
-                {:key k}
-                ($ :h2 (name k))
-                ($ ui/code-editor
-                   {:source code :resume-audio-ctx (fn [_] (.resume audio-ctx))})))
-           ex/examples))
+   (sc {:p 2
+        :text [:sans {:leading :normal}]}
+       ($ guide/guide))
    root))
 
 (defn ^:dev/after-load reload []
