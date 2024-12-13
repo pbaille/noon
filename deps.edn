@@ -31,7 +31,7 @@
                         stylefy/generic-dom {:mvn/version "3.0.0"}
                         uic/uic {#_:local/root #_"/Users/pierrebaille/Code/WIP/uic"
                                  :git/url "https://github.com/pbaille/uic.git"
-                                 :sha "da6897812fb944d0402e31343da21a7af408f58d"}
+                                 :sha "3bea9d982ed2aeee17fb33a19bc0ae9d0e000f15"}
                         com.pitch/uix.core {:mvn/version "1.2.0"}
                         com.pitch/uix.dom {:mvn/version "1.2.0"}
                         org.babashka/sci {:mvn/version "0.9.44"}}}
