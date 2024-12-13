@@ -3,6 +3,8 @@
             [uix.core :as uix :refer [defui]]
             [uic.component :refer [c sc]]
             [noon.client.examples :as ex]
+            [noon.utils.misc :as u]
+            [clojure.string :as str]
             ["react" :as react]
             ["@uiw/react-codemirror" :default CodeMirror]
             ["@nextjournal/lang-clojure" :refer [clojure]]
@@ -41,12 +43,12 @@
               :on-click (fn [_] (set-return (eval/sci-eval source)))}
              (c icons-vsc/VscDebugLineByLine)))
        (when return
-         (sc {:bg {:color (if (:error return) [:red {:a 0.2}] [color {:a 0.2}])}
+         (sc {:bg {:color (if (:error return) [:red {:a 0.1}] [color {:a 0.1}])}
               :border [2 [color {:a 0.2}]]
               :p [0.3 0.7]}
              (c CodeMirror
-                {:value (str (or (:error return)
-                                 (:result return)))
+                {:value (str/trim (u/pretty-str (or (some-> return :error .-message)
+                                                    (:result return))))
                  :editable false
                  :extensions #js [(clojure)]
                  :basic-setup #js {:lineNumbers false

@@ -14,8 +14,10 @@
 (defn render []
   (uix.dom/render-root
    (sc {:p 2
-        :text [:sans {:leading :normal}]}
+        :text [:sans {:leading :normal}]
+        ".cm-editor" {:bg {:color "transparent"}}}
        ($ guide/guide))
+   #_($ ui/examples)
    root))
 
 (defn ^:dev/after-load reload []

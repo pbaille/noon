@@ -22,7 +22,11 @@
                  'm (sci-namespace noon.lib.melody)
                  'r (sci-namespace noon.lib.rythmn)
                  'noon.utils.misc (ns-publics 'noon.utils.misc)
-                 'events (ns-publics 'noon.events)
+                 'noon.updates (ns-publics 'noon.updates)
+                 'noon.events (merge (ns-publics 'noon.events)
+                                ;; simple defs are exposed as dereferenceable objects
+                                ;; instead of simple values, hardcode this for now...
+                                {'DEFAULT_EVENT noon.events/DEFAULT_EVENT})
                  'noon.midi (ns-publics 'noon.midi)
                  'noon.vst.general-midi (ns-publics 'noon.vst.general-midi)
                  'noon.constants (ns-publics 'noon.constants)
