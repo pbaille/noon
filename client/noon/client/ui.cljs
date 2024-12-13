@@ -7,7 +7,8 @@
             ["@uiw/react-codemirror" :default CodeMirror]
             ["@nextjournal/lang-clojure" :refer [clojure]]
             ["react-icons/vsc" :as icons-vsc]
-            ["react-icons/tb" :as icons-tb]))
+            ["react-icons/tb" :as icons-tb]
+            ["react-icons/lu" :refer [LuSquarePlus LuSquareMinus LuAlignJustify LuChevronsDown LuSquareMenu]]))
 
 
 (defui code-editor [{:keys [source]}]
@@ -52,49 +53,62 @@
                                    :foldGutter false
                                    :highlightActiveLine false}}))))))
 
-(defui section [{:keys [folded level title children]}]
-  (let [[is-folded set-folded] (uix/use-state folded)
-        [semi-folded set-semi-folded] (uix/use-state false)
+(defn with-extra-props [component extra-props]
+  (uix/$ (.-type component)
+         (merge (js->clj (.-argv (.-props component)))
+                extra-props)
+         (.-children (.-props component))))
 
-        header (case level
-                 1 :h1
-                 2 :h2
-                 :h3)]
-    (uix/use-effect (fn [] (set-folded folded))
-                    [folded])
+(defui section
+  [{:keys [level title children]
+    visibility-prop :visibility}]
+
+  (let [[visibility set-visibility] (uix/use-state :expanded)
+        header (case level 1 :h1 2 :h2 :h3)
+
+        button-style {:text [:md :bold]
+                      :color :grey3
+                      :hover {:color :tomato}}
+
+        [left-button right-button]
+        (case visibility
+          :summary [(c LuSquareMinus
+                       {:on-click (fn [_] (set-visibility :folded))})
+                    (c LuSquarePlus
+                       {:on-click (fn [_] (set-visibility :expanded))})]
+          :folded [(c LuSquareMenu
+                      {:on-click (fn [_] (set-visibility :summary))})
+                   (c LuSquarePlus
+                      {:on-click (fn [_] (set-visibility :expanded))})]
+          :expanded [(c LuSquareMenu
+                        {:on-click (fn [_] (set-visibility :summary))})
+                     (c LuSquareMinus
+                        {:on-click (fn [_] (set-visibility :folded))})]
+          (println visibility))]
+
+    (uix/use-effect #(set-visibility (or visibility-prop :expanded))
+                    [visibility-prop])
+
     (c :div.section
+
        (c header
           {:style {:flex [:start {:items :baseline :gap 1}]
                    :border {:bottom [2 :grey1]}
                    :p {:bottom 1}}}
-          (sc {:text [:lg :bold]
-               :color :grey3
-               :hover {:color :tomato}}
-              (if is-folded
-                (c icons-tb/TbSquareChevronDownFilled
-                   {:on-click (fn [_] (set-folded false))})
-                (c icons-tb/TbSquareChevronUpFilled
-                   {:on-click (fn [_] (set-folded true))})))
+          (sc button-style left-button)
           title
-          (sc {:text [:lg :bold]
-               :color :grey3
-               :hover {:color :tomato}}
-              (if semi-folded
-                (c icons-tb/TbSquareChevronDownFilled
-                   {:on-click (fn [_] (set-semi-folded false))})
-                (c icons-tb/TbSquareChevronUpFilled
-                   {:on-click (fn [_] (set-semi-folded true))}))))
+          (sc button-style right-button))
+
        (c :div
-          {:style {:display (if is-folded :none :block)
+          {:style {:display (if (= :folded visibility) :none :block)
                    :p [0 0 0 2]}}
-          (react/Children.map children
-                              (fn [c]
-                                (if (and semi-folded (= section (.-type c)))
-                                  (uix/$ section
-                                         (assoc (js->clj (.-argv (.-props c)))
-                                                :folded true)
-                                         (.-children (.-props c)))
-                                  c)))))))
+
+          (-> children
+              (react/Children.map
+               (fn [c]
+                 (if (and (= :summary visibility) (= section (.-type c)))
+                   (with-extra-props c {:visibility :folded})
+                   c))))))))
 
 (defui examples [{}]
   (c (map (fn [[k code]]
