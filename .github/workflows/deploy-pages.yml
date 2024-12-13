@@ -51,7 +51,7 @@ jobs:
       - name: install pandoc
         uses: docker://pandoc/core:3.5
         with:
-          args: "-f org -t gfm --atx-headers <(printf "#+OPTIONS: H:9") -o src/noon/doc/guide.md src/noon/doc/guide.org"
+          args: "-f org -t gfm -o src/noon/doc/guide.md src/noon/doc/guide.org"
 
       # - name: Install Emacs
       #   uses: purcell/setup-emacs@master

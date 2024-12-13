@@ -1,3 +1,5 @@
+#+OPTIONS: H:9
+
 * Noon
 
 Noon is a clojure library that helps with *musical composition and exploration*.
