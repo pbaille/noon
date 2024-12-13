@@ -3,7 +3,7 @@
             [uix.core :as uix :refer [defui]]
             [uic.component :refer [c sc]]
             [noon.client.examples :as ex]
-            #_["react" :as react]
+            ["react" :as react]
             ["@uiw/react-codemirror" :default CodeMirror]
             ["@nextjournal/lang-clojure" :refer [clojure]]
             ["react-icons/vsc" :as icons-vsc]
@@ -52,12 +52,16 @@
                                    :foldGutter false
                                    :highlightActiveLine false}}))))))
 
-(defui section [{:keys [level title children]}]
-  (let [[folded set-folded] (uix/use-state false)
+(defui section [{:keys [folded level title children]}]
+  (let [[is-folded set-folded] (uix/use-state folded)
+        [semi-folded set-semi-folded] (uix/use-state false)
+
         header (case level
                  1 :h1
                  2 :h2
                  :h3)]
+    (uix/use-effect (fn [] (set-folded folded))
+                    [folded])
     (c :div.section
        (c header
           {:style {:flex [:start {:items :baseline :gap 1}]
@@ -66,16 +70,31 @@
           (sc {:text [:lg :bold]
                :color :grey3
                :hover {:color :tomato}}
-              (if folded
+              (if is-folded
                 (c icons-tb/TbSquareChevronDownFilled
                    {:on-click (fn [_] (set-folded false))})
                 (c icons-tb/TbSquareChevronUpFilled
                    {:on-click (fn [_] (set-folded true))})))
-          title)
+          title
+          (sc {:text [:lg :bold]
+               :color :grey3
+               :hover {:color :tomato}}
+              (if semi-folded
+                (c icons-tb/TbSquareChevronDownFilled
+                   {:on-click (fn [_] (set-semi-folded false))})
+                (c icons-tb/TbSquareChevronUpFilled
+                   {:on-click (fn [_] (set-semi-folded true))}))))
        (c :div
-          {:style {:display (if folded :none :block)
+          {:style {:display (if is-folded :none :block)
                    :p [0 0 0 2]}}
-          children))))
+          (react/Children.map children
+                              (fn [c]
+                                (if (and semi-folded (= section (.-type c)))
+                                  (uix/$ section
+                                         (assoc (js->clj (.-argv (.-props c)))
+                                                :folded true)
+                                         (.-children (.-props c)))
+                                  c)))))))
 
 (defui examples [{}]
   (c (map (fn [[k code]]
