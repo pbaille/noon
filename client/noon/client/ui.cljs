@@ -80,10 +80,10 @@
                       {:on-click (fn [_] (set-visibility :summary))})
                    (c LuSquarePlus
                       {:on-click (fn [_] (set-visibility :expanded))})]
-          :expanded [(c LuSquareMenu
-                        {:on-click (fn [_] (set-visibility :summary))})
-                     (c LuSquareMinus
-                        {:on-click (fn [_] (set-visibility :folded))})]
+          :expanded [(c LuSquareMinus
+                        {:on-click (fn [_] (set-visibility :folded))})
+                     (c LuSquareMenu
+                        {:on-click (fn [_] (set-visibility :summary))})]
           (println visibility))]
 
     (uix/use-effect #(set-visibility (or visibility-prop :expanded))
