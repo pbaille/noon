@@ -24,7 +24,7 @@ Leveraging clojure and functional programming powers in order to *generate, mani
    [noon.lib.rythmn :as r]
 
    ;; extra deps (for low level explanations)
-   [noon.events :as events]
+   [noon.events]
    [noon.midi]
    [noon.vst.general-midi]
    [noon.constants]
@@ -74,7 +74,7 @@ It can represent any MIDI event, a note, a control change etc...
 It is represented using a clojure map
 
 #+begin_src clojure :pp
-events/DEFAULT_EVENT
+noon.events/DEFAULT_EVENT
 #+end_src
 
 **** Score
@@ -1106,7 +1106,7 @@ The harmonic context can be found under the :pitch key of any event.
 
 #+begin_src clojure :pp
 (=
- (:pitch events/DEFAULT_EVENT)
+ (:pitch noon.events/DEFAULT_EVENT)
  {:scale [0 2 4 5 7 9 11],
   :structure [0 2 4],
   :origin {:d 35, :c 60},
