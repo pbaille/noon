@@ -7,8 +7,6 @@
             [stylefy.generic-dom :as gdom]
             [noon.client.guide :as guide]))
 
-(def ^:export audio-ctx (new js/AudioContext))
-
 (defonce root (uix.dom/create-root (js/document.getElementById "app")))
 
 (defn render []
@@ -30,11 +28,9 @@
    root))
 
 (defn ^:dev/after-load reload []
-  (.resume audio-ctx)
   (render))
 
 (defn ^:export init []
   (stylefy/init {:dom (gdom/init)})
-  (.resume audio-ctx)
-  #_(println guide/guide)
+  #_ (println guide/guide)
   (render))
