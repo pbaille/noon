@@ -8,8 +8,11 @@
    [noon.lib.rythmn]
    [noon.utils.misc]
    [sci.core :as sci]
-   [noon.client.sci-macros])
+   [noon.client.sci-macros]
+   ["tone" :as Tone])
   (:require-macros [noon.client.eval :refer [sci-namespace]]))
+
+(defn get-audio-ctx [] (.-_context (.-context Tone)))
 
 (def sci-ctx
   (sci/init
@@ -24,9 +27,9 @@
                  'noon.utils.misc (ns-publics 'noon.utils.misc)
                  'noon.updates (ns-publics 'noon.updates)
                  'noon.events (merge (ns-publics 'noon.events)
-                                ;; simple defs are exposed as dereferenceable objects
-                                ;; instead of simple values, hardcode this for now...
-                                {'DEFAULT_EVENT noon.events/DEFAULT_EVENT})
+                                     ;; simple defs are exposed as dereferenceable objects
+                                     ;; instead of simple values, hardcode this for now...
+                                     {'DEFAULT_EVENT noon.events/DEFAULT_EVENT})
                  'noon.midi (ns-publics 'noon.midi)
                  'noon.vst.general-midi (ns-publics 'noon.vst.general-midi)
                  'noon.constants (ns-publics 'noon.constants)
@@ -36,10 +39,14 @@
 #_ (println sci-ctx)
 (defn sci-eval [x]
   #_(println sci-ctx)
+  (.resume (get-audio-ctx))
   (let [evaluation (try {:result (sci/eval-string* sci-ctx x)}
                         (catch js/Error e {:error e}))]
     (println (assoc evaluation :form x))
     evaluation))
+
+(defn stop-audio []
+  (.suspend (get-audio-ctx)))
 
 (comment
   (println "ui")
