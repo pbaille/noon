@@ -47,26 +47,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-
-      - name: install pandoc
+      - name: convert guide.org to md
         uses: docker://pandoc/core:3.5
         with:
           args: "-f org -t gfm -o src/noon/doc/guide.md src/noon/doc/guide.org"
-
-      # - name: Install Emacs
-      #   uses: purcell/setup-emacs@master
-      #   with:
-      #      version: 29.3
-
-      # - name: Convert Org to Markdown
-      #   run: |
-      #     emacs -Q --batch \
-      #       --eval "(require 'org)" \
-      #       --eval "(require 'ox-md)" \
-      #       --eval "(setq org-export-with-broken-links t org-export-with-toc nil org-md-headline-style 'atx org-export-headline-levels 10)" \
-      #       --find-file src/noon/doc/guide.org \
-      #       --eval '(org-md-export-to-markdown)' \
-      #       --kill
 
       - name: Build noon.client.guide namespace
         run: clojure -X:create-client-guide-ns
