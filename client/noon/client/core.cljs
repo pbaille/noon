@@ -15,7 +15,12 @@
   (uix.dom/render-root
    (sc {:p 2
         :text [:sans {:leading :normal}]
-        ".cm-editor" {:bg {:color "transparent"}}}
+        ".cm-editor" {:bg {:color "transparent"}}
+        "code" {:bg {:color [:gray {:a 0.1}]}
+                :color [:black {:a 0.8}]
+                :p [1 0.5]
+                :text :bold
+                :rounded 1}}
        ($ guide/guide))
    #_($ ui/examples)
    root))

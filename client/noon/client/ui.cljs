@@ -16,73 +16,83 @@
 (defui snippet-runner [{:keys [source]}]
   (let [[return set-return] (uix/use-state nil)
         color :light-skyblue]
-    (c (sc {:border [2 [color {:a 0.2}]]
-            :p 0 :flex [:row {:items :center}]
-            :m {:top 0.5}}
-           (c {:style {:flex :center
-                       :bg {:color [color {:a 0.2}]}
-                       :color color
-                       :p 1}
-              :on-click (fn [_] (set-return (eval/sci-eval source)))}
-             (c icons-vsc/VscDebugStart))
-           (c CodeMirror
-              {:value source
-               :editable false
-               :extensions #js [(clojure)]
-               :basic-setup #js {:lineNumbers false
-                                 :foldGutter false
-                                 :highlightActiveLine false}}))
-       (when return
-         (sc {:bg {:color (if (:error return) [:red {:a 0.1}] [color {:a 0.1}])}
-              :p [0.3 0.7]}
-             (c CodeMirror
-                {:value (str/trim (u/pretty-str (or (some-> return :error .-message)
-                                                    (:result return))))
-                 :editable false
-                 :extensions #js [(clojure)]
-                 :basic-setup #js {:lineNumbers false
-                                   :foldGutter false
-                                   :highlightActiveLine false}}))))))
+    (sc {:m [0 :1em]}
+        (sc {:border [2 [color {:a 0.2}]]
+             :p 0 :flex [:row {:items :center}]
+             }
+            (if return
+              (c {:style {:flex :center
+                          :bg {:color :white}
+                          :border {:right [2 [color {:a 0.2}]]}
+                          :color color
+                          :p 1}
+                  :on-click (fn [_] (set-return nil))}
+                 (c icons-vsc/VscChevronUp))
+              (c {:style {:flex :center
+                          :bg {:color [color {:a 0.2}]}
+                          :color color
+                          :p 1}
+                  :on-click (fn [_] (set-return (eval/sci-eval source)))}
+                 (c icons-vsc/VscDebugStart)))
+            (c CodeMirror
+               {:value source
+                :editable false
+                :extensions #js [(clojure)]
+                :basic-setup #js {:lineNumbers false
+                                  :foldGutter false
+                                  :highlightActiveLine false}}))
+        (when return
+          (sc {:bg {:color (if (:error return) [:red {:a 0.1}] [color {:a 0.1}])}
+               :p [0.3 0.7]}
+              (c CodeMirror
+                 {:value (str/trim (u/pretty-str (or (some-> return :error .-message)
+                                                     (:result return))))
+                  :editable false
+                  :extensions #js [(clojure)]
+                  :basic-setup #js {:lineNumbers false
+                                    :foldGutter false
+                                    :highlightActiveLine false}}))))))
 
 (defui code-editor [{:keys [source]}]
   (let [[source set-source] (uix/use-state source)
         [return set-return] (uix/use-state nil)
         color :light-skyblue]
-    (c (sc {:border [2 [color {:a 0.2}]]
-            :p [0.3 0.7]}
-           (c CodeMirror
-              {:value source
-               :on-change (fn [x] (set-source x))
-               :extensions #js [(clojure)]
-               :basic-setup #js {:lineNumbers false
-                                 :foldGutter false
-                                 :highlightActiveLine false}}))
-       (c {:style {:text :sm
-                   :color color
-                   :bg {:color [color {:a 0.2}]}
-                   :flex [:start {:justify :space-around :items :center}]}}
-          (c {:style {:flex :center :flexi [1 1 :auto] :p 1}
-              :on-click (fn [_] (println (eval/sci-eval source)))}
-             (c icons-vsc/VscDebugStart))
-          (c {:style {:flex :center
-                      :flexi [1 1 :auto]
-                      :bg {:color [color {:a 0.2}]}
-                      :color [color {:l 0.5}]
-                      :p 1}
-              :on-click (fn [_] (set-return (eval/sci-eval source)))}
-             (c icons-vsc/VscDebugLineByLine)))
-       (when return
-         (sc {:bg {:color (if (:error return) [:red {:a 0.1}] [color {:a 0.1}])}
-              :border [2 [color {:a 0.2}]]
-              :p [0.3 0.7]}
-             (c CodeMirror
-                {:value (str/trim (u/pretty-str (or (some-> return :error .-message)
-                                                    (:result return))))
-                 :editable false
-                 :extensions #js [(clojure)]
-                 :basic-setup #js {:lineNumbers false
-                                   :foldGutter false
-                                   :highlightActiveLine false}}))))))
+    (sc {:m [0 :1em]}
+        (sc {:border [2 [color {:a 0.2}]]
+             :p [0.3 0.7]}
+            (c CodeMirror
+               {:value source
+                :on-change (fn [x] (set-source x))
+                :extensions #js [(clojure)]
+                :basic-setup #js {:lineNumbers false
+                                  :foldGutter false
+                                  :highlightActiveLine false}}))
+        (c {:style {:text :sm
+                    :color color
+                    :bg {:color [color {:a 0.2}]}
+                    :flex [:start {:justify :space-around :items :center}]}}
+           (c {:style {:flex :center :flexi [1 1 :auto] :p 1}
+               :on-click (fn [_] (println (eval/sci-eval source)))}
+              (c icons-vsc/VscDebugStart))
+           (c {:style {:flex :center
+                       :flexi [1 1 :auto]
+                       :bg {:color [color {:a 0.2}]}
+                       :color [color {:l 0.5}]
+                       :p 1}
+               :on-click (fn [_] (set-return (eval/sci-eval source)))}
+              (c icons-vsc/VscDebugLineByLine)))
+        (when return
+          (sc {:bg {:color (if (:error return) [:red {:a 0.1}] [color {:a 0.1}])}
+               :border [2 [color {:a 0.2}]]
+               :p [0.3 0.7]}
+              (c CodeMirror
+                 {:value (str/trim (u/pretty-str (or (some-> return :error .-message)
+                                                     (:result return))))
+                  :editable false
+                  :extensions #js [(clojure)]
+                  :basic-setup #js {:lineNumbers false
+                                    :foldGutter false
+                                    :highlightActiveLine false}}))))))
 
 (defn with-extra-props [component extra-props]
   (uix/$ (.-type component)
