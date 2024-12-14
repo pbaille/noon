@@ -3,16 +3,14 @@
    [noon.score]
    [noon.updates]
    [noon.output]
+   [noon.midi]
    [noon.lib.harmony]
    [noon.lib.melody]
    [noon.lib.rythmn]
    [noon.utils.misc]
    [sci.core :as sci]
-   [noon.client.sci-macros]
-   ["tone" :as Tone])
+   [noon.client.sci-macros])
   (:require-macros [noon.client.eval :refer [sci-namespace]]))
-
-(defn get-audio-ctx [] (.-_context (.-context Tone)))
 
 (def sci-ctx
   (sci/init
@@ -39,14 +37,14 @@
 #_ (println sci-ctx)
 (defn sci-eval [x]
   #_(println sci-ctx)
-  (.resume (get-audio-ctx))
+  #_(.resume (get-audio-ctx))
   (let [evaluation (try {:result (sci/eval-string* sci-ctx x)}
                         (catch js/Error e {:error e}))]
     (println (assoc evaluation :form x))
     evaluation))
 
 (defn stop-audio []
-  (.suspend (get-audio-ctx)))
+  (noon.midi/stop-midi))
 
 (comment
   (println "ui")
