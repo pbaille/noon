@@ -24,3 +24,4 @@ vsl/*
 /.shadow-cljs/
 /public/js/*
 /client/noon/client/user.cljs
+/src/noon/doc/guide.md

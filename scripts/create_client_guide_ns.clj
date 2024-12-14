@@ -27,10 +27,16 @@
                                                       (self content))
                                               (self remaining)))
 
-                             (= :pre h) (let [[_ [_ props source]] x]
-                                          (cons (list '$ 'noon.client.ui/code-editor
-                                                      (merge props
-                                                             {:source (str/trim source)}))
+                             (= :pre h) (let [[_ [_ props source]] x
+                                              source (str/trim source)
+                                              multi-line? (boolean (next (str/split source #"\n")))]
+                                          (cons (if multi-line?
+                                                  (list '$ 'noon.client.ui/code-editor
+                                                        (merge props
+                                                               {:source source}))
+                                                  (list '$ 'noon.client.ui/snippet-runner
+                                                        (merge props
+                                                               {:source source})))
                                                 (self xs)))
 
                              (seq? (second x)) (cons (concat (list '$ h) (self (second x)))
