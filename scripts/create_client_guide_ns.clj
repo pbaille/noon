@@ -16,6 +16,11 @@
 
 (def guide-md-filepath "src/noon/doc/guide.md")
 
+(defn parse-deep-header [s]
+  (when (string? s)
+    (when-let [[_ hashes title] (re-matches #"^(#+) (.+)$" s)]
+     [(count hashes) title])))
+
 (defn md-str->noon-client-hiccup [md-str]
   (let [group-sections (fn self [elems]
                          (if-let [[[h props & _ :as x] & xs] (seq elems)]
@@ -40,6 +45,14 @@
                                                         (merge props
                                                                {:source source})))
                                                 (self xs)))
+
+                             ;; the commonmark parser starts emitting Paragraph Nodes when headings exceeds level 7
+                             ;; we take care of fixing this here
+                             (= :p h) (if-let [[level title] (parse-deep-header (first (second x)))]
+                                        (self (cons [:header {:level level :children (cons title (rest (second x)))}]
+                                                    xs))
+                                        (cons (concat (list '$ :p) (self (second x)))
+                                              (self xs)))
 
                              (seq? (second x)) (cons (concat (list '$ h) (self (second x)))
                                                      (self xs))
