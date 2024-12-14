@@ -42,7 +42,8 @@
   [_ _ opts score]
   `(do ~@(when (:play opts) [`(noon.output/play-score ~score)])
        ~@(when-let [unsupported-keys (seq (keys (dissoc opts :play)))]
-           [`(throw (js/Error. ~(str "Not supported noon options: " unsupported-keys)))])))
+           [`(throw (js/Error. ~(str "Those options are not supported inside web brower:  "
+                                     (apply str (interpose ", " unsupported-keys)))))])))
 
 #_(def all
   {'sf_ #'sf_ 'sfn #'sfn
