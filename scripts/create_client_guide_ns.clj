@@ -2,7 +2,7 @@
   (:require [commonmark-hiccup.core :as h]
             [clojure.string :as str]))
 
-(defmethod h/node-properties org.commonmark.node.IndentedCodeBlock [node]
+(defmethod h/node-properties org.commonmark.node.FencedCodeBlock [node]
   (h/property-map node))
 
 (defmethod h/node-properties org.commonmark.node.Code [node]
@@ -27,8 +27,11 @@
                                                       (self content))
                                               (self remaining)))
 
-                             (= :pre h) (cons (list '$ 'noon.client.ui/code-editor {:source (str/trim (second (second x)))})
-                                              (self xs))
+                             (= :pre h) (let [[_ [_ props source]] x]
+                                          (cons (list '$ 'noon.client.ui/code-editor
+                                                      (merge props
+                                                             {:source (str/trim source)}))
+                                                (self xs)))
 
                              (seq? (second x)) (cons (concat (list '$ h) (self (second x)))
                                                      (self xs))
