@@ -36,15 +36,10 @@
                                                    (self remaining)))
 
                              (= :pre h) (let [[_ [_ props source]] x
-                                              source (str/trim source)
-                                              multi-line? (boolean (next (str/split source #"\n")))]
-                                          (cons (if multi-line?
-                                                  (list '$ 'noon.client.ui/code-editor
-                                                        (merge props
-                                                               {:source source}))
-                                                  (list '$ 'noon.client.ui/snippet-runner
-                                                        (merge props
-                                                               {:source source})))
+                                              source (str/trim source)]
+                                          (cons (list '$ 'noon.client.ui/code-editor
+                                                      (merge props
+                                                             {:source source}))
                                                 (self xs)))
 
                              ;; the commonmark parser starts emitting Paragraph Nodes when headings exceeds level 7
