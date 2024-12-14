@@ -1,6 +1,7 @@
 (ns create-client-guide-ns
   (:require [commonmark-hiccup.core :as h]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.java.shell :as shell]))
 
 (defmethod h/node-properties org.commonmark.node.FencedCodeBlock [node]
   (h/property-map node))
@@ -72,3 +73,7 @@
              "(defui guide [_]\n  "
              (seq (first (md-str->noon-client-hiccup (slurp guide-md-filepath))))
              ")")))
+
+(comment
+  (shell/sh "pandoc" "-f" "org" "-t" "gfm" "-o" "src/noon/doc/guide.md" "src/noon/doc/guide.org")
+  (create-client-guide-ns))
