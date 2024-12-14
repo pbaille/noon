@@ -21,24 +21,27 @@
 
 (do :midi
 
-    #_(.resume (new js/AudioContext))
-
     ;; when playing some midi we get back a stop function,
     ;; all those functions are kept here in order to be able to stop all playing instruments.
     (def stop-fns* (atom []))
+    (def playing* (atom false))
 
     (defn get-instrument [instrument-name]
       (.-load (Soundfont. (.-_context (.-context Tone))
-                          #js {:instrument instrument-name #_:kit #_"FluidR3_GM"})))
+                          #js {:instrument instrument-name
+                               #_:kit #_"FluidR3_GM"})))
 
     (defn stop-midi []
       (println "stopping midi")
       #_(.stop Tone/Transport (.now Tone))
-      (doseq [f @stop-fns*] (f)))
+      (doseq [f @stop-fns*] (f))
+      (reset! playing* false))
 
     (defn play [noon-data]
+      (stop-midi)
       #_(println "playing js " noon-data)
       #_(js/console.log Tone)
+      (reset! playing* true)
       (let [patch->events (group-by :patch noon-data)]
         (-> (js/Promise.all
              (mapv (fn [[[_bank instrument] events]]
@@ -49,16 +52,26 @@
                    patch->events))
             (.then (fn [xs]
                      #_(js/console.log "instruments " xs)
-                     (let [t0 (.now Tone)]
-                       (mapv (fn [[instrument events]]
-                               (doseq [{:as _note :keys [channel pitch velocity duration position]} events]
-                                 (.start instrument
-                                         #js {:channel channel
-                                              :note pitch
-                                              :velocity velocity
-                                              :duration duration
-                                              :time (+ t0 position)})))
-                             xs)
+                     (let [t0 (.now Tone)
+                           time-until-end
+                           (reduce (fn [end-pos [instrument events]]
+                                     (reduce (fn [end-pos {:as _note :keys [channel pitch velocity duration position]}]
+
+                                               (.start instrument
+                                                       #js {:channel channel
+                                                            :note pitch
+                                                            :velocity velocity
+                                                            :duration duration
+                                                            :time (+ t0 position)})
+                                               (max (+ position duration) end-pos))
+                                             end-pos
+                                             events))
+                                   0 xs)]
+
+                       (println time-until-end)
+
+                       (js/setTimeout (fn [] #_(println "done playing") (reset! playing* false))
+                                      (* 1000 time-until-end))
                        {:stop (fn [] (doseq [[i _] xs] (.stop i)))
                         :started (.start Tone/Transport)})))
             (.then (fn [{:keys [stop]}]
