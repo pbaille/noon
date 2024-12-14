@@ -20,7 +20,11 @@
                 :color [:black {:a 0.8}]
                 :p [1 0.5]
                 :text :bold
-                :rounded 1}}
+                :rounded 1}
+        ".cm-editor.cm-focused" {:border {:width 0}
+                                 :outline :none
+                                 :box-shadow :none}
+        }
        ($ guide/guide))
    #_($ ui/examples)
    root))
