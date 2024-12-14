@@ -9,6 +9,7 @@
    [noon.lib.rythmn]
    [noon.utils.misc]
    [sci.core :as sci]
+   [sci.async :as scia]
    [noon.client.sci-macros])
   (:require-macros [noon.client.eval :refer [sci-namespace]]))
 
@@ -38,10 +39,19 @@
 (defn sci-eval [x]
   #_(println sci-ctx)
   #_(.resume (get-audio-ctx))
+  ()
   (let [evaluation (try {:result (sci/eval-string* sci-ctx x)}
                         (catch js/Error e {:error e}))]
     (println (assoc evaluation :form x))
     evaluation))
+
+(defn sci-eval-async [x on-success & [on-failure]]
+  #_(println sci-ctx)
+  #_(.resume (get-audio-ctx))
+  (.then (scia/eval-string* sci-ctx x)
+         (fn [ret] (on-success {:result ret}))
+         (fn [err] ((or on-failure
+                        on-success) {:error err}))))
 
 (defn stop-audio []
   (noon.midi/stop-midi))
