@@ -23,8 +23,8 @@
                                  :outline :none
                                  :box-shadow :none}
         }
-       ($ guide/guide)
-       #_($ ui/examples))
+       #_($ guide/guide)
+       ($ ui/examples))
    root))
 
 (defn ^:dev/after-load reload []

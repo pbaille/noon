@@ -3,9 +3,7 @@
             [noon.score :as score]))
 
 (def examples
-  {:trivial (u/source-str (tup s0 s1 s2))
-
-   :debug (u/source-str (sf_ (merge _ _)))
+  {:trivial (u/source-str (play (tup s0 s1 s2)))
 
    :complex-tritonal
    (u/source-str (play (let [I (one-of [lydian+ (structure [2 3 4 5 6])] [melodic-minor (structure [1 2 4 5 6])])
