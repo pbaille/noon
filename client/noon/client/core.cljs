@@ -22,9 +22,10 @@
         ".cm-editor.cm-focused" {:border {:width 0}
                                  :outline :none
                                  :box-shadow :none}
+        :margin {:bottom "100vh"}
         }
-       #_($ guide/guide)
-       ($ ui/examples))
+       ($ guide/guide)
+       #_($ ui/examples))
    root))
 
 (defn ^:dev/after-load reload []
