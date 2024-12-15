@@ -50,7 +50,7 @@
    (u/source-str (play
                   (let [decorate (sf_ (let [sorted (sort-by :position _)]
                                         (reduce (fn [s [n1 n2]]
-                                                  (into s (score/update-score #{n1 n2} (maybe (m/connect 1)))))
+                                                  (into s (noon.score/update-score #{n1 n2} (maybe (m/connect 1)))))
                                                 #{(last sorted)} (partition 2 1 sorted))))]
                     [dur2
                      (lin (shuftup s0 s1 s2 s3)
@@ -59,8 +59,8 @@
                      (lin _ (s-shift 1) (s-shift -1) _)
                      (lin _ (s-shift 2))
                      (chans [(patch :ocarina) o1 (s-shift -1)]
-                            [(sf_ (score/shift-score _ 2))]
-                            [(patch :acoustic-bass) o2- (s-shift 1) (sf_ (score/shift-score _ 5))])
+                            [(sf_ (noon.score/shift-score _ 2))]
+                            [(patch :acoustic-bass) o2- (s-shift 1) (sf_ (noon.score/shift-score _ 5))])
                      (h/grid dur2
                              harmonic-minor
                              (lin I IV VII I [IV melodic-minor VII] IV [V harmonic-minor VII] VII)
