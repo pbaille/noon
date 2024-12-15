@@ -23,7 +23,7 @@
      [(count hashes) title])))
 
 (defn md-str->noon-client-hiccup [md-str]
-  (let [group-sections (fn self [elems]
+  (let [group-sections (fn self [at elems]
                          (if-let [[[h props & _ :as x] & xs] (seq elems)]
                            (cond
                              (= :header h) (let [take? (fn [[k props*]] (or (not (= :header k))
@@ -35,36 +35,40 @@
                                                                               [false title]
                                                                               [true (second title)])]
                                              (cons (concat (list '$ 'noon.client.ui/section
-                                                                 {:level h
+                                                                 {:id (str (conj at simple-title))
+                                                                  :level h
                                                                   :title simple-title
-                                                                  :inline-code inline-code})
-                                                           (self content))
-                                                   (self remaining)))
+                                                                  :inline-code inline-code
+                                                                  :path at
+                                                                  :has-subsections (boolean (some (fn [x] (and (vector? x) (= :header (first x))))
+                                                                                                  content))})
+                                                           (self (conj at simple-title) content))
+                                                   (self at remaining)))
 
                              (= :pre h) (let [[_ [_ props source]] x
                                               source (str/trim source)]
                                           (cons (list '$ 'noon.client.ui/code-editor
                                                       (merge props
                                                              {:source source}))
-                                                (self xs)))
+                                                (self at xs)))
 
                              ;; the commonmark parser starts emitting Paragraph Nodes when headings exceeds level 7
                              ;; we take care of fixing this here
                              (= :p h) (if-let [[level title] (parse-deep-header (first (second x)))]
-                                        (self (cons [:header {:level level :children (cons title (rest (second x)))}]
-                                                    xs))
-                                        (cons (concat (list '$ :p) (self (second x)))
-                                              (self xs)))
+                                        (self at (cons [:header {:level level :children (cons title (rest (second x)))}]
+                                                       xs))
+                                        (cons (concat (list '$ :p) (self at (second x)))
+                                              (self at xs)))
 
-                             (seq? (second x)) (cons (concat (list '$ h) (self (second x)))
-                                                     (self xs))
+                             (seq? (second x)) (cons (concat (list '$ h) (self at (second x)))
+                                                     (self at xs))
                              (seq? (nth x 2 nil)) (cons (concat (list '$ h (second x))
-                                                                (self (nth x 2)))
-                                                        (self xs))
-                             (vector? x) (cons (cons '$ x) (self xs))
-                             :else (cons x (self xs)))
+                                                                (self at (nth x 2)))
+                                                        (self at xs))
+                             (vector? x) (cons (cons '$ x) (self at xs))
+                             :else (cons x (self at xs)))
                            ()))]
-    (vec (group-sections (h/markdown->hiccup config md-str)))))
+    (vec (group-sections [] (h/markdown->hiccup config md-str)))))
 
 #_(md-str->noon-client-hiccup (slurp "src/noon/doc/guide.md"))
 
