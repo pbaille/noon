@@ -29,9 +29,15 @@
                              (= :header h) (let [take? (fn [[k props*]] (or (not (= :header k))
                                                                             (< (:level props) (:level props*))))
                                                  content (take-while take? xs)
-                                                 remaining (drop-while take? xs)]
+                                                 remaining (drop-while take? xs)
+                                                 title (first (:children props))
+                                                 [inline-code simple-title] (if (string? title)
+                                                                              [false title]
+                                                                              [true (second title)])]
                                              (cons (concat (list '$ 'noon.client.ui/section
-                                                                 {:level h :title (first (self [(first (:children props))]))})
+                                                                 {:level h
+                                                                  :title simple-title
+                                                                  :inline-code inline-code})
                                                            (self content))
                                                    (self remaining)))
 
