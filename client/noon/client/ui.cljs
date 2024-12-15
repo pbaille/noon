@@ -107,59 +107,128 @@
                                         :foldGutter false
                                         :highlightActiveLine false}})))))))
 
+(defn use-visible-intersection [ref f options]
+  (let [[return set-return] (uix/use-state false)]
+
+    (uix/use-effect
+     (fn []
+       (let [observer (js/IntersectionObserver.
+                       (fn [entries _observer]
+                         (let [entry (aget entries 0)]
+                           (set-return (f entry))))
+                       (clj->js options))]
+
+         (when @ref
+           #_(println "ref is not nil")
+           (.observe observer (.-current ref)))
+
+         (fn []
+           #_(println "release observer")
+           (when @ref
+             (.unobserve observer @ref))
+           (.disconnect observer))))
+     [ref f options])
+
+    return))
+
 (defn with-extra-props [component extra-props]
-  (uix/$ (.-type component)
-         (merge (js->clj (.-argv (.-props component)))
-                extra-props)
-         (.-children (.-props component))))
+  (let [children (.-children (.-props component))]
+    #_(js/console.log children (array? children))
+    (uix/$ (.-type component)
+           (merge (js->clj (.-argv (.-props component)))
+                  extra-props)
+           children)))
 
 (defui section
-  [{:keys [level title children]
+  [{:keys [id path level title children has-subsections]
     visibility-prop :visibility}]
 
-  (let [[visibility set-visibility] (uix/use-state :expanded)
+  (let [header-ref (uix/use-ref)
+        content-ref (uix/use-ref)
+        [visibility set-visibility] (uix/use-state :summary)
         header (case level 1 :h1 2 :h2 :h3)
 
         button-style {:text [:md :bold]
                       :color :grey3
                       :hover {:color :tomato}}
 
+        visibility-toggler (fn [value]
+                             (fn [e] (.stopPropagation e) (set-visibility value)))
+
+        fold-button (c LuSquareMinus
+                       {:on-click (visibility-toggler :folded)})
+        expand-button (c LuSquarePlus
+                         {:on-click (visibility-toggler :expanded)})
+        summary-button (when has-subsections (c LuSquareMenu
+                                                {:on-click (visibility-toggler :summary)}))
+
         [left-button right-button]
         (case visibility
-          :summary [(c LuSquareMinus
-                       {:on-click (fn [_] (set-visibility :folded))})
-                    (c LuSquarePlus
-                       {:on-click (fn [_] (set-visibility :expanded))})]
-          :folded [(c LuSquareMenu
-                      {:on-click (fn [_] (set-visibility :summary))})
-                   (c LuSquarePlus
-                      {:on-click (fn [_] (set-visibility :expanded))})]
-          :expanded [(c LuSquareMinus
-                        {:on-click (fn [_] (set-visibility :folded))})
-                     (c LuSquareMenu
-                        {:on-click (fn [_] (set-visibility :summary))})])]
+          :summary [fold-button expand-button]
+          :folded [expand-button summary-button]
+          :expanded [fold-button summary-button])
+
+        header-visible (use-visible-intersection
+                        header-ref
+                        (fn [entry]
+                          (.-isIntersecting entry))
+                        {:root nil
+                         :rootMargin "-45px"
+                         :threshold 0})
+        content-visible (use-visible-intersection
+                         content-ref
+                         (fn [entry]
+                           (.-isIntersecting entry))
+                         {:root nil
+                          :rootMargin "0px"
+                          :threshold 0})]
 
     (uix/use-effect #(set-visibility (or visibility-prop :expanded))
                     [visibility-prop])
 
     (c :div.section
-
+       {:id id
+        :on-click (fn [e]
+                    (println [title header-visible content-visible])
+                    (.stopPropagation e))}
        (c header
-          {:style {:flex [:start {:items :baseline :gap 1}]
+          {:ref header-ref
+           :style {:flex [:start {:items :baseline :gap 1}]
                    :border {:bottom [2 :grey1]}
                    :p {:bottom 1}}}
           (sc button-style left-button)
           title
           (sc button-style right-button))
 
+       (when (and content-visible (not header-visible))
+         (c header
+            {:style {:m 0
+                     :z-index 1000
+                     :width :full
+                     :bg {:color :white}
+                     :position [:fixed {:top 0 :left 10}]
+                     :flex [:start {:items :baseline :gap 1}]
+                     :border {:bottom [2 :grey1]}
+                     :p 1}}
+            (sc {:flex [:row {:gap 1 :items :center}]}
+                (mapcat (fn [path] [(sc button-style
+                                        (c icons-tb/TbCaretRightFilled))
+                                    (c :a {:style {:color "inherit" :text-decoration "none"}
+                                           :href (str "#" path)}
+                                       (last path))])
+                        (next (reductions conj [] (conj path title)))))
+            (sc button-style right-button)))
+
        (c :div
-          {:style {:display (if (= :folded visibility) :none :block)
+          {:ref content-ref
+           :style {:display (if (= :folded visibility) :none :block)
                    :p [0 0 0 2]}}
 
           (-> children
               (react/Children.map
                (fn [c]
-                 (if (and (= :summary visibility) (= section (.-type c)))
+                 (if (and (= section (.-type c))
+                          (= :summary visibility))
                    (with-extra-props c {:visibility :folded})
                    c))))))))
 
