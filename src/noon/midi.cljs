@@ -21,28 +21,59 @@
 
 (do :midi
 
+    (def playing* (atom false))
+
     ;; when playing some midi we get back a stop function,
     ;; all those functions are kept here in order to be able to stop all playing instruments.
     (def stop-fns* (atom []))
-    (def playing* (atom false))
+
+    (def soundfonts* (atom {}))
+
+    ;; user can register callbacks to be triggered when playing is done
+    ;; see `on-done-playing`
+    (def on-done-callbacks* (atom {}))
+
+    (defn on-done-playing
+      "Register a callback to execute when corresponding play ends."
+      [playing-id cb]
+      (swap! on-done-callbacks* assoc playing-id cb))
+
+    (defn done-playing!
+      "This function is called with the corresponding playing-id when playing ends."
+      [playing-id]
+      (when (= playing-id @playing*)
+        #_(println "stop playing " playing-id)
+        (reset! playing* false)
+        #_(println "will execute callback: " (get @on-done-callbacks* playing-id))
+        (when-let [cb (get @on-done-callbacks* playing-id)]
+          (cb))
+        {:noon.midi/done playing-id}))
 
     (defn get-instrument [instrument-name]
-      (.-load (Soundfont. (.-_context (.-context Tone))
-                          #js {:instrument instrument-name
-                               #_:kit #_"FluidR3_GM"})))
+      (or (get @soundfonts* instrument-name)
+          (when-let [sf (.-load (Soundfont. (.-_context (.-context Tone))
+                                            #js {:instrument instrument-name
+                                                 #_:kit #_"FluidR3_GM"}))]
+            (swap! soundfonts* assoc instrument-name sf)
+            sf)))
 
-    (defn stop-midi []
+    (defn stop-midi
+      "Call all recorded stop-fns* and set playing* to false"
+      []
       (println "stopping midi")
       #_(.stop Tone/Transport (.now Tone))
       (doseq [f @stop-fns*] (f))
       (reset! playing* false))
 
-    (defn play [noon-data]
+    (defn play
+      "Play a noon score using tone and smplr."
+      [noon-data]
       (stop-midi)
-      #_(println "playing js " noon-data)
+      (println "loading instruments...")
       #_(js/console.log Tone)
-      (reset! playing* true)
-      (let [patch->events (group-by :patch noon-data)]
+      (let [playing-id (reset! playing* (gensym))
+            patch->events (group-by :patch noon-data)]
+
         (-> (js/Promise.all
              (mapv (fn [[[_bank instrument] events]]
                      (let [instrument-name (gm/instrument-val->instrument-name instrument)]
@@ -50,8 +81,9 @@
                        (.then (get-instrument instrument-name)
                               (fn [inst] [inst events]))))
                    patch->events))
+
             (.then (fn [xs]
-                     #_(js/console.log "instruments " xs)
+                     (js/console.log "scheduling events...")
                      (let [t0 (.now Tone)
                            time-until-end
                            (reduce (fn [end-pos [instrument events]]
@@ -70,12 +102,19 @@
 
                        (println time-until-end)
 
-                       (js/setTimeout (fn [] #_(println "done playing") (reset! playing* false))
-                                      (* 1000 time-until-end))
-                       {:stop (fn [] (doseq [[i _] xs] (.stop i)))
+                       (js/setTimeout (fn []
+                                        (println "done playing.")
+                                        (done-playing! playing-id))
+                                      (+ 1000 (* 1000 time-until-end)))
+
+                       {:id playing-id
+                        :stop (fn [] (doseq [[i _] xs] (.stop i)))
                         :started (.start Tone/Transport)})))
-            (.then (fn [{:keys [stop]}]
-                     (swap! stop-fns* conj stop))))))
+
+            (.then (fn [{:keys [id stop]}]
+                     (println "playing...")
+                     (swap! stop-fns* conj stop)
+                     {:noon.midi/playing id})))))
 
     (comment (def simple-tup
                [{:patch [0 4] :channel 0, :pitch 67, :voice 0, :duration (/ 1 3)  , :position (/ 2 3) , :velocity 80, :track 0}
