@@ -25,7 +25,9 @@
         :margin {:bottom "100vh"}
         }
        ($ guide/guide)
-       #_($ ui/examples))
+       ($ ui/section
+          {:level 1 :path [] :title "Examples"}
+          ($ ui/examples)))
    root))
 
 (defn ^:dev/after-load reload []
