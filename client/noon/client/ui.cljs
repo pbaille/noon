@@ -177,6 +177,9 @@
                                         :foldGutter false
                                         :highlightActiveLine false}})))))))
 
+(defn level->header-keyword [level]
+  (case level 1 :h1 2 :h2 3 :h3 4 :h4 :h5))
+
 (defui section
   [{:keys [id path level title children has-subsections inline-code]
     visibility-prop :visibility}]
@@ -184,7 +187,7 @@
   (let [header-ref (uix/use-ref)
         content-ref (uix/use-ref)
         [visibility set-visibility] (uix/use-state DEFAULT_VISIBILITY)
-        header (case level 1 :h1 2 :h2 :h3)
+        header (level->header-keyword level)
 
         button-style {:text [:md :bold]
                       :color :grey3
@@ -239,23 +242,24 @@
           (sc button-style right-button))
 
        (when (and content-visible (not header-visible))
-         (c header
-            {:style {:m 0
-                     :z-index 1000
-                     :width :full
-                     :bg {:color :white}
-                     :position [:fixed {:top 0 :left 10}]
-                     :flex [:start {:items :baseline :gap 1}]
-                     :border {:bottom [2 :grey1]}
-                     :p 1}}
-            (sc {:flex [:row {:gap 1 :items :center}]}
-                (mapcat (fn [path] [(sc button-style
-                                        (c icons-tb/TbCaretRightFilled))
-                                    (c :a {:style {:color "inherit" :text-decoration "none"}
-                                           :href (str "#" path)}
-                                       (last path))])
-                        (next (reductions conj [] (conj path title)))))
-            (sc button-style right-button)))
+         (sc
+          {:m 0
+           :z-index 1000
+           :width :full
+           :bg {:color :white}
+           :position [:fixed {:top 0 :left 10}]
+           :flex [:start {:items :baseline :gap 1}]
+           :border {:bottom [2 :grey1]}}
+          (sc {:flex [:row {:gap 1 :items :baseline}]}
+              (mapcat (fn [path] [(sc button-style
+                                      (c icons-tb/TbCaretRightFilled))
+                                  (c :a {:style {:color "inherit" :text-decoration "none"}
+                                         :href (str "#" path)}
+                                     (uix/$ (level->header-keyword (count path))
+                                            {:style {:margin 1}}
+                                            (last path)))])
+                      (next (reductions conj [] (conj path title)))))
+          (sc button-style right-button)))
 
        (c :div
           {:ref content-ref
