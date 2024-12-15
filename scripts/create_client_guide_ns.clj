@@ -36,7 +36,7 @@
                                                                               [true (second title)])]
                                              (cons (concat (list '$ 'noon.client.ui/section
                                                                  {:id (str (conj at simple-title))
-                                                                  :level h
+                                                                  :level (:level props)
                                                                   :title simple-title
                                                                   :inline-code inline-code
                                                                   :path at
