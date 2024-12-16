@@ -36,18 +36,14 @@
                  'noon.utils.sequences (ns-publics 'noon.utils.sequences)}
     :bindings {}}))
 
-#_ (println sci-ctx)
 (defn sci-eval [x]
   #_(println sci-ctx)
-  #_(.resume (get-audio-ctx))
-  ()
   (let [evaluation (try {:result (sci/eval-string* sci-ctx x)}
                         (catch js/Error e {:error e}))]
-    (println (assoc evaluation :form x))
+    #_(println (assoc evaluation :form x))
     evaluation))
 
 (defn sci-eval-async [x on-success & [on-failure]]
-  #_(println sci-ctx)
   #_(.resume (get-audio-ctx))
   (.then (scia/eval-string* sci-ctx x)
          (fn [ret] (on-success {:result ret}))
