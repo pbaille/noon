@@ -1,6 +1,7 @@
 (ns noon.client.eval
   (:require
    [noon.score]
+   [noon.events]
    [noon.updates]
    [noon.output]
    [noon.midi]
