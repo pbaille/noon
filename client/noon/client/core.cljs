@@ -26,7 +26,7 @@
         :width {:max 800}
         }
        ($ guide/guide)
-       ($ ui/section
+       #_($ ui/section
           {:level 1 :path [] :title "Examples"
            :visibility :folded}
           ($ ui/examples)))
