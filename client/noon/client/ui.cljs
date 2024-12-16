@@ -184,8 +184,8 @@
 (defn level->header-keyword [level]
   (case level 1 :h1 2 :h2 3 :h3 4 :h4 :h5))
 
-(defui breadcrumb
-  [{:keys [path title button-style right-button]}]
+(defui breadcrumbs
+  [{:keys [elements button-style right-button]}]
 
   (sc {:m 0
        :z-index 1000
@@ -196,25 +196,25 @@
        :border {:bottom [2 :grey1]}}
 
       (sc {:flex [:row {:gap 1 :items :baseline}]}
-          (mapcat (fn [idx path]
+          (mapcat (fn [{:keys [level href text]}]
                     [(c {:style button-style
-                         :key (str idx - "button")}
+                         :key (str level "-button")}
                         (c icons-tb/TbCaretRightFilled))
                      (c :a {:style {:color "inherit" :text-decoration "none"}
-                            :href (str "#" path)
-                            :key (str idx - "link")}
-                        (uix/$ (level->header-keyword (count path))
+                            :href href
+                            :key (str level "-link")}
+                        (uix/$ (level->header-keyword level)
                                {:style {:margin 1}}
-                               (last path)))])
-                  (range)
-                  (next (reductions conj [] (conj path title)))))
+                               text))])
+                  elements))
 
       (when right-button
         (sc button-style right-button))))
 
 (defui section
-  [{:keys [id path level title children has-subsections inline-code]
-    visibility-prop :visibility}]
+  [{:keys [id level title children has-subsections inline-code]
+    visibility-prop :visibility
+    breadcrumbs-prop :breadcrumbs}]
 
   (let [header-ref (uix/use-ref)
         content-ref (uix/use-ref)
@@ -278,8 +278,8 @@
           (sc button-style right-button))
 
        (when (and content-visible (not header-visible))
-         (c breadcrumb
-            {:path path
+         (c breadcrumbs
+            {:elements breadcrumbs-prop
              :title title
              :button-style button-style
              :right-button right-button}))
