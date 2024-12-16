@@ -137,13 +137,14 @@
 
                     (c spinner {:color "lightskyblue"  :loading evaluating :size 15}))
 
-                (c CodeMirror
-                   {:value source
-                    :on-change (fn [x] (set-source x))
-                    :extensions EDITOR_EXTENSIONS
-                    :basic-setup #js {:lineNumbers false
-                                      :foldGutter false
-                                      :highlightActiveLine false}})))
+                (do #_(println "render code-mirror")
+                    (c CodeMirror
+                       {:value source
+                        :on-change (fn [x] (set-source x))
+                        :extensions EDITOR_EXTENSIONS
+                        :basic-setup #js {:lineNumbers false
+                                          :foldGutter false
+                                          :highlightActiveLine false}}))))
         (when return
 
           (sc :code-editor-output
@@ -183,13 +184,42 @@
 (defn level->header-keyword [level]
   (case level 1 :h1 2 :h2 3 :h3 4 :h4 :h5))
 
+(defui breadcrumb
+  [{:keys [path title button-style right-button]}]
+
+  (sc {:m 0
+       :z-index 1000
+       :width :full
+       :bg {:color :white}
+       :position [:fixed {:top 0 :left 10}]
+       :flex [:start {:items :baseline :gap 1}]
+       :border {:bottom [2 :grey1]}}
+
+      (sc {:flex [:row {:gap 1 :items :baseline}]}
+          (mapcat (fn [idx path]
+                    [(c {:style button-style
+                         :key (str idx - "button")}
+                        (c icons-tb/TbCaretRightFilled))
+                     (c :a {:style {:color "inherit" :text-decoration "none"}
+                            :href (str "#" path)
+                            :key (str idx - "link")}
+                        (uix/$ (level->header-keyword (count path))
+                               {:style {:margin 1}}
+                               (last path)))])
+                  (range)
+                  (next (reductions conj [] (conj path title)))))
+
+      (when right-button
+        (sc button-style right-button))))
+
 (defui section
   [{:keys [id path level title children has-subsections inline-code]
     visibility-prop :visibility}]
 
   (let [header-ref (uix/use-ref)
         content-ref (uix/use-ref)
-        [visibility-override set-visibility] (uix/use-state nil)
+        content-loaded-ref (uix/use-ref false)
+        [visibility-override set-visibility-override] (uix/use-state nil)
 
         visibility (or visibility-override visibility-prop DEFAULT_VISIBILITY)
 
@@ -200,7 +230,7 @@
                       :hover {:color :tomato}}
 
         visibility-toggler (fn [value]
-                             (fn [e] (.stopPropagation e) (set-visibility value)))
+                             (fn [e] (.stopPropagation e) (set-visibility-override value)))
 
         fold-button (c LuSquareMinus
                        {:on-click (visibility-toggler :folded)})
@@ -233,6 +263,9 @@
                           :rootMargin "0px"
                           :threshold 0})]
 
+    (uix/use-effect #(set-visibility-override nil)
+                    [visibility-prop])
+
     (c :div.section
        {:id id}
        (c header
@@ -245,27 +278,15 @@
           (sc button-style right-button))
 
        (when (and content-visible (not header-visible))
-         (sc
-          {:m 0
-           :z-index 1000
-           :width :full
-           :bg {:color :white}
-           :position [:fixed {:top 0 :left 10}]
-           :flex [:start {:items :baseline :gap 1}]
-           :border {:bottom [2 :grey1]}}
-          (sc {:flex [:row {:gap 1 :items :baseline}]}
-              (mapcat (fn [path] [(sc button-style
-                                      (c icons-tb/TbCaretRightFilled))
-                                  (c :a {:style {:color "inherit" :text-decoration "none"}
-                                         :href (str "#" path)}
-                                     (uix/$ (level->header-keyword (count path))
-                                            {:style {:margin 1}}
-                                            (last path)))])
-                      (next (reductions conj [] (conj path title)))))
-          (sc button-style right-button)))
+         (c breadcrumb
+            {:path path
+             :title title
+             :button-style button-style
+             :right-button right-button}))
 
-       (when (or visibility-override
+       (when (or @content-loaded-ref
                  (not= :folded visibility))
+         (reset! content-loaded-ref true)
          (c :div
             {:ref content-ref
              :style {:display (if (= :folded visibility) :none :block)
@@ -274,9 +295,13 @@
             (-> children
                 (react/Children.map
                  (fn [c]
-                   (if (and (= section (.-type c))
-                            (= :summary visibility))
-                     (with-extra-props c {:visibility :folded})
+                   (if (= section (.-type c))
+                     (with-extra-props c
+                       {:visibility
+                        (case visibility
+                          :summary :folded
+                          :expanded :expanded
+                          nil)})
                      c)))))))))
 
 (defui examples [{}]
