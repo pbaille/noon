@@ -77,14 +77,8 @@
   (spit "client/noon/client/guide.cljs"
         (str "(ns noon.client.guide (:require [noon.client.ui] [uix.core :refer [$ defui]]))\n\n"
              "(defui guide [_]\n  "
-             (seq (first (md-str->noon-client-hiccup (slurp guide-md-filepath))))
-             ")")))
-
-(defn create-client-examples-ns [& _]
-  (spit "client/noon/client/experiments.cljs"
-        (str "(ns noon.client.experiments (:require [noon.client.ui] [uix.core :refer [$ defui]]))\n\n"
-             "(defui experiments [_]\n  "
-             (seq (first (md-str->noon-client-hiccup (slurp examples-md-filepath))))
+             (seq (conj (vec (first (md-str->noon-client-hiccup (slurp guide-md-filepath))))
+                        (seq (first (md-str->noon-client-hiccup (slurp examples-md-filepath))))))
              ")")))
 
 (comment
