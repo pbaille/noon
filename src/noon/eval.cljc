@@ -9,9 +9,10 @@
    [noon.lib.harmony]
    [noon.lib.melody]
    [noon.lib.rythmn]
-   [noon.utils.misc]
+   [noon.utils.misc :as u]
    [sci.core :as sci]
-   #?(:cljs [sci.async :as scia]))
+   #?@(:cljs [[sci.async :as scia]
+              [noon.macros]]))
   #?(:cljs (:require-macros [noon.eval :refer [sci-namespaces]])))
 
 (defmacro sci-namespaces [& xs]
@@ -42,17 +43,40 @@
         (assoc (list 'quote 'user)
                (cons `merge user)))))
 
+(defn deref-def-bindings
+  "Within sci evaluation in clojurescript,
+  regular defs have to be dereferenced to be used by name.
+  This function dereferences all defs in an ns-map.
+  Has no effect in clojure."
+  [ns-map]
+  #?(:clj ns-map
+     :cljs (update-vals ns-map (fn [v]
+                                 (if (seq (:arglists (meta v)))
+                                   v
+                                   (deref v))))))
+
+(def nss
+  (sci-namespaces
+   [noon.updates :refer :all]
+   [noon.events :as events]
+   [noon.score :as score :refer [mk]]
+   [noon.harmony]
+   [noon.output]
+   [noon.lib.harmony :as h]
+   [noon.lib.melody :as m]
+   [noon.lib.rythmn :as r]
+   #?(:cljs [noon.macros :refer :all])))
+
 (def sci-ctx
   (sci/init
-   {:namespaces (sci-namespaces
-                 [noon.updates :refer :all]
-                 [noon.events :as events]
-                 [noon.score :as score :refer [mk]]
-                 [noon.harmony]
-                 [noon.output]
-                 [noon.lib.harmony :as h]
-                 [noon.lib.melody :as m]
-                 [noon.lib.rythmn :as r])}))
+   {:namespaces (update-vals nss deref-def-bindings)}))
+
+(comment
+  (meta (get (ns-publics 'noon.output)
+             'MIDI_DEFAULT_OPTIONS))
+
+  (meta (get (ns-publics 'noon.output)
+             'options)))
 
 (defn eval-string [x]
   #_(println sci-ctx)

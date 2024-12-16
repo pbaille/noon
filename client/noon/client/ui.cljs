@@ -1,5 +1,5 @@
 (ns noon.client.ui
-  (:require [noon.client.eval :as eval]
+  (:require [noon.eval :as eval]
             [noon.midi :as midi]
             [uix.core :as uix :refer [defui]]
             [uic.component :refer [c sc]]
