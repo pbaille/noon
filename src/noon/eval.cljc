@@ -61,7 +61,7 @@
    [noon.events :as events]
    [noon.score :as score :refer [mk]]
    [noon.harmony]
-   [noon.output]
+   [noon.output :as out]
    [noon.lib.harmony :as h]
    [noon.lib.melody :as m]
    [noon.lib.rythmn :as r]
