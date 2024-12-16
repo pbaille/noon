@@ -11,7 +11,7 @@
 
 (defn render []
   (uix.dom/render-root
-   (sc {:p 2
+   (sc {:p [2 0]
         :text [:sans {:leading :normal}]
         ".cm-editor" {:bg {:color "transparent"}}
         "code" {:bg {:color [:gray {:a 0.1}]}
@@ -23,10 +23,12 @@
                                  :outline :none
                                  :box-shadow :none}
         :margin {:bottom "100vh"}
+        :width {:max 800}
         }
        ($ guide/guide)
        ($ ui/section
-          {:level 1 :path [] :title "Examples"}
+          {:level 1 :path [] :title "Examples"
+           :visibility :folded}
           ($ ui/examples)))
    root))
 
