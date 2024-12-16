@@ -58,16 +58,21 @@
 (def nss
   (sci-namespaces
    [noon.updates :refer :all]
-   [noon.events :as events]
-   [noon.score :as score :refer [mk]]
-   [noon.harmony]
-   [noon.output :as out]
+   [noon.events :as events :refer [ef_ efn]]
+   [noon.score :as score :refer [mk mk* sf_ sfn e->s]]
+   [noon.output :as out :refer [noon play write]]
+   [noon.harmony :as hc]
+   [noon.numbers :refer [mul div add sub]]
    [noon.lib.harmony :as h]
+   [noon.constants :as constants]
    [noon.lib.melody :as m]
    [noon.lib.rythmn :as r]
    [noon.utils.misc :as u]
+   [noon.utils.pseudo-random :as rand]
    [noon.utils.sequences :as seqs]
-   [noon.utils.pseudo-random :as pr]
+   [clojure.math.combinatorics :as combinatorics]
+   #?@(:clj [[noon.utils.multi-val :as multi-val]
+             [noon.vst.vsl :as vsl :refer [vsl]]])
    #?(:cljs [noon.macros :refer :all])))
 
 (def sci-ctx
