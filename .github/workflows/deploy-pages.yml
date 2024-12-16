@@ -52,6 +52,11 @@ jobs:
         with:
           args: "-f org -t gfm -o src/noon/doc/guide.md src/noon/doc/guide.org"
 
+      - name: convert examples.org to md
+        uses: docker://pandoc/core:3.5
+        with:
+          args: "-f org -t gfm -o src/noon/doc/examples.md src/noon/doc/examples.org"
+
       - name: Build noon.client.guide namespace
         run: clojure -X:create-client-guide-ns
 
