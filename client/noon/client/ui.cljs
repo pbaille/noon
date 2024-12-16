@@ -17,6 +17,9 @@
 (def DEFAULT_VISIBILITY
   :summary)
 
+(def EDITOR_EXTENSIONS
+  #js [(clojure)])
+
 (do :help
 
     (defn use-atom [atom]
@@ -137,7 +140,7 @@
                 (c CodeMirror
                    {:value source
                     :on-change (fn [x] (set-source x))
-                    :extensions #js [(clojure)]
+                    :extensions EDITOR_EXTENSIONS
                     :basic-setup #js {:lineNumbers false
                                       :foldGutter false
                                       :highlightActiveLine false}})))
@@ -186,7 +189,10 @@
 
   (let [header-ref (uix/use-ref)
         content-ref (uix/use-ref)
-        [visibility set-visibility] (uix/use-state DEFAULT_VISIBILITY)
+        [visibility-override set-visibility] (uix/use-state nil)
+
+        visibility (or visibility-override visibility-prop DEFAULT_VISIBILITY)
+
         header (level->header-keyword level)
 
         button-style {:text [:md :bold]
@@ -227,9 +233,6 @@
                           :rootMargin "0px"
                           :threshold 0})]
 
-    (uix/use-effect #(set-visibility (or visibility-prop DEFAULT_VISIBILITY))
-                    [visibility-prop])
-
     (c :div.section
        {:id id}
        (c header
@@ -261,18 +264,20 @@
                       (next (reductions conj [] (conj path title)))))
           (sc button-style right-button)))
 
-       (c :div
-          {:ref content-ref
-           :style {:display (if (= :folded visibility) :none :block)
-                   :p [0 0 0 2]}}
+       (when (or visibility-override
+                 (not= :folded visibility))
+         (c :div
+            {:ref content-ref
+             :style {:display (if (= :folded visibility) :none :block)
+                     :p [0 0 0 2]}}
 
-          (-> children
-              (react/Children.map
-               (fn [c]
-                 (if (and (= section (.-type c))
-                          (= :summary visibility))
-                   (with-extra-props c {:visibility :folded})
-                   c))))))))
+            (-> children
+                (react/Children.map
+                 (fn [c]
+                   (if (and (= section (.-type c))
+                            (= :summary visibility))
+                     (with-extra-props c {:visibility :folded})
+                     c)))))))))
 
 (defui examples [{}]
   (c (map (fn [[k code]]
