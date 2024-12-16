@@ -16,6 +16,7 @@
                       :children :content}]))
 
 (def guide-md-filepath "src/noon/doc/guide.md")
+(def examples-md-filepath "src/noon/doc/examples.md")
 
 (defn parse-deep-header [s]
   (when (string? s)
@@ -79,6 +80,14 @@
              (seq (first (md-str->noon-client-hiccup (slurp guide-md-filepath))))
              ")")))
 
+(defn create-client-examples-ns [& _]
+  (spit "client/noon/client/experiments.cljs"
+        (str "(ns noon.client.experiments (:require [noon.client.ui] [uix.core :refer [$ defui]]))\n\n"
+             "(defui experiments [_]\n  "
+             (seq (first (md-str->noon-client-hiccup (slurp examples-md-filepath))))
+             ")")))
+
 (comment
   (shell/sh "pandoc" "-f" "org" "-t" "gfm" "-o" "src/noon/doc/guide.md" "src/noon/doc/guide.org")
+  (shell/sh "pandoc" "-f" "org" "-t" "gfm" "-o" "src/noon/doc/examples.md" "src/noon/doc/examples.org")
   (create-client-guide-ns))
