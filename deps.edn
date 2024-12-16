@@ -10,7 +10,8 @@
         instaparse/instaparse {:mvn/version "1.5.0"}
         clj-http/clj-http {:mvn/version "3.13.0"}
         ;; should be moved to dev
-        zprint/zprint {:mvn/version "1.2.9"}}
+        zprint/zprint {:mvn/version "1.2.9"}
+        org.babashka/sci {:mvn/version "0.9.44"}}
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
           :ns-default build}
@@ -33,8 +34,7 @@
                                  :git/url "https://github.com/pbaille/uic.git"
                                  :sha "3bea9d982ed2aeee17fb33a19bc0ae9d0e000f15"}
                         com.pitch/uix.core {:mvn/version "1.2.0"}
-                        com.pitch/uix.dom {:mvn/version "1.2.0"}
-                        org.babashka/sci {:mvn/version "0.9.44"}}}
+                        com.pitch/uix.dom {:mvn/version "1.2.0"}}}
 
   ;; building noon.client.guide.cljs file
   :create-client-guide-ns {:extra-paths ["scripts"]
