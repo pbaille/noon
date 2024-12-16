@@ -65,6 +65,9 @@
    [noon.lib.harmony :as h]
    [noon.lib.melody :as m]
    [noon.lib.rythmn :as r]
+   [noon.utils.misc :as u]
+   [noon.utils.sequences :as seqs]
+   [noon.utils.pseudo-random :as pr]
    #?(:cljs [noon.macros :refer :all])))
 
 (def sci-ctx
