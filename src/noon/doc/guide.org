@@ -8,7 +8,7 @@ It provides a way to compose, play and export music as *MIDI*.
 The initial goal was to be able to define musical fragments in a very declarative way.
 Leveraging clojure and functional programming powers in order to *generate, manipulate and organize* musical content.
 
-#+begin_src clojure
+#+begin_src clojure :exports none
 (ns noon.doc.guide
   ;; main building blocks
   (:use noon.updates)
