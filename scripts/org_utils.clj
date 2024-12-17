@@ -2,23 +2,26 @@
   (:require [clojure.string :as str]
             [zprint.core :as z]
             [clojure.java.io :as io]
-            [clojure.pprint :as pp]))
+            [clojure.pprint :as pp]
+            [zprint.core :as zp]))
 
 "Utils for converting org files to clojure files (regular and test)"
 
-(defn parse-org-headline [line]
-  (if-let [[_ stars title] (re-matches #"^(\*+) (.*)$"
-                                       line)]
-    {:level (count stars)
-     :title title}))
+(do :help
 
-(defn ns-decl? [x]
-  (and (seq? x)
-       (= 'ns (first x))))
+    (defn parse-org-headline [line]
+      (if-let [[_ stars title] (re-matches #"^(\*+) (.*)$"
+                                           line)]
+        {:level (count stars)
+         :title title}))
 
-(defn ns-form->file-path [x src-path]
-  (and (ns-decl? x)
-       (str/join "/" (cons src-path (str/split (second x) #"\.")))))
+    (defn ns-decl? [x]
+      (and (seq? x)
+           (= 'ns (first x))))
+
+    (defn ns-form->file-path [x src-path]
+      (and (ns-decl? x)
+           (str/join "/" (cons src-path (str/split (second x) #"\."))))))
 
 (do :org->clj
     (defn org->clj [org-file clj-file]
@@ -86,7 +89,7 @@
                                        in-block (assoc state :ret (str ret prefix line))
                                        :else (assoc state :ret
                                                     (str ret #_prefix ";; " (str/replace line #"\n" (str #_prefix ";; ")))))))))
-                         {:level 0 :in-block false :ret ""}
+                         {:level 0 :in-block false :ret "'"}
                          (conj (vec lines)
                                :end))]
         tree))
@@ -96,123 +99,39 @@
   Assumes that the first code block of the org-file is a valid clojure ns form."
       [org-file clj-file]
 
-      (let [clj-str (org-str->clj-str (slurp org-file))
-            without-square-brackets (-> clj-str
-                                        (subs 0 (dec (count clj-str)))
-                                        (subs 1))
-            without-first-line (->> without-square-brackets
-                                    str/split-lines
-                                    rest
-                                    (str/join "\n"))]
-        (spit clj-file
-              without-first-line))))
+      (spit clj-file
+            (org-str->clj-str (slurp org-file)))))
 
-(defn org-file->clojure-expressions [org-file]
-  (loop [blocks [] path [] block nil lines (str/split-lines (slurp org-file))]
-    (if-let [[line & lines] (seq lines)]
-      (cond (str/starts-with? line "*") (let [{:keys [level title]} (parse-org-headline line)]
-                                          (recur blocks (concat (take (dec level) (concat path (repeat nil)))
-                                                                (list title))
-                                                 block lines))
-            (str/starts-with? line "#+begin_src clojure") (recur blocks path "" lines)
-            (str/starts-with? line "#+end_src") (recur (concat blocks
-                                                               (map (fn [expr]
-                                                                      (with-meta expr {:path path}))
-                                                                    (read-string (str "[" block "\n]"))))
-                                                       path false lines)
-            block (recur blocks path (str block "\n" line) lines)
-            :else (recur blocks path block lines))
-      blocks)))
+(do :entry-points
 
-(defn parse-score-creating-form
-  "Parse a score creating form into :return and :bindings or return nil."
-  [e]
-  (if (seq? e)
-    (some-> (cond (contains? #{"play" "mk"} (name (first e)))
-                  {:return (cons 'noon.score/mk (rest e))}
-                  (= "mk*" (name (first e)))
-                  {:return (list* 'noon.score/mk* (second e))}
-                  (= "noon" (name (first e)))
-                  {:return (nth e 2)}
-                  (= 'let (first e))
-                  (if-let [parsed-return (parse-score-creating-form (nth e 2))]
-                    (assoc parsed-return :bindings (second e))))
-            (with-meta (meta e)))))
+    (defn build-examples-tests []
+      (org->test "src/noon/doc/examples.org"
+                 "test/noon/doc/examples_test.clj")
+      (z/zprint-file "test/noon/doc/examples_test.clj"
+                     "test/noon/doc/examples_test.clj"
+                     "test/noon/doc/examples_test.clj"))
 
-(defn assertion-tree->nested-testing
-  [content]
-  (concat (:content content)
-          (mapv (fn [[subtitle subcontent]]
-                  (list* 'testing subtitle (assertion-tree->nested-testing subcontent)))
-                (dissoc content :content))))
+    (defn build-clj-examples []
+      (org->clj2 "src/noon/doc/examples.org"
+                 "src/noon/doc/examples.clj")
+      (z/zprint-file "src/noon/doc/examples.clj"
+                     "src/noon/doc/examples.clj"
+                     "src/noon/doc/examples.clj"))
 
-(defn org->test
-  "Turn an org files containing noon examples into a test ns.
-       top forms starting with 'play and 'let are assumed to be the one we froze."
-  [org-file clj-file]
-  (let [[ns-decl & expressions] (org-file->clojure-expressions org-file)
-        {:keys [statements score-creating-forms]}
-        (reduce (fn [ret expr]
-                  (if-let [parsed-noon-expr (parse-score-creating-form expr)]
-                    (update ret :score-creating-forms conj parsed-noon-expr)
-                    (if (and (seq? expr) (str/starts-with? (name (first expr)) "def"))
-                      (update ret :statements conj expr)
-                      ret)))
-                {:statements [] :score-creating-forms []}
-                expressions)
-        assertions (mapv (fn [{:as e :keys [bindings return]}]
-                           (with-meta (list 'is (list 'noon.test/frozen* nil
-                                                      (if bindings
-                                                        (list 'let bindings return)
-                                                        return)))
-                             (meta e)))
-                         score-creating-forms)
-        assertion-tree (reduce (fn [ret expr]
-                                 (update-in ret (conj (vec (:path (meta expr)))
-                                                      :content)
-                                            (fnil conj [])
-                                            expr))
-                               {} assertions)
-        [_ ns & ns-body] ns-decl
-        enriched-body (-> (group-by first (filter seq? ns-body))
-                          (update :require (fn [reqs] (map (fn [req]
-                                                             (concat req
-                                                                     '([clojure.test :refer [deftest testing is]] [noon.test])))
-                                                           reqs))))]
-    (spit clj-file
-          (str/join "\n\n"
-                    (cons (list* 'ns (symbol (str (name ns) "-test"))
-                                 (str "This file is generated from `" org-file "`")
-                                 (map first (vals enriched-body)))
-                          (concat statements
-                                  (list (list* 'deftest 'main
-                                               (assertion-tree->nested-testing assertion-tree)))))))))
+    (defn build-clj-guide []
+      (org->clj2 "src/noon/doc/guide.org"
+                 "src/noon/doc/guide.clj")
+      (z/zprint-file "src/noon/doc/guide.clj"
+                     "src/noon/doc/guide.clj"
+                     "src/noon/doc/guide.clj"))
 
-(comment (slurp org-file)
-         (org-file->clojure-expressions "src/noon/doc/examples.org")
-         (org->test "src/noon/doc/examples.org"
-                    "test/noon/doc/examples_test.clj"))
-
-(defn build-examples-tests []
-  (org->test "src/noon/doc/examples.org"
-             "test/noon/doc/examples_test.clj")
-  (z/zprint-file "test/noon/doc/examples_test.clj"
-                 "test/noon/doc/examples_test.clj"
-                 "test/noon/doc/examples_test.clj"))
-
-(defn build-clj-examples []
-  (org->clj2 "src/noon/doc/examples.org"
-             "src/noon/doc/examples.clj")
-  (z/zprint-file "src/noon/doc/examples.clj"
-                 "src/noon/doc/examples.clj"
-                 "src/noon/doc/examples.clj"))
-
-(defn build-clj-guide []
-  (org->clj2 "src/noon/doc/guide.org"
-             "src/noon/doc/guide.clj")
-  (z/zprint-file "src/noon/doc/guide.clj"
-                 "src/noon/doc/guide.clj"
-                 "src/noon/doc/guide.clj"))
+    (defn noon-org->clj []
+      (let [clj-file "src/noon/doc/noon.clj"]
+        (org->clj2 "src/noon/doc/noon.org"
+                   clj-file)
+        #_(z/zprint-file clj-file
+                         clj-file
+                         clj-file))))
 
 (do :org->edn
     "attempt 2"
@@ -271,38 +190,98 @@
 (defn build-all []
   (build-clj-examples)
   (build-clj-guide)
-  (build-examples-tests)); replace underscore with space
+  (build-examples-tests))
 
-(defn file->title [filename]
-  (-> filename
-      (str/replace #"^\d+-" "")  ; remove digit prefix
-      (str/replace #"\.md$" "")  ; remove .md extension
-      (str/replace "_" " ")))
+(do :clj-doc-tree
 
-(defn build-doc-tree [dir-path]
-  (let [root (io/file dir-path)
-        ]
-    (letfn [(process-file [file]
-              (let [title (file->title (.getName file))]
-                [title {:file (.getPath file)}]))
+    (defn file->title [filename]
+      (-> filename
+          (str/replace #"^\d+-" "")     ; remove digit prefix
+          (str/replace #"\.md$" "")     ; remove .md extension
+          (str/replace "_" " ")))
 
-            (process-dir [dir]
-              (let [files (sort-by #(.getName %) (.listFiles dir))
-                    index-file (io/file (str (.getPath dir) ".md"))
-                    subdirs (filter #(.isDirectory %) files)
-                    index-file-name? (set (map (fn [d] (str (.getName d) ".md")) subdirs))]
-                #_(clojure.pprint/pprint {:dirs subdirs :index-file index-file})
-                (vec (concat (process-file index-file)
-                             (keep (fn [f]
-                                     (cond
-                                       (.isDirectory f) (process-dir f)
-                                       (and (.isFile f)
-                                            (not (index-file-name? (.getName f)))) (process-file f)))
-                                   files)))))]
+    (defn build-doc-tree [dir-path]
+      (let [root (io/file dir-path)
+            ]
+        (letfn [(process-file [file]
+                  (let [title (file->title (.getName file))]
+                    [title {:file (.getPath file)}]))
 
-      (process-dir root))))
+                (process-dir [dir]
+                  (let [files (sort-by #(.getName %) (.listFiles dir))
+                        index-file (io/file (str (.getPath dir) ".md"))
+                        subdirs (filter #(.isDirectory %) files)
+                        index-file-name? (set (map (fn [d] (str (.getName d) ".md")) subdirs))]
+                    #_(clojure.pprint/pprint {:dirs subdirs :index-file index-file})
+                    (vec (concat (process-file index-file)
+                                 (keep (fn [f]
+                                         (cond
+                                           (.isDirectory f) (process-dir f)
+                                           (and (.isFile f)
+                                                (not (index-file-name? (.getName f)))) (process-file f)))
+                                       files)))))]
 
-(defn build-cljdoc-tree []
-  (spit "doc/cljdoc.edn"
-        (with-out-str (pp/pprint {:cljdoc/languages ["clj"]
-                                  :cljdoc.doc/tree [(build-doc-tree "doc/Noon")]}))))
+          (process-dir root))))
+
+    (defn build-cljdoc-tree []
+      (spit "doc/cljdoc.edn"
+            (with-out-str (pp/pprint {:cljdoc/languages ["clj"]
+                                      :cljdoc.doc/tree [(build-doc-tree "doc/Noon")]}))))); replace underscore with space
+
+(do :test-noon-eval
+
+    (defn org-file->clojure-expressions [org-file]
+      (loop [blocks [] path [] block nil lines (str/split-lines (slurp org-file))]
+        (if-let [[line & lines] (seq lines)]
+          (cond (str/starts-with? line "*") (let [{:keys [level title]} (parse-org-headline line)]
+                                              (recur (conj blocks {:path path :title title})
+                                                     (concat (take (dec level) (concat path (repeat nil)))
+                                                             (list title))
+                                                     block lines))
+                (str/starts-with? line "#+begin_src clojure") (recur blocks path "" lines)
+                (str/starts-with? line "#+end_src") (recur (into blocks
+                                                                 (map-indexed (fn [idx expr]
+                                                                                {:expr expr
+                                                                                 :path path})
+                                                                              (read-string (str "[" block "\n]"))))
+                                                           path false lines)
+                block (recur blocks path (str block "\n" line) lines)
+                :else (recur blocks path block lines))
+          blocks)))
+
+    (defn expressions->code-tree
+      [exprs]
+      (reduce (fn [tree [idx {:keys [title path expr]}]]
+                (if (seq? path)
+                  (update-in tree
+                             (interpose :children path)
+                             (fn [subtree]
+                               (if title
+                                 (assoc subtree :idx idx)
+                                 (update subtree :content (fnil conj []) expr))))
+                  tree))
+              {} (map vector (range) exprs)))
+
+    (defn code-tree->tests [from tree]
+      (keep (fn [[k {:keys [content idx children]}]]
+              (if (or (seq children) (seq content))
+                (list* 'clojure.test/testing k
+                       (concat content
+                               (code-tree->tests (conj from k) children)))))
+            (sort-by (comp :idx val)
+                     tree)))
+
+    (defn emit-noon-org-tests []
+      (let [file "test/noon/doc/noon_org_tests.clj"
+            expressions (->> (org-file->clojure-expressions "src/noon/doc/noon.org")
+                             (expressions->code-tree)
+                             (code-tree->tests [])
+                             (list* 'clojure.test/deftest 'noon-tests)
+                             (str '(ns noon.doc.noon-org-tests
+                                     (:require [clojure.test]
+                                               [noon.eval :refer [play noon score]]))
+                                  "\n"))]
+        (spit file expressions)
+        (zp/zprint-file file file file)))
+
+    #_(emit-noon-org-tests))
