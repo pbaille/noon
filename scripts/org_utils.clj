@@ -21,7 +21,10 @@
 
     (defn ns-form->file-path [x src-path]
       (and (ns-decl? x)
-           (str/join "/" (cons src-path (str/split (second x) #"\."))))))
+           (str/join "/" (cons src-path (str/split (second x) #"\.")))))
+
+    (defn pretty-file! [file]
+      (z/zprint-file file file file)))
 
 (do :org->clj
     (defn org->clj [org-file clj-file]
@@ -102,37 +105,6 @@
       (spit clj-file
             (org-str->clj-str (slurp org-file)))))
 
-(do :entry-points
-
-    (defn build-examples-tests []
-      (org->test "src/noon/doc/examples.org"
-                 "test/noon/doc/examples_test.clj")
-      (z/zprint-file "test/noon/doc/examples_test.clj"
-                     "test/noon/doc/examples_test.clj"
-                     "test/noon/doc/examples_test.clj"))
-
-    (defn build-clj-examples []
-      (org->clj2 "src/noon/doc/examples.org"
-                 "src/noon/doc/examples.clj")
-      (z/zprint-file "src/noon/doc/examples.clj"
-                     "src/noon/doc/examples.clj"
-                     "src/noon/doc/examples.clj"))
-
-    (defn build-clj-guide []
-      (org->clj2 "src/noon/doc/guide.org"
-                 "src/noon/doc/guide.clj")
-      (z/zprint-file "src/noon/doc/guide.clj"
-                     "src/noon/doc/guide.clj"
-                     "src/noon/doc/guide.clj"))
-
-    (defn noon-org->clj []
-      (let [clj-file "src/noon/doc/noon.clj"]
-        (org->clj2 "src/noon/doc/noon.org"
-                   clj-file)
-        #_(z/zprint-file clj-file
-                         clj-file
-                         clj-file))))
-
 (do :org->edn
     "attempt 2"
 
@@ -187,11 +159,6 @@
       (org->edn guide-org-str)
       (split-section guide-org-str)))
 
-(defn build-all []
-  (build-clj-examples)
-  (build-clj-guide)
-  (build-examples-tests))
-
 (do :clj-doc-tree
 
     (defn file->title [filename]
@@ -226,7 +193,7 @@
     (defn build-cljdoc-tree []
       (spit "doc/cljdoc.edn"
             (with-out-str (pp/pprint {:cljdoc/languages ["clj"]
-                                      :cljdoc.doc/tree [(build-doc-tree "doc/Noon")]}))))); replace underscore with space
+                                      :cljdoc.doc/tree [(build-doc-tree "doc/Noon")]})))))
 
 (do :test-noon-eval
 
@@ -271,17 +238,31 @@
             (sort-by (comp :idx val)
                      tree)))
 
-    (defn emit-noon-org-tests []
-      (let [file "test/noon/doc/noon_org_tests.clj"
-            expressions (->> (org-file->clojure-expressions "src/noon/doc/noon.org")
-                             (expressions->code-tree)
-                             (code-tree->tests [])
-                             (list* 'clojure.test/deftest 'noon-tests)
-                             (str '(ns noon.doc.noon-org-tests
-                                     (:require [clojure.test]
-                                               [noon.eval :refer [play noon score]]))
-                                  "\n"))]
-        (spit file expressions)
-        (zp/zprint-file file file file)))
+    (defn org->test-ns-str [file]
+      (->> (org-file->clojure-expressions file)
+           (expressions->code-tree)
+           (code-tree->tests [])
+           (list* 'clojure.test/deftest 'noon-tests)
+           (str '(ns noon.doc.noon-org-tests
+                   (:require [clojure.test]
+                             [noon.eval :refer [play noon score]]))
+                "\n")))
 
     #_(emit-noon-org-tests))
+
+(do :entry-points
+
+    (defn build-doc-tests []
+      (let [file "test/noon/doc/noon_org_test.clj"]
+        (spit file (org->test-ns-str "src/noon/doc/noon.org"))
+        (pretty-file! file)))
+
+    (defn build-doc-ns []
+      (let [clj-file "src/noon/doc/noon.clj"]
+        (org->clj2 "src/noon/doc/noon.org"
+                   clj-file)
+        (pretty-file! clj-file))))
+
+(defn build-all []
+  (build-doc-tests)
+  (build-doc-ns))
