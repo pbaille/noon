@@ -9,58 +9,103 @@
    [noon.lib.harmony]
    [noon.lib.melody]
    [noon.lib.rythmn]
-   [noon.utils.misc :as u]
+   [noon.utils.misc]
+   [noon.utils.multi-val]
+   [noon.vst.vsl]
+   [noon.vst.general-midi]
    [sci.core :as sci]
    #?@(:cljs [[sci.async :as scia]
-              [noon.macros]]))
+              [noon.macros]])
+   #?(:clj [clojure.string :as str]))
   #?(:cljs (:require-macros [noon.eval :refer [sci-namespaces]])))
 
-(defmacro sci-namespaces [& xs]
-  (let [refer-map
-        (fn [ns-sym refered-syms]
-          (zipmap (map (fn [sym] (list 'quote sym))
-                       refered-syms)
-                  (map (fn [sym]
-                         (list 'var (symbol (str ns-sym) (str sym))))
-                       refered-syms)))
+(do :utils
 
-        {:as namespaces :keys [user]}
-        (reduce (fn [ret [ns-sym & {:as opts}]]
-                  (let [ns-publics-form `(ns-publics '~ns-sym)]
-                    (merge (assoc ret `'~ns-sym ns-publics-form)
-                           (when-let [as (:as opts)]
-                             {`'~as ns-publics-form})
-                           (when-let [refered-syms (:refer opts)]
-                             {:user
-                              (conj (:user ret)
-                                    (if (= :all refered-syms)
-                                      ns-publics-form
-                                      (refer-map ns-sym refered-syms)))}))))
-                {:user []}
-                xs)]
+    (defmacro sci-namespaces [& xs]
+      (let [refer-map
+            (fn [ns-sym refered-syms]
+              (zipmap (map (fn [sym] (list 'quote sym))
+                           refered-syms)
+                      (map (fn [sym]
+                             (list 'var (symbol (str ns-sym) (str sym))))
+                           refered-syms)))
 
-    (-> (dissoc namespaces :user)
-        (assoc (list 'quote 'user)
-               (cons `merge user)))))
+            {:as namespaces :keys [user]}
+            (reduce (fn [ret [ns-sym & {:as opts}]]
+                      (let [ns-publics-form `(ns-publics '~ns-sym)]
+                        (merge (assoc ret `'~ns-sym ns-publics-form)
+                               (when-let [as (:as opts)]
+                                 {`'~as ns-publics-form})
+                               (when-let [refered-syms (:refer opts)]
+                                 {:user
+                                  (conj (:user ret)
+                                        (if (= :all refered-syms)
+                                          ns-publics-form
+                                          (refer-map ns-sym refered-syms)))}))))
+                    {:user []}
+                    xs)
 
-(defn deref-def-bindings
-  "Within sci evaluation in clojurescript,
-  regular defs have to be dereferenced to be used by name.
-  This function dereferences all defs in an ns-map.
-  Has no effect in clojure."
-  [ns-map]
-  #?(:clj ns-map
-     :cljs (update-vals ns-map (fn [v]
-                                 (if (seq (:arglists (meta v)))
-                                   v
-                                   (deref v))))))
+            requirements
+            (mapv (fn [[ns-sym & {:as opts} :as reqv]]
+                    (if (= :all (:refer opts))
+                      [ns-sym :refer (vec (keys (ns-publics ns-sym)))]
+                      reqv))
+                  xs)]
 
-(def nss
+        (list `with-meta
+              (-> (dissoc namespaces :user)
+                  (assoc (list 'quote 'user)
+                         (cons `merge user)))
+              {:ns-requirements (list 'quote requirements)})))
+
+    (macroexpand '(sci-namespaces
+                   [noon.updates :refer :all]
+                   [noon.events :as events :refer [ef_ efn]]
+                   [noon.score :as score :refer [mk mk* sf_ sfn e->s]]
+                   [noon.output :as out :refer [noon play write]]
+                   [noon.harmony :as hc]
+                   [noon.numbers :refer [mul div add sub]]
+                   [noon.lib.harmony :as h]
+                   [noon.constants :as constants]
+                   [noon.lib.melody :as m]
+                   [noon.lib.rythmn :as r]
+                   [noon.utils.misc :as u]
+                   [noon.utils.pseudo-random :as rand]
+                   [noon.utils.sequences :as seqs]
+                   [clojure.math.combinatorics :as combinatorics]
+                   #?@(:clj [[noon.utils.multi-val :as multi-val]
+                             [noon.vst.vsl :as vsl :refer [vsl]]])
+                   #?(:cljs [noon.macros :refer :all])))
+
+    (defn deref-def-bindings_bu
+      "Within sci evaluation in clojurescript,
+       regular defs have to be dereferenced to be used by name.
+       This function dereferences all defs in an ns-map.
+       Has no effect in clojure."
+      [ns-map]
+      #?(:clj ns-map
+         :cljs (update-vals ns-map (fn [v]
+                                     (if (seq (:arglists (meta v)))
+                                       v
+                                       (deref v))))))
+
+    (defn deref-def-bindings
+      "Within sci evaluation in clojurescript,
+       regular defs have to be dereferenced to be used by name.
+       This function dereferences all defs in an ns-map.
+       Has no effect in clojure."
+      [ns-map]
+      (update-vals ns-map (fn [v]
+                            (if (seq (:arglists (meta v)))
+                              v
+                              (deref v))))))
+
+(def default-namespaces
   (sci-namespaces
    [noon.updates :refer :all]
    [noon.events :as events :refer [ef_ efn]]
    [noon.score :as score :refer [mk mk* sf_ sfn e->s]]
-   [noon.output :as out :refer [noon play write]]
+   [noon.output :as out]
    [noon.harmony :as hc]
    [noon.numbers :refer [mul div add sub]]
    [noon.lib.harmony :as h]
@@ -75,46 +120,80 @@
              [noon.vst.vsl :as vsl :refer [vsl]]])
    #?(:cljs [noon.macros :refer :all])))
 
-(def sci-ctx
+(defn fresh-context []
   (sci/init
-   {:namespaces (update-vals nss deref-def-bindings)}))
+   {:namespaces (update-vals default-namespaces deref-def-bindings)}))
+
+(def default-ctx
+  (fresh-context))
+
+(defn eval-string
+  "Evaluate a string of noon code."
+  ([x]
+   (eval-string default-ctx x))
+  ([ctx x]
+   (try {:result (sci/eval-string* ctx x)}
+        (catch #?(:clj Exception
+                  :cljs js/Error) e
+          {:error e}))))
+
+
+(defn eval
+  "Evaluate a noon expression."
+  ([x] (eval default-ctx x))
+  ([ctx x] (eval-string ctx (str x))))
+
+#?(:cljs (do (defn eval-string-async [x on-success & [on-failure]]
+               (.then (scia/eval-string* default-ctx x)
+                      (fn [ret] (on-success {:result ret}))
+                      (fn [err] ((or on-failure
+                                     on-success) {:error err}))))
+             (defn eval-async [x on-success & [on-failure]]
+               (eval-string-async (str x) on-success on-failure))))
+
+(defmacro play [& xs]
+  `(let [{res# :result err# :error}
+         (eval '~(vec xs))]
+    (cond res# (noon.output/play-score (noon.score/mk* res#))
+          err# err#)))
+
+(defmacro noon [options score]
+  `(let [{res# :result err# :error}
+         (eval '~score)]
+     (cond res# (noon.output/noon ~options res#)
+           err# err#)))
+
+#?(:clj (do :ns-spit
+
+            (defn- ns->filename [ns-sym]
+              (-> (name ns-sym)
+                  (str/replace "." "/")
+                  (str/replace "-" "_")))
+
+            (defn spit-ns
+              [{:keys [ns path content target]}]
+              (spit (str path "/" (ns->filename ns) "." (or target "clj"))
+                    (str/join "\n\n"
+                              (cons (list 'ns 'noon.tries.generated
+                                          (cons :require
+                                                (cons '[noon.eval :refer [play noon]]
+                                                      (:ns-requirements (meta default-namespaces)))))
+                                    content))))
+
+            (comment
+              (spit-ns '{:ns noon.tries.spit-test
+                         :path "src"
+                         :content [(play (tup s0 s1))]}))))
 
 (comment
-  (meta (get (ns-publics 'noon.output)
-             'MIDI_DEFAULT_OPTIONS))
+  (play (tup s0 s1 s2))
 
-  (meta (get (ns-publics 'noon.output)
-             'options)))
+  (macroexpand '(play (tup s0 s1 s2)))
 
-(defn eval-string [x]
-  #_(println sci-ctx)
-  (try {:result (sci/eval-string* sci-ctx x)}
-       (catch #?(:clj Exception
-                 :cljs js/Error) e
-         {:error e})))
-
-
-(defn eval [x]
-  (eval-string (str x)))
-
-#?(:cljs (defn sci-eval-async [x on-success & [on-failure]]
-           #_(.resume (get-audio-ctx))
-           (.then (scia/eval-string* sci-ctx x)
-                  (fn [ret] (on-success {:result ret}))
-                  (fn [err] ((or on-failure
-                                 on-success) {:error err})))))
-
-#?(:cljs (defn stop-audio []
-           (noon.midi/stop-midi)))
+  (noon {:midi true}
+        (mk (tup s0 s1))))
 
 (comment
   (eval '(noon.score/mk))
   (eval '(mk))
   (eval '(tup s0)))
-
-(comment
-  (println "ui")
-  (println (sci/eval-string* sci-ctx "(tup s0 s1 s2 s3)"))
-  (println (sci/eval-string* sci-ctx "(output/play-score (score/mk (tup s0)))"))
-  (println (sci/eval-string* sci-ctx "(sfn s (merge s s))"))
-  (sci-play "(tup s0 s1 s2 s3)"))
