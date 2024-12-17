@@ -40,4 +40,6 @@
   ;; building noon.client.guide.cljs file
   :create-client-guide-ns {:extra-paths ["scripts"]
                            :extra-deps {commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}
-                           :exec-fn create-client-guide-ns/create-client-guide-ns}}}
+                           :exec-fn create-client-guide-ns/create-client-guide-ns}
+  :build-doc-tests {:extra-paths ["scripts"]
+                    :exec-fn org-utils/build-doc-tests}}}
