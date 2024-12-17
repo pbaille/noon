@@ -3,12 +3,10 @@
  :tasks {zprint {:requires ([zprint.main]),
                  :task (apply zprint.main/-main *command-line-args*)}
 
-         build-examples-tests {:requires ([org-utils]),
-                               :task (org-utils/build-examples-tests)}
-         build-clj-guide {:requires ([org-utils]),
-                          :task (org-utils/build-clj-guide)}
-         build-clj-examples {:requires ([org-utils]),
-                             :task (org-utils/build-clj-examples)}
+         build-doc-tests {:requires ([org-utils]),
+                          :task (org-utils/build-doc-tests)}
+         build-doc-clj {:requires ([org-utils]),
+                        :task (org-utils/build-doc-clj)}
          build-all {:requires ([org-utils]),
                     :task (org-utils/build-all)}
          build-cljdoc-tree {:requires ([org-utils]),
