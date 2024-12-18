@@ -1,6 +1,6 @@
 (ns noon.freeze
   (:require [noon.eval]
-            [noon.utils.misc :refer [pretty-str]]
+            #_[noon.utils.misc :refer [pretty-str]]
             [noon.utils.pseudo-random :as pseudo-random]
             [noon.freezer :refer [freezer]]
             #_(:cljs ["fs" :as fs]))
