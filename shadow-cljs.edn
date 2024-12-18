@@ -15,5 +15,10 @@
                               :output-feature-set :es8
                               :output-wrapper false}}
 
-          :test {:target :node-test
-                 :output-to "out/node-tests.js"}}}
+          #_:test #_{:target :node-test
+                     :output-to "out/node-tests.js"}
+
+          :test {:target :esm
+                 :runtime :node
+                 :output-dir "out"
+                 :modules {:test {:init-fn noon.test/all}}}}}
