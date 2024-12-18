@@ -26,3 +26,4 @@ vsl/*
 /client/noon/client/user.cljs
 /src/noon/doc/guide.md
 /src/noon/doc/examples.md
+/client/noon/client/guide.cljs
