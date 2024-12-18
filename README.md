@@ -4,11 +4,12 @@
 
 # Noon
 
-A library to compose and play MIDI music.
+
+A library to compose and play **MIDI** music.
+
+> **'noon'** translates to **'midi'** in french.
 
 Try it [online!](https://pbaille.github.io/noon/)
-
-![noon translation](https://github.com/pbaille/noon/blob/main/resources/data/noon-translation.png)
 
 https://github.com/user-attachments/assets/324a2e7c-7d13-4cc5-aedb-141f8a8347e9
 
