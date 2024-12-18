@@ -98,16 +98,16 @@
                             (fn [_]
                               (set-return nil)
                               (set-playing false)
-                              (eval/stop-audio))
+                              (noon.midi/stop-midi))
                             (fn [_]
                               (if playing
-                                (eval/stop-audio)
+                                (noon.midi/stop-midi)
                                 (when-not evaluating
                                   (set-evaluating true)
                                   ;; this delay is needed for the set-evaluating call
                                   ;; to have effect before evaluation begins.
                                   (js/setTimeout (fn []
-                                                   (eval/sci-eval-async
+                                                   (eval/eval-string-async
                                                     source
                                                     (fn [x]
                                                       (when-let [id (some-> x :result :noon.midi/playing)]
