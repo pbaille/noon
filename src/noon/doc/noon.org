@@ -207,7 +207,7 @@ Which is is roughly equivalent to:
 
 #+begin_src clojure
 '(noon {:play true}
-       (mk transformation1 transformation2 ...))
+       (score transformation1 transformation2 ...))
 #+end_src
 
 More concretly:
@@ -1120,7 +1120,7 @@ noon.constants/modes ; modes full list
 #+end_src
 
 #+begin_src clojure :pp
-(mk harmonic-minor) ; sets scale to harmonic-minor
+(score harmonic-minor) ; sets scale to harmonic-minor
 #+end_src
 
 ***** structure
@@ -3067,9 +3067,9 @@ Experimenting interleaving passing notes
         (connect-with d1-))
   (play (lin d0 [IIb mixolydian])
         (connect-with2 d-floor))
-  (mk (lin d0 [IIb mixolydian])
+  (score (lin d0 [IIb mixolydian])
       (connect-with2 _))
-  (mk (lin d0 [IIb mixolydian]))
+  (score (lin d0 [IIb mixolydian]))
   (play (lin d0 d-floor)))
 
 ;; This is difficult... to be continued
@@ -3720,7 +3720,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
                                            (tup _ d1- d1 _)))])
                             r l)))]
   (vsl/noon {:play true}
-            (mk [dur3
+            (score [dur3
                  aeolian
                  (lin _ (degree -1))
                  (lin _ s1)
@@ -3768,7 +3768,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
                  (range 3))]
   (vsl/noon {:pdf true
              :play true}
-            (mk dur8
+            (score dur8
                 harmonic-minor
                 (par* lines)
                 (lin _ (transpose c3-))
@@ -3816,7 +3816,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
                  (range 3))]
   (vsl/noon {:pdf true
              :play true}
-            (mk dur8
+            (score dur8
                 dur2
                 dorian
                 (par* (cons bass lines))
@@ -4200,7 +4200,7 @@ Trying to produce vibrating textures by playing very fast note sequences.
        [(patch :vibraphone)
         (shuflin s0 s1 s2 s3 s4)
         (nlin 4 (one-of s1 s2 s1- s2-))
-        (sf_ (let [rythmn (mk (nlin 2 (! (r/gen-tup 12 5 :shifted))) (append rev))]
+        (sf_ (let [rythmn (score (nlin 2 (! (r/gen-tup 12 5 :shifted))) (append rev))]
                (set (map (fn [r n]
                            (merge n (select-keys r [:position :duration])))
                          (sort-by :position rythmn)
@@ -4329,7 +4329,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
                       [mode-kw prio] (rand/rand-nth (possible-modes interval modal-lvl (dec chord-size)))
                       partial-scale (cons 0 (take (dec chord-size) prio))
                       structure' (constants/partial-scale->structure mode-kw partial-scale)
-                      closed (mk (dissoc (first score) :pitch)
+                      closed (score/mk (dissoc (first score) :pitch)
                                  (origin min-pitch-val)
                                  (scale mode-kw)
                                  (structure structure')
@@ -4544,7 +4544,7 @@ It assumes VSL special edition (volumes 1+ and 2+)
 
 #+begin_src clojure :clj-only
 (vsl/noon {:play true}
-          (mk (par [(vsl :chamber-violins-1 :detache)
+          (score (par [(vsl :chamber-violins-1 :detache)
                     (lin s0
                          [(vsl/patch :legato) (tup s1 s2 s3)]
                          [(vsl/patch :pizzicato)
@@ -4555,7 +4555,7 @@ It assumes VSL special edition (volumes 1+ and 2+)
               (dup 4)))
 
 (vsl/noon {:play true}
-          (mk vel10
+          (score vel10
               (vsl/instrument :chamber-cellos)
               (vsl/patch :pizzicato)
               o1-
