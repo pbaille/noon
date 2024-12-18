@@ -30,7 +30,7 @@ jobs:
         cli: latest
         bb: latest
 
-    - name Generating noon.org tests
+    - name: Generating noon org tests
       run: clojure -X:build-doc-tests
 
     - name: Install npm dependencies
