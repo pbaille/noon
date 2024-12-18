@@ -7,7 +7,8 @@
 
 A library to compose and play **MIDI** music.
 
-> **'noon'** translates to **'midi'** in french.
+> **ⓘ**  
+> **NOON** *translates to* **MIDI** *in french*.
 
 Try it [online!](https://pbaille.github.io/noon/)
 
