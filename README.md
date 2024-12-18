@@ -4,12 +4,9 @@
 
 # Noon
 
-
 A library to compose MIDI music.
 
-[guide](https://github.com/pbaille/noon/blob/main/src/noon/doc/guide.org)
-
-[sandbox](https://pbaille.github.io/noon/)
+Try it [online!](https://pbaille.github.io/noon/)
 
 https://github.com/user-attachments/assets/324a2e7c-7d13-4cc5-aedb-141f8a8347e9
 
