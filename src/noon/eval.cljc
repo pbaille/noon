@@ -10,13 +10,13 @@
    [noon.lib.melody]
    [noon.lib.rythmn]
    [noon.utils.misc]
-   [noon.utils.multi-val]
-   [noon.vst.vsl]
    [noon.vst.general-midi]
    [sci.core :as sci]
    #?@(:cljs [[sci.async :as scia]
               [noon.macros]])
-   #?(:clj [clojure.string :as str]))
+   #?@(:clj [[noon.vst.vsl]
+             [noon.utils.multi-val]
+             [clojure.string :as str]]))
   #?(:cljs (:require-macros [noon.eval :refer [sci-namespaces]])))
 
 (do :utils
@@ -48,7 +48,7 @@
             requirements
             (mapv (fn [[ns-sym & {:as opts} :as reqv]]
                     (if (= :all (:refer opts))
-                      [ns-sym :refer (vec (keys (ns-publics ns-sym)))]
+                      [ns-sym :refer '(vec (keys (ns-publics ns-sym)))]
                       reqv))
                   xs)]
 
@@ -137,31 +137,40 @@
                   :cljs js/Error) e
           {:error e}))))
 
-
 (defn eval
   "Evaluate a noon expression."
   ([x] (eval default-ctx x))
-  ([ctx x] (eval-string ctx (str x))))
+  ([ctx x]
+   (try {:result (sci/eval-form ctx x)}
+        (catch #?(:clj Exception
+                  :cljs js/Error) e
+          {:error e}))))
 
-#?(:cljs (do (defn eval-string-async [x on-success & [on-failure]]
-               (.then (scia/eval-string* default-ctx x)
-                      (fn [ret] (on-success {:result ret}))
-                      (fn [err] ((or on-failure
-                                     on-success) {:error err}))))
-             (defn eval-async [x on-success & [on-failure]]
-               (eval-string-async (str x) on-success on-failure))))
+(defmacro score [& xs]
+  `(let [{res# :result err# :error}
+         (eval '~(vec xs))]
+     (cond res# (noon.score/mk* res#)
+           err# err#)))
 
 (defmacro play [& xs]
   `(let [{res# :result err# :error}
          (eval '~(vec xs))]
-    (cond res# (noon.output/play-score (noon.score/mk* res#))
-          err# err#)))
+     (cond res# (noon.output/play-score (noon.score/mk* res#))
+           err# err#)))
 
 (defmacro noon [options score]
   `(let [{res# :result err# :error}
          (eval '~score)]
      (cond res# (noon.output/noon ~options res#)
            err# err#)))
+
+#?(:cljs (do (defn eval-string-async [x on-success & [on-failure]]
+               (.then (scia/eval-string* default-ctx x)
+                      (fn [ret] (on-success {:result ret}))
+                      (fn [err] ((or on-failure
+                                     on-success) {:error err}))))))
+
+
 
 #?(:clj (do :ns-spit
 
