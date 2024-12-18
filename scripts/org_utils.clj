@@ -198,32 +198,13 @@
 
 (do :test-noon-eval
 
-    (defn org-file->clojure-expressions [org-file]
-      (loop [blocks [] path [] block nil lines (str/split-lines (slurp org-file))]
-        (if-let [[line & lines] (seq lines)]
-          (cond (str/starts-with? line "*") (let [{:keys [level title]} (parse-org-headline line)]
-                                              (recur (conj blocks {:path path :title title})
-                                                     (concat (take (dec level) (concat path (repeat nil)))
-                                                             (list title))
-                                                     block lines))
-                (str/starts-with? line "#+begin_src clojure") (recur blocks path "" lines)
-                (str/starts-with? line "#+end_src") (recur (into blocks
-                                                                 (map (fn [expr]
-                                                                        {:expr expr
-                                                                         :path path})
-                                                                      (read-string (str "[" block "\n]"))))
-                                                           path false lines)
-                block (recur blocks path (str block "\n" line) lines)
-                :else (recur blocks path block lines))
-          blocks)))
-
     (defn code-block-options [s]
       (let [options (set (str/split (str/replace s "#+begin_src clojure" "")
                                     #" "))]
         {:clj-only (options ":clj-only")
          :cljs-only (options ":cljs-only")}))
 
-    (defn org-file->clojure-expressions2 [org-file]
+    (defn org-file->clojure-expressions [org-file]
       (loop [lines (str/split-lines (slurp org-file))
              {:as state :keys [blocks path current-block block-options]}
              {:blocks [] :path [] :current-block nil :block-options nil}]
@@ -299,7 +280,7 @@
 
     (defn org->test-ns-str [file target]
       (let [code-str
-            (->> (org-file->clojure-expressions2 file)
+            (->> (org-file->clojure-expressions file)
                  (expressions->code-tree)
                  (code-tree->tests [] target)
                  (list* 't/deftest 'noon-tests)
@@ -319,7 +300,7 @@
       (org->test-ns-str "src/noon/doc/noon.org" :clj)
 
       (let [file "src/noon/doc/noon.org"]
-        (->> (org-file->clojure-expressions2 file)
+        (->> (org-file->clojure-expressions file)
              (expressions->code-tree)
              (code-tree->tests [])))))
 
