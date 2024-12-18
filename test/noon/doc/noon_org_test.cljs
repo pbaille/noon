@@ -52,7 +52,7 @@
                   (quote (play transformation1 transformation2 ...))))
           (t/is (noon.freeze/freeze
                   (quote (noon {:play true}
-                               (mk transformation1 transformation2 ...)))))
+                               (score transformation1 transformation2 ...)))))
           (t/is (noon.freeze/freeze (play dur2 (tup s0 s1 s2 s3))))))
       (t/testing "Transformations 1"
         (t/testing "Pitches"
@@ -290,7 +290,7 @@
           (t/testing "scale"
             (t/is (noon.freeze/freeze noon.constants/modes))
             (t/is (noon.freeze/freeze (play (scale :dorian) dur:4 (rep 8 d1))))
-            (t/is (noon.freeze/freeze (mk harmonic-minor))))
+            (t/is (noon.freeze/freeze (score harmonic-minor))))
           (t/testing "structure"
             (t/is (noon.freeze/freeze noon.constants/structures))
             (t/is (noon.freeze/freeze (score (structure :tetrad))))
@@ -1501,8 +1501,8 @@
                                   (vec (mapcat f (partition size step x)))))
                         >> (fn [& xs]
                              (fn [x]
-                               (reduce (fn* [p1__47303# p2__47302#]
-                                         (p2__47302# p1__47303#))
+                               (reduce (fn* [p1__47935# p2__47934#]
+                                         (p2__47934# p1__47935#))
                                  x
                                  xs)))
                         upd (fn [x f] (f x))]
@@ -2313,27 +2313,27 @@
         (t/testing "zip rythmn"
           (t/is
             (noon.freeze/freeze
-              (play lydianb7
-                    (h/modal-structure 5)
-                    (chans
-                      [(patch :vibraphone) (shuflin s0 s1 s2 s3 s4)
-                       (nlin 4 (one-of s1 s2 s1- s2-))
-                       (sf_
-                         (let [rythmn (mk (nlin 2 (! (r/gen-tup 12 5 :shifted)))
-                                          (append rev))]
-                           (set (map (fn [r n]
-                                       (merge
-                                         n
-                                         (select-keys r [:position :duration])))
-                                  (sort-by :position rythmn)
-                                  (sort-by :position _)))))]
-                      [(patch :woodblock) (r/gen-tup 12 5 :euclidean) (dup 4)]
-                      [(patch :tinkle-bell) (dup 4)]
-                      [(patch :metallic) (shuflin s0 s1 s2 s3)
-                       (each (par s0 s1 s2))]
-                      [(patch :acoustic-bass) t2- (dup 4)])
-                    (adjust 8)
-                    (append [(transpose c3-) s1 rev] _)))))
+              (play
+                lydianb7
+                (h/modal-structure 5)
+                (chans
+                  [(patch :vibraphone) (shuflin s0 s1 s2 s3 s4)
+                   (nlin 4 (one-of s1 s2 s1- s2-))
+                   (sf_
+                     (let [rythmn (score (nlin 2 (! (r/gen-tup 12 5 :shifted)))
+                                         (append rev))]
+                       (set
+                         (map (fn [r n]
+                                (merge n (select-keys r [:position :duration])))
+                           (sort-by :position rythmn)
+                           (sort-by :position _)))))]
+                  [(patch :woodblock) (r/gen-tup 12 5 :euclidean) (dup 4)]
+                  [(patch :tinkle-bell) (dup 4)]
+                  [(patch :metallic) (shuflin s0 s1 s2 s3)
+                   (each (par s0 s1 s2))]
+                  [(patch :acoustic-bass) t2- (dup 4)])
+                (adjust 8)
+                (append [(transpose c3-) s1 rev] _)))))
         (t/testing "Gradual melodic transformation"
           (t/is (noon.freeze/freeze
                   (play
@@ -2446,11 +2446,12 @@
                              structure' (constants/partial-scale->structure
                                           mode-kw
                                           partial-scale)
-                             closed (mk (dissoc (first score) :pitch)
-                                        (origin min-pitch-val)
-                                        (scale mode-kw)
-                                        (structure structure')
-                                        (par* (map s-step (range chord-size))))
+                             closed (score/mk (dissoc (first score) :pitch)
+                                              (origin min-pitch-val)
+                                              (scale mode-kw)
+                                              (structure structure')
+                                              (par* (map s-step
+                                                      (range chord-size))))
                              drops (filter (fn [drop]
                                              (= max-pitch-val
                                                 (last (h/pitch-values drop))))

@@ -52,7 +52,7 @@
                   (quote (play transformation1 transformation2 ...))))
           (t/is (noon.freeze/freeze
                   (quote (noon {:play true}
-                               (mk transformation1 transformation2 ...)))))
+                               (score transformation1 transformation2 ...)))))
           (t/is (noon.freeze/freeze (play dur2 (tup s0 s1 s2 s3))))))
       (t/testing "Transformations 1"
         (t/testing "Pitches"
@@ -290,7 +290,7 @@
           (t/testing "scale"
             (t/is (noon.freeze/freeze noon.constants/modes))
             (t/is (noon.freeze/freeze (play (scale :dorian) dur:4 (rep 8 d1))))
-            (t/is (noon.freeze/freeze (mk harmonic-minor))))
+            (t/is (noon.freeze/freeze (score harmonic-minor))))
           (t/testing "structure"
             (t/is (noon.freeze/freeze noon.constants/structures))
             (t/is (noon.freeze/freeze (score (structure :tetrad))))
@@ -1522,8 +1522,8 @@
                     (comment
                       (play (lin d0 [IIb mixolydian]) (connect-with d1-))
                       (play (lin d0 [IIb mixolydian]) (connect-with2 d-floor))
-                      (mk (lin d0 [IIb mixolydian]) (connect-with2 _))
-                      (mk (lin d0 [IIb mixolydian]))
+                      (score (lin d0 [IIb mixolydian]) (connect-with2 _))
+                      (score (lin d0 [IIb mixolydian]))
                       (play (lin d0 d-floor))))))
           (t/testing "polarity"
             (t/is (noon.freeze/freeze [0 0 1 0]))
@@ -1558,8 +1558,8 @@
                                   (vec (mapcat f (partition size step x)))))
                         >> (fn [& xs]
                              (fn [x]
-                               (reduce (fn* [p1__47295# p2__47294#]
-                                         (p2__47294# p1__47295#))
+                               (reduce (fn* [p1__47927# p2__47926#]
+                                         (p2__47926# p1__47927#))
                                  x
                                  xs)))
                         upd (fn [x f] (f x))]
@@ -2046,8 +2046,8 @@
                     voice1 (rand/rand-nth complements)
                     voice2 (map (fn [a b]
                                   (first (filter (complement
-                                                   (set (map (fn* [p1__47296#]
-                                                               (mod p1__47296#
+                                                   (set (map (fn* [p1__47928#]
+                                                               (mod p1__47928#
                                                                     3))
                                                           [a b])))
                                            [0 1 2])))
@@ -2083,8 +2083,8 @@
                                               (every?
                                                 (fn [xs]
                                                   (apply distinct?
-                                                    (map (fn* [p1__47297#]
-                                                           (mod p1__47297#
+                                                    (map (fn* [p1__47929#]
+                                                           (mod p1__47929#
                                                                 structure-size))
                                                       xs)))
                                                 (apply map vector p' at)))
@@ -2109,8 +2109,8 @@
           (t/is (noon.freeze/freeze
                   (let [[v1 v2 v3] (->> (complementarity-tree 3 3)
                                         (leaves-paths)
-                                        (filter (fn* [p1__47298#]
-                                                  (= 3 (count p1__47298#))))
+                                        (filter (fn* [p1__47930#]
+                                                  (= 3 (count p1__47930#))))
                                         (rand/rand-nth))]
                     (play [dur3 aeolian (lin _ (degree -1)) (lin _ s1)
                            (lin _ [(degree 3) s1-])
@@ -2127,7 +2127,7 @@
               (let [[[r1 r2 r3] [l1 l2 l3]]
                       (->> (complementarity-tree 3 3)
                            (leaves-paths)
-                           (filter (fn* [p1__47299#] (= 3 (count p1__47299#))))
+                           (filter (fn* [p1__47931#] (= 3 (count p1__47931#))))
                            (rand/shuffle))
                     f (fn [r l]
                         (tup*
@@ -2141,20 +2141,21 @@
                             l)))]
                 (vsl/noon
                   {:play true}
-                  (mk [dur3 aeolian (lin _ (degree -1)) (lin _ s1)
-                       (lin _ [(degree 3) s1-]) (lin _ [s1 (transpose c3-)])]
-                      (each (! (let [[a b c] (rand/shuffle [(f r1 l1) (f r2 l2)
-                                                            (f r3 l3)])]
-                                 (chans [(vsl :solo-violin-1 :pizzicato) o1 b]
-                                        [(vsl :solo-viola :pizzicato) c]
-                                        [(vsl :solo-cello-1 :pizzicato) o1-
-                                         a])))))))))
+                  (score [dur3 aeolian (lin _ (degree -1)) (lin _ s1)
+                          (lin _ [(degree 3) s1-]) (lin _ [s1 (transpose c3-)])]
+                         (each
+                           (! (let [[a b c] (rand/shuffle [(f r1 l1) (f r2 l2)
+                                                           (f r3 l3)])]
+                                (chans [(vsl :solo-violin-1 :pizzicato) o1 b]
+                                       [(vsl :solo-viola :pizzicato) c]
+                                       [(vsl :solo-cello-1 :pizzicato) o1-
+                                        a])))))))))
           (t/is
             (noon.freeze/freeze
               (let [[arpegios ornamentations harmonic-sequences]
                       (->> (complementarity-tree 3 3)
                            (leaves-paths)
-                           (filter (fn* [p1__47300#] (= 3 (count p1__47300#))))
+                           (filter (fn* [p1__47932#] (= 3 (count p1__47932#))))
                            (rand/shuffle))
                     choices {:harmony {0 _,
                                        1 [(degree 3) (s-shift -1)],
@@ -2185,25 +2186,25 @@
                                       (drop offset (cycle ornamentations))))])
                             (range 3))]
                 (vsl/noon {:pdf true, :play true}
-                          (mk dur8
-                              harmonic-minor
-                              (par* lines)
-                              (lin _ (transpose c3-))
-                              ($by :channel
-                                   (connect-with
-                                     (sf_ (->> (get-in choices
-                                                       [:ornamentation
-                                                        (:connection (first
-                                                                       _))])
-                                               (score/update-score _))))))))))
+                          (score
+                            dur8
+                            harmonic-minor
+                            (par* lines)
+                            (lin _ (transpose c3-))
+                            ($by :channel
+                                 (connect-with
+                                   (sf_ (->> (get-in choices
+                                                     [:ornamentation
+                                                      (:connection (first _))])
+                                             (score/update-score _))))))))))
           (t/is
             (noon.freeze/freeze
               (quote
                 (let [[arpegios ornamentations harmonic-sequences articulations]
                         (->> (complementarity-tree 3 3)
                              (leaves-paths)
-                             (filter (fn* [p1__47301#]
-                                       (= 3 (count p1__47301#))))
+                             (filter (fn* [p1__47933#]
+                                       (= 3 (count p1__47933#))))
                              (rand/shuffle))
                       choices {:harmony {0 _,
                                          1 [lydian (transpose c4) (s-shift -1)],
@@ -2247,19 +2248,19 @@
                                                            arpegios)))
                                       (drop offset (cycle articulations)))))])
                           (range 3))]
-                  (vsl/noon {:pdf true, :play true}
-                            (mk dur8
-                                dur2
-                                dorian
-                                (par* (cons bass lines))
-                                (lin _ (transpose c3-))
-                                ($by :channel
-                                     (connect-with
-                                       (sf_ (->>
-                                              (get-in choices
-                                                      [:ornamentation
-                                                       (:connection (first _))])
-                                              (score/update-score _)))))))))))))
+                  (vsl/noon
+                    {:pdf true, :play true}
+                    (score dur8
+                           dur2
+                           dorian
+                           (par* (cons bass lines))
+                           (lin _ (transpose c3-))
+                           ($by :channel
+                                (connect-with
+                                  (sf_ (->> (get-in choices
+                                                    [:ornamentation
+                                                     (:connection (first _))])
+                                            (score/update-score _)))))))))))))
       (t/testing "Tunes"
         (t/testing "Autumn leaves"
           (t/is
@@ -2604,27 +2605,27 @@
         (t/testing "zip rythmn"
           (t/is
             (noon.freeze/freeze
-              (play lydianb7
-                    (h/modal-structure 5)
-                    (chans
-                      [(patch :vibraphone) (shuflin s0 s1 s2 s3 s4)
-                       (nlin 4 (one-of s1 s2 s1- s2-))
-                       (sf_
-                         (let [rythmn (mk (nlin 2 (! (r/gen-tup 12 5 :shifted)))
-                                          (append rev))]
-                           (set (map (fn [r n]
-                                       (merge
-                                         n
-                                         (select-keys r [:position :duration])))
-                                  (sort-by :position rythmn)
-                                  (sort-by :position _)))))]
-                      [(patch :woodblock) (r/gen-tup 12 5 :euclidean) (dup 4)]
-                      [(patch :tinkle-bell) (dup 4)]
-                      [(patch :metallic) (shuflin s0 s1 s2 s3)
-                       (each (par s0 s1 s2))]
-                      [(patch :acoustic-bass) t2- (dup 4)])
-                    (adjust 8)
-                    (append [(transpose c3-) s1 rev] _)))))
+              (play
+                lydianb7
+                (h/modal-structure 5)
+                (chans
+                  [(patch :vibraphone) (shuflin s0 s1 s2 s3 s4)
+                   (nlin 4 (one-of s1 s2 s1- s2-))
+                   (sf_
+                     (let [rythmn (score (nlin 2 (! (r/gen-tup 12 5 :shifted)))
+                                         (append rev))]
+                       (set
+                         (map (fn [r n]
+                                (merge n (select-keys r [:position :duration])))
+                           (sort-by :position rythmn)
+                           (sort-by :position _)))))]
+                  [(patch :woodblock) (r/gen-tup 12 5 :euclidean) (dup 4)]
+                  [(patch :tinkle-bell) (dup 4)]
+                  [(patch :metallic) (shuflin s0 s1 s2 s3)
+                   (each (par s0 s1 s2))]
+                  [(patch :acoustic-bass) t2- (dup 4)])
+                (adjust 8)
+                (append [(transpose c3-) s1 rev] _)))))
         (t/testing "Gradual melodic transformation"
           (t/is (noon.freeze/freeze
                   (play
@@ -2737,11 +2738,12 @@
                              structure' (constants/partial-scale->structure
                                           mode-kw
                                           partial-scale)
-                             closed (mk (dissoc (first score) :pitch)
-                                        (origin min-pitch-val)
-                                        (scale mode-kw)
-                                        (structure structure')
-                                        (par* (map s-step (range chord-size))))
+                             closed (score/mk (dissoc (first score) :pitch)
+                                              (origin min-pitch-val)
+                                              (scale mode-kw)
+                                              (structure structure')
+                                              (par* (map s-step
+                                                      (range chord-size))))
                              drops (filter (fn [drop]
                                              (= max-pitch-val
                                                 (last (h/pitch-values drop))))
@@ -2793,26 +2795,26 @@
           (t/is (noon.freeze/freeze
                   (vsl/noon
                     {:play true}
-                    (mk (par [(vsl :chamber-violins-1 :detache)
-                              (lin s0
-                                   [(vsl/patch :legato) (tup s1 s2 s3)]
-                                   [(vsl/patch :pizzicato)
-                                    (par [(vsl/patch :snap-pizzicato) _]
-                                         [(vsl :solo-double-bass :pizzicato) o2-
-                                          (tup s2 s1)])])]
-                             [(vsl :flute-1 :portato) o1 s-
-                              (lin s0 [(vsl/patch :legato) (tup s1 s2 s3)])])
-                        (lin s0 s2 s1-)
-                        (dup 4)))))
+                    (score (par [(vsl :chamber-violins-1 :detache)
+                                 (lin s0
+                                      [(vsl/patch :legato) (tup s1 s2 s3)]
+                                      [(vsl/patch :pizzicato)
+                                       (par [(vsl/patch :snap-pizzicato) _]
+                                            [(vsl :solo-double-bass :pizzicato)
+                                             o2- (tup s2 s1)])])]
+                                [(vsl :flute-1 :portato) o1 s-
+                                 (lin s0 [(vsl/patch :legato) (tup s1 s2 s3)])])
+                           (lin s0 s2 s1-)
+                           (dup 4)))))
           (t/is (noon.freeze/freeze (vsl/noon {:play true}
-                                              (mk vel10
-                                                  (vsl/instrument
-                                                    :chamber-cellos)
-                                                  (vsl/patch :pizzicato)
-                                                  o1-
-                                                  (shuftup d0 d3 d6)
-                                                  (shuftup d0 d3 d6)
-                                                  (dup 8))))))
+                                              (score vel10
+                                                     (vsl/instrument
+                                                       :chamber-cellos)
+                                                     (vsl/patch :pizzicato)
+                                                     o1-
+                                                     (shuftup d0 d3 d6)
+                                                     (shuftup d0 d3 d6)
+                                                     (dup 8))))))
         (t/testing "=noon.lib.rythmn/bintup="
           (t/is
             (noon.freeze/freeze
