@@ -5,7 +5,7 @@
 # Noon
 
 
-A library to compose and play **MIDI** music.
+Compose and play **MIDI** music.
 
 > **ⓘ**  
 > **NOON** *translates to* **MIDI** *in french*.
