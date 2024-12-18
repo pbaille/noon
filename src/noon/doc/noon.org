@@ -59,29 +59,12 @@ noon.events/DEFAULT_EVENT
 A score is a collection of events, represented using a clojure set.
 
 #+begin_src clojure :pp
-(mk) ; the `mk` function is used to build score, more on it later
-#+end_src
-
-#+RESULTS:
-#+begin_src clojure
-#{{:position 0,
-   :channel 0,
-   :track 0,
-   :duration 1,
-   :pitch
-   {:scale [0 2 4 5 7 9 11],
-    :structure [0 2 4],
-    :origin {:d 35, :c 60},
-    :position {:t 0, :s 0, :d 0, :c 0}},
-   :velocity 80,
-   :voice 0,
-   :patch [0 4]}}
-
+(score) ; the `noon.eval/score` function is used to build score, more on it later
 #+end_src
 
 *** Top form
 
-=noon.output/noon= is the top level form of the library.
+=noon.eval/noon= is the top level form of the library.
 
 #+begin_src clojure
 '(noon <option-map> <score>)
@@ -94,7 +77,7 @@ Here a minimal example:
  ;; the play option let you play the given score
  {:play true}
  ;; calling mk without argument just build the default score (middle C)
- (mk))
+ (score))
 #+end_src
 
 **** Options
@@ -134,16 +117,13 @@ example:
       ;; this will be explained later
       ;; it repeats an ascending scale with different patches
       ;; in order to demonstrate the soundfont
-      (mk dur2
-          (rup 8 d1)
-          (lin (patch :clarinet)
-               (patch :electric-piano-1)
-               (patch :trumpet)
-               (patch :ocarina))))
+      (score dur2
+             (rup 8 d1)
+             (lin (patch :clarinet)
+                  (patch :electric-piano-1)
+                  (patch :trumpet)
+                  (patch :ocarina))))
 #+end_src
-
-#+RESULTS:
-: {:source-file "generated/1733903842560.noon", :seed-file "generated/1733903842560.seed"}
 
 In addition to those soundfonts, you can send the output of noon to any output device available on your machine.
 
@@ -156,7 +136,7 @@ In addition to those soundfonts, you can send the output of noon to any output d
 ;; use it to play a score
 (noon {:play true
        :tracks {0 bus1-sequencer}}
-      (mk (par s0 s1 s2)))
+      (score (par s0 s1 s2)))
 #+end_src
 
 ***** Musescore options
@@ -177,18 +157,18 @@ It is possible to create an mp3 file by passing this option:
 
 #+begin_src clojure :export-audio t
 (noon {:mp3 true}
-      (mk (tup s0 s1 s2)))
+      (score (tup s0 s1 s2)))
 #+end_src
 
 [[https://ffmpeg.org/][FFmpeg]] and [[https://www.fluidsynth.org/][FluidSynth]] have to be installed on your machine.
 
 **** score
 
-As we've just seen, we can create a score with the =mk= function.
+As we've just seen, we can create a score with the =score= function.
 With no arguments it simply returns the default score containing only a middle C.
 
 #+begin_src clojure :pp
-(mk)
+(score)
 #+end_src
 
 #+RESULTS:
@@ -207,19 +187,17 @@ With no arguments it simply returns the default score containing only a middle C
    :patch [0 4]}}
 #+end_src
 
-The =mk= function can take any number of arguments, each one being a score transformation.
+The =score= function can take any number of arguments, each one being a score transformation.
 
 Those transformations are applied in order to the default score.
 
 #+begin_src clojure :pp
-'(mk transformation1 transformation2 ...)
+'(score transformation1 transformation2 ...)
 #+end_src
 
-**** shorthands
+**** =noon.eval/play=
 
-As a convenience, some thin =noon.output/noon= wrappers are defined:
-
-***** =noon.output/play=
+As a convenience, this thin =noon.eval/noon= wrapper let you play a score with fewer keystrokes:
 
 #+begin_src clojure
 '(play transformation1 transformation2 ...)
@@ -239,9 +217,6 @@ More concretly:
       (tup s0 s1 s2 s3))
 #+end_src
 
-***** =noon.output/write=
-
-TODO
 *** Transformations 1
 
 There is a bunch of transformations available, let's see the basics.
@@ -297,7 +272,7 @@ There is also a more flexible (and verbose) way to build duration transformation
 (dur (fn [x] (* x 2))) ; multiply by 2 the current duration.
 #+end_src
 
-Those 3 forms return a transformation that can be used in =mk= or =play=
+Those 3 forms return a transformation that can be used in =score= or =play=
 
 #+begin_src clojure :proll
 (play (dur 1/4))
@@ -353,7 +328,7 @@ We can compose any number of transformations together using a clojure vector.
 (play [(vel 127) dur4 F#-1]) ; the order do not matter in this case.
 #+end_src
 
-The =noon.output/play= and the =noon.score/mk= functions, when given several arguments are doing exactly this
+The =play= and =score= forms, when given several arguments are doing exactly this
 
 #+begin_src clojure :proll
 (play F#-1 dur4) ; is the same as (play [F#-1 dur4])
@@ -637,7 +612,7 @@ The 2 previous transformations introduced: =dup= and =rep=, are changing the sco
 In fact =tup= is just a composition of =fit= and =lin=.
 
 #+begin_src clojure :pp
-(= (mk (tup c0 c3 c8)) (mk (fit (lin c0 c3 c8))))
+(= (score (tup c0 c3 c8)) (score (fit (lin c0 c3 c8))))
 #+end_src
 
 The composition of =fit= and =rep= is also defined as =rup= for lack of a better name:
@@ -1094,21 +1069,13 @@ The :origin key hold the pitch from where our layers starts (in both directions)
 
 The :position key holds a map with the 4 layers indexes
 
-#+begin_src clojure :pp
-:t ; tonic
-#+end_src
+- =:t= tonic
 
-#+begin_src clojure :pp
-:s ; structural
-#+end_src
+- =:s= structural
 
-#+begin_src clojure :pp
-:d ; diatonic
-#+end_src
+- =:d= diatonic
 
-#+begin_src clojure :pp
-:c ; chromatic
-#+end_src
+- =:c= chromatic
 
 **** Shifts
 
@@ -1165,11 +1132,11 @@ noon.constants/structures ; full structure list
 #+end_src
 
 #+begin_src clojure :pp
-(mk (structure :tetrad)) ; sets structure to tetrad
+(score (structure :tetrad)) ; sets structure to tetrad
 #+end_src
 
 #+begin_src clojure :pp
-(mk sus47) ; set-structure-to-sus47
+(score sus47) ; set-structure-to-sus47
 #+end_src
 
 ***** origin
@@ -1181,7 +1148,7 @@ By default the origin is setup to middle C.
 We can use the =origin= function to change this
 
 #+begin_src clojure :pp
-(mk (origin :Eb0))
+(score (origin :Eb0))
 #+end_src
 
 ****** Examples
@@ -1197,11 +1164,11 @@ The root update works a bit like =origin= but it takes a pitch-class instead of 
 For instance if the origin is on =C0=, =(root :B)= will put the origin on =B-1= because =B-1= is closer to =C0= than =B0=.
 
 #+begin_src clojure :pp
-(mk (root :D))
+(score (root :D))
 #+end_src
 
 #+begin_src clojure :pp
-(mk (root :B))
+(score (root :B))
 #+end_src
 
 ****** Examples
@@ -1226,14 +1193,14 @@ the transpose update takes an interval or a position and use it to update the or
 Sometimes when changing the harmonic context, we want to stay on the same pitch, the =rebase= function let you do that.
 
 #+begin_src clojure :pp
-(mk (rebase (root :E)))
+(score (rebase (root :E)))
 #+end_src
 
 Here we are modulating to E major, but we are staying on the pitch we were on (=C0=).
 
 #+begin_src clojure :pp
 (=
- (get-in (mk (rebase (root :E))) [:pitch :position])
+ (get-in (score (rebase (root :E))) [:pitch :position])
  {:t 0, :s -1, :d 0, :c 1})
 #+end_src
 
@@ -1242,7 +1209,7 @@ This position points to =C0= but in the context of E major.
 The =rebase= function can take several harmonic context transformations.
 
 #+begin_src clojure :pp
-(mk (rebase (root :E) (scale :mixolydianb6)))
+(score (rebase (root :E) (scale :mixolydianb6)))
 #+end_src
 
 ***** degree
@@ -1250,11 +1217,11 @@ The =rebase= function can take several harmonic context transformations.
 Move to the nth degree of the current scale (mode), negative indexes are allowed.
 
 #+begin_src clojure :pp
-(mk (degree 2)) ; move to the 3rd degree of C major, E phrygian
+(score (degree 2)) ; move to the 3rd degree of C major, E phrygian
 #+end_src
 
 #+begin_src clojure :pp
-(mk (scale :melodic-minor) (degree -1)) ; move to the 7th degree of C melodic minor, B superlocrian.
+(score (scale :melodic-minor) (degree -1)) ; move to the 7th degree of C melodic minor, B superlocrian.
 #+end_src
 
 Roman numeral vars are also available to change degree.
@@ -1288,11 +1255,11 @@ One of the most common things we want to be able to control when generating melo
 This function returns nil if any event of the score is not in the given pitch bounds.
 
 #+begin_src clojure :pp
-(= (mk Eb0 (within-pitch-bounds? :C-1 :C0)) nil)
+(= (score Eb0 (within-pitch-bounds? :C-1 :C0)) nil)
 #+end_src
 
 #+begin_src clojure :pp
-(= (mk Eb0 (within-pitch-bounds? :C0 :C1)) (mk Eb0))
+(= (score Eb0 (within-pitch-bounds? :C0 :C1)) (score Eb0))
 #+end_src
 
 This function is handy in conjuction with the =any-that= or =fst-that= forms.
@@ -2964,6 +2931,8 @@ Experimenting interleaving passing notes
            (rand-interleaving a b)
            xs)))
 
+(require '[clojure.math.combinatorics :as combinatorics])
+
 (defn interleavings [a b]
   (reduce (fn [ret perm]
             (conj ret (interleaving perm a b)))
@@ -3007,7 +2976,7 @@ Experimenting interleaving passing notes
 
 ***** experience 1
 
-#+begin_src clojure :results silent
+#+begin_src clojure :results silent :clj-only
 ;; Try to implement diverse melodic passing notes things.
 
 ;; Mono harmony passing notes
@@ -3464,7 +3433,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 #+begin_src clojure :results silent
 (defn rand-structure [size]
   (ef_ (let [degree-count (-> _ :pitch :scale count)
-             degrees (first (multi-val/consume size (multi-val/mix* (range degree-count))))]
+             degrees (first (take size (pr/shuffle (range degree-count))))]
          ((structure (vec (sort degrees))) _))))
 #+end_src
 
@@ -3481,7 +3450,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 (defn rand-tup [size]
   (e->s event
         (let [degree-count (-> event :pitch :scale count)
-              degrees (first (multi-val/consume size (multi-val/mix* (range degree-count))))]
+              degrees (first (take size (pr/shuffle (range degree-count))))]
           (score/update-score #{event} (tup* (mapv d-step degrees))))))
 
 #+end_src
@@ -3645,7 +3614,9 @@ Some attempts to implement or illustrate various musical ideas using noon.
 
 **** Simple counterpoint
 
-#+begin_src clojure
+#+begin_src clojure :clj-only true
+(require '[clojure.math.combinatorics :as combinatorics])
+
 (let [perms (combinatorics/permutations [0 1 2 3])
       complementary-map
       (reduce (fn [acc p]
@@ -4571,7 +4542,7 @@ Using the awesome Vienna Symphonic Library for playback.
 The Vienna Ensemble setup file is provided =vsl/setup1.vep64=
 It assumes VSL special edition (volumes 1+ and 2+)
 
-#+begin_src clojure
+#+begin_src clojure :clj-only
 (vsl/noon {:play true}
           (mk (par [(vsl :chamber-violins-1 :detache)
                     (lin s0
