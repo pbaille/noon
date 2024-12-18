@@ -3,7 +3,8 @@
             [zprint.core :as z]
             [clojure.java.io :as io]
             [clojure.pprint :as pp]
-            [zprint.core :as zp]))
+            [zprint.core :as zp]
+            [noon.utils.misc :as u]))
 
 "Utils for converting org files to clojure files (regular and test)"
 
@@ -207,62 +208,139 @@
                                                      block lines))
                 (str/starts-with? line "#+begin_src clojure") (recur blocks path "" lines)
                 (str/starts-with? line "#+end_src") (recur (into blocks
-                                                                 (map-indexed (fn [idx expr]
-                                                                                {:expr expr
-                                                                                 :path path})
-                                                                              (read-string (str "[" block "\n]"))))
+                                                                 (map (fn [expr]
+                                                                        {:expr expr
+                                                                         :path path})
+                                                                      (read-string (str "[" block "\n]"))))
                                                            path false lines)
                 block (recur blocks path (str block "\n" line) lines)
                 :else (recur blocks path block lines))
           blocks)))
 
+    (defn code-block-options [s]
+      (let [options (set (str/split (str/replace s "#+begin_src clojure" "")
+                                    #" "))]
+        {:clj-only (options ":clj-only")
+         :cljs-only (options ":cljs-only")}))
+
+    (defn org-file->clojure-expressions2 [org-file]
+      (loop [lines (str/split-lines (slurp org-file))
+             {:as state :keys [blocks path current-block block-options]}
+             {:blocks [] :path [] :current-block nil :block-options nil}]
+        (if-let [[line & lines] (seq lines)]
+          (cond (str/starts-with? line "*")
+                (let [{:keys [level title]} (parse-org-headline line)]
+                  (recur lines
+                         (assoc state
+                                :blocks (conj blocks {:path path :title title})
+                                :path (concat (take (dec level) (concat path (repeat nil)))
+                                              (list title)))))
+
+                (str/starts-with? line "#+begin_src clojure")
+                (recur lines (assoc state
+                                    :current-block ""
+                                    :block-options (code-block-options line)))
+
+                (str/starts-with? line "#+end_src")
+                (recur lines
+                       (assoc state
+                              :blocks (into blocks
+                                            (map (fn [expr]
+                                                   {:expr expr
+                                                    :path path
+                                                    :options block-options})
+                                                 (read-string (str "[" current-block "\n]"))))
+                              :current-block false))
+
+                current-block
+                (recur lines (assoc state
+                                    :current-block (str current-block "\n" line)))
+
+                :else
+                (recur lines state))
+          blocks)))
+
     (defn expressions->code-tree
       [exprs]
-      (reduce (fn [tree [idx {:keys [title path expr]}]]
+      (reduce (fn [tree [idx {:keys [title path expr] :as block}]]
                 (if (seq? path)
                   (update-in tree
                              (interpose :children path)
                              (fn [subtree]
                                (if title
                                  (assoc subtree :idx idx)
-                                 (update subtree :content (fnil conj []) expr))))
+                                 (update subtree :content (fnil conj []) block))))
                   tree))
               {} (map vector (range) exprs)))
 
-    (defn code-tree->tests [from tree]
-      (keep (fn [[k {:keys [content idx children]}]]
+    (defn prepare-test-content [content target]
+      (map (fn [{:keys [expr options]}]
+             (let [expr `(t/is (noon.freeze/freeze ~expr))]
+               (cond (:clj-only options) (when (= target :clj) expr)
+                     (:cljs-only options) (when (= target :cljs) expr)
+                     :else expr)))
+           content))
+
+    (defn code-tree->tests [from target tree]
+      (keep (fn [[k {:keys [content children]}]]
               (if (or (seq children) (seq content))
-                (list* 'clojure.test/testing k
-                       (concat content
-                               (code-tree->tests (conj from k) children)))))
+                (list* 't/testing k
+                       (concat (prepare-test-content content target)
+                               (code-tree->tests (conj from k) target children)))))
             (sort-by (comp :idx val)
                      tree)))
 
-    (defn org->test-ns-str [file]
-      (->> (org-file->clojure-expressions file)
-           (expressions->code-tree)
-           (code-tree->tests [])
-           (list* 'clojure.test/deftest 'noon-tests)
-           (str '(ns noon.doc.noon-org-tests
-                   (:require [clojure.test]
-                             [noon.eval :refer [play noon score]]))
-                "\n")))
+    (defn replace-rational-literals [s]
+      (clojure.string/replace
+       s
+       #"\b(\d+)/(\d+)\b"
+       (fn [[_ n d]]
+         (str "(/ " n " " d ")"))))
 
-    #_(emit-noon-org-tests))
+    (defn org->test-ns-str [file target]
+      (let [code-str
+            (->> (org-file->clojure-expressions2 file)
+                 (expressions->code-tree)
+                 (code-tree->tests [] target)
+                 (list* 't/deftest 'noon-tests)
+                 (str (list 'ns 'noon.doc.noon-org-test
+                            (list :require (case target
+                                             :clj '[clojure.test :as t]
+                                             :cljs '[cljs.test :as t])
+
+                                  '[noon.eval :refer [play noon score]]
+                                  '[noon.freeze]))
+                      "\n"))]
+        (if (= :cljs target)
+          (replace-rational-literals code-str)
+          code-str)))
+    (comment
+
+      (org->test-ns-str "src/noon/doc/noon.org" :clj)
+
+      (let [file "src/noon/doc/noon.org"]
+        (->> (org-file->clojure-expressions2 file)
+             (expressions->code-tree)
+             (code-tree->tests [])))))
 
 (do :entry-points
 
-    (defn build-doc-tests []
-      (let [file "test/noon/doc/noon_org_test.clj"]
-        (spit file (org->test-ns-str "src/noon/doc/noon.org"))
-        (pretty-file! file)))
+    (defn build-doc-tests [& [pretty?]]
+      (let [file "test/noon/doc/noon_org_test"
+            clj-file (str file ".clj")
+            cljs-file (str file ".cljs")]
+        (spit clj-file (org->test-ns-str "src/noon/doc/noon.org" :clj))
+        (spit cljs-file (org->test-ns-str "src/noon/doc/noon.org" :cljs))
+        (when pretty?
+          (pretty-file! clj-file)
+          (pretty-file! cljs-file))))
 
-    (defn build-doc-ns []
+    (defn build-doc-ns [& [pretty?]]
       (let [clj-file "src/noon/doc/noon.clj"]
         (org->clj2 "src/noon/doc/noon.org"
                    clj-file)
-        (pretty-file! clj-file))))
+        (when pretty? (pretty-file! clj-file)))))
 
 (defn build-all []
-  (build-doc-tests)
+  (build-doc-tests true)
   (build-doc-ns))
