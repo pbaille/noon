@@ -1,9 +1,8 @@
 (ns noon.lib.harmony-test
-  (:use noon.updates)
   (:require [noon.lib.harmony :as h]
             [clojure.test :refer [testing deftest is]]
-            [noon.score :as score :refer [sf_ mk]]
-            [noon.test :as t]))
+            [noon.eval :refer [score]]
+            [noon.freeze :refer [freeze]]))
 
 (defn pitch-values= [& xs]
     (apply = (map h/pitch-values xs)))
@@ -17,11 +16,11 @@
            (h/bounds-gte [0 3] [1 2])))
 
   (is (h/in-bounds [60 72]
-                   (mk (tup s0 s1 s2))))
+                   (score (tup s0 s1 s2))))
   (is (not (h/in-bounds [60 72]
-                        (mk (tup s0 [o1 d1])))))
+                        (score (tup s0 [o1 d1])))))
   (is (not (h/in-bounds [60 72]
-                        (mk d1-)))))
+                        (score d1-)))))
 
 (deftest voicings
 
@@ -42,141 +41,128 @@
 
   (testing "closed"
 
-    (is (= (h/closed (mk (par s0 s2 s4)))
-           (mk (par s0 s2 [o1- s4]))))
-    (is (= (h/closed (mk (par s0 s2 s4 s6)))
-           (mk (par s0 s2 [o1- s4] [o2- s6]))))
-    (is (= (h/closed-no-unison (mk (par s0 s2 s4 s6)))
-           (mk (par s0 s2 [o1- s4] [o1- s6])))))
+    (is (= (h/closed (score (par s0 s2 s4)))
+           (score (par s0 s2 [o1- s4]))))
+    (is (= (h/closed (score (par s0 s2 s4 s6)))
+           (score (par s0 s2 [o1- s4] [o2- s6]))))
+    (is (= (h/closed-no-unison (score (par s0 s2 s4 s6)))
+           (score (par s0 s2 [o1- s4] [o1- s6])))))
 
   (testing "drops"
     (testing "simple-checks"
-      (is (= (mk (par s0 s1 s2)
-                 (h/drop 1))
-             (mk (par s0 [o1 s1] s2))))
-      (is (= (mk tetrad
-                 (par s0 s1 s2 s3)
-                 (h/drop 1))
-             (mk tetrad
-                 (par s0 [o1 s1] s2 s3))))
-      (is (= (mk tetrad
-                 (par s0 s1 s2 s3)
-                 (h/drop 2))
-             (mk tetrad
-                 (par s0 s1 [o1 s2] s3))))
-      (is (= (mk tetrad
-                 (par s0 s1 s2 s3)
-                 (h/drop -1))
-             (mk tetrad
-                 (par s0 [o2 s1] [o1 s2] s3))))
+      (is (= (score (par s0 s1 s2)
+                    (h/drop 1))
+             (score (par s0 [o1 s1] s2))))
+      (is (= (score tetrad
+                    (par s0 s1 s2 s3)
+                    (h/drop 1))
+             (score tetrad
+                    (par s0 [o1 s1] s2 s3))))
+      (is (= (score tetrad
+                    (par s0 s1 s2 s3)
+                    (h/drop 2))
+             (score tetrad
+                    (par s0 s1 [o1 s2] s3))))
+      (is (= (score tetrad
+                    (par s0 s1 s2 s3)
+                    (h/drop -1))
+             (score tetrad
+                    (par s0 [o2 s1] [o1 s2] s3))))
 
-      (is (pitch-values= (mk (par s0 s1 s2 s3)
-                             (h/drop 1))
-                         (mk (par s0 [o1 s1] s2 s3)))))
+      (is (pitch-values= (score (par s0 s1 s2 s3)
+                                (h/drop 1))
+                         (score (par s0 [o1 s1] s2 s3)))))
     (testing "diatonic no duplicates"
-      (is (t/frozen :diatonic-drops
-                    (par d0 d1 d2 d3)
-                    (sf_ (score/concat-scores (h/drops _ :inversions true)))))
-      (is (t/frozen :diatonic-drops-no-inversions
-                    (par d0 d1 d2 d3)
-                    (sf_ (score/concat-scores (h/drops _))))))
+      (freeze (score (par d0 d1 d2 d3)
+                     (sf_ (score/concat-scores (h/drops _ :inversions true)))))
+      (freeze (score (par d0 d1 d2 d3)
+                     (sf_ (score/concat-scores (h/drops _))))))
     (testing "with two tonic"
-      (is (t/frozen :drops-2-tonics
-                    (par s0 s1 s2 s3)
-                    (sf_ (score/concat-scores (h/drops _ :inversions true)))))
-      (is (t/frozen :drops-2-tonics-no-inversions
-                    (par s0 s1 s2 s3)
-                    (sf_ (score/concat-scores (h/drops _))))))
+      (freeze (score (par s0 s1 s2 s3)
+                     (sf_ (score/concat-scores (h/drops _ :inversions true)))))
+      (freeze (score (par s0 s1 s2 s3)
+                     (sf_ (score/concat-scores (h/drops _))))))
     (testing "with duplicates"
-      (is (t/frozen :diatonic-drops-with-duplicates
-                    (par d0 d4 d8 d11)
-                    (sf_ (score/concat-scores (h/drops _ :inversions true)))))
-      (is (t/frozen :diatonic-drops-with-duplicates-no-inversions
-                    (par d0 d1 d4 d8)
-                    (sf_ (score/concat-scores (h/drops _)))))))
+      (freeze (score
+               (par d0 d4 d8 d11)
+               (sf_ (score/concat-scores (h/drops _ :inversions true)))))
+      (freeze (score
+               (par d0 d1 d4 d8)
+               (sf_ (score/concat-scores (h/drops _)))))))
 
   (testing "inversions"
 
-    (is (pitch-values= (mk (par s0 s1 s2)
-                           (h/inversion 1))
-                       (mk (par s1 s2 s3))))
-    (is (pitch-values= (mk (par s0 s1 s2)
-                           (h/inversion -1))
-                       (mk (par s1- s0 s1))))
-    (is (pitch-values= (mk (par s0 s1 s2)
-                           (h/inversion 0))
-                       (mk (par s0 s1 s2))))
-    (is (pitch-values= (mk (par d0 d2 d4 d6 d8)
-                           (h/inversion 1))
-                       (mk (par d1 d4 d6 d7 d9))))
-    (is (pitch-values= (mk (par d0 d2 d4 d6 d8)
-                           (h/inversion -1))
-                       (mk (par d1- d1 d2 d4 d7))))
+    (is (pitch-values= (score (par s0 s1 s2)
+                              (h/inversion 1))
+                       (score (par s1 s2 s3))))
+    (is (pitch-values= (score (par s0 s1 s2)
+                              (h/inversion -1))
+                       (score (par s1- s0 s1))))
+    (is (pitch-values= (score (par s0 s1 s2)
+                              (h/inversion 0))
+                       (score (par s0 s1 s2))))
+    (is (pitch-values= (score (par d0 d2 d4 d6 d8)
+                              (h/inversion 1))
+                       (score (par d1 d4 d6 d7 d9))))
+    (is (pitch-values= (score (par d0 d2 d4 d6 d8)
+                              (h/inversion -1))
+                       (score (par d1- d1 d2 d4 d7))))
 
     (testing "with duplicates"
-      (is (pitch-values= (mk (par s0 s1 s2 s3)
-                             (h/inversion 1))
-                         (mk (par s1 s2 s3 s4))))
-      (is (pitch-values= (mk (par s0 s1 s2 s3)
-                             (h/inversion -1))
-                         (mk (par s1- s0 s1 s2))))))
+      (is (pitch-values= (score (par s0 s1 s2 s3)
+                                (h/inversion 1))
+                         (score (par s1 s2 s3 s4))))
+      (is (pitch-values= (score (par s0 s1 s2 s3)
+                                (h/inversion -1))
+                         (score (par s1- s0 s1 s2))))))
 
   (testing "voicings"
-    (is (t/frozen :voicings1
-                  tetrad
-                  (par s0 s1 s2 s3)
-                  (sf_ (score/concat-scores (h/voicings _ {:bounds [48 84]})))))
+    (freeze (score tetrad
+                   (par s0 s1 s2 s3)
+                   (sf_ (score/concat-scores (h/voicings _ {:bounds [48 84]})))))
     (testing "with duplicates"
-      (is (t/frozen :voicings-with-duplicates
-                    (par s0 s1 s2 s3)
-                    (sf_ (score/concat-scores (h/voicings _ {:bounds [48 84]})))))))
+      (freeze (score (par s0 s1 s2 s3)
+                     (sf_ (score/concat-scores (h/voicings _ {:bounds [48 84]})))))))
 
   (testing "voice-led"
-    (is (t/frozen :voice-leading1
-                  (lin I VI II V)
-                  (each tetrad h/simple-chord)
-                  h/voice-led)))
+    (freeze (score (lin I VI II V)
+                   (each tetrad h/simple-chord)
+                   h/voice-led)))
 
   (testing "align-contexts"
-    (is (t/frozen :align-contexts-diatonic-incremental
-                  (nlin> 4 (transpose c4))
-                  (h/align-contexts :diatonic :incremental)
-                  (each h/simple-chord)))
-    (is (t/frozen :align-contexts-diatonic-static
-                  (nlin> 4 (transpose c4))
-                  (h/align-contexts :diatonic :static)
-                  (each h/simple-chord)))
-    (is (t/frozen :align-contexts-structural-static
-                  (nlin> 12 (transpose c1))
-                  (h/align-contexts :structural :static)
-                  (each tetrad h/simple-chord)))
-    (is (t/frozen :align-contexts-structural-incremental
-                  (nlin> 12 (transpose c1))
-                  (h/align-contexts :structural :incremental)
-                  (each tetrad h/simple-chord)))))
+    (freeze (score (nlin> 4 (transpose c4))
+                   (h/align-contexts :diatonic :incremental)
+                   (each h/simple-chord)))
+    (freeze (score (nlin> 4 (transpose c4))
+                   (h/align-contexts :diatonic :static)
+                   (each h/simple-chord)))
+    (freeze (score (nlin> 12 (transpose c1))
+                   (h/align-contexts :structural :static)
+                   (each tetrad h/simple-chord)))
+    (freeze (score (nlin> 12 (transpose c1))
+                   (h/align-contexts :structural :incremental)
+                   (each tetrad h/simple-chord)))))
 
 (deftest parsed-updates
   (testing "lin"
-    (is (t/frozen :parsed-updates
-                  (h/lin :IM7 :VIIm7b5 :III7 :VI7 :IIm7 :II7 :V7sus4 :V7b9omit1)
-                  (chans (each (par s0 s1 s2 s3))
-                         [(patch :ocarina) o1
-                          (each [(mixtup s0 s1 s2 s3)
-                                 (shuftup s0 (one-of s3- s2- s1- s1 s2 s3))])])
-                  (dup 2)))
+    (freeze (score (h/lin :IM7 :VIIm7b5 :III7 :VI7 :IIm7 :II7 :V7sus4 :V7b9omit1)
+                   (chans (each (par s0 s1 s2 s3))
+                          [(patch :ocarina) o1
+                           (each [(mixtup s0 s1 s2 s3)
+                                  (shuftup s0 (one-of s3- s2- s1- s1 s2 s3))])])
+                   (dup 2)))
 
-    (is (t/frozen :parsed-updates2
-                  (h/tup :IM7 :V/III7 :IIIm7 :bIIIM7 :V/V7sus4 :bVI7#11omit5 :V7sus4 :bIIM7)
-                  (chans (each [(par s0 s2 s3) (mixtup s0 s1 s2)])
-                         [(patch :acoustic-bass) C-2 t-round])
-                  (dup 2)
-                  (adjust 16))))
+    (freeze (score (h/tup :IM7 :V/III7 :IIIm7 :bIIIM7 :V/V7sus4 :bVI7#11omit5 :V7sus4 :bIIM7)
+                   (chans (each [(par s0 s2 s3) (mixtup s0 s1 s2)])
+                          [(patch :acoustic-bass) C-2 t-round])
+                   (dup 2)
+                   (adjust 16))))
 
-  (is (= (mk (h/upd :EM7) (par s0 s1 s2 s3))
-         (mk (root :E) tetrad C0 (par s0 s1 s2 s3))))
+  (is (= (score (h/upd :EM7) (par s0 s1 s2 s3))
+         (score (root :E) tetrad C0 (par s0 s1 s2 s3))))
 
   (testing "mixed parsed, unparsed, event-update, score-update"
-    (is (= (mk (h/upd (dup 2) :E7sus4 vel2))
+    (is (= (score (h/upd (dup 2) :E7sus4 vel2))
            #{{:patch [0 4], :channel 0,
               :pitch {:scale [0 2 4 5 7 9 10], :structure [0 3 4 6], :origin {:d 37, :c 64}, :position {:t 0, :s -2, :d 0, :c 1}},
               :voice 0, :duration 1, :position 1, :velocity 21, :track 0}
@@ -208,7 +194,7 @@
   ;; TODO investigate the real value of harmonic-zip
   (noon {:play true :midi true
          :filename "test/data/hgrid"}
-        (mk (h/harmonic-zip
+        (score (h/harmonic-zip
              [tetrad
               (fit (append> (transpose c3) (transpose c6)))
               (each C0 s-round (tup* (map redegree [0 5 1 4])))]
@@ -223,7 +209,7 @@
   (noon {:play false
          :midi true
          :filename "test/data/aligned-contexts"}
-        (mk dur4
+        (score dur4
             (append (transpose c3) (transpose c6))
             (each [tetrad (tup I VI II V)])
             (h/align-contexts :s :static)
@@ -231,28 +217,28 @@
 
   (noon {:filename "test/data/drops"
          :midi true}
-        (mk tetrad
+        (score tetrad
             (par s0 s1 s2 s3 s4)
             (sf_ (score/concat-scores (h/drops _ :inversions true)))))
 
   (noon {:filename "test/data/inversions"
          :midi true}
-        (mk tetrad
+        (score tetrad
             (par s0 s1 s2 s3 s4)
             (sf_ (let [{:keys [upward downward self]} (h/inversions _ [40 80])]
                    (score/concat-scores (concat (reverse (next downward)) [self] (next upward)))))))
 
   (noon {:filename "test/data/voicings"
          :midi true}
-        (mk tetrad
+        (score tetrad
             (par s0 s1 s2 s3)
             (sf_ (score/concat-scores (h/voicings _ {:bounds [40 100]})))))
 
-  (h/shiftings (mk tetrad (par s0 s1 s2 s3))
+  (h/shiftings (score tetrad (par s0 s1 s2 s3))
                [40 100])
-  (h/drops (mk tetrad (par s0 s1 s2 s3))
+  (h/drops (score tetrad (par s0 s1 s2 s3))
            :inversions true)
-  (h/voicings (mk tetrad (par s0 s1 s2 s3))
+  (h/voicings (score tetrad (par s0 s1 s2 s3))
               {:bounds [40 100]}))
 
 (comment :scratch-abstract-drop-remap
