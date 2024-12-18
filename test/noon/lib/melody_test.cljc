@@ -1,16 +1,16 @@
 (ns noon.lib.melody-test
   (:require [noon.lib.melody :as m]
-            [clojure.test :refer [deftest testing is]]
-            [noon.utils.pseudo-random :as pr]
+            [clojure.test :as t :refer [deftest testing]]
             [noon.eval :refer [score]]
-            [noon.freeze :refer [freeze]]))
+            [noon.freeze :refer [freeze]]
+            #?(:clj [noon.utils.pseudo-random :as pr])))
 
 (deftest main
 
   (testing "misc"
-    #?(:clj (is (= (m/layer-split :s
-                                  (score (mk (tup s0 s1 s2)
-                                             (each (tup d0 d1 d2)))))
+    #?(:clj (t/is (= (m/layer-split :s
+                                  (score (tup s0 s1 s2)
+                                         (each (tup d0 d1 d2))))
                    (list {:position 2/3, :layer-idx 2, :score #{{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 0}}, :voice 0, :duration 1/9, :position 2/3, :velocity 80, :track 0} {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 2}}, :voice 0, :duration 1/9, :position 8/9, :velocity 80, :track 0} {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 2, :d 1}}, :voice 0, :duration 1/9, :position 7/9, :velocity 80, :track 0}}}
                          {:position 1/3, :layer-idx 1, :score #{{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 0}}, :voice 0, :duration 1/9, :position 1/3, :velocity 80, :track 0} {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 2}}, :voice 0, :duration 1/9, :position 5/9, :velocity 80, :track 0} {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 1, :d 1}}, :voice 0, :duration 1/9, :position 4/9, :velocity 80, :track 0}}}
                          {:position 0N, :layer-idx 0, :score #{{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 2}}, :voice 0, :duration 1/9, :position 2/9, :velocity 80, :track 0} {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 1}}, :voice 0, :duration 1/9, :position 1/9, :velocity 80, :track 0} {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0}}, :voice 0, :duration 1/9, :position 0N, :velocity 80, :track 0}}})))))
@@ -89,7 +89,7 @@
                    (m/gen-line {:contour [6 4] :grow 6 :layer :c})
                    (append> c3 c4 c2 rev (each (maybe o1 o1-)))))
 
-    #?(:clj (is (= (pr/with-rand 0
+    #?(:clj (t/is (= (pr/with-rand 0
                      (take 10 (m/step-seqs {:length 5
                                             :delta 0
                                             :bounds [-2 6]
