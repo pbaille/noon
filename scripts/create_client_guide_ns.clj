@@ -15,8 +15,7 @@
             [:header {:level :node-level
                       :children :content}]))
 
-(def guide-md-filepath "src/noon/doc/guide.md")
-(def examples-md-filepath "src/noon/doc/examples.md")
+(def noon-org-filepath "src/noon/doc/noon.md")
 
 (defn slugify [s]
   (-> s
@@ -98,8 +97,7 @@
   (spit "client/noon/client/guide.cljs"
         (str "(ns noon.client.guide (:require [noon.client.ui] [uix.core :refer [$ defui]]))\n\n"
              "(defui guide [_]\n  "
-             (seq (conj (vec (first (md-str->noon-client-hiccup [] (slurp guide-md-filepath))))
-                        (seq (first (md-str->noon-client-hiccup ["Noon"] (slurp examples-md-filepath))))))
+             (first (md-str->noon-client-hiccup [] (slurp noon-org-filepath)))
              ")")))
 
 (comment

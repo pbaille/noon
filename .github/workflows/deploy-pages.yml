@@ -47,15 +47,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: convert guide.org to md
+      - name: convert noon.org to md
         uses: docker://pandoc/core:3.5
         with:
-          args: "-f org -t gfm -o src/noon/doc/guide.md src/noon/doc/guide.org"
-
-      - name: convert examples.org to md
-        uses: docker://pandoc/core:3.5
-        with:
-          args: "-f org -t gfm -o src/noon/doc/examples.md src/noon/doc/examples.org"
+          args: "-f org -t gfm -o src/noon/doc/noon.md src/noon/doc/noon.org"
 
       - name: Build noon.client.guide namespace
         run: clojure -X:create-client-guide-ns
