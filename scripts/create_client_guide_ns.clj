@@ -97,7 +97,7 @@
   (spit "client/noon/client/guide.cljs"
         (str "(ns noon.client.guide (:require [noon.client.ui] [uix.core :refer [$ defui]]))\n\n"
              "(defui guide [_]\n  "
-             (first (md-str->noon-client-hiccup [] (slurp noon-org-filepath)))
+             (seq (first (md-str->noon-client-hiccup [] (slurp noon-org-filepath))))
              ")")))
 
 (comment
