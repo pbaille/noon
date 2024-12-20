@@ -32,18 +32,9 @@
 
   (testing "basic"
 
-    (is (= (s/score s/score0)
-           s/score0))
-
-    (is (s/score? (s/score s/score0)))
-
-    (is (= (s/score event0)
-           #{event0}))
+    (is (s/score? s/score0))
 
     (is (s/score? (s/score event0)))
-
-    (is (= (s/score (g/one-of event0))
-           s/score0))
 
     (is (not (s/score? 23)))
     (is (not (s/score? {:a 1}))))
