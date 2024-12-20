@@ -98,10 +98,10 @@
                             (fn [_]
                               (set-return nil)
                               (set-playing false)
-                              (noon.midi/stop-midi))
+                              (eval/stop))
                             (fn [_]
                               (if playing
-                                (noon.midi/stop-midi)
+                                (eval/stop)
                                 (when-not evaluating
                                   (set-evaluating true)
                                   ;; this delay is needed for the set-evaluating call
