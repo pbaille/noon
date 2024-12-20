@@ -1,4 +1,4 @@
-{:deps {:aliases [:client]}
+{:deps {:aliases [:test :client]}
 
  :nrepl {:port 9000}
 
@@ -21,4 +21,4 @@
           :test {:target :esm
                  :runtime :node
                  :output-dir "out"
-                 :modules {:test {:init-fn noon.test/all}}}}}
+                 :modules {:test {:init-fn noon.test/run-all}}}}}
