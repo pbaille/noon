@@ -110,7 +110,8 @@
                                                    (eval/eval-string-async
                                                     source
                                                     (fn [x]
-                                                      (when-let [id (some-> x :result :noon.midi/playing)]
+                                                      (println (some-> x :result))
+                                                      (when-let [id (some-> x :result :id)]
                                                         (set-playing true)
                                                         (midi/on-done-playing id (fn [] (set-playing false))))
                                                       (set-evaluating false)

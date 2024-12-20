@@ -60,7 +60,8 @@
          {:as files
           :keys [midi-file]} (output-files options score)
 
-         multi-sequencer (midi/midi :bpm bpm
+         multi-sequencer (midi/midi :id id
+                                    :bpm bpm
                                     :track-idx->sequencer (or tracks (constantly :default))
                                     :data midifiable-score
                                     :mute mute)]
