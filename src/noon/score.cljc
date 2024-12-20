@@ -11,7 +11,7 @@
 
 (def score0 #{events/DEFAULT_EVENT})
 
-(defn score
+#_(defn score
   "Build a score from `x`.
    `x` can be either:
     - a set of event maps.

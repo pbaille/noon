@@ -19,7 +19,7 @@
       "noon" (second args)
       "let" (if (top-level-form? (last args))
               (list `noon.eval/eval (list 'quote (concat (list v (first args))
-                                                         (butlast args)
+                                                         (butlast (rest args))
                                                          (list (top-level-form->score-form (last args)))))))
       nil)))
 
@@ -47,4 +47,5 @@
   (macroexpand '(freeze (noon.eval/play (tup s0 s1 s2))))
   (freeze (noon.eval/play (tup s0 s1 s2)))
   (freeze (noon.eval/play (one-of s0 s1 s2)))
-  (write-freezer))
+  (write-freezer)
+  (reset! freezer {}))
