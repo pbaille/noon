@@ -56,7 +56,7 @@
                                        in-block (assoc state :ret (str ret prefix line))
                                        :else (assoc state :ret
                                                     (str ret prefix ";; " (str/replace line #"\n" (str prefix ";; ")))))))))
-                         {:level 0 :in-block false :ret "'"}
+                         {:level 0 :in-block false :ret ""}
                          (conj (vec lines)
                                :end))
             [_ ns-decl] (or [nil ns-form] (re-find #"(?s)#\+begin_src.*?\n(.*?)#\+end_src" org-str))]
@@ -69,7 +69,7 @@
 
       (spit clj-file
             (org-str->clj-str (slurp org-file)
-                              :ns-form (noon.eval/clj-ns-form ns-sym)))))
+                              :ns-form (u/pretty-str (noon.eval/clj-ns-form 'noon.doc.noon))))))
 
 (do :org->edn
     "attempt 2"
@@ -295,5 +295,6 @@
 
 (comment
   (noon.eval/clj-ns-form 'noon.doc.noon)
-  (org-str->clj-str (slurp "src/noon/doc/noon.org")
-                    :ns-form (noon.eval/clj-ns-form 'noon.doc.noon)))
+  (spit "src/noon/doc/noon.clj"
+        (org-str->clj-str (slurp "src/noon/doc/noon.org")
+                          :ns-form (u/pretty-str (noon.eval/clj-ns-form 'noon.doc.noon)))))
