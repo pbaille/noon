@@ -110,7 +110,7 @@ The option map let you stay what you want to do with your score.
 
 example:
 
-#+begin_src clojure
+#+begin_src clojure :clj-only
 (noon {:play true
        :tracks {0 :chorium}} ;; try to change soundfont here
 
@@ -155,7 +155,7 @@ It is possible to create an mp3 file by passing this option:
 
 =:mp3 true=
 
-#+begin_src clojure :export-audio t
+#+begin_src clojure :clj-only
 (noon {:mp3 true}
       (score (tup s0 s1 s2)))
 #+end_src
@@ -834,7 +834,7 @@ maps can be used to compose event transformations
 
 **** Examples
 
-#+begin_src clojure :proll
+#+begin_src clojure :proll :no-tests
 (play (tup* (shuffle [c0 c3 c7 c9])))
 #+end_src
 
@@ -848,7 +848,7 @@ maps can be used to compose event transformations
 
 It is quite fun to insert a bit of randomness in our scores.
 
-#+begin_src clojure :proll
+#+begin_src clojure :proll :no-tests
 (play
  (rand-nth [(tup c0 c4 c7) (tup c0 c3 c7)])
  (rep 4 (rand-nth [c3 c4 c3- c4-])))
@@ -919,11 +919,11 @@ the =!= macro can be useful to deal with raw non deterministic expressions. here
 Takes a non deterministic expression resulting in a score transformation. return a score transformation that wraps the expression so that it is evaluated each time the transformation is used.
 #+end_quote
 
-#+begin_src clojure :proll
+#+begin_src clojure :proll :no-tests
 (play (nlin 4 (! (tup* (shuffle [d0 d2 d4 d6])))))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure :proll :no-tests
 (play (nlin 4 (tup* (shuffle [d0 d2 d4 d6])))) ; without the bang the shuffle expression is executed only one time.
 #+end_src
 
@@ -2244,7 +2244,7 @@ Almost the same with comping.
 #+end_src
 ** Experiments
 
-#+begin_src clojure :results silent :exports none
+#+begin_src clojure :results silent :exports none :clj-only
 ;;Let's use the chorium soundfont:
 (swap! out/options* assoc :tracks {0 :chorium})
 #+end_src
@@ -2976,7 +2976,7 @@ Experimenting interleaving passing notes
 
 ***** experience 1
 
-#+begin_src clojure :results silent :clj-only
+#+begin_src clojure :results silent
 ;; Try to implement diverse melodic passing notes things.
 
 ;; Mono harmony passing notes
@@ -3025,8 +3025,12 @@ Experimenting interleaving passing notes
       (each (ntup> 6 s1))
       (connect-with d1))
 
-;; With parts and vsl
+#+end_src
 
+With parts and vsl
+
+
+#+begin_src clojure :results silent :clj-only
 (play
  ;; grid
  [harmonic-minor
@@ -3433,7 +3437,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 #+begin_src clojure :results silent
 (defn rand-structure [size]
   (ef_ (let [degree-count (-> _ :pitch :scale count)
-             degrees (first (take size (pr/shuffle (range degree-count))))]
+             degrees (take size (rand/shuffle (range degree-count)))]
          ((structure (vec (sort degrees))) _))))
 #+end_src
 
@@ -3450,7 +3454,7 @@ Some attempts to implement or illustrate various musical ideas using noon.
 (defn rand-tup [size]
   (e->s event
         (let [degree-count (-> event :pitch :scale count)
-              degrees (first (take size (pr/shuffle (range degree-count))))]
+              degrees (take size (rand/shuffle (range degree-count)))]
           (score/update-score #{event} (tup* (mapv d-step degrees))))))
 
 #+end_src
