@@ -39,7 +39,7 @@
     (when-let [[_ hashes title] (re-matches #"^(#+) (.+)$" s)]
       [(count hashes) title])))
 
-(defn md-str->noon-client-hiccup [from md-str]
+(defn md-str->noon-client-markup [from md-str]
   (let [group-sections
         (fn self [at elems]
           (if-let [[[h props & _ :as x] & xs] (seq elems)]
@@ -97,7 +97,7 @@
   (spit "client/noon/client/guide.cljs"
         (str "(ns noon.client.guide (:require [noon.client.ui] [uix.core :refer [$ defui]]))\n\n"
              "(defui guide [_]\n  "
-             (seq (first (md-str->noon-client-hiccup [] (slurp noon-org-filepath))))
+             (seq (first (md-str->noon-client-markup [] (slurp noon-org-filepath))))
              ")")))
 
 (comment
