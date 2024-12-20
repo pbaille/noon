@@ -127,7 +127,7 @@ example:
 
 In addition to those soundfonts, you can send the output of noon to any output device available on your machine.
 
-#+begin_src clojure
+#+begin_src clojure :clj-only
 (require 'noon.midi)
 ;; retrieve a device by name
 (def bus1 (noon.midi/get-output-device "Bus 1"))
