@@ -4329,7 +4329,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
                       [mode-kw prio] (rand/rand-nth (possible-modes interval modal-lvl (dec chord-size)))
                       partial-scale (cons 0 (take (dec chord-size) prio))
                       structure' (constants/partial-scale->structure mode-kw partial-scale)
-                      closed (score (dissoc (first score) :pitch)
+                      closed (score/score (dissoc (first score) :pitch)
                                  (origin min-pitch-val)
                                  (scale mode-kw)
                                  (structure structure')
