@@ -45,8 +45,8 @@
                     {:user []}
                     xs)
 
-            requirements
-            (mapv (fn [[ns-sym & {:as opts} :as reqv]]
+            #_requirements
+            #_(mapv (fn [[ns-sym & {:as opts} :as reqv]]
                     (if (= :all (:refer opts))
                       [ns-sym :refer '(vec (keys (ns-publics ns-sym)))]
                       reqv))
