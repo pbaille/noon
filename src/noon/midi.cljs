@@ -62,7 +62,9 @@
       []
       (println "stopping midi")
       #_(.stop Tone/Transport (.now Tone))
-      (doseq [f @stop-fns*] (f))
+      (doseq [f (concat @stop-fns*
+                        (vals @on-done-callbacks*))]
+        (f))
       (reset! playing* false))
 
     (defn play
