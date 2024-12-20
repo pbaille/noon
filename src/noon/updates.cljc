@@ -223,7 +223,7 @@
       {:doc "Act like 'mk, ignoring current score."
        :tags [:base :score-update-builder]}
       [updates]
-      (sf_ (score/mk* updates)))
+      (sf_ (score/score* updates)))
 
     (def ^{:doc "Returns the empty score regardless of input."
            :tags [:base :score-update]}

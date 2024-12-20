@@ -415,7 +415,7 @@
 
     "Main entry point to create a score."
 
-    (defn mk*
+    (defn score*
       "Feed score0 into given updates."
       {:tags [:base :score-builder]}
       [updates]
@@ -424,4 +424,4 @@
     (defn mk
       {:tags [:base :score-builder]}
       [& updates]
-      (mk* updates)))
+      (score* updates)))

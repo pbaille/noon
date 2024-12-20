@@ -56,7 +56,7 @@
               (-> (dissoc namespaces :user)
                   (assoc (list 'quote 'user)
                          (cons `merge user)))
-              {:ns-requirements (list 'quote requirements)})))
+              {:ns-requirements (list 'quote #_requirements)})))
 
     (macroexpand '(sci-namespaces
                    [noon.updates :refer :all]
@@ -149,13 +149,13 @@
 (defmacro score [& xs]
   `(let [{res# :result err# :error}
          (eval '~(vec xs))]
-     (cond res# (noon.score/mk* res#)
+     (cond res# (noon.score/score* res#)
            err# err#)))
 
 (defmacro play [& xs]
   `(let [{res# :result err# :error}
          (eval '~(vec xs))]
-     (cond res# (noon.output/play-score (noon.score/mk* res#))
+     (cond res# (noon.output/play-score (noon.score/score* res#))
            err# err#)))
 
 (defmacro noon [options score]
@@ -179,14 +179,17 @@
                   (str/replace "." "/")
                   (str/replace "-" "_")))
 
+            (defn clj-ns-form [ns-sym]
+              (list 'ns ns-sym
+                    (cons :require
+                          (cons '[noon.eval :refer [play noon score]]
+                                (:ns-requirements (meta default-namespaces))))))
+
             (defn spit-ns
               [{:keys [ns path content target]}]
               (spit (str path "/" (ns->filename ns) "." (or target "clj"))
                     (str/join "\n\n"
-                              (cons (list 'ns 'noon.tries.generated
-                                          (cons :require
-                                                (cons '[noon.eval :refer [play noon]]
-                                                      (:ns-requirements (meta default-namespaces)))))
+                              (cons (clj-ns-form 'noon.tries.generated)
                                     content))))
 
             (comment
