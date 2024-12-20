@@ -35,12 +35,12 @@
 (defn play
   {:sci/macro true}
   [_ _ & xs]
-  `(noon.output/play-score (noon.score/score ~@xs)))
+  `(noon.output/noon {:play true} (noon.score/score ~@xs)))
 
 (defn noon
   {:sci/macro true}
   [_ _ opts score]
-  `(do ~@(when (:play opts) [`(noon.output/play-score ~score)])
+  `(do ~@(when (:play opts) [`(noon.output/noon {:play true} ~score)])
        ~@(when-let [unsupported-keys (seq (keys (dissoc opts :play)))]
            [`(throw (js/Error. ~(str "Those options are not supported inside web brower:  "
                                      (apply str (interpose ", " unsupported-keys)))))])))

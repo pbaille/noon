@@ -8,29 +8,13 @@
 
 (def FREEZE_FILE "test/noon/freezer.cljc")
 
-(defn top-level-form? [[v & _]]
-  (#{"score" "play" "noon"} (name v)))
-
-(defn top-level-form->score-form [form]
-  (if-let [[v & args :as form] (if (list? form) form)]
-    (case (name v)
-      "play" `(noon.eval/score ~@args)
-      "score" form
-      "noon" (second args)
-      "let" (if (top-level-form? (last args))
-              (list `noon.eval/eval (list 'quote (concat (list v (first args))
-                                                         (butlast (rest args))
-                                                         (list (top-level-form->score-form (last args)))))))
-      nil)))
-
 (defmacro freeze [form]
   (let [expr-hash (hash form)
         score-expr `(pseudo-random/with-rand 0
-                      ~(or (top-level-form->score-form form)
-                           `(noon.eval/eval '~form)))]
-    (if-let [frozen (get @freezer expr-hash)]
-      `(= ~frozen (hash ~score-expr))
-      `(swap! freezer assoc ~expr-hash (hash ~score-expr)))))
+                      (noon.eval/eval-and-return '~form))]
+    `(if-let [frozen# (get @freezer ~expr-hash)]
+       (= frozen# (hash ~score-expr))
+       (swap! freezer assoc ~expr-hash (hash ~score-expr)))))
 
 #_(defn write-freezer []
   (let [spit-fn #?(:cljs (fn [file content]
@@ -43,9 +27,30 @@
                         (list 'atom @freezer))))))
 
 (comment
-  (macroexpand '(freeze (noon.eval/play (tup s0 s1 s2))))
-  (macroexpand '(freeze (noon.eval/play (tup s0 s1 s2))))
-  (freeze (noon.eval/play (tup s0 s1 s2)))
+  (macroexpand '(freeze (play (tup s0 s1 s2))))
+  (macroexpand '(freeze (play (tup s0 s1 s2))))
+  (freeze (play (tup s0 s1 s3)))
+  (swap! noon.output/options*
+         assoc :mute false)
+  (freeze
+   (play (chans
+          [(patch :aahs) vel6 (rup 24 (any-that (within-pitch-bounds? :G-1 :G1) s2 s2- s3 s3-)) (each (par s0 s1 s2 s3))]
+          [(patch :acoustic-bass) t2-])
+         (h/grid tetrad
+                 (lin [I lydian (structure [2 3 5 6])]
+                      [IIb dorian (structure [1 2 3 6])]
+                      [V mixolydian (structure [2 3 5 6])]
+
+                      [Vb melodic-minor (structure [1 2 5 6])])
+                 (rep 2 (transpose c2-)) (dup 2) (h/align-contexts :d :static) (adjust 1))
+         (parts (patch :acoustic-bass) (each (tup (maybe o1) (one-of d4 d3-)))) (adjust 32)))
   (freeze (noon.eval/play (one-of s0 s1 s2)))
+  (freeze (play (symetric-modes :half-whole) (rand-structure 3) (rep 3 rand-degree) (each (chans [vel4 h/simple-chord] [(patch :music-box) o1 (rand-tup 6) (each (one-of vel0 vel4 vel6 vel7))])) (append [rev s2]) (append (transpose c5)) (append (between 0 1/3))))
+  (freeze (def bus1 (noon.midi/get-output-device "Bus 1")))
+  (noon.eval/eval 'midi/DEFAULT_EVENT)
+  (freeze (play dur2 (chans [(patch :tinkle-bell) o1-] [(patch :woodblock) (r/durtup 2 1 1 4) (r/rotation :relative (/ -1 4))]) (dup 4)))
   (write-freezer)
-  (reset! freezer {}))
+  @freezer
+  (reset! freezer {})
+  (hash (:result (noon.eval/eval '(play s0))))
+  (noon.eval/eval '(noon {:play true} (score (sf_ _)))))
