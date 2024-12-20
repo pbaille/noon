@@ -49,18 +49,18 @@
           (cb))
         {:noon.midi/done playing-id}))
 
-    (defn get-instrument [instrument-name]
-      (or (get @soundfonts* instrument-name)
+    (defn get-instrument [instrument-name kit]
+      (or (get @soundfonts* [instrument-name kit])
           (when-let [sf (.-load (Soundfont. (.-_context (.-context Tone))
                                             #js {:instrument instrument-name
-                                                 #_:kit #_"FluidR3_GM"}))]
-            (swap! soundfonts* assoc instrument-name sf)
+                                                 :kit kit}))]
+            (swap! soundfonts* assoc [instrument-name kit] sf)
             sf)))
 
     (defn stop-midi
       "Call all recorded stop-fns* and set playing* to false"
       []
-      (println "stopping midi")
+      #_(println "stopping midi")
       #_(.stop Tone/Transport (.now Tone))
       (doseq [f (concat @stop-fns*
                         (vals @on-done-callbacks*))]
@@ -69,20 +69,30 @@
 
     (defn play
       "Play a noon score using tone and smplr."
-      [noon-data]
+      [noon-data & {:keys [bpm id track->kit]}]
       (stop-midi)
       (println "loading instruments...")
       #_(js/console.log Tone)
-      (let [playing-id (reset! playing* (gensym))
-            patch->events (group-by :patch noon-data)]
+      (let [playing-id (reset! playing* id)
+            stretch-ratio (/ 60 bpm)
+            stretch (fn [x] (* stretch-ratio x))
+            score (if (= 60 bpm)
+                    noon-data
+                    (mapv (fn [{:as e :keys [position duration]}]
+                            (assoc e
+                                   :position (stretch position)
+                                   :duration (stretch duration)))
+                          noon-data))
+            by-instrument (group-by #(select-keys % [:patch :track]) score)]
 
         (-> (js/Promise.all
-             (mapv (fn [[[_bank instrument] events]]
-                     (let [instrument-name (gm/instrument-val->instrument-name instrument)]
+             (mapv (fn [[{:keys [patch track]} events]]
+                     (let [[_ instrument-val] patch
+                           instrument-name (gm/instrument-val->instrument-name instrument-val)]
                        #_(log "loading: " instrument-name)
-                       (.then (get-instrument instrument-name)
+                       (.then (get-instrument instrument-name (track->kit track))
                               (fn [inst] [inst events]))))
-                   patch->events))
+                   by-instrument))
 
             (.then (fn [xs]
                      (js/console.log "scheduling events...")
@@ -90,7 +100,6 @@
                            time-until-end
                            (reduce (fn [end-pos [instrument events]]
                                      (reduce (fn [end-pos {:as _note :keys [channel pitch velocity duration position]}]
-
                                                (.start instrument
                                                        #js {:channel channel
                                                             :note pitch
@@ -102,7 +111,7 @@
                                              events))
                                    0 xs)]
 
-                       (println time-until-end)
+                       #_(println time-until-end)
 
                        (js/setTimeout (fn []
                                         (println "done playing.")
@@ -117,6 +126,15 @@
                      (println "playing...")
                      (swap! stop-fns* conj stop)
                      {:noon.midi/playing id})))))
+
+    (defn midi [& {:as options :keys [data track-idx->sequencer]}]
+      (let [track->soundfont-kit (fn [t]
+                                   (case (track-idx->sequencer t)
+                                     :fluid "FluidR3_GM"
+                                     :default "MusyngKite"
+                                     "MusyngKite"))]
+        {:play (fn [] (play data (assoc options :track->kit track->soundfont-kit)))
+         :close (fn [] (stop-midi))}))
 
     (comment (def simple-tup
                [{:patch [0 4] :channel 0, :pitch 67, :voice 0, :duration (/ 1 3)  , :position (/ 2 3) , :velocity 80, :track 0}
