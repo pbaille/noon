@@ -338,7 +338,7 @@
                     (format "t %-6d MetaMessage: type=%-3d data=%s" tick type (java.util.Arrays/toString data)))
 
                   :else
-                  (str "Message is of unknown type"))))
+                  "Message is of unknown type")))
 
             (defn show-sequence [sequencer]
               (let [sequence (.getSequence sequencer)]                               ; Get the sequence

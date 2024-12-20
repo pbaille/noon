@@ -14,9 +14,9 @@
              (zero? (:exit (shell/sh "which" FFMPEG_BIN))))
     (shell/sh "sh" "-c" (str FLUIDSYNTH_BIN " -a alsa -T raw -F -"
                              " ./resources/midi/soundfonts/choriumreva.sf2"
-                             (str " ./" midi-file)
+                             " ./" midi-file
                              " | " FFMPEG_BIN " -f s32le -i -"
-                             (str " ./" mp3-file))))
+                             " ./" mp3-file)))
 
   (when (zero? (:exit (shell/sh "which" MUSESCORE_BIN)))
     (if xml-file

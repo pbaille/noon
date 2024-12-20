@@ -16,7 +16,8 @@
  :config-in-comment {:linters {:unresolved-symbol {:level :off}
                                :unresolved-namespace {:level :off}
                                :invalid-arity {:level :off}}}
- :config-in-ns {noon.doc.noon {:ignore [:unused-referred-var :refer-all :unused-namespace]}}
+ :config-in-ns {noon.doc.noon {:ignore [:unused-referred-var :refer-all :unused-namespace]}
+                noon.doc.noon-org-test {:ignore [:inline-def]}}
  :hooks {:analyze-call {noon.utils.chance/gen hooks.noon.utils.chance/gen
                         noon.utils.chance/defcoll hooks.noon.utils.chance/defcoll}
          :macroexpand {noon.utils.chance/defgen hooks.noon.utils.chance/defgen

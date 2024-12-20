@@ -217,7 +217,7 @@
     (defn preview [g max]
       (if-let [[firsts _] (consume max g)]
         (str (str/join ", " firsts) "...")
-        (str (str/join ", " (get-all g)))))
+        (str/join ", " (get-all g))))
 
     (defmethod print-method ::multi-val [g w]
       (print-method (symbol (str "<[multi-val: " (preview g 4) "]>"))
@@ -540,7 +540,7 @@
     (meval (let [a 1
                  b (join 2 3 4)
                  c (+ b 1)
-                 f (fn [x y] (+ b x y))]
+                 f (fn [x y] (+ c b x y))]
              (f a (join 4 8))))
 
     (get-all (meval (let [a {:a coin :b 3}

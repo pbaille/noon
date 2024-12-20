@@ -1,5 +1,5 @@
 (ns noon.client.core
-  (:require [noon.client.ui :as ui]
+  (:require #_[noon.client.ui :as ui]
             [uix.core :refer [$]]
             [uic.component :refer [sc]]
             [uix.dom]

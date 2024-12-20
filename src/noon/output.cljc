@@ -35,7 +35,7 @@
               (midi/add-events (midifiable-score score))
               (midi/get-midi-bytes))))
 
-(defn output-files [{:keys [output-dir id source midi pdf xml mp3]} score]
+(defn output-files [{:keys [output-dir id source midi pdf xml mp3]}]
   (let [base (str output-dir "/" id)]
     #?(:clj (u/ensure-directory output-dir))
     (merge
@@ -58,7 +58,7 @@
           :keys [tracks bpm play source mute]} (merge @options* {:id id} opts (-> score meta ::options))
 
          {:as files
-          :keys [midi-file]} (output-files options score)
+          :keys [midi-file]} (output-files options)
 
          multi-sequencer (midi/midi :id id
                                     :bpm bpm

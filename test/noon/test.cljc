@@ -1,6 +1,5 @@
 (ns noon.test
-  (:require [clojure.test :as t]
-            [noon.doc.noon-org-test]
+  (:require [noon.doc.noon-org-test]
             [noon.lib.harmony-test]
             [noon.lib.melody-test]
             [noon.lib.rythmn-test]
@@ -20,7 +19,8 @@
             [noon.updates-test]
             [noon.freezer :refer [freezer]]
             [noon.output]
-            #?(:clj [cognitect.test-runner.api :as test-runner])))
+            #?(:clj [cognitect.test-runner.api :as test-runner]
+               :cljs [clojure.test :as t])))
 
 (defn ^:export run-all [_]
   (swap! noon.output/options*

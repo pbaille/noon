@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+
     - uses: actions/checkout@v4
     
     - name: Setup Java
@@ -31,6 +32,10 @@ jobs:
       with:
         cli: latest
         bb: latest
+        clj-kondo: latest
+
+    - name: Run clj-kondo Linting
+      run: clj-kondo --lint src --config ./.clj-kondo/config.edn
 
     - name: Generating noon org tests
       run: clojure -X:build-doc-tests
