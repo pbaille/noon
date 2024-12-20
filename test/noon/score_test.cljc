@@ -54,19 +54,19 @@
            1))
     (is (= (s/score-duration (s/update-score S0 u/dur2))
            2))
-    (is (= (s/score-duration (s/mk (u/lin u/s0 u/s2 u/s4)))
+    (is (= (s/score-duration (s/score (u/lin u/s0 u/s2 u/s4)))
            3))
 
     (is (= (s/score-track-count S0)
            1))
-    (is (= (s/score-track-count (s/mk (u/superpose u/track1)))
+    (is (= (s/score-track-count (s/score (u/superpose u/track1)))
            2))
 
     (is (= (s/score-bounds S0 :position)
            [{:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}
             {:position 0, :channel 0, :track 0, :duration 1, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0, :d 0, :c 0}}, :velocity 80, :voice 0, :patch [0 4]}]))
 
-    (is (= (s/score-bounds (s/mk (u/lin u/s0 u/s2 u/s4)) :position)
+    (is (= (s/score-bounds (s/score (u/lin u/s0 u/s2 u/s4)) :position)
            [{:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 0}}, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
             {:patch [0 4], :channel 0, :pitch {:scale [0 2 4 5 7 9 11], :structure [0 2 4], :origin {:d 35, :c 60}, :position {:t 0, :s 4}}, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}]))
 
@@ -77,29 +77,29 @@
 
     (is (= (s/pitch-value-bounds S0)
            [60 60]))
-    (is (= (s/pitch-value-bounds (s/mk (u/lin u/s0 u/s2 u/s4)))
+    (is (= (s/pitch-value-bounds (s/score (u/lin u/s0 u/s2 u/s4)))
            [60 76])))
 
   (testing "transformations"
 
     (testing "map-event-update"
 
-      (is (= (s/map-event-update (s/mk (u/lin u/d0 u/d1 u/d2)) u/d1)
-             (s/mk (u/lin u/d1 u/d2 u/d3))))
+      (is (= (s/map-event-update (s/score (u/lin u/d0 u/d1 u/d2)) u/d1)
+             (s/score (u/lin u/d1 u/d2 u/d3))))
 
-      (is (= (s/map-event-update (s/mk (u/lin u/d0 u/d1 u/d2)) u/vel4)
-             (s/mk u/vel4 (u/lin u/d0 u/d1 u/d2))))
+      (is (= (s/map-event-update (s/score (u/lin u/d0 u/d1 u/d2)) u/vel4)
+             (s/score u/vel4 (u/lin u/d0 u/d1 u/d2))))
 
       (testing "can remove events by returning nil"
 
-        (is (= (count (s/map-event-update (s/mk (u/lin u/d0 u/d1 u/d2))
+        (is (= (count (s/map-event-update (s/score (u/lin u/d0 u/d1 u/d2))
                                           (fn [e] (if (not (zero? (e/pitch-class-value e))) e))))
                2))))
 
     (testing "scale score, shift score"
 
       (is (= (s/score-duration
-              (s/scale-score (s/mk (u/lin u/s0 u/s2 u/s4))
+              (s/scale-score (s/score (u/lin u/s0 u/s2 u/s4))
                              (/ 1 3)))
              1))
       (is (numbers/float-equal? (s/score-duration
@@ -117,48 +117,48 @@
 
     (testing "fit-score, normalise-score"
 
-      (is (let [s0 (s/mk (u/lin u/s0 u/s2 u/s4))
+      (is (let [s0 (s/score (u/lin u/s0 u/s2 u/s4))
                 s1 (s/fit-score s0 event0)
                 s2 (s/normalise-score s0)]
             (and (= s1 s2)
                  (= 1 (s/score-duration s1))
                  (= 0 (s/score-origin s2)))))
 
-      (is (let [s (s/fit-score (s/mk (u/lin u/s0 u/s2 u/s4))
+      (is (let [s (s/fit-score (s/score (u/lin u/s0 u/s2 u/s4))
                                {:position 3 :duration 2})]
             (and (= 5 (s/score-duration s))
                  (= 3 (s/score-origin s))))))
 
-    (is (= (s/reverse-score (s/mk (u/lin u/s0 u/s2 u/s4)))
-           (s/mk (u/lin u/s4 u/s2 u/s0))))
+    (is (= (s/reverse-score (s/score (u/lin u/s0 u/s2 u/s4)))
+           (s/score (u/lin u/s4 u/s2 u/s0))))
 
     (testing "filter-score"
 
-      (is (= (s/mk (u/lin u/d0 u/d1))
-             (s/filter-score (s/mk (u/lin u/d0 u/d1)) map?)))
+      (is (= (s/score (u/lin u/d0 u/d1))
+             (s/filter-score (s/score (u/lin u/d0 u/d1)) map?)))
 
-      (is (= (s/mk (u/lin u/d0 u/d1))
-             (s/filter-score (s/mk (u/lin u/d0 u/d1)) {:channel 0})
-             (s/filter-score (s/mk (u/lin u/d0 u/d1)) u/chan0)))
+      (is (= (s/score (u/lin u/d0 u/d1))
+             (s/filter-score (s/score (u/lin u/d0 u/d1)) {:channel 0})
+             (s/filter-score (s/score (u/lin u/d0 u/d1)) u/chan0)))
 
-      (is (= (s/filter-score (s/mk (u/chans (u/lin u/d0 u/d1)
+      (is (= (s/filter-score (s/score (u/chans (u/lin u/d0 u/d1)
                                             (u/lin u/d3 u/d4)))
                              u/chan0)
-             (s/mk (u/lin u/d0 u/d1)))))
+             (s/score (u/lin u/d0 u/d1)))))
 
     (testing "midi prepare helpers"
 
-      (is (= (s/numerify-pitches (s/mk (u/lin u/s0 u/s2 u/s4)))
+      (is (= (s/numerify-pitches (s/score (u/lin u/s0 u/s2 u/s4)))
              #{{:patch [0 4], :channel 0, :pitch 60, :voice 0, :duration 1, :position 0, :velocity 80, :track 0}
                {:patch [0 4], :channel 0, :pitch 67, :voice 0, :duration 1, :position 1, :velocity 80, :track 0}
                {:patch [0 4], :channel 0, :pitch 76, :voice 0, :duration 1, :position 2, :velocity 80, :track 0}}))
 
-      (is (= (->> (s/dedupe-patches-and-control-changes (s/mk (u/lin u/s0 u/s2 u/s4)))
+      (is (= (->> (s/dedupe-patches-and-control-changes (s/score (u/lin u/s0 u/s2 u/s4)))
                   (s/sort-score)
                   (map (juxt :position :patch :cc)))
              (list [0 [0 4] nil] [1 nil nil] [2 nil nil])))
 
-      (is (= (->> (s/mk (u/lin u/s0
+      (is (= (->> (s/score (u/lin u/s0
                                [(u/patch :vibraphone)
                                 (u/cc :volume 70)
                                 (u/lin u/s2 u/s4)]))
@@ -182,17 +182,17 @@
           (and (= 6 (s/score-duration s))
                (= 0 (s/score-origin s)))))
 
-    (is (= (s/merge-scores [(s/mk (u/lin u/d0 u/d1 u/d2))
-                            (s/mk (u/lin u/d1 u/d2 u/d3))])
-           (s/mk (u/lin (u/par u/d0 u/d1) (u/par u/d1 u/d2) (u/par u/d2 u/d3))))))
+    (is (= (s/merge-scores [(s/score (u/lin u/d0 u/d1 u/d2))
+                            (s/score (u/lin u/d1 u/d2 u/d3))])
+           (s/score (u/lin (u/par u/d0 u/d1) (u/par u/d1 u/d2) (u/par u/d2 u/d3))))))
 
   (testing "chunk-score"
 
-    (is (= (s/chunk-score (s/mk (u/lin u/d0 (u/par u/d1 u/d2) u/d3))
+    (is (= (s/chunk-score (s/score (u/lin u/d0 (u/par u/d1 u/d2) u/d3))
                           :position)
-           (list (s/mk u/d0)
-                 (s/mk (u/par u/d1 u/d2) (u/adjust {:position 1}))
-                 (s/mk u/d3 (u/adjust {:position 2}))))))
+           (list (s/score u/d0)
+                 (s/score (u/par u/d1 u/d2) (u/adjust {:position 1}))
+                 (s/score u/d3 (u/adjust {:position 2}))))))
 
   (testing "updates"
 
@@ -261,13 +261,13 @@
 
     (testing "map-score-update"
 
-      (is (= (s/map-score-update (s/mk (u/lin u/d0 u/d1 u/d2))
+      (is (= (s/map-score-update (s/score (u/lin u/d0 u/d1 u/d2))
                                  u/same)
-             (s/mk (u/lin u/d0 u/d1 u/d2))))
+             (s/score (u/lin u/d0 u/d1 u/d2))))
 
-      (is (= (s/map-score-update (s/mk (u/lin u/d0 u/d1 u/d2))
+      (is (= (s/map-score-update (s/score (u/lin u/d0 u/d1 u/d2))
                                  (u/tup u/d0 u/d3))
-             (s/mk (u/lin (u/tup u/d0 u/d3)
+             (s/score (u/lin (u/tup u/d0 u/d3)
                           (u/tup u/d1 u/d4)
                           (u/tup u/d2 u/d5))))))
 
@@ -277,16 +277,16 @@
              S0))
 
       (is (= (s/update-score S0 u/dur2)
-             (s/mk u/dur2)))
+             (s/score u/dur2)))
 
       (is (= (s/update-score S0 [u/vel10 u/dur2])
-             (s/mk u/dur2 u/vel10)))
+             (s/score u/dur2 u/vel10)))
 
       (is (= (s/update-score S0 (g/one-of u/vel10))
-             (s/mk u/vel10)))
+             (s/score u/vel10)))
 
       (is (= (s/update-score S0 (u/par u/vel5 u/d1))
-             (s/mk (u/par u/vel5 u/d1))
+             (s/score (u/par u/vel5 u/d1))
              (into (s/update-score S0 u/vel5)
                    (s/update-score S0 u/d1))))
 
@@ -298,24 +298,24 @@
 
       (is (= S0 (s/partial-update S0 u/chan1 u/vel4)))
 
-      (is (= (s/partial-update (s/mk (u/chans (u/tup u/d0 u/d1 u/d2)
+      (is (= (s/partial-update (s/score (u/chans (u/tup u/d0 u/d1 u/d2)
                                               u/o1-))
                                u/chan1
                                (u/tup u/s0 u/s1 u/s2))
-             (s/mk (u/chans (u/tup u/d0 u/d1 u/d2)
+             (s/score (u/chans (u/tup u/d0 u/d1 u/d2)
                             [u/o1- (u/tup u/s0 u/s1 u/s2)])))))
 
     (testing "map-update"
 
       (is (= (s/map-update S0 u/vel2)
-             (s/mk u/vel2)))
+             (s/score u/vel2)))
 
-      (is (= (s/map-update (s/mk (u/lin u/s0 u/s1)) u/vel2)
-             (s/mk u/vel2 (u/lin u/s0 u/s1))))
+      (is (= (s/map-update (s/score (u/lin u/s0 u/s1)) u/vel2)
+             (s/score u/vel2 (u/lin u/s0 u/s1))))
 
-      (is (= (s/map-update (s/mk (u/tup u/s0 u/s2))
+      (is (= (s/map-update (s/score (u/tup u/s0 u/s2))
                            (u/tup u/d0 u/d3))
-             (s/mk (u/tup [u/s0 (u/tup u/d0 u/d3)]
+             (s/score (u/tup [u/s0 (u/tup u/d0 u/d3)]
                           [u/s2 (u/tup u/d0 u/d3)])))))))
 
 

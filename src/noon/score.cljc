@@ -281,7 +281,7 @@
     (comment
 
       (show
-       (mk (chans [(patch :piano) (tup s0 s1 s2)]
+       (score (chans [(patch :piano) (tup s0 s1 s2)]
                   [(patch :vibraphone) (lin s0 s1 (par d0 d1 d2))]))))
 
     (defn qshow
@@ -421,7 +421,7 @@
       [updates]
       ((chain-score-updates updates) score0))
 
-    (defn mk
+    (defn score
       {:tags [:base :score-builder]}
       [& updates]
       (score* updates)))

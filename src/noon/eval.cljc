@@ -206,6 +206,6 @@
         (mk (tup s0 s1))))
 
 (comment
-  (eval '(noon.score/mk))
+  (eval '(noon.score/score))
   (eval '(mk))
   (eval '(tup s0)))

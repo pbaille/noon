@@ -3,7 +3,7 @@
   (:require [noon.lib.harmony :as h]
             [noon.lib.melody :as m]
             [noon.lib.rythmn :as r]
-            [noon.score :as score :refer [mk]]
+            [noon.score :as score :refer [score]]
             [noon.output :refer [play noon]]
             [noon.utils.pseudo-random :as pr]
             [noon.harmony :as nh]))
@@ -13,7 +13,7 @@
   (swap! options* assoc :tracks {0 :chorium})
 
   (spit "simple-tup.edn"
-        (str (midifiable-score (mk (tup s0 s1 s2)))))
+        (str (midifiable-score (score (tup s0 s1 s2)))))
 
   (play (tup s0 s1))
   (play vel2 dur2
@@ -33,7 +33,7 @@
          (noon {:play true
                 :tracks {0 :chorium}
                 :filename "./test/data/scratch/1"}
-               (mk dur4
+               (score dur4
                    (patch :electric-piano-1)
                    (scale :harmonic-minor)
                    (lin I VII I IV I [IIb lydian] V I)
@@ -199,7 +199,7 @@
                             [(root root') kind])
 
                triad->pitch-class-values (reduce (fn [ret t]
-                                                   (assoc ret t (mapv pitch-class-value (mk t (par s0 s1 s2)))))
+                                                   (assoc ret t (mapv pitch-class-value (score t (par s0 s1 s2)))))
                                                  {} all-triads)
 
                _all-transitions (reduce (fn [ret [t vs]]
@@ -223,7 +223,7 @@
            (noon {:play true
                   :midi true
                   :filename "test/data/garzone1"}
-                 (mk (lin* (map (fn [[triad inv]] [dur:2
+                 (score (lin* (map (fn [[triad inv]] [dur:2
                                                    triad
                                                    (chans [(patch :acoustic-bass) o1- t-round]
                                                           [(patch :electric-piano-1)
@@ -240,7 +240,7 @@
                             [(root root') kind])
 
                triad->pitch-class-values (reduce (fn [ret t]
-                                                   (assoc ret t (mapv pitch-class-value (mk t (par s0 s1 s2)))))
+                                                   (assoc ret t (mapv pitch-class-value (score t (par s0 s1 s2)))))
                                                  {} all-triads)
 
                pitch-class-value->triads (reduce (fn [ret [t vs]] (reduce #(update %1 %2 conj t) ret vs))
@@ -325,7 +325,7 @@
                 :midi true
                 :filename "test/trash/secondary-dominants"
                 :tracks {0 :chorium}}
-               (mk (structure :tetrad)
+               (score (structure :tetrad)
                    (rep 6 (degree 3))
                    (each (tup secondary-dominant same))
                    (h/align-contexts :d)
@@ -370,9 +370,9 @@
   (play (h/lin :I [:II :V7] :V/V7 [vel1 :V7] :I)
         (each (tup s0 s1 s2 s3)))
 
-  (mk (h/upd [vel1 :I]))
+  (score (h/upd [vel1 :I]))
 
-  (->> (mk (h/upd :V7b9omit1) (lin s0 s1 s2 s3 s4))
+  (->> (score (h/upd :V7b9omit1) (lin s0 s1 s2 s3 s4))
        (sort-by :position)
        (map pitch-value))
 

@@ -40,7 +40,7 @@
             points (map (numbers/mul increment) (range 0 (inc n)))]
         (map (fn [[from to]]
                (score/update-score score [(updates/between from to) (updates/trim from to)
-                                          (score/sf_ (if (empty? _) (score/mk updates/vel0 {:duration increment :position from}) _))
+                                          (score/sf_ (if (empty? _) (score/score updates/vel0 {:duration increment :position from}) _))
                                           (score/sf_ (score/shift-score _ (- from)))]))
              (partition 2 1 points)))))
 

@@ -92,14 +92,14 @@
                `(noon (merge {:midi true
                               :source '~&form}
                              ~opts)
-                      (score/mk ~@xs)))
+                      (score/score ~@xs)))
 
              (defmacro play [& xs]
                `(noon {:filename ~(gen-filename (MIDI_DIRECTORIES :history))
                        :source '~&form
                        :midi true
                        :play true}
-                      (score/mk ~@xs)))
+                      (score/score ~@xs)))
 
              (defmacro stop []
                `(if-let [sq# @sequencer*]
