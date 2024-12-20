@@ -35,7 +35,7 @@ jobs:
         clj-kondo: latest
 
     - name: Run clj-kondo Linting
-      run: clj-kondo --lint src --config ./.clj-kondo/config.edn
+      run: clj-kondo --lint src client test --config ./.clj-kondo/config.edn
 
     - name: Generating noon org tests
       run: clojure -X:build-doc-tests
