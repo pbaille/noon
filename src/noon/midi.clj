@@ -495,25 +495,26 @@
       (.add target-track (.get track i)))
     sequence))
 
-(defn midi [& {:keys [track-idx->sequencer bpm data]
+(defn midi [& {:keys [mute track-idx->sequencer bpm data]
                :or {track-idx->sequencer (constantly :default)}}]
-  (let [track->data (group-by :track data)
-        n-tracks (inc (apply max (keys track->data)))
-        sequence (add-events (new-sequence n-tracks bpm)
-                             data)
-        sequencers (map (fn [track-idx]
-                          (let [sequencer (new-sequencer (track-idx->sequencer track-idx))]
-                            (.setSequence sequencer (copy-track (new-sequence 1 bpm)
-                                                                (aget (.getTracks sequence) track-idx)))
-                            sequencer))
-                        (range n-tracks))]
-    {:play (fn []
-             (doseq [s sequencers] (reset-sequencer s))
-             (doseq [s sequencers] (restart-sequencer s)))
-     :write (fn [filename] (write-midi-file sequence filename))
-     :midi-string (fn [] (sequence->midi-string sequence))
-     :stop (fn [] (doseq [s sequencers] (stop-sequencer s)))
-     :close (fn [] (doseq [s sequencers] (close-sequencer s)))}))
+  (when-not mute
+    (let [track->data (group-by :track data)
+          n-tracks (inc (apply max (keys track->data)))
+          sequence (add-events (new-sequence n-tracks bpm)
+                               data)
+          sequencers (map (fn [track-idx]
+                            (let [sequencer (new-sequencer (track-idx->sequencer track-idx))]
+                              (.setSequence sequencer (copy-track (new-sequence 1 bpm)
+                                                                  (aget (.getTracks sequence) track-idx)))
+                              sequencer))
+                          (range n-tracks))]
+      {:play (fn []
+               (doseq [s sequencers] (reset-sequencer s))
+               (doseq [s sequencers] (restart-sequencer s)))
+       :write (fn [filename] (write-midi-file sequence filename))
+       :midi-string (fn [] (sequence->midi-string sequence))
+       :stop (fn [] (doseq [s sequencers] (stop-sequencer s)))
+       :close (fn [] (doseq [s sequencers] (close-sequencer s)))})))
 
 
 
