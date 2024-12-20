@@ -161,13 +161,13 @@
          "from this note pick another triad but changing the inversion used"
 
          [:aborted '(let [main-triad [(root :C) ionian triad]
-                          main-pitch-classes (set (map pitch-class-value (mk main-triad (par s0 s1 s2))))
+                          main-pitch-classes (set (map pitch-class-value (score main-triad (par s0 s1 s2))))
                           all-triads (for [root' [:C :Db :D :Eb :E :F :Gb :G :Ab :A :Bb :B]
                                            kind [ionian eolian lydian+ superlocrian]]
                                        [(root root') kind])
 
                           triad->pitch-class-values (reduce (fn [ret t]
-                                                              (assoc ret t (mapv pitch-class-value (mk t (par s0 s1 s2)))))
+                                                              (assoc ret t (mapv pitch-class-value (score t (par s0 s1 s2)))))
                                                             {} all-triads)
 
                           all-transitions (reduce (fn [ret [t vs]]
@@ -178,7 +178,7 @@
 
                           available-triads (filter (fn [u]
                                                      (some main-pitch-classes
-                                                           (map pitch-class-value (mk u (par s0 s1 s2)))))
+                                                           (map pitch-class-value (score u (par s0 s1 s2)))))
                                                    all-triads)
 
                           transitions (reduce (fn [ret triad]
@@ -424,7 +424,7 @@
                        (update :position float)
                        (update :duration float)))
                  (numerify-pitches
-                  (mk
+                  (score
                    aeolian
                    (h/lin :Im :VIIo :Im :IIIo :IVm :#IVo :Vsus4 :VIIo)
                    (h/align-contexts :s)

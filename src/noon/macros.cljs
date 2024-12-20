@@ -35,7 +35,7 @@
 (defn play
   {:sci/macro true}
   [_ _ & xs]
-  `(noon.output/play-score (noon.score/mk ~@xs)))
+  `(noon.output/play-score (noon.score/score ~@xs)))
 
 (defn noon
   {:sci/macro true}

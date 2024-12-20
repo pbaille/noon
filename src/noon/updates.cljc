@@ -220,7 +220,7 @@
       _ same)
 
     (defn* k
-      {:doc "Act like 'mk, ignoring current score."
+      {:doc "Act like 'noon.score/score, ignoring current score."
        :tags [:base :score-update-builder]}
       [updates]
       (sf_ (score/score* updates)))

@@ -76,7 +76,7 @@ Here a minimal example:
 (noon
  ;; the play option let you play the given score
  {:play true}
- ;; calling mk without argument just build the default score (middle C)
+ ;; calling score without argument just build the default score (middle C)
  (score))
 #+end_src
 
@@ -4200,7 +4200,7 @@ Trying to produce vibrating textures by playing very fast note sequences.
        [(patch :vibraphone)
         (shuflin s0 s1 s2 s3 s4)
         (nlin 4 (one-of s1 s2 s1- s2-))
-        (sf_ (let [rythmn (score/mk (nlin 2 (! (r/gen-tup 12 5 :shifted))) (append rev))]
+        (sf_ (let [rythmn (score (nlin 2 (! (r/gen-tup 12 5 :shifted))) (append rev))]
                (set (map (fn [r n]
                            (merge n (select-keys r [:position :duration])))
                          (sort-by :position rythmn)
@@ -4329,7 +4329,7 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
                       [mode-kw prio] (rand/rand-nth (possible-modes interval modal-lvl (dec chord-size)))
                       partial-scale (cons 0 (take (dec chord-size) prio))
                       structure' (constants/partial-scale->structure mode-kw partial-scale)
-                      closed (score/mk (dissoc (first score) :pitch)
+                      closed (score (dissoc (first score) :pitch)
                                  (origin min-pitch-val)
                                  (scale mode-kw)
                                  (structure structure')
