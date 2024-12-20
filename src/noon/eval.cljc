@@ -56,7 +56,7 @@
               (-> (dissoc namespaces :user)
                   (assoc (list 'quote 'user)
                          (cons `merge user)))
-              {:ns-requirements (list 'quote #_requirements)})))
+              {:ns-requirements (list 'quote xs #_requirements)})))
 
     (macroexpand '(sci-namespaces
                    [noon.updates :refer :all]
@@ -104,8 +104,8 @@
   (sci-namespaces
    [noon.updates :refer :all]
    [noon.events :as events :refer [ef_ efn]]
-   [noon.score :as score :refer [mk mk* sf_ sfn e->s]]
-   [noon.output :as out]
+   [noon.score :as score :refer [score sf_ sfn e->s]]
+   [noon.output :as out :refer [play noon]]
    [noon.harmony :as hc]
    [noon.numbers :refer [mul div add sub]]
    [noon.lib.harmony :as h]
@@ -182,8 +182,7 @@
             (defn clj-ns-form [ns-sym]
               (list 'ns ns-sym
                     (cons :require
-                          (cons '[noon.eval :refer [play noon score]]
-                                (:ns-requirements (meta default-namespaces))))))
+                          (:ns-requirements (meta default-namespaces)))))
 
             (defn spit-ns
               [{:keys [ns path content target]}]
