@@ -167,7 +167,8 @@
       (let [options (set (str/split (str/replace s "#+begin_src clojure" "")
                                     #" "))]
         {:clj-only (options ":clj-only")
-         :cljs-only (options ":cljs-only")}))
+         :cljs-only (options ":cljs-only")
+         :no-tests (options ":no-tests")}))
 
     (defn org-file->clojure-expressions [org-file]
       (loop [lines (str/split-lines (slurp org-file))
@@ -222,7 +223,8 @@
     (defn prepare-test-content [content target]
       (map (fn [{:keys [expr options]}]
              (let [expr `(t/is (noon.freeze/freeze ~expr))]
-               (cond (:clj-only options) (when (= target :clj) expr)
+               (cond (:no-tests options) nil
+                     (:clj-only options) (when (= target :clj) expr)
                      (:cljs-only options) (when (= target :cljs) expr)
                      :else expr)))
            content))
@@ -239,10 +241,9 @@
     (defn replace-rational-literals [s]
       (clojure.string/replace
        s
-       #"\b(\d+)/(\d+)\b"
+       #"(-?\d+)/(\d+)\b"
        (fn [[_ n d]]
          (str "(/ " n " " d ")"))))
-
     (defn org->test-ns-str [file target]
       (let [code-str
             (->> (org-file->clojure-expressions file)
@@ -267,7 +268,7 @@
       (let [file "src/noon/doc/noon.org"]
         (->> (org-file->clojure-expressions file)
              (expressions->code-tree)
-             (code-tree->tests [])))))
+             (code-tree->tests [] :cljs)))))
 
 (do :entry-points
 
@@ -289,7 +290,7 @@
         (when pretty? (pretty-file! clj-file)))))
 
 (defn build-all []
-  (build-doc-tests true)
+  (build-doc-tests)
   (build-doc-ns))
 
 (comment
