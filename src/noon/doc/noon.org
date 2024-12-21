@@ -235,11 +235,11 @@ Here some examples of pitches:
 (play Eb0)
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play F#-1)
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play Gb2)
 #+end_src
 
@@ -250,11 +250,11 @@ But it may be a little overwhelming to start with, so for now we will use them t
 
 We can operate on durations by multiplying or dividing them.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur2) ; multiplies the duration of our middle C by 2
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur:3) ; divides it by 3
 #+end_src
 
@@ -274,7 +274,7 @@ There is also a more flexible (and verbose) way to build duration transformation
 
 Those 3 forms return a transformation that can be used in =score= or =play=
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (dur 1/4))
 #+end_src
 
@@ -286,29 +286,29 @@ In midi the velocity is a number between 0 and 127.
 
 For easing notation, 12 levels of velocity are defined as vars.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play vel0) ; silent
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play vel3) ; piano
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play vel8) ; forte
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play vel12) ; fortissimo
 #+end_src
 
 Like for duration there is also a more flexible form:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (vel 100)) ; sets the midi velocity of the current event to 100 (forte).
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (vel (fn [x] (/ x 2)))) ; divide the current velocity by 2 (by default the velocity is 80)
 #+end_src
 
@@ -316,21 +316,21 @@ Like for duration there is also a more flexible form:
 
 We can compose any number of transformations together using a clojure vector.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play [Eb0 dur:2]) ; plays a Eb of half duration
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play [F#-1 dur4 (vel 127)]) ; F# above the middle C with quadruple duration and max velocity.
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play [(vel 127) dur4 F#-1]) ; the order do not matter in this case.
 #+end_src
 
 The =play= and =score= forms, when given several arguments are doing exactly this
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play F#-1 dur4) ; is the same as (play [F#-1 dur4])
 #+end_src
 
@@ -339,13 +339,13 @@ The =play= and =score= forms, when given several arguments are doing exactly thi
 Using the =lin= function we can create our first melody.
 The =lin= function takes an arbitrary number of transformations and concatenate their results into one score.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (lin C0 E0 G0 B0))
 #+end_src
 
 =lin= accept any valid transformation, here we are using composite transformations.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (lin [C0 dur:2]
            [Eb0 dur:4]
            [G0 dur:4]
@@ -356,13 +356,13 @@ The =lin= function takes an arbitrary number of transformations and concatenate 
 
 Using the =par= function we can stack things up.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (par C0 Eb0 G0)) ; a C minor chord.
 #+end_src
 
 A pianissimo, double duration, Csus4 chord:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play vel2
       dur2
       (par C0 F0 G0))
@@ -376,11 +376,11 @@ Of course if you want to use fancy VSTs in a proper DAW you can, one of the feat
 
 Here how you can leverage general MIDI sounds:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :clarinet) (lin C0 E0 G#0 B0))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :vibraphone) [dur:4 (lin C0 E0 G0 (par D1 B0))])
 #+end_src
 
@@ -396,7 +396,7 @@ In most of the tunes we write, we want several instruments playing together.
 
 In MIDI there is this concept of channel, it serve the purpose to separate different streams of events.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (chans
   [(patch :ocarina) dur:2 (lin G0 Eb0 C0 G-1 F0 D0 A-1 F-1)]
@@ -445,15 +445,15 @@ All chromatic steps from =c36= to =c36-= are available.
 
 If we apply the =c3= step to the default score, it transpose the default middle C (=C0=) 3 semitones up to =Eb0= (or =D#0=).
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play c3)
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (c-step -3)) ; going down 3 semitones to A-1
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play c12-) ; going 12 semitones down (one octave) to C-1
 #+end_src
 
@@ -487,15 +487,15 @@ all diatonic steps from =d21= to =d21-= are available.
 
 ******* Example
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur:4 (lin d0 d1 d2 d3 d4 d5 d6 d7)) ; ascending scale
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur:4 (lin d0 d2 d1 d3 d2 d4 d3 d5 d4)) ; broken scale pattern
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur:4 (lin d0 d2- d1- d3- d2- d4- d3- d5- d4-)) ; same downward
 #+end_src
 
@@ -503,7 +503,7 @@ By default, we are in the C major scale, but of course it can be changed. (see [
 
 As a quick example, pretty self explanatory (but explained in more details later).
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur:4 (root :Eb) (scale :hungarian) (lin d0 d1 d2 d3 d4 d5 d6 d7))
 #+end_src
 
@@ -520,15 +520,15 @@ In noon, octaves are a different kind of interval, they belong to the =shift= fa
 
 The nuance will appear more clearly later... Until then, let see how to use them:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (t-shift 1)) ; one octave up.
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (t-shift -1)) ; one octave down.
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play o2-) ; 2 octaves down in var notation
 #+end_src
 
@@ -536,13 +536,13 @@ The nuance will appear more clearly later... Until then, let see how to use them
 
 As we have seen, =lin= let you create a succession of events:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (lin C0 E0 G0 B0))
 #+end_src
 
 Let's try to go further with it by composing it with another =lin=:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur:8 (lin c0 c3 c6) (lin c0 c2 c3 c5))
 #+end_src
 
@@ -558,7 +558,7 @@ Let see what happens here:
 
 =tup= stands for tuplet and is analogous to =lin= but keep the duration of the given score unchanged.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup c1 c2 c3 c4 c5 c6 c7 c8))
 #+end_src
 
@@ -566,7 +566,7 @@ The resulting notes are fitted into the duration of the base note.
 
 Like =lin= it can of course be chained with other transformations, as an example, here is a classic jazz melodic pattern.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup c0 c2 c4 c7) (tup c0 c3) (rep 3 c4-))
 #+end_src
 
@@ -574,7 +574,7 @@ Like =lin= it can of course be chained with other transformations, as an example
 
 =dup= stands for duplicate and let you repeat a score n times.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup c0 c3 c6 c9) (dup 3))
 #+end_src
 
@@ -584,19 +584,19 @@ Like =lin= it can of course be chained with other transformations, as an example
 
 A melody of 8 successive major thirds (4 semitones):
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur:4 (rep 8 c4))
 #+end_src
 
 Be careful, with more complex transformations it can quickly become hairy:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (rep 6 (tup c5 c10)))
 #+end_src
 
 You can remove the input score at the start of the result by giving an extra argument:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (rep 3 o1 :skip-first))
 #+end_src
 
@@ -605,7 +605,7 @@ You can remove the input score at the start of the result by giving an extra arg
 =fit= is used to make a transformation fit the current duration of the score.
 The 2 previous transformations introduced: =dup= and =rep=, are changing the score duration, but sometimes we want to transform our score in place, stretching or compressing it, in the same way =tup= is acting.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup c0 c4) (fit (rep 4 c2)))
 #+end_src
 
@@ -617,13 +617,13 @@ In fact =tup= is just a composition of =fit= and =lin=.
 
 The composition of =fit= and =rep= is also defined as =rup= for lack of a better name:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (rup 15 d1))
 #+end_src
 
 A fitted version of =dup= also exists under the name =dupt=
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup d0 d3 d6 d7) (dupt 3))
 #+end_src
 
@@ -631,13 +631,13 @@ A fitted version of =dup= also exists under the name =dupt=
 
 concat the results of the given transformation n times
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (nlin 4 (tup d0 d1 d2 d3)))
 #+end_src
 
 it is the same thing as:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup d0 d1 d2 d3) (dup 4))
 #+end_src
 
@@ -645,7 +645,7 @@ it is the same thing as:
 
 the fitted version of =nlin=
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (ntup 4 (tup d0 d1 d2 d3)))
 #+end_src
 
@@ -653,7 +653,7 @@ the fitted version of =nlin=
 
 =lin>= stands for accumulative concatenation, it accumulates the given transformations concatenating the intermediate results.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (lin> c0 c2 c2 c2 c2 c2 c2))
 #+end_src
 
@@ -661,7 +661,7 @@ the fitted version of =nlin=
 
 =tup>= is doing the same as =lin>=, except it maintains the score original duration.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup> d0 d1 d1 d1 d1 d1 d1 d1))
 #+end_src
 
@@ -669,17 +669,17 @@ the fitted version of =nlin=
 
 As we have seen, we can parallelize things with the =par= function.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (par c0 c3 c7 c9 c14)) ; a Cm69 chord.
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (par c10 c0 c16 c5)) ; a C7sus4add10 using set literal
 #+end_src
 
 But we are not limited to use simple intervals, we can use any score transformations.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (patch :electric-piano-1)
  (par (tup d0 d2 d4 o1)
@@ -689,25 +689,25 @@ But we are not limited to use simple intervals, we can use any score transformat
 
 Parallels transformations can be used anywhere of course. Here inside a =tup=.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play o1
       (tup c0 (par c15 c10)
            c9 (par c6 c4))
       (rep 3 c3))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (par (rep 12 c1)
            (rep 12 c1-)))
 #+end_src
 
 Like =lin= and =tup=, =par= has its accumulative counterpart:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (par> d0 d2 d2 d2 d2)) ; piling diatonic thirds.
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :string-ensemble-1)
       o2-
       (par> c0 c7 c7 c7 c7 c7)) ; piling perfect fifths.
@@ -717,7 +717,7 @@ Like =lin= and =tup=, =par= has its accumulative counterpart:
 
 the =chans= function is doing the same thing as =par= except that it put each element on a separate MIDI channel.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (chans c0 c3 c7))
 #+end_src
 
@@ -739,7 +739,7 @@ When we want more fine control we can use the =chan= function, that works like =
 
 We can achieve the same thing as the first expression of the section using =par= and =chan= like this:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (par [(chan 0) c0]
            [(chan 1) c3]
            [(chan 2) c7]))
@@ -749,7 +749,7 @@ We can achieve the same thing as the first expression of the section using =par=
 
 Tracks are a way of not be limited to only 16 channels, you can create virtually as many as you want. Most of the time, 16 channels are enough but who knows... The =tracks= function works exactly like the =chans= function, except that it operates on the =:track= entry of events.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (patch :flute)
  (tracks (tup> c0 c5 c5 c5- c2- c7-)
@@ -777,19 +777,19 @@ All the transformations we've seen so far are acting on a score to produce anoth
 
 As an illustration, here those two fragments:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (lin c0 c1 c2 c3)
       (tup c0 o1)) ; each member of this `tup` form receives and operate on the whole score
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (lin c0 c1 c2 c3)
       (each (tup c0 o1))) ; each event of the score is transformed using this `tup` transformation.
 #+end_src
 
 One important thing to be aware of is that events will be mapped in place, so if the given transformation expand the score, some superposition will occur.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (lin c0 o1)
       (each [dur:4 (rep 8 c1-)]))
 #+end_src
@@ -828,17 +828,17 @@ It ease things a bit when using clojure to generate arguments of those functions
 
 maps can be used to compose event transformations
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play {:velocity (fn [x] (/ x 2)), :duration (fn [x] (* x 2))})
 #+end_src
 
 **** Examples
 
-#+begin_src clojure :proll :no-tests
+#+begin_src clojure  :no-tests
 (play (tup* (shuffle [c0 c3 c7 c9])))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (patch :electric-piano-1)
  (tup* (map (fn [v] {:velocity v}) (range 0 127 15))))
@@ -848,7 +848,7 @@ maps can be used to compose event transformations
 
 It is quite fun to insert a bit of randomness in our scores.
 
-#+begin_src clojure :proll :no-tests
+#+begin_src clojure  :no-tests
 (play
  (rand-nth [(tup c0 c4 c7) (tup c0 c3 c7)])
  (rep 4 (rand-nth [c3 c4 c3- c4-])))
@@ -860,11 +860,11 @@ We can use some great available tools like =test.check.generators= to handle non
 
 =one-of= picks randomly one of the given transformations and apply it.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (one-of o1- o1))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur:8 (rep 50 (one-of c1 c1-)))
 #+end_src
 
@@ -872,15 +872,15 @@ We can use some great available tools like =test.check.generators= to handle non
 
 =maybe= is very similar to =one-of= except it has a chance to do nothing (identity transformation).
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (maybe o1 o2)) ; may do nothing, or one octave up, or two octave up
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (one-of same o1 o2)) ; the equivalent `one-of` form
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur:8 (rep 50 (maybe c1 c1-))) ; you can notice melodic repetitions unlike with the corresponding one-of example.
 #+end_src
 
@@ -888,11 +888,11 @@ We can use some great available tools like =test.check.generators= to handle non
 
 =probs= gives you more control over the probability of occurence of the given transformations.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (probs {o1 4, o1- 1})) ; 4/5 to go up one octave, 1/5 chance to go down one octave
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur:4 (rep 24 (probs {c1 6, c6- 1, (par c0 o1-) 1})))
 #+end_src
 
@@ -902,7 +902,7 @@ We can use some great available tools like =test.check.generators= to handle non
 
 A melody of 60 notes using the 6 given intervals but remaining in the given pitch bounds:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur:8
       (rep 60
            (any-that (within-pitch-bounds? :C-1 :C1)
@@ -919,11 +919,11 @@ the =!= macro can be useful to deal with raw non deterministic expressions. here
 Takes a non deterministic expression resulting in a score transformation. return a score transformation that wraps the expression so that it is evaluated each time the transformation is used.
 #+end_quote
 
-#+begin_src clojure :proll :no-tests
+#+begin_src clojure  :no-tests
 (play (nlin 4 (! (tup* (shuffle [d0 d2 d4 d6])))))
 #+end_src
 
-#+begin_src clojure :proll :no-tests
+#+begin_src clojure  :no-tests
 (play (nlin 4 (tup* (shuffle [d0 d2 d4 d6])))) ; without the bang the shuffle expression is executed only one time.
 #+end_src
 
@@ -933,11 +933,11 @@ As in the previews example, building a =tup= or a =lin= with shuffled sequence o
 
 So two shortcuts are defined:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (shuftup d0 d2 d4 d6))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (shuflin d0 d2 d4 d6))
 #+end_src
 
@@ -957,25 +957,25 @@ Most of the time, our music is based on chords.
 
 Structural steps are targeting chord notes. By default the harmony is set to C Major scale, and C Major chord (C major triad).
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (s-step 1)) ; ascending third
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (s-step 2)) ; ascending fifth
 #+end_src
 
 As other steps, corresponding vars are defined:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play s1)
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play s2)
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play s1-)
 #+end_src
 
@@ -983,21 +983,21 @@ As other steps, corresponding vars are defined:
 
 ******** Arpegios
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s1 s2 s3))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (rup 6 s1))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (rep 4 s1-) (each (tup> s2 s2 s2 s1- s2- s1-)))
 #+end_src
 
 ******** Passing tones
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (scale :eolian) dur:2 o2 (rep 12 s1-) (each (tup s0 c1- d1 s0)))
 #+end_src
 
@@ -1007,35 +1007,35 @@ The last kind of step is the tonic one.
 
 It let you jump to the root of the tonality.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (t-step 1)) ; upper tonic
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (t-step -1)) ; above tonic
 #+end_src
 
 As other steps corresponding vars are defined:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play t1)
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play t2)
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play t1-)
 #+end_src
 
 ******* Examples
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (rup 4 t1))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (rep 3 t1) (each (tup> s0 s1 s1 d1-)))
 #+end_src
 
@@ -1083,21 +1083,21 @@ At least we will understand the nuance between steps and shifts. To do so let's 
 
 At first glance they seems to be equivalent:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (t-shift 1))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (t-step 1))
 #+end_src
 
 In this case they are indeed equivalent, in each case a C1 is played. But how about this ?
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play s1 (t-shift 1)) ; plays a E1
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play s1 (t-step 1)) ; plays a C1
 #+end_src
 
@@ -1115,7 +1115,7 @@ By default the major scale is used, but it can be changed. Most of the known sca
 noon.constants/modes ; modes full list
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (scale :dorian) dur:4 (rep 8 d1)) ; dorian scale
 #+end_src
 
@@ -1153,7 +1153,7 @@ We can use the =origin= function to change this
 
 ****** Examples
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (lin (origin :C0) (origin :E0) (origin :G#0)) (each (rup 6 s1)))
 #+end_src
 
@@ -1173,7 +1173,7 @@ For instance if the origin is on =C0=, =(root :B)= will put the origin on =B-1= 
 
 ****** Examples
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (lin* (map root [:C :E :G#]))
  (each (chans (par d0 d3 d6 d9) [(rup 4 d3) (rup 3 d2)]))
@@ -1184,7 +1184,7 @@ For instance if the origin is on =C0=, =(root :B)= will put the origin on =B-1= 
 
 the transpose update takes an interval or a position and use it to update the origin of the harmonic context
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (scale :lydianb7) (rup 6 d2) (rep 4 (transpose c3-)))
 #+end_src
 
@@ -1226,7 +1226,7 @@ Move to the nth degree of the current scale (mode), negative indexes are allowed
 
 Roman numeral vars are also available to change degree.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :trumpet) (lin I IV V I) (each (tup s0 s1 s2)))
 #+end_src
 
@@ -1264,7 +1264,7 @@ This function returns nil if any event of the score is not in the given pitch bo
 
 This function is handy in conjuction with the =any-that= or =fst-that= forms.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (patch :electric-piano-1)
  dur:8
@@ -1273,7 +1273,7 @@ This function is handy in conjuction with the =any-that= or =fst-that= forms.
 
 The =fst-that= form takes a test and any number of update that will be tried in order until one pass the test.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  dur:8
  (rep
@@ -1289,7 +1289,7 @@ Rotating a melody is a way to evolve it while preserving its identity.
 
 ***** Example
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (fit (rep 8 d1)) (m/rotation 3))
 #+end_src
 
@@ -1335,7 +1335,7 @@ available forms:
 
 Not only pure melodies can be rotated, if we feed chords into the =rotation= transformation it behaves as intended.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (fit (rep 8 d1)) (each (par d0 d3 d6)) (m/rotation 1/4))
 #+end_src
 
@@ -1421,13 +1421,13 @@ As we've seen, our melodies are built on different harmonic layers (chromatic, d
 
 As an example for this, please consider this kind of melody.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur2 (tup s0 s1 s2 s3) (each (tup d1 d1- d0)))
 #+end_src
 
 We start with an ascension on the structural layer, then adding some diatonic ornementation on each structural degree. Those diatonic notes have meaning relatively to the structural degrees they are based upon. If we do a raw permutation on this melodic line we are losing those relations. With the :layer option we can permute only the structural layer keeping those diatonic ornementations untouched.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  dur2
  (tup s0 s1 s2 s3)
@@ -1443,7 +1443,7 @@ TODO
 
 In the following example you can get a sense of the effect of deriving a melody from simple transformations.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  {:description
   "rand harmonic seq using IV II and VI degrees on vibraphone,
@@ -1472,23 +1472,23 @@ The idea of contour is quite simple. When you see a melody on a score or a piano
 
 For instance those different melodies are all sharing the same contour: [0 2 1 2]
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s2 s1 s2))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s3 s2 s3))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup d0 d2 d1 d2))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup d1 d5 d2 d5))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s2 s4 d8 s4))
 #+end_src
 
@@ -1526,13 +1526,13 @@ changing the melodic contour of a score.
 
 Let's take this simple arpegio to start
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2)) ; {:contour [0 1 2 3 1 2]}
 #+end_src
 
 Here the way to obtain the mirror contour of the previous arpegio.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :mirror)) ; {:contour [3 2 1 0 3 2]}
 #+end_src
 
@@ -1540,7 +1540,7 @@ Next let's try contour rotations:
 
 Here we are picking the first rotation (with the option =:nth=)
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :rotation {:nth 1})) ; {:contour [1 2 3 0 2 3]}
 #+end_src
 
@@ -1548,13 +1548,13 @@ Every contour index has been shifted one step up, the highest one returning all 
 
 Lets get the last rotation using a 'member-pick argument.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :rotation {:pick -1})) ; {:contour [3 0 1 2 0 1]}
 #+end_src
 
 If no :pick or :nth option is given, select a random one.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :rotation))
 #+end_src
 
@@ -1562,7 +1562,7 @@ One of the nice things with contours is that it can serve to generate many melod
 
 Here we are randomly picking a similar score that is one structural step wider (:delta 1) that the original one.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :similar {:delta 1}))
 #+end_src
 
@@ -1570,21 +1570,21 @@ In all the previous exemples, the contour was computed over the structural layer
 
 As an illustration let's look at the effect of specifying the layer within the :mirror contour operation:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :mirror)) ; Original example
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :mirror {:layer :d})) ; Mirrored diatonically, resulting in a F major arpegio
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :mirror {:layer :c})) ; Mirror chromatically, resulting in a F minor arpegio (it can help with 'negative harmony')
 #+end_src
 
 One of the similar scores between those shrinked by 2 diatonic step and those expanded by 3 diatonic steps (:extent [-2 3] :layer :d).
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (tup s0 s1 s2 s3 s1 s2)
  (m/contour :similar {:extent [-2 3], :layer :d}))
@@ -1596,7 +1596,7 @@ One simple way to build a melody is to concatenate some little fragments one aft
 
 There are several ways to do this:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  {:description
   "building a melodic line of 32 notes by chaining fragments of differerent lengths."}
@@ -1613,7 +1613,7 @@ There are several ways to do this:
 
 The =simple-line= function is built on top of the more general function =noon.lib.melody/line=
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  {:description
   "another way to build a melodic line from a bunch of randomly chosen transformations."}
@@ -1639,7 +1639,7 @@ So far we havn't discuss rythmn so much, let see what we have at our disposal to
 
 As we've seen earlier, we can use the =duration= related transformations to write simple rythmns
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (patch :woodblock)
  dur:4
@@ -1648,29 +1648,29 @@ As we've seen earlier, we can use the =duration= related transformations to writ
 
 This is not a pretty way to write it ! We can use the =_= shortcut instead of =same=, and the =tup= function for making this a bit more readable.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :woodblock) dur:4 (lin _ (tup _ _) _ dur2 _ _))
 #+end_src
 
 We can also use the =dupt= function if we prefer.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :woodblock) dur:4 (lin _ (dupt 2) _ dur2 _ _))
 #+end_src
 
 We could have done it like so too:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :woodblock) dur2 (tup* (map dur [1 1/2 1/2 1 2 1 1])))
 #+end_src
 
 There is a function to help writing a rythmn this way:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur2 (r/durtup 1 1/2 1/2 1 2 1 1))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play dur2 (r/durtup* [1 1/2 1/2 1 2 1 1]))
 #+end_src
 
@@ -1698,13 +1698,13 @@ form:
 
 randomly dispose 5 notes into 8 subdivisions.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :woodblock) (r/gen-tup 8 5) (dup 4))
 #+end_src
 
 Lets add a metronome
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (chans
   [(patch :tinkle-bell) o1-]
@@ -1714,7 +1714,7 @@ Lets add a metronome
 
 A bit slower
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  dur2
  (chans
@@ -1725,7 +1725,7 @@ A bit slower
 
 Let's try 12/8
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  dur2
  (chans
@@ -1736,7 +1736,7 @@ Let's try 12/8
 
 Using the =:shifted= keyword you can give your tup a chance to not start on beat.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  dur2
  (chans
@@ -1749,7 +1749,7 @@ You can specifies which durations are allowed with the =:durations= option
 
 here we are generating a tuple of resolution 12 and size 5, using only 2/12 and 3/12 durations.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  dur2
  (chans
@@ -1760,7 +1760,7 @@ here we are generating a tuple of resolution 12 and size 5, using only 2/12 and 
 
 A 3 voices example:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (patch :tinkle-bell)
  dur2
@@ -1773,7 +1773,7 @@ A 3 voices example:
 
 The =:euclidean= flag let you generate euclidean rythmns: https://blog.landr.com/euclidean-rhythms/
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  {:description "~trésillo"}
  (chans
@@ -1782,7 +1782,7 @@ The =:euclidean= flag let you generate euclidean rythmns: https://blog.landr.com
  (dup 4))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  {:description "~bembé"}
  dur2
@@ -1792,7 +1792,7 @@ The =:euclidean= flag let you generate euclidean rythmns: https://blog.landr.com
  (dup 4))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  {:description "~bossa"}
  dur2
@@ -1847,7 +1847,7 @@ Once we have written or generated a rythmn we may want to make it evolve, here i
 
 We can use the previously seen functions from =noon.lib.melody= to permute or rotate a rythmn.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  dur2
  (chans
@@ -1865,7 +1865,7 @@ Unlike =noon.lib.melody/rotation= this function do not operates on a note basis
 
 Rotating a score by the given duration
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (chans
   [(patch :tinkle-bell) o1- (dup 4)]
@@ -1876,7 +1876,7 @@ Rotating a score by the given duration
 
 You can rotate by any duration, even if it do not really make sense.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (chans
   [(patch :tinkle-bell) o1-]
@@ -1886,7 +1886,7 @@ You can rotate by any duration, even if it do not really make sense.
 
 You can also rotate relatively to score duration. Here we are starting with a score of duration 2. With the form (r/rotation :relative -1/4) we are rotating it a quarter of its duration backward.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  dur2
  (chans
@@ -1897,7 +1897,7 @@ You can also rotate relatively to score duration. Here we are starting with a sc
 
 There is also forms to randomly pick a rotation (rotation :rand-by <increment>) : pick a random rotation using increment as resolution. (rotation :rand-sub <n>) : split the score in 'n parts and rotate to a randomly picked one.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  dur2
  (chans
@@ -1906,7 +1906,7 @@ There is also forms to randomly pick a rotation (rotation :rand-by <increment>) 
  (dup 4))
 #+end_src
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  dur2
  (chans
@@ -1923,13 +1923,13 @@ Like =noon.lib.rythmn/rotation=, =noon.lib.rythmn/permutation= do not operate on
 
 Let's start with this tup:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :woodblock) (r/durtup 2 1 1 4) (dup 4))
 #+end_src
 
 Here we are picking a random permutation of our score splitted in 4 equal parts.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (chans
   [(patch :tinkle-bell) o1-]
@@ -1957,7 +1957,7 @@ Like we've seen with =noon.lib.melody/permutation=, there is several way to choo
 
 fun:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  {:description "rythmic permutation demo"}
  (chans
@@ -1985,19 +1985,19 @@ In musical terms, a voicing is a particular agencement of a chord. When we speak
 
 It can be played in closed position
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :electric-piano-1) V tetrad (par s0 s1 s2 s3))
 #+end_src
 
 Inverted (first inversion)
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :electric-piano-1) V tetrad (par [o1 s0] s1 s2 s3))
 #+end_src
 
 Or dropped (drop 2)
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :electric-piano-1) V tetrad (par s1 [o1 s2] s3 s4))
 #+end_src
 
@@ -2007,25 +2007,25 @@ and many other ways...
 
 upward inversions
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :vibraphone) (par s0 s1 s2) (rep 4 (h/inversion 1)))
 #+end_src
 
 downward double inversions
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :vibraphone) o1 (par s0 s1 s2) (rep 4 (h/inversion -2)))
 #+end_src
 
 In those particular exemples we could have done the same using s1 and s2-, here the equivalent of the first example:
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :vibraphone) (par s0 s1 s2) (rep 4 s1))
 #+end_src
 
 But it is not always the case with more complex chords
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  {:description "4 successive double inversions upward on a Cmaj79 "}
  (patch :vibraphone)
@@ -2065,25 +2065,25 @@ This function help you to drop a voicing. It takes the same polymorphic kind of 
 
 pick a random drop of Cmaj7
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :vibraphone) tetrad (par s0 s1 s2 s3) (h/drop :rand))
 #+end_src
 
 first drop
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :vibraphone) tetrad (par s0 s1 s2 s3) (h/drop 1))
 #+end_src
 
 last drop
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :vibraphone) tetrad (par s0 s1 s2 s3) (h/drop -1))
 #+end_src
 
 one-of the least wide drop
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play (patch :vibraphone) tetrad (par s0 s1 s2 s3) (h/drop [0 1/2]))
 #+end_src
 
@@ -2097,7 +2097,7 @@ When dealing with chord progression one of the first thing to consider is called
 
 Let's start with a very common chord progression.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (patch :electric-piano-1)
  (lin I VI IV V)
@@ -2107,7 +2107,7 @@ Let's start with a very common chord progression.
 
 It do not sound bad but it can arguably be better.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (patch :electric-piano-1)
  (lin I VI II V)
@@ -2120,7 +2120,7 @@ The =voice-led= transformation is using inversions and drops in order to minimiz
 
 It is a really smooth way to transition between voicings but it would be nice to get the original bass motion back.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (lin I VI II V)
  (chans
@@ -2131,7 +2131,7 @@ It is a really smooth way to transition between voicings but it would be nice to
 
 It works on any voicings.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (structure :tetrad)
  (lin I VI II V)
@@ -2155,7 +2155,7 @@ One way to do so is to use the =noon.lib.harmony/align-contexts= transformation
 
 Let's start with a simple chord progression in minor.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (patch :clarinet)
  (scale :harmonic-minor)
@@ -2167,7 +2167,7 @@ the tup is applied on each chord without any inversion.
 
 With =noon.lib.harmony/align-contexts= we can connect contexts together with minimal offsets, resulting in more conjoint motions.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  (patch :clarinet)
  (scale :harmonic-minor)
@@ -2180,7 +2180,7 @@ The word 'context' may seem a bit confusing, what it really stands for is 'harmo
 
 A more elaborated example
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
  dur2
  (scale :harmonic-minor)
@@ -2229,7 +2229,7 @@ Now let's use the =h/harmonic-zip= function to apply this to a chord progression
 
 Almost the same with comping.
 
-#+begin_src clojure :proll
+#+begin_src clojure
 (play
   (h/harmonic-zip
    [(scale :harmonic-minor) (tup I IV VII I) (h/align-contexts :s)]
