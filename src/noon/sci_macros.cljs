@@ -1,4 +1,4 @@
-(ns noon.macros
+(ns noon.sci-macros
   (:require [noon.utils.misc :refer [t]]))
 
 (defn sfn

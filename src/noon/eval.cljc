@@ -14,7 +14,7 @@
    [sci.core :as sci]
    [noon.utils.pseudo-random]
    #?@(:cljs [[sci.async :as scia]
-              [noon.macros]])
+              [noon.sci-macros]])
    #?@(:clj [[noon.vst.vsl]
              [noon.utils.multi-val]
              [clojure.string :as str]]))
@@ -76,7 +76,7 @@
                    [clojure.math.combinatorics :as combinatorics]
                    #?@(:clj [[noon.utils.multi-val :as multi-val]
                              [noon.vst.vsl :as vsl :refer [vsl]]])
-                   #?(:cljs [noon.macros :refer :all])))
+                   #?(:cljs [noon.sci-macros :refer :all])))
 
     (defn deref-def-bindings_bu
       "Within sci evaluation in clojurescript,
@@ -121,7 +121,7 @@
    [clojure.math.combinatorics :as combinatorics]
    #?@(:clj [[noon.utils.multi-val :as multi-val]
              [noon.vst.vsl :as vsl :refer [vsl]]])
-   #?(:cljs [noon.macros :refer :all])))
+   #?(:cljs [noon.sci-macros :refer :all])))
 
 (defn fresh-context []
   (sci/init
