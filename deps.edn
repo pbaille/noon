@@ -11,8 +11,7 @@
         clj-http/clj-http {:mvn/version "3.13.0"}
         org.babashka/sci {:mvn/version "0.9.44"}
         ;; should be moved to dev
-        zprint/zprint {:mvn/version "1.2.9"}
-        commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}
+        }
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
           :ns-default build}
@@ -22,7 +21,7 @@
                        :artifact "target/noon-0.1.3.jar"}}
   :test {:extra-paths ["test"]
          :extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}
-                      ch.qos.logback/logback-classic {:mvn/version "1.4.11"}}
+                      #_ch.qos.logback/logback-classic #_{:mvn/version "1.4.11"}}
          :exec-fn noon.test/run-all}
   :client {:extra-paths ["client"]
            :extra-deps {org.clojure/clojurescript {:mvn/version "1.11.132"}
@@ -37,6 +36,9 @@
                         com.pitch/uix.dom {:mvn/version "1.2.0"}}}
 
   ;; building noon.client.guide.cljs file
+  :scripts {:extra-paths ["scripts"]
+            :extra-deps {zprint/zprint {:mvn/version "1.2.9"}
+                         commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}}
   :create-client-guide-ns {:extra-paths ["scripts"]
                            :extra-deps {commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}
                            :exec-fn create-client-guide-ns/create-client-guide-ns}

@@ -170,23 +170,35 @@
          :cljs-only (options ":cljs-only")
          :no-tests (options ":no-tests")}))
 
-    (defn org-file->clojure-expressions [org-file]
+    (defn scan-org-file [org-file]
       (loop [lines (str/split-lines (slurp org-file))
-             {:as state :keys [blocks path current-block block-options]}
-             {:blocks [] :path [] :current-block nil :block-options nil}]
+             {:as state :keys [blocks path current-block current-text block-options]}
+             {:blocks []
+              :path []
+              :current-block nil
+              :block-options nil
+              :current-text nil}]
         (if-let [[line & lines] (seq lines)]
           (cond (str/starts-with? line "*")
                 (let [{:keys [level title]} (parse-org-headline line)]
                   (recur lines
                          (assoc state
-                                :blocks (conj blocks {:path path :title title})
+                                :blocks (if current-text
+                                          (into blocks [{:text current-text :path path}
+                                                        {:path path :title title}])
+                                          (conj blocks {:path path :title title}))
                                 :path (concat (take (dec level) (concat path (repeat nil)))
-                                              (list title)))))
+                                              (list title))
+                                :current-text nil)))
 
                 (str/starts-with? line "#+begin_src clojure")
                 (recur lines (assoc state
+                                    :blocks (if current-text
+                                              (conj blocks {:text current-text :path path})
+                                              blocks)
                                     :current-block ""
-                                    :block-options (code-block-options line)))
+                                    :block-options (code-block-options line)
+                                    :current-text nil))
 
                 (str/starts-with? line "#+end_src")
                 (recur lines
@@ -197,12 +209,17 @@
                                                     :path path
                                                     :options block-options})
                                                  (read-string (str "[" current-block "\n]"))))
-                              :current-block false))
+                              :current-block nil))
 
                 current-block
                 (recur lines (assoc state
                                     :current-block (str current-block "\n" line)))
 
+                (or current-text (seq line))
+                (recur lines (assoc state
+                                   :current-text (if current-text
+                                                   (str current-text "\n" line)
+                                                   line)))
                 :else
                 (recur lines state))
           blocks)))
@@ -244,9 +261,11 @@
        #"(-?\d+)/(\d+)\b"
        (fn [[_ n d]]
          (str "(/ " n " " d ")"))))
+
     (defn org->test-ns-str [file target]
       (let [code-str
-            (->> (org-file->clojure-expressions file)
+            (->> (scan-org-file file)
+                 (remove :text)
                  (expressions->code-tree)
                  (code-tree->tests [] target)
                  (list* 't/deftest 'noon-tests)
@@ -261,14 +280,15 @@
         (if (= :cljs target)
           (replace-rational-literals code-str)
           code-str)))
+
     (comment
 
       (org->test-ns-str "src/noon/doc/noon.org" :clj)
 
       (let [file "src/noon/doc/noon.org"]
         (->> (org-file->clojure-expressions file)
-             (expressions->code-tree)
-             (code-tree->tests [] :cljs)))))
+             #_(expressions->code-tree)
+             #_(code-tree->tests [] :cljs)))))
 
 (do :entry-points
 
