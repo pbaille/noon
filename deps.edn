@@ -12,8 +12,7 @@
         org.babashka/sci {:mvn/version "0.9.44"}
         ;; should be moved to dev
         ;;
-        zprint/zprint {:mvn/version "1.2.9"}
-        }
+        zprint/zprint {:mvn/version "1.2.9"}}
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
           :ns-default build}
@@ -41,8 +40,7 @@
   :scripts {:extra-paths ["scripts"]
             :extra-deps {zprint/zprint {:mvn/version "1.2.9"}
                          commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}}
-  :create-client-guide-ns {:extra-paths ["scripts"]
-                           :extra-deps {commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}
-                           :exec-fn create-client-guide-ns/create-client-guide-ns}
+  :build-client-doc-ns {:extra-paths ["scripts"]
+                        :exec-fn org-utils/build-client-doc-ns}
   :build-doc-tests {:extra-paths ["scripts"]
                     :exec-fn org-utils/build-doc-tests}}}

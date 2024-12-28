@@ -49,13 +49,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: convert noon.org to md
-        uses: docker://pandoc/core:3.5
-        with:
-          args: "-f org -t gfm -o src/noon/doc/noon.md src/noon/doc/noon.org"
-
-      - name: Build noon.client.guide namespace
-        run: clojure -X:create-client-guide-ns
+      - name: Build noon.client.doc namespace
+        run: bb build-client-doc-ns
 
       - name: Build with shadow-cljs
         run: npx shadow-cljs release client

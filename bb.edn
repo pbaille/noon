@@ -5,6 +5,8 @@
 
          build-doc-tests {:requires ([org-utils]),
                           :task (org-utils/build-doc-tests)}
+         build-client-doc-ns {:requires ([org-utils]),
+                              :task (org-utils/build-client-doc-ns)}
          build-doc-clj {:requires ([org-utils]),
                         :task (org-utils/build-doc-clj)}
          build-all {:requires ([org-utils]),

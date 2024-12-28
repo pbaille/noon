@@ -4,9 +4,10 @@
             [clojure.java.io :as io]
             [clojure.pprint :as pp]
             [zprint.core :as zp]
-            [noon.utils.misc :as u]
-            [noon.eval]
-            [clojure.java.shell :as shell]))
+            #_[noon.utils.misc :as u]
+            #_[noon.eval]
+            #_[clojure.java.shell :as shell]
+            [babashka.process :as bpr]))
 
 "Utils for converting org files to clojure files (regular and test)"
 
@@ -29,7 +30,7 @@
     (defn pretty-file! [file]
       (z/zprint-file file file file)))
 
-(do :org->clj
+#_(do :org->clj
     (defn org-str->clj-str [org-str & {:as opts :keys [ns-form]}]
       (let [lines (str/split-lines org-str)
             tree (reduce (fn [{:as state :keys [level ret in-block]} line]
@@ -288,10 +289,20 @@
         (def org-to-html
           (memoize
            (fn [input-str]
-             (let [result (shell/sh "pandoc" "-f" "org" "-t" "html" :in input-str)]
-               (if (zero? (:exit result))
-                 (:out result)
-                 (throw (Exception. (:err result))))))))
+             #_(println "org-to-html " input-str)
+             (let [{:keys [out err exit]} (bpr/process ["pandoc" "-f" "org" "-t" "html"]
+                                                       {:in input-str :out :string :err :string})]
+               (if out
+                 @out
+                 (throw (Exception. err)))
+               #_(if (zero? exit)
+                   (println "HTML output:" out)
+                   (println "Error:" err)))
+             #_(let [result (bpr/process ["pandoc" "-f" "org" "-t" "html"] {:in input-str :out :string})]
+                 (println result)
+                 (if (zero? (:exit result))
+                   @(:out result)
+                   (throw (Exception. (:err result))))))))
 
         (defn htmlify-text-blocks [blocks]
           (map (fn [node]
@@ -378,7 +389,7 @@
           (pretty-file! clj-file)
           (pretty-file! cljs-file))))
 
-    (defn build-doc-ns [& [pretty?]]
+    #_(defn build-doc-ns [& [pretty?]]
       (let [clj-file "src/noon/doc/noon.clj"]
         (org->clj "src/noon/doc/noon.org"
                   clj-file
@@ -395,10 +406,12 @@
 (defn build-all []
   (build-client-doc-ns)
   (build-doc-tests)
-  (build-doc-ns))
+  #_(build-doc-ns))
 
 (comment
   (noon.eval/clj-ns-form 'noon.doc.noon)
+  (deref (keys (bpr/process ["pandoc" "-f" "org" "-t" "html"]
+                      {:in "#+OPTIONS: H:9" :out :string :err :string})))
   (spit "src/noon/doc/noon.clj"
         (org-str->clj-str (slurp "src/noon/doc/noon.org")
                           :ns-form (u/pretty-str (noon.eval/clj-ns-form 'noon.doc.noon)))))
