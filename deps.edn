@@ -11,6 +11,8 @@
         clj-http/clj-http {:mvn/version "3.13.0"}
         org.babashka/sci {:mvn/version "0.9.44"}
         ;; should be moved to dev
+        ;;
+        zprint/zprint {:mvn/version "1.2.9"}
         }
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}

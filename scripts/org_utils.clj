@@ -5,7 +5,8 @@
             [clojure.pprint :as pp]
             [zprint.core :as zp]
             [noon.utils.misc :as u]
-            [noon.eval]))
+            [noon.eval]
+            [clojure.java.shell :as shell]))
 
 "Utils for converting org files to clojure files (regular and test)"
 
@@ -203,12 +204,11 @@
                 (str/starts-with? line "#+end_src")
                 (recur lines
                        (assoc state
-                              :blocks (into blocks
-                                            (map (fn [expr]
-                                                   {:expr expr
-                                                    :path path
-                                                    :options block-options})
-                                                 (read-string (str "[" current-block "\n]"))))
+                              :blocks (conj blocks
+                                            {:exprs (read-string (str "[" current-block "\n]"))
+                                             :source (str/trim current-block)
+                                             :path path
+                                             :options block-options})
                               :current-block nil))
 
                 current-block
@@ -217,34 +217,36 @@
 
                 (or current-text (seq line))
                 (recur lines (assoc state
-                                   :current-text (if current-text
-                                                   (str current-text "\n" line)
-                                                   line)))
+                                    :current-text (if current-text
+                                                    (str current-text "\n" line)
+                                                    line)))
                 :else
                 (recur lines state))
           blocks)))
 
-    (defn expressions->code-tree
+    (defn org-blocks->code-tree
       [exprs]
-      (reduce (fn [tree [idx {:keys [title path expr] :as block}]]
+      (reduce (fn [tree [idx {:keys [title path] :as block}]]
                 (if (seq? path)
                   (update-in tree
                              (interpose :children path)
                              (fn [subtree]
                                (if title
-                                 (assoc subtree :idx idx)
+                                 (assoc subtree :idx idx :path path)
                                  (update subtree :content (fnil conj []) block))))
                   tree))
               {} (map vector (range) exprs)))
 
     (defn prepare-test-content [content target]
-      (map (fn [{:keys [expr options]}]
-             (let [expr `(t/is (noon.freeze/freeze ~expr))]
-               (cond (:no-tests options) nil
-                     (:clj-only options) (when (= target :clj) expr)
-                     (:cljs-only options) (when (= target :cljs) expr)
-                     :else expr)))
-           content))
+      (mapcat (fn [{:keys [exprs options]}]
+                (map (fn [expr]
+                       (let [expr `(t/is (noon.freeze/freeze ~expr))]
+                         (cond (:no-tests options) nil
+                               (:clj-only options) (when (= target :clj) expr)
+                               (:cljs-only options) (when (= target :cljs) expr)
+                               :else expr)))
+                     exprs))
+              content))
 
     (defn code-tree->tests [from target tree]
       (keep (fn [[k {:keys [content children]}]]
@@ -266,7 +268,7 @@
       (let [code-str
             (->> (scan-org-file file)
                  (remove :text)
-                 (expressions->code-tree)
+                 (org-blocks->code-tree)
                  (code-tree->tests [] target)
                  (list* 't/deftest 'noon-tests)
                  (str (list 'ns 'noon.doc.noon-org-test
@@ -281,6 +283,71 @@
           (replace-rational-literals code-str)
           code-str)))
 
+    (do :client-markup-gen
+
+        (def org-to-html
+          (memoize
+           (fn [input-str]
+             (let [result (shell/sh "pandoc" "-f" "org" "-t" "html" :in input-str)]
+               (if (zero? (:exit result))
+                 (:out result)
+                 (throw (Exception. (:err result))))))))
+
+        (defn htmlify-text-blocks [blocks]
+          (map (fn [node]
+                 (if-let [text (:text node)]
+                   (-> (dissoc node :text)
+                       (assoc :html (org-to-html text)))
+                   node))
+               blocks))
+
+        (defn slugify [s]
+          (-> s
+              (str/lower-case)
+              (str/replace #"[^\w\s-]" "")
+              (str/replace #"\s+" "-")
+              (str/trim)))
+
+        (defn breadcrumbs [at]
+          (mapv (fn [path]
+                  {:text (last path)
+                   :level (count path)
+                   :href (->> (map slugify path)
+                              (interpose "/")
+                              (cons "#/")
+                              (apply str))})
+                (next (reductions conj [] at))))
+
+        (defn node->markup [{:keys [content children path html source]}]
+          (cond source (list '$ 'noon.client.ui/code-editor {:source source})
+                html (list '$ 'noon.client.ui/raw {:html html})
+                :else (let [title (last path)
+                            [inline-code simple-title] (if (= \= (first title))
+                                                         [true (str/replace title #"=" "")]
+                                                         [false title])
+                            id (str "/"
+                                    (str/join "/" (map slugify path)))]
+
+                        (concat (list '$ 'noon.client.ui/section
+                                      {:id id
+                                       :level (count path)
+                                       :title simple-title
+                                       :inline-code inline-code
+                                       :breadcrumbs (breadcrumbs path)
+                                       :has-subsections (boolean (seq children))})
+                                (mapv node->markup (concat content (sort-by :idx (vals children))))))))
+
+        (defn org-file->client-markup [file]
+          (->> (scan-org-file file)
+               (htmlify-text-blocks)
+               (org-blocks->code-tree)))
+
+        (comment
+          (def code-tree
+            (org-file->client-markup "src/noon/doc/noon.org"))
+
+          (first (mapv node->markup (vals (org-file->client-markup "src/noon/doc/noon.org"))))))
+
     (comment
 
       (org->test-ns-str "src/noon/doc/noon.org" :clj)
@@ -288,7 +355,16 @@
       (let [file "src/noon/doc/noon.org"]
         (->> (org-file->clojure-expressions file)
              #_(expressions->code-tree)
-             #_(code-tree->tests [] :cljs)))))
+             #_(code-tree->tests [] :cljs)))
+
+      (let [file "src/noon/doc/noon.org"]
+        (->> (org-file->clojure-expressions file)
+             (map (fn [node]
+                    (if-let [text (:text node)]
+                      (-> (dissoc node :text)
+                          (assoc :html (org-to-html text)))
+                      node)))
+             (org-blocks->code-tree)))))
 
 (do :entry-points
 
@@ -305,11 +381,19 @@
     (defn build-doc-ns [& [pretty?]]
       (let [clj-file "src/noon/doc/noon.clj"]
         (org->clj "src/noon/doc/noon.org"
-                   clj-file
-                   'noon.doc.noon)
-        (when pretty? (pretty-file! clj-file)))))
+                  clj-file
+                  'noon.doc.noon)
+        (when pretty? (pretty-file! clj-file))))
+
+    (defn build-client-doc-ns [& _]
+      (spit "client/noon/client/doc.cljs"
+            (str "(ns noon.client.doc (:require [noon.client.ui] [uix.core :refer [$ defui]]))\n\n"
+                 "(defui doc [_]\n  "
+                 (seq (first (mapv node->markup (vals (org-file->client-markup "src/noon/doc/noon.org")))))
+                 ")"))))
 
 (defn build-all []
+  (build-client-doc-ns)
   (build-doc-tests)
   (build-doc-ns))
 

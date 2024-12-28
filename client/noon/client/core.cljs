@@ -5,7 +5,7 @@
             [uix.dom]
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]
-            [noon.client.guide :as guide]))
+            [noon.client.doc :as doc]))
 
 (defonce root (uix.dom/create-root (js/document.getElementById "app")))
 
@@ -25,7 +25,7 @@
         :margin {:bottom "100vh"}
         :width {:max 800}
         }
-       ($ guide/guide)
+       ($ doc/doc)
        #_($ ui/section
           {:level 1 :path [] :title "Examples"
            :visibility :folded}

@@ -305,6 +305,9 @@
                           nil)})
                      c)))))))))
 
+(defui raw [{:keys [html]}]
+  (c :div {:dangerouslySetInnerHTML #js {:__html html}}))
+
 (defui examples [{}]
   (c (map (fn [[k code]]
             (c {:key k}

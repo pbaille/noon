@@ -19,9 +19,9 @@
 
 (defn slugify [s]
   (-> s
-      (str/lower-case)                      ; Convert to lowercase
-      (str/replace #"[^\w\s-]" "")          ; Remove non-word and non-space characters
-      (str/replace #"\s+" "-")              ; Replace spaces with dashes
+      (str/lower-case)
+      (str/replace #"[^\w\s-]" "")
+      (str/replace #"\s+" "-")
       (str/trim)))
 
 (defn breadcrumbs [at]
