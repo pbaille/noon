@@ -13,96 +13,16 @@
    [noon.vst.general-midi]
    [sci.core :as sci]
    [noon.utils.pseudo-random]
+   [noon.utils.sci :as sci-utils]
    #?@(:cljs [[sci.async :as scia]
               [noon.sci-macros]])
    #?@(:clj [[noon.vst.vsl]
              [noon.utils.multi-val]
              [clojure.string :as str]]))
-  #?(:cljs (:require-macros [noon.eval :refer [sci-namespaces play noon]])))
-
-(do :utils
-
-    (defmacro sci-namespaces [& xs]
-      (let [refer-map
-            (fn [ns-sym refered-syms]
-              (zipmap (map (fn [sym] (list 'quote sym))
-                           refered-syms)
-                      (map (fn [sym]
-                             (list 'var (symbol (str ns-sym) (str sym))))
-                           refered-syms)))
-
-            {:as namespaces :keys [user]}
-            (reduce (fn [ret [ns-sym & {:as opts}]]
-                      (let [ns-publics-form `(ns-publics '~ns-sym)]
-                        (merge (assoc ret `'~ns-sym ns-publics-form)
-                               (when-let [as (:as opts)]
-                                 {`'~as ns-publics-form})
-                               (when-let [refered-syms (:refer opts)]
-                                 {:user
-                                  (conj (:user ret)
-                                        (if (= :all refered-syms)
-                                          ns-publics-form
-                                          (refer-map ns-sym refered-syms)))}))))
-                    {:user []}
-                    xs)
-
-            #_requirements
-            #_(mapv (fn [[ns-sym & {:as opts} :as reqv]]
-                    (if (= :all (:refer opts))
-                      [ns-sym :refer '(vec (keys (ns-publics ns-sym)))]
-                      reqv))
-                  xs)]
-
-        (list `with-meta
-              (-> (dissoc namespaces :user)
-                  (assoc (list 'quote 'user)
-                         (cons `merge user)))
-              {:ns-requirements (list 'quote xs #_requirements)})))
-
-    (macroexpand '(sci-namespaces
-                   [noon.updates :refer :all]
-                   [noon.events :as events :refer [ef_ efn]]
-                   [noon.score :as score :refer [mk mk* sf_ sfn e->s]]
-                   [noon.output :as out :refer [noon play]]
-                   [noon.harmony :as hc]
-                   [noon.numbers :refer [mul div add sub]]
-                   [noon.lib.harmony :as h]
-                   [noon.constants :as constants]
-                   [noon.lib.melody :as m]
-                   [noon.lib.rythmn :as r]
-                   [noon.utils.misc :as u]
-                   [noon.utils.pseudo-random :as rand]
-                   [noon.utils.sequences :as seqs]
-                   [clojure.math.combinatorics :as combinatorics]
-                   #?@(:clj [[noon.utils.multi-val :as multi-val]
-                             [noon.vst.vsl :as vsl :refer [vsl]]])
-                   #?(:cljs [noon.sci-macros :refer :all])))
-
-    (defn deref-def-bindings_bu
-      "Within sci evaluation in clojurescript,
-       regular defs have to be dereferenced to be used by name.
-       This function dereferences all defs in an ns-map.
-       Has no effect in clojure."
-      [ns-map]
-      #?(:clj ns-map
-         :cljs (update-vals ns-map (fn [v]
-                                     (if (seq (:arglists (meta v)))
-                                       v
-                                       (deref v))))))
-
-    (defn deref-def-bindings
-      "Within sci evaluation in clojurescript,
-       regular defs have to be dereferenced to be used by name.
-       This function dereferences all defs in an ns-map.
-       Has no effect in clojure."
-      [ns-map]
-      (update-vals ns-map (fn [v]
-                            (if (seq (:arglists (meta v)))
-                              v
-                              (deref v))))))
+  #?(:cljs (:require-macros [noon.eval :refer [play noon]])))
 
 (def default-namespaces
-  (sci-namespaces
+  (sci-utils/sci-namespaces
    [noon.updates :refer :all]
    [noon.events :as events :refer [ef_ efn]]
    [noon.score :as score :refer [score sf_ sfn e->s]]
@@ -125,7 +45,7 @@
 
 (defn fresh-context []
   (sci/init
-   {:namespaces (update-vals default-namespaces deref-def-bindings)}))
+   {:namespaces (update-vals default-namespaces sci-utils/deref-def-bindings)}))
 
 (def default-ctx
   (fresh-context))

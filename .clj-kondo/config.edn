@@ -7,7 +7,7 @@
            :unresolved-var {:exclude [clj-commons.byte-streams/to-input-stream]}}
  :lint-as {backtick/template clojure.core/comment
            noon.utils.misc/source-str clojure.core/comment
-           noon.eval/sci-namespaces clojure.core/comment
+           noon.utils.sci/sci-namespaces clojure.core/comment
            noon.eval/score clojure.core/comment
            noon.eval/eval clojure.core/comment
            noon.eval/play clojure.core/comment
