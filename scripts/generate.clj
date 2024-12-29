@@ -1,14 +1,8 @@
-(ns org-utils
+(ns generate
   (:require [clojure.string :as str]
-            [zprint.core :as z]
-            [clojure.java.io :as io]
-            [clojure.pprint :as pp]
-            [zprint.core :as zp]
-            [noon.utils.misc :as u]
-            [noon.eval]
-            [clojure.java.shell :as shell]))
-
-"Utils for converting org files to clojure files (regular and test)"
+            [babashka.process :as bpr]
+            [noon.utils.sci :as sci-utils]
+            [clojure.pprint :as pp]))
 
 (do :help
 
@@ -24,13 +18,10 @@
 
     (defn ns-form->file-path [x src-path]
       (and (ns-decl? x)
-           (str/join "/" (cons src-path (str/split (second x) #"\.")))))
-
-    (defn pretty-file! [file]
-      (z/zprint-file file file file)))
+           (str/join "/" (cons src-path (str/split (second x) #"\."))))))
 
 (do :org->clj
-    (defn org-str->clj-str [org-str & {:as opts :keys [ns-form]}]
+    (defn org-str->clj-str [org-str & {:keys [ns-form]}]
       (let [lines (str/split-lines org-str)
             tree (reduce (fn [{:as state :keys [level ret in-block]} line]
                            (if (= :end line)
@@ -70,97 +61,7 @@
 
       (spit clj-file
             (org-str->clj-str (slurp org-file)
-                              :ns-form (u/pretty-str (noon.eval/clj-ns-form 'noon.doc.noon))))))
-
-(do :org->edn
-    "attempt 2"
-
-    (def code-block-regex
-      #"^(?s)#\+begin_src.*?\n(.*?)#\+end_src(.*)")
-
-    (defn split-code-block [s]
-      (if (seq? s)
-        (println s))
-      (when-let [[_ code remaining] (re-find code-block-regex s)]
-        [code remaining]))
-
-    (defn split-section [s]
-      (when-let [[l1 & lines] (seq (str/split-lines s))]
-        (when-let [parsed (parse-org-headline l1)]
-          (let [break? (fn [l] (re-find (re-pattern (str "^\\*{1," (:level parsed 1) "} ")) l))
-                content (take-while (complement break?) lines)
-                remaining (str/join "\n" (drop-while (complement break?) lines))]
-            [(assoc parsed :content (str/join "\n" content))
-             remaining]))))
-
-    (defn split-paragraph [s]
-      (let [lines (str/split-lines s)
-            break? (fn [l]
-                     (or (str/starts-with? l "*")
-                         (str/starts-with? l "#+begin")))
-            paragraph (str/join "\n" (take-while (complement break?) lines))
-            remaining (str/join "\n" (drop-while (complement break?) lines))]
-        (when (seq paragraph)
-          [(str/trim paragraph)
-           remaining])))
-
-    (defn org->edn [s]
-      (let [s (str/trim s)]
-        (if-let [[code remaining] (split-code-block s)]
-          (cons [:code code]
-                (org->edn remaining))
-          (if-let [[section remaining] (split-section s)]
-            (cons (into [:section (:title section)]
-                        (org->edn (:content section)))
-                  (org->edn remaining))
-            (if-let [[paragraph remaining] (split-paragraph s)]
-              (if (seq paragraph)
-                (cons [:p paragraph] (org->edn remaining))
-                (org->edn remaining))
-              (if (seq s)
-                [[:as-is s]]
-                []))))))
-
-    (comment
-      (def noon-org-str (slurp "src/noon/doc/noon.org"))
-      (org->edn noon-org-str)
-      (split-section noon-org-str)))
-
-(do :clj-doc-tree
-
-    (defn file->title [filename]
-      (-> filename
-          (str/replace #"^\d+-" "")     ; remove digit prefix
-          (str/replace #"\.md$" "")     ; remove .md extension
-          (str/replace "_" " ")))
-
-    (defn build-doc-tree [dir-path]
-      (let [root (io/file dir-path)
-            ]
-        (letfn [(process-file [file]
-                  (let [title (file->title (.getName file))]
-                    [title {:file (.getPath file)}]))
-
-                (process-dir [dir]
-                  (let [files (sort-by #(.getName %) (.listFiles dir))
-                        index-file (io/file (str (.getPath dir) ".md"))
-                        subdirs (filter #(.isDirectory %) files)
-                        index-file-name? (set (map (fn [d] (str (.getName d) ".md")) subdirs))]
-                    #_(clojure.pprint/pprint {:dirs subdirs :index-file index-file})
-                    (vec (concat (process-file index-file)
-                                 (keep (fn [f]
-                                         (cond
-                                           (.isDirectory f) (process-dir f)
-                                           (and (.isFile f)
-                                                (not (index-file-name? (.getName f)))) (process-file f)))
-                                       files)))))]
-
-          (process-dir root))))
-
-    (defn build-cljdoc-tree []
-      (spit "doc/cljdoc.edn"
-            (with-out-str (pp/pprint {:cljdoc/languages ["clj"]
-                                      :cljdoc.doc/tree [(build-doc-tree "doc/Noon")]})))))
+                              :ns-form (with-out-str (pp/pprint (sci-utils/clj-ns-form ns-sym)))))))
 
 (do :noon-org->test-files
 
@@ -289,19 +190,11 @@
           (memoize
            (fn [input-str]
              #_(println "org-to-html " input-str)
-             (let [{:keys [out err exit]} (bpr/process ["pandoc" "-f" "org" "-t" "html"]
-                                                       {:in input-str :out :string :err :string})]
+             (let [{:keys [out err _exit]} (bpr/process ["pandoc" "-f" "org" "-t" "html"]
+                                                        {:in input-str :out :string :err :string})]
                (if out
                  @out
-                 (throw (Exception. err)))
-               #_(if (zero? exit)
-                   (println "HTML output:" out)
-                   (println "Error:" err)))
-             #_(let [result (bpr/process ["pandoc" "-f" "org" "-t" "html"] {:in input-str :out :string})]
-                 (println result)
-                 (if (zero? (:exit result))
-                   @(:out result)
-                   (throw (Exception. (:err result))))))))
+                 (throw (Exception. err)))))))
 
         (defn htmlify-text-blocks [blocks]
           (map (fn [node]
@@ -378,22 +271,18 @@
 
 (do :entry-points
 
-    (defn build-doc-tests [& [pretty?]]
+    (defn build-doc-tests [& _]
       (let [file "test/noon/doc/noon_org_test"
             clj-file (str file ".clj")
             cljs-file (str file ".cljs")]
         (spit clj-file (org->test-ns-str "src/noon/doc/noon.org" :clj))
-        (spit cljs-file (org->test-ns-str "src/noon/doc/noon.org" :cljs))
-        (when pretty?
-          (pretty-file! clj-file)
-          (pretty-file! cljs-file))))
+        (spit cljs-file (org->test-ns-str "src/noon/doc/noon.org" :cljs))))
 
-    (defn build-doc-ns [& [pretty?]]
+    (defn build-doc-ns [& _]
       (let [clj-file "src/noon/doc/noon.clj"]
         (org->clj "src/noon/doc/noon.org"
                   clj-file
-                  'noon.doc.noon)
-        (when pretty? (pretty-file! clj-file))))
+                  'noon.doc.noon)))
 
     (defn build-client-doc-ns [& _]
       (spit "client/noon/client/doc.cljs"
@@ -404,13 +293,10 @@
 
 (defn build-all []
   (build-client-doc-ns)
-  (build-doc-tests)
-  #_(build-doc-ns))
+  (build-doc-ns)
+  (build-doc-tests))
 
 (comment
   (noon.eval/clj-ns-form 'noon.doc.noon)
   (deref (keys (bpr/process ["pandoc" "-f" "org" "-t" "html"]
-                      {:in "#+OPTIONS: H:9" :out :string :err :string})))
-  (spit "src/noon/doc/noon.clj"
-        (org-str->clj-str (slurp "src/noon/doc/noon.org")
-                          :ns-form (u/pretty-str (noon.eval/clj-ns-form 'noon.doc.noon)))))
+                            {:in "#+OPTIONS: H:9" :out :string :err :string}))))

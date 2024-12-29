@@ -38,7 +38,7 @@ jobs:
       run: clj-kondo --lint src test
 
     - name: Generating noon org tests
-      run: clojure -X:build-doc-tests
+      run: bb build-doc-tests
 
     - name: Install npm dependencies
       run: npm install

@@ -1,15 +1,15 @@
-{:paths ["scripts"]
+{:paths ["src" "scripts"]
  :deps {zprint/zprint {:mvn/version "1.2.9"}}
  :tasks {zprint {:requires ([zprint.main]),
                  :task (apply zprint.main/-main *command-line-args*)}
 
-         build-doc-tests {:requires ([org-utils]),
-                          :task (org-utils/build-doc-tests)}
-         build-client-doc-ns {:requires ([org-utils]),
-                              :task (org-utils/build-client-doc-ns)}
-         build-doc-clj {:requires ([org-utils]),
-                        :task (org-utils/build-doc-clj)}
-         build-all {:requires ([org-utils]),
-                    :task (org-utils/build-all)}
+         build-doc-tests {:requires ([generate]),
+                          :task (generate/build-doc-tests)}
+         build-client-doc-ns {:requires ([generate]),
+                              :task (generate/build-client-doc-ns)}
+         build-doc-ns {:requires ([generate]),
+                       :task (generate/build-doc-ns)}
+         build-all {:requires ([generate]),
+                    :task (generate/build-all)}
          build-cljdoc-tree {:requires ([org-utils]),
                             :task (org-utils/build-cljdoc-tree)}}}
