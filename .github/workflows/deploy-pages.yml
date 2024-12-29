@@ -24,8 +24,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: docker://pandoc/core:3.5
-      
+
+      - name: Update APT Package List
+        run: sudo apt-get update
+      - name: Install pandoc
+        run: sudo apt-get install -y pandoc
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
