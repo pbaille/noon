@@ -200,16 +200,16 @@
                                         :highlightActiveLine false}})))))))
 
 (defn level->header-keyword [level]
-  (case level 1 :h1 2 :h2 3 :h3 4 :h4 :h5))
+  (case level 1 :h1 2 :h2 3 :h3 :h4))
 
 (defui breadcrumbs
   [{:keys [elements button-style right-button]}]
 
-  (sc {:m 0
+  (sc {:m [3 0]
        :z-index 1000
        :width :full
        :bg {:color :white}
-       :position [:fixed {:top 0 :left 10}]
+       :position [:fixed {:top 0 :left 0}]
        :flex [:start {:items :baseline :gap 1}]
        :border {:bottom [2 :grey1]}}
 
