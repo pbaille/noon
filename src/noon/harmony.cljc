@@ -659,8 +659,12 @@
               current-c-val (get scale scale-idx)]
           (if (= current-c-val c-val)
             harmonic-context
-            (let [below-c-val (get scale (dec scale-idx))
-                  above-c-val (if (< scale-idx scale-size) (get scale (inc scale-idx)))]
+            (let [below-c-val (if (zero? scale-idx)
+                                (- (last scale) 12)
+                                (get scale (dec scale-idx)))
+                  above-c-val (if (= scale-idx (dec scale-size))
+                                (+ (first scale) 12)
+                                (get scale (inc scale-idx)))]
               (if (and (> c-val below-c-val)
                        (or (not above-c-val) (< c-val above-c-val)))
                 (update harmonic-context :scale assoc scale-idx c-val)
