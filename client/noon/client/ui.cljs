@@ -68,7 +68,15 @@
                       extra-props)
                children))))
 
-(defui code-editor [{:keys [source]}]
+(defui badge [{:keys [color size text]}]
+  (sc {:text size
+       :color color
+       :rounded 3
+       :bg {:color [color {:a 0.1}]}
+       :p [1 0]}
+      text))
+
+(defui code-editor [{:keys [source options]}]
   (let [[source set-source] (uix/use-state source)
         [return set-return] (uix/use-state nil)
         [evaluating set-evaluating] (uix/use-state false)
@@ -78,7 +86,16 @@
 
     (sc :.code-editor
 
-        {:m [0 :1em]}
+        {:m [0 :1em]
+         :position :relative}
+
+        (when (:clj-only options)
+          (sc {:position [:absolute {:top 6 :right 6}]
+               :z-index 100}
+              (c badge
+                 {:color :tomato
+                  :size :sm
+                  :text "clj-only"})))
 
         (sc :.code-editor_input
 
@@ -139,13 +156,13 @@
                     (c spinner {:color "lightskyblue"  :loading evaluating :size 15}))
 
                 (do #_(println "render code-mirror")
-                    (c CodeMirror
-                       {:value source
-                        :on-change (fn [x] (set-source x))
-                        :extensions EDITOR_EXTENSIONS
-                        :basic-setup #js {:lineNumbers false
-                                          :foldGutter false
-                                          :highlightActiveLine false}}))))
+                 (c CodeMirror
+                    {:value source
+                     :on-change (fn [x] (set-source x))
+                     :extensions EDITOR_EXTENSIONS
+                     :basic-setup #js {:lineNumbers false
+                                       :foldGutter false
+                                       :highlightActiveLine false}}))))
         (when return
 
           (sc :code-editor-output

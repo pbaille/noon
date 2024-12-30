@@ -68,9 +68,9 @@
     (defn code-block-options [s]
       (let [options (set (str/split (str/replace s "#+begin_src clojure" "")
                                     #" "))]
-        {:clj-only (options ":clj-only")
-         :cljs-only (options ":cljs-only")
-         :no-tests (options ":no-tests")}))
+        {:clj-only (boolean (options ":clj-only"))
+         :cljs-only (boolean (options ":cljs-only"))
+         :no-tests (boolean (options ":no-tests"))}))
 
     (defn scan-org-file [org-file]
       (loop [lines (str/split-lines (slurp org-file))
@@ -110,7 +110,8 @@
                                              :source (str/trim current-block)
                                              :path path
                                              :options block-options})
-                              :current-block nil))
+                              :current-block nil
+                              :block-options nil))
 
                 current-block
                 (recur lines (assoc state
@@ -221,8 +222,9 @@
                               (apply str))})
                 (next (reductions conj [] at))))
 
-        (defn node->markup [{:keys [content children path html source]}]
-          (cond source (list '$ 'noon.client.ui/code-editor {:source source})
+        (defn node->markup [{:keys [content children path html source options]}]
+          (cond source (list '$ 'noon.client.ui/code-editor {:source source
+                                                             :options options})
                 html (list '$ 'noon.client.ui/raw {:html html})
                 :else (let [title (last path)
                             [inline-code simple-title] (if (= \= (first title))
