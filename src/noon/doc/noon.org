@@ -516,7 +516,7 @@ The nuance will appear more clearly later... Until then, let see how to use them
 (play o2-) ; 2 octaves down in var notation
 #+end_src
 
-**** lin
+**** =lin=
 
 As we have seen, =lin= let you create a succession of events:
 
@@ -538,7 +538,7 @@ Let see what happens here:
 2. We are creating a series of 3 notes using chromatic intervals (diminished triad C,Eb,Gb).
 3. Then this 3 notes score is passed to each member of the second =lin= expression, each one transposing it from the indicated chromatic interval.
 
-**** tup
+**** =tup=
 
 =tup= stands for tuplet and is analogous to =lin= but keep the duration of the given score unchanged.
 
@@ -554,7 +554,7 @@ Like =lin= it can of course be chained with other transformations, as an example
 (play (tup c0 c2 c4 c7) (tup c0 c3) (rep 3 c4-))
 #+end_src
 
-**** dup
+**** =dup=
 
 =dup= stands for duplicate and let you repeat a score n times.
 
@@ -562,7 +562,7 @@ Like =lin= it can of course be chained with other transformations, as an example
 (play (tup c0 c3 c6 c9) (dup 3))
 #+end_src
 
-**** rep
+**** =rep=
 
 =rep= let you apply a transformation several times in a row accumulating intermediate results.
 
@@ -584,7 +584,7 @@ You can remove the input score at the start of the result by giving an extra arg
 (play (rep 3 o1 :skip-first))
 #+end_src
 
-**** fit
+**** =fit=
 
 =fit= is used to make a transformation fit the current duration of the score.
 The 2 previous transformations introduced: =dup= and =rep=, are changing the score duration, but sometimes we want to transform our score in place, stretching or compressing it, in the same way =tup= is acting.
@@ -611,7 +611,7 @@ A fitted version of =dup= also exists under the name =dupt=
 (play (tup d0 d3 d6 d7) (dupt 3))
 #+end_src
 
-**** nlin
+**** =nlin=
 
 concat the results of the given transformation n times
 
@@ -625,7 +625,7 @@ it is the same thing as:
 (play (tup d0 d1 d2 d3) (dup 4))
 #+end_src
 
-**** ntup
+**** =ntup=
 
 the fitted version of =nlin=
 
@@ -633,7 +633,7 @@ the fitted version of =nlin=
 (play (ntup 4 (tup d0 d1 d2 d3)))
 #+end_src
 
-**** lin>
+**** =lin>=
 
 =lin>= stands for accumulative concatenation, it accumulates the given transformations concatenating the intermediate results.
 
@@ -641,7 +641,7 @@ the fitted version of =nlin=
 (play (lin> c0 c2 c2 c2 c2 c2 c2))
 #+end_src
 
-**** tup>
+**** =tup>=
 
 =tup>= is doing the same as =lin>=, except it maintains the score original duration.
 
@@ -840,7 +840,7 @@ It is quite fun to insert a bit of randomness in our scores.
 
 We can use some great available tools like =test.check.generators= to handle non determinism. That being said, some commonly used non-deterministic functions are available directly.
 
-**** one-of
+**** =one-of=
 
 =one-of= picks randomly one of the given transformations and apply it.
 
@@ -852,7 +852,7 @@ We can use some great available tools like =test.check.generators= to handle non
 (play dur:8 (rep 50 (one-of c1 c1-)))
 #+end_src
 
-**** maybe
+**** =maybe=
 
 =maybe= is very similar to =one-of= except it has a chance to do nothing (identity transformation).
 
@@ -868,7 +868,7 @@ We can use some great available tools like =test.check.generators= to handle non
 (play dur:8 (rep 50 (maybe c1 c1-))) ; you can notice melodic repetitions unlike with the corresponding one-of example.
 #+end_src
 
-**** probs
+**** =probs=
 
 =probs= gives you more control over the probability of occurence of the given transformations.
 
@@ -880,7 +880,7 @@ We can use some great available tools like =test.check.generators= to handle non
 (play dur:4 (rep 24 (probs {c1 6, c6- 1, (par c0 o1-) 1})))
 #+end_src
 
-**** any-that
+**** =any-that=
 
 =any-that= is similar to =one-of= except it takes an extra first argument that check if the picked transformation is valid.
 
@@ -895,7 +895,7 @@ A melody of 60 notes using the 6 given intervals but remaining in the given pitc
 
 The =within-pitch-bounds?= is just a score transformation that return the score unchanged if it is within the given bounds, else it returns =nil=. Any function of this kind can be used has first argument to =any-that=.
 
-**** !
+**** =!=
 
 the =!= macro can be useful to deal with raw non deterministic expressions. here the docstring:
 
@@ -1091,7 +1091,7 @@ In practice, apart for octaves, shifts are not used so often, thats the reason w
 
 **** Tonality
 
-***** scale
+***** =scale=
 
 By default the major scale is used, but it can be changed. Most of the known scales and modes are available via the =scale= function or directly by name.
 
@@ -1107,7 +1107,7 @@ noon.constants/modes ; modes full list
 (score harmonic-minor) ; sets scale to harmonic-minor
 #+end_src
 
-***** structure
+***** =structure=
 
 By default we use the triad structure (tonic, third, fifth), but it can be changed. Some common structures are predefined and available by name.
 
@@ -1123,7 +1123,7 @@ noon.constants/structures ; full structure list
 (score sus47) ; set-structure-to-sus47
 #+end_src
 
-***** origin
+***** =origin=
 
 The last thing we need to setup an harmonic context is an origin pitch.
 
@@ -1141,7 +1141,7 @@ We can use the =origin= function to change this
 (play (lin (origin :C0) (origin :E0) (origin :G#0)) (each (rup 6 s1)))
 #+end_src
 
-***** root
+***** =root=
 
 The root update works a bit like =origin= but it takes a pitch-class instead of a pitch. It moves the :origin of the harmonic context to the closest pitch matching the given pitch class.
 
@@ -1164,15 +1164,15 @@ For instance if the origin is on =C0=, =(root :B)= will put the origin on =B-1= 
  (rep 4 s1))
 #+end_src
 
-***** transpose
+***** =transpose=
 
-the transpose update takes an interval or a position and use it to update the origin of the harmonic context
+The transpose update takes an interval or a position and use it to update the origin of the harmonic context
 
 #+begin_src clojure
 (play (scale :lydianb7) (rup 6 d2) (rep 4 (transpose c3-)))
 #+end_src
 
-***** rebase
+***** =rebase=
 
 Sometimes when changing the harmonic context, we want to stay on the same pitch, the =rebase= function let you do that.
 
@@ -1196,7 +1196,7 @@ The =rebase= function can take several harmonic context transformations.
 (score (rebase (root :E) (scale :mixolydianb6)))
 #+end_src
 
-***** degree
+***** =degree=
 
 Move to the nth degree of the current scale (mode), negative indexes are allowed.
 
@@ -1213,6 +1213,184 @@ Roman numeral vars are also available to change degree.
 #+begin_src clojure
 (play (patch :trumpet) (lin I IV V I) (each (tup s0 s1 s2)))
 #+end_src
+
+***** parser
+
+It is possible to express harmonic transformations via keyword notation.
+Chord color, key, mode and structure can be combined as a keyword for more concision and expressiveness.
+
+This feature is still very much a work in progress but is already usable.
+
+Here is a list of components that can be composed together to express complex harmonic context:
+
+****** root
+
+Pitch classes can be used to specify the root of the tonality.
+They can be followed or not with extra components like chord structure or mode.
+
+
+#+begin_src clojure
+(h/upd :A) ; sets the root to A
+#+end_src
+
+
+#+begin_src clojure
+(h/upd :C#) ; set the root to C#
+#+end_src
+
+#+begin_src clojure
+(h/upd :Am) ; set the tonality to A minor (more on chord colors later)
+#+end_src
+
+#+begin_src clojure
+(h/upd :Dmixolydian) ; set the tonality to D mixolydian (more on modes later)
+#+end_src
+
+****** degree
+
+Roman degree notation can be used to denote relative motion to another harmonic context.
+
+
+#+begin_src clojure
+(h/upd :II) ; go to the second degree of the current context
++end_src
+
+
+#+begin_src clojure
+(h/upd :IIm7) ; same with with additional chord color minor seventh.
+#+end_src
+
+
+#+begin_src clojure
+(h/upd :bIIIionian) ; go to bIII degree setting the mode to ionian.
+#+end_src
+
+
+****** triads
+
+Common triad notation can be used:
+
+- =m= (minor triad)
+- =M= (major triad)
+- =o= (diminished triad)
+- =+= (augmented triad)
+
+An example using the four 4 triad colors.
+
+#+begin_src clojure
+(play (lin (h/upd :CM)
+           (h/upd :C#o)
+           (h/upd :Dm)
+           (h/upd :Eb+))
+      (each (par s0 s1 s2)))
+#+end_src
+
+With =noon.lib.harmony/lin= (a variant of =lin= that understand this notation), it can be expressed in a more concise manner.
+
+#+begin_src clojure
+(play (h/lin :CM :C#o :Dm :Eb+)
+      (each (par s0 s1 s2)))
+#+end_src
+
+****** tetrad
+
+Common tetrad notation:
+
+- major-seventh: =Δ= or =M7=
+- diminished-seventh: =o7=
+- minor-seventh: =m7=
+- dominant: =7=
+- half-diminished: =ø= or =m7b5=
+- minor-major-seventh: =mΔ= or =mM7=
+
+#+begin_src clojure
+(play (h/lin :IM7 :#Io7 :IIm7 :#IIo7 :III7 :VI7 :IIm7b5 :V7)
+      (dup 2)
+      (each (par s0 s1 s2 s3)))
+#+end_src
+
+****** modifiers
+
+Modes or structures can be altered with degree modifiers:
+
+#+begin_src clojure
+(play (h/lin :G7b9 :CM79)
+      (par s0 s1 s2 s3 s4))
+#+end_src
+
+
+#+begin_src clojure
+(play (h/lin :G7sus4b9 :CM7#11)
+      (par s0 s1 s2 s3 s4))
+#+end_src
+
+****** structure shorthand
+
+This a non standard way to write structures can be handy for uncommon cases.
+
+The =s= character is followed by a suite of scale-idxs representing the structure.
+
+#+begin_src clojure
+(play (h/upd :s1234) ; tonic + second +third + fourth
+      (par s0 s1 s2 s3))
+#+end_src
+
+
+#+begin_src clojure
+(play (h/upd :s3467) ; third + fourth + sixth + seventh
+      (par s0 s1 s2 s3))
+#+end_src
+
+
+****** modes
+
+Common modes names are supported:
+
+- dorian: =dorian= or =dor=
+- phrygian: =phrygian= or =phry=
+- lydian: =lydian= or =lyd=
+- mixolydian: =mixolydian= or =mix=
+- aeolian: =aeolian= or =eolian= or =eol=
+- locrian: =locrian= or =loc=
+- harmonic-minor: =harmonic-minor= or =harmm=
+- melodic-minor: =melodic-minor= or =melm=
+- altered: =superlocrian= or =altered= or =alt=
+- harmonic-major: =harmonic-major= or =harmM=
+- double-harmonic: =double-harmonic=
+- ultraphrygian: =ultraphrygian=
+- hungarian-minor: =hungarian-minor= or =hungarian=
+- oriental: =oriental=
+- ultralocrian: =ultralocrian=
+
+
+Basics examples:
+
+#+begin_src clojure
+(play (h/upd :ionian)
+      (rup 7 d1))
+(play (h/upd :dorian)
+      (rup 7 d1))
+#+end_src
+
+With extra modifiers:
+
+#+begin_src clojure
+(play (h/upd :lydian+)
+      (rup 7 d1))
+(play (h/upd :lydianb7)
+      (rup 7 d1))
+#+end_src
+
+
+****** =upd=
+As seen in above examples, the =noon.harmony/upd= function turns a keyword describing an harmonic-context into a usable score update.
+****** =lin=
+The =noon.harmony/lin= function is the same as the =noon.updates/lin= function, excepts it can understand ahrmonic keywords.
+****** =tup=
+The =noon.harmony/tup= function is the same as the =noon.updates/tup= function, excepts it can understand ahrmonic keywords.
+****** implementation
+The instaparse library is used to parse harmonic keywords, the grammar is located at =noon.parse.harmony-grammar/grammar=
+
 
 ** Composing
 
