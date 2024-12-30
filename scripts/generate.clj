@@ -206,7 +206,7 @@
                blocks))
 
         (defn slugify [s]
-          (-> s
+          (-> (or s "")
               (str/lower-case)
               (str/replace #"[^\w\s-]" "")
               (str/replace #"\s+" "-")
@@ -238,7 +238,7 @@
                                        :level (count path)
                                        :title simple-title
                                        :inline-code inline-code
-                                       :breadcrumbs (breadcrumbs path)
+                                       :breadcrumbs (breadcrumbs (concat (butlast path) (list simple-title)))
                                        :has-subsections (boolean (seq children))})
                                 (mapv node->markup (concat content (sort-by :idx (vals children))))))))
 
