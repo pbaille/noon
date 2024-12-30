@@ -9,6 +9,7 @@
             ["react" :as react]
             ["@uiw/react-codemirror" :default CodeMirror]
             ["@nextjournal/lang-clojure" :refer [clojure]]
+            ["@codemirror/theme-one-dark" :refer [oneDark]]
             ["react-icons/vsc" :as icons-vsc]
             ["react-icons/tb" :as icons-tb]
             ["react-icons/lu" :refer [LuSquarePlus LuSquareMinus LuSquareMenu]]
@@ -18,7 +19,7 @@
   :summary)
 
 (def EDITOR_EXTENSIONS
-  #js [(clojure)])
+  #js [(clojure) (oneDark)])
 
 (do :help
 
@@ -160,6 +161,7 @@
                     {:value source
                      :on-change (fn [x] (set-source x))
                      :extensions EDITOR_EXTENSIONS
+                     :theme "dark"
                      :basic-setup #js {:lineNumbers false
                                        :foldGutter false
                                        :highlightActiveLine false}}))))
@@ -195,6 +197,7 @@
                                            (u/pretty-str (:result return))))
                       :editable false
                       :extensions #js [(clojure)]
+                      :theme "dark"
                       :basic-setup #js {:lineNumbers false
                                         :foldGutter false
                                         :highlightActiveLine false}})))))))
