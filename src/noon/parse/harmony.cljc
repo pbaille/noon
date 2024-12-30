@@ -45,6 +45,7 @@
 
     (defn- roman-degree->scale-degree [v]
       (case v
+        :one :tonic
         :two :second
         :three :third
         :four :fourth
@@ -54,6 +55,7 @@
 
     (defn- scale-degree->natural-pitch-class [v]
       (case v
+        :tonic :C
         :second :D
         :third :E
         :fourth :F
@@ -71,6 +73,7 @@
 
     (defn- scale-degree->scale-idx [v]
       (case v
+        :tonic 0
         :second 1
         :third 2
         :fourth 3
@@ -156,12 +159,14 @@
           (pitch-class->bass-update natural-pitch-class alteration))))
 
     (defn- base-structure-update [structure]
+
       (let [type (keyword (namespace structure))
             structure-name (keyword (name structure))
             structure-update
             (case type
               :triad (h/structure :triad)
               :tetrad (h/structure :tetrad))
+            _ (println structure-name structure-update type)
             degree-updates
             (mapv (fn [[degree alteration]]
                     (degree-alteration-update degree alteration))
@@ -171,7 +176,7 @@
                     :diminished [[:third :bemol] [:fifth :bemol]]
                     :augmented [[:third :natural] [:fifth :sharp]]
                     :major-seventh [[:third :natural] [:fifth :natural] [:seventh :natural]]
-                    :diminished-seventh [[:third :bemol] [:fifth :bemol] [:seventh :diminished]]
+                    :diminished-seventh [[:third :bemol] [:fifth :bemol] [:seventh :double-bemol]]
                     :minor-seventh [[:third :bemol] [:fifth :natural] [:seventh :bemol]]
                     :dominant [[:third :natural] [:fifth :natural] [:seventh :bemol]]
                     :half-diminished [[:third :bemol] [:fifth :bemol] [:seventh :bemol]]
@@ -210,8 +215,19 @@
            ((apply interpret xs)
             h/hc0))
 
+         (parse :C#o7)
+         (?? :C#o7)
+
          (?? :III7)
          (parse :III7)
+
+         (parse :C#o)
+         (parse :bIIo7)
+         (parse :#Io7)
+         (?? :#Io7)
+         (map parsed-tree->update (parse :C#o7))
+         (?? :C#o7)
+         (?? :bIIo7)
 
          (comment
            (?? :m)
