@@ -9,17 +9,21 @@
             ["react" :as react]
             ["@uiw/react-codemirror" :default CodeMirror]
             ["@nextjournal/lang-clojure" :refer [clojure]]
-            ["@codemirror/theme-one-dark" :refer [oneDark]]
             ["react-icons/vsc" :as icons-vsc]
             ["react-icons/tb" :as icons-tb]
             ["react-icons/lu" :refer [LuSquarePlus LuSquareMinus LuSquareMenu]]
-            ["react-spinners/BeatLoader" :default spinner]))
+            ["react-spinners/BeatLoader" :default spinner]
+            ["@uiw/codemirror-themes-all" :as cm-themes]))
 
 (def DEFAULT_VISIBILITY
   :summary)
 
 (def EDITOR_EXTENSIONS
-  #js [(clojure) (oneDark)])
+  #js [(clojure)])
+
+(def EDITOR_THEME cm-themes/quietlight)
+
+#_(js/console.log cm-themes)
 
 (do :help
 
@@ -161,7 +165,7 @@
                     {:value source
                      :on-change (fn [x] (set-source x))
                      :extensions EDITOR_EXTENSIONS
-                     :theme "dark"
+                     :theme EDITOR_THEME  ;noctisLilac ; vscodeLight ;quietlight ;githubLight
                      :basic-setup #js {:lineNumbers false
                                        :foldGutter false
                                        :highlightActiveLine false}}))))
@@ -196,8 +200,8 @@
                      {:value (str/trim (or (some-> return :error .-message)
                                            (u/pretty-str (:result return))))
                       :editable false
-                      :extensions #js [(clojure)]
-                      :theme "dark"
+                      :extensions EDITOR_EXTENSIONS
+                      :theme EDITOR_THEME
                       :basic-setup #js {:lineNumbers false
                                         :foldGutter false
                                         :highlightActiveLine false}})))))))
