@@ -2411,7 +2411,7 @@ Almost the same with comping.
 (swap! out/options* assoc :tracks {0 :chorium})
 #+end_src
 
-*** Harmonic experiments
+*** Harmonic
 
 Some experiences built on top of an harmonic idea.
 
@@ -2747,7 +2747,7 @@ A very artificial sounding chord sequence using quartal voicings and ninuplets (
 #+end_src
 
 
-*** Melodic experiments
+*** Melodic
 
 **** Target notes
 Building good rythmic melodies is not easy.
@@ -3509,7 +3509,7 @@ But it is not really what we want.
 #+end_src
 
 
-*** Concepts and techniques
+*** Techniques
 
 Some attempts to implement or illustrate various musical ideas using noon.
 
@@ -4271,7 +4271,7 @@ One more shredding experiment
 #+end_src
 
 
-*** snippets
+*** Snippets
 
 **** textures 1
 
