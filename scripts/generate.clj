@@ -253,6 +253,27 @@
                                        :has-subsections (boolean (seq children))})
                                 (mapv node->markup (concat content (sort-by :idx (vals children))))))))
 
+        (defn node->ui-data [{:keys [content children path html source options]}]
+          (cond source {:type :code
+                        :source source
+                        :options options}
+                html {:type :raw :html html}
+                :else (let [title (last path)
+                            [inline-code simple-title] (if (= \= (first title))
+                                                         [true (str/replace title #"=" "")]
+                                                         [false title])
+                            id (str "/"
+                                    (str/join "/" (map slugify path)))]
+
+                        {:type :section
+                         :id id
+                         :level (count path)
+                         :title simple-title
+                         :inline-code inline-code
+                         :breadcrumbs (breadcrumbs (concat (butlast path) (list simple-title)))
+                         :has-subsections (boolean (seq children))
+                         :children (mapv node->ui-data (concat content (sort-by :idx (vals children))))})))
+
         (defn org-file->client-markup [file]
           (->> (scan-org-file file)
                (htmlify-text-blocks)
@@ -302,9 +323,9 @@
 
     (defn build-client-doc-ns [& _]
       (spit "client/noon/client/doc.cljs"
-            (str "(ns noon.client.doc (:require [noon.client.ui] [uix.core :refer [$ defui]]))\n\n"
-                 "(defui doc [_]\n  "
-                 (seq (first (mapv node->markup (vals (org-file->client-markup "src/noon/doc/noon.org")))))
+            (str "(ns noon.client.doc)\n\n"
+                 "(def doc-data\n  "
+                 (first (mapv node->ui-data (vals (org-file->client-markup "src/noon/doc/noon.org"))))
                  ")"))))
 
 (defn build-all []

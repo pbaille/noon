@@ -13,7 +13,8 @@
             ["react-icons/tb" :as icons-tb]
             ["react-icons/lu" :refer [LuSquarePlus LuSquareMinus LuSquareMenu]]
             ["react-spinners/BeatLoader" :default spinner]
-            ["@uiw/codemirror-themes-all" :as cm-themes]))
+            ["@uiw/codemirror-themes-all" :as cm-themes]
+            [noon.client.doc :as doc]))
 
 (def DEFAULT_VISIBILITY
   :summary)
@@ -301,7 +302,9 @@
           (if inline-code (c :code title) title)
           (sc button-style right-button))
 
-       (when (and content-visible (not header-visible))
+       (when (and breadcrumbs-prop
+                  content-visible
+                  (not header-visible))
          (c breadcrumbs
             {:elements breadcrumbs-prop
              :title title
@@ -338,3 +341,95 @@
                (c code-editor
                   {:source code})))
           ex/examples)))
+
+(defn render-doc-node [node]
+  (case (:type node)
+    :section (uix/$ section
+                    (dissoc node :children)
+                    (mapv (fn [i c] (render-doc-node (assoc c :key (str i))))
+                          (range)
+                          (:children node)))
+    :raw (uix/$ raw node)
+    :code (uix/$ code-editor node)))
+
+(defui sidebar-section
+  [{:keys [id level title children has-subsections inline-code]
+    visibility-prop :visibility}]
+
+  (let [header-ref (uix/use-ref)
+        [visibility-override set-visibility-override] (uix/use-state nil)
+
+        visibility (or visibility-override visibility-prop DEFAULT_VISIBILITY)
+
+        header (level->header-keyword level)
+
+        button-style {:text [:md :bold]
+                      :color :grey3
+                      :hover {:color :tomato}}
+
+        visibility-toggler (fn [value]
+                             (fn [e] (.stopPropagation e) (set-visibility-override value)))
+
+        fold-button (c icons-tb/TbCaretDownFilled
+                       {:on-click (visibility-toggler :folded)})
+
+        summary-button (if has-subsections
+                         (c icons-tb/TbCaretRightFilled
+                            {:on-click (visibility-toggler :summary)})
+                         (c icons-tb/TbPoint))
+
+        button (case visibility
+                 :summary fold-button
+                 :folded summary-button)
+        top-level? (= 1 level)]
+
+    (uix/use-effect #(set-visibility-override nil)
+                    [visibility-prop])
+
+    (c :div.section
+       {:id id}
+       (when (not top-level?)
+         (c header
+            {:ref header-ref
+             :style {:flex [:start {:items :baseline :gap 1}]}}
+            (sc button-style button)
+            (if inline-code (c :code title) title)))
+
+       (when (not= :folded visibility)
+         (c :div
+            {:style {:display (if (= :folded visibility) :none :block)
+                     :p [0 0 0 (if top-level? 0 2)]}}
+
+            (-> children
+                (react/Children.map
+                 (fn [c]
+                   (with-extra-props c
+                     {:visibility
+                      (case visibility
+                        :summary :folded
+                        :expanded :expanded
+                        nil)})))))))))
+
+(defn render-sidebar-node [node]
+  (when (= :section (:type node))
+    (uix/$ sidebar-section
+           (dissoc node :children)
+           (keep render-sidebar-node (:children node)))))
+
+(defn sidebar []
+  (sc :div
+      {:bg {:color :white}
+       :p [0 3 0 2]
+       :border {:right [2 :grey2]}
+       :height "100vh"
+       :overflow :scroll
+       :flexi [1 0 :auto]
+       :align-self :stretch}
+      (render-sidebar-node doc/doc-data)))
+
+(defn doc []
+  (sc {:height :full :flex [:row {:gap 2 :items :stretch}]}
+      (sidebar)
+      (sc {:height "100vh"
+           :overflow :scroll}
+          (render-doc-node doc/doc-data))))

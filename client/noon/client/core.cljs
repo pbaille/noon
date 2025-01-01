@@ -1,5 +1,5 @@
 (ns noon.client.core
-  (:require #_[noon.client.ui :as ui]
+  (:require [noon.client.ui :as ui]
             [uix.core :refer [$]]
             [uic.component :refer [sc]]
             [uix.dom]
@@ -22,9 +22,10 @@
         ".cm-editor.cm-focused" {:border {:width 0}
                                  :outline :none
                                  :box-shadow :none}
-        :margin {:bottom "100vh"}
-        :width {:max 800}}
-       ($ doc/doc)
+        ;:margin {:bottom "100vh"}
+        ;:width {:max 800}
+        }
+       (ui/doc)
        #_($ ui/section
             {:level 1 :path [] :title "Examples"
              :visibility :folded}
