@@ -218,14 +218,15 @@
        :bg {:color :white}
        :position [:fixed {:top 0 :left 0}]
        :flex [:start {:items :baseline :gap 1}]
-       :border {:bottom [2 :grey1]}}
+       :border {:bottom [2 :grey1]}
+       :overflow-x :scroll}
 
       (sc {:flex [:row {:gap 1 :items :baseline}]}
           (mapcat (fn [{:keys [level href text]}]
                     [(c {:style button-style
                          :key (str level "-button")}
                         (c icons-tb/TbCaretRightFilled))
-                     (c :a {:style {:color "inherit" :text-decoration "none"}
+                     (c :a {:style {:flex-shrink 0 :color "inherit" :text-decoration "none"}
                             :href href
                             :key (str level "-link")}
                         (uix/$ (level->header-keyword level)
