@@ -124,7 +124,8 @@
                                                     line)))
                 :else
                 (recur lines state))
-          blocks)))
+          (mapv (fn [i b] (assoc b :idx i))
+                (range) blocks))))
 
     (defn org-blocks->code-tree
       [exprs]
@@ -187,23 +188,33 @@
 
     (do :client-markup-gen
 
-        (def org-to-html
-          (memoize
-           (fn [input-str]
-             #_(println "org-to-html " input-str)
-             (let [{:keys [out err _exit]} (bpr/process ["pandoc" "-f" "org" "-t" "html"]
-                                                        {:in input-str :out :string :err :string})]
-               (if out
-                 @out
-                 (throw (Exception. err)))))))
+        (defn org-to-html
+          [input-str]
+          (let [{:keys [out err _exit]} (bpr/process ["pandoc" "-f" "org" "-t" "html"]
+                                                     {:in input-str :out :string :err :string})]
+            (if out
+              @out
+              (throw (Exception. err)))))
 
-        (defn htmlify-text-blocks [blocks]
-          (map (fn [node]
-                 (if-let [text (:text node)]
-                   (-> (dissoc node :text)
-                       (assoc :html (org-to-html text)))
-                   node))
-               blocks))
+        (defn htmlify-text-blocks
+          "blocks containing a :text entry will be enriched with an
+          :html entry holding the text content turned into html by pandoc."
+          [blocks]
+
+          (let [text-blocks (filter :text blocks)
+                ;; not a particularly elegant solution
+                ;; but I want to avoid calling org-to-html many times (perf)
+                sep "\n* SPLIT\n"
+                split #"<h1 id=\".*?\">SPLIT</h1>"
+                org-content (str/join sep (map :text text-blocks))
+                html-content (str/split (org-to-html org-content) split)]
+            (reduce (fn [blocks b]
+                      (assoc blocks (:idx b) b))
+                    blocks
+                    (map (fn [b html]
+                           (assoc b :html (str/trim html)))
+                         text-blocks
+                         html-content))))
 
         (defn slugify [s]
           (-> (or s "")
@@ -250,6 +261,9 @@
         (comment
           (def code-tree
             (org-file->client-markup "src/noon/doc/noon.org"))
+
+          (->> (scan-org-file "src/noon/doc/noon.org")
+               (htmlify-text-blocks))
 
           (first (mapv node->markup (vals (org-file->client-markup "src/noon/doc/noon.org"))))))
 
