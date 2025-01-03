@@ -14,7 +14,8 @@
             ["react-icons/lu" :refer [LuSquarePlus LuSquareMinus LuSquareMenu]]
             ["react-spinners/BeatLoader" :default spinner]
             ["@uiw/codemirror-themes-all" :as cm-themes]
-            [noon.client.doc :as doc]))
+            [noon.client.doc :as doc]
+            [noon.client.state :refer [<< >>]]))
 
 (def DEFAULT_VISIBILITY
   :summary)
@@ -79,6 +80,9 @@
        :bg {:color [color {:a 0.1}]}
        :p [1 0]}
       text))
+
+(defui raw [{:keys [html]}]
+  (c :div {:dangerouslySetInnerHTML #js {:__html html}}))
 
 (defui code-editor [{:keys [source options]}]
   (let [[source set-source] (uix/use-state source)
@@ -208,45 +212,12 @@
 (defn level->header-keyword [level]
   (case level 1 :h1 2 :h2 3 :h3 :h4))
 
-(defui breadcrumbs
-  [{:keys [elements button-style right-button]}]
-
-  (sc {:m [3 0]
-       :z-index 1000
-       :width :full
-       :bg {:color :white}
-       :position [:fixed {:top 0 :left 0}]
-       :flex [:start {:items :baseline :gap 1}]
-       :border {:bottom [2 :grey1]}
-       :overflow-x :scroll}
-
-      (sc {:flex [:row {:gap 1 :items :baseline}]}
-          (mapcat (fn [{:keys [level href text]}]
-                    [(c {:style button-style
-                         :key (str level "-button")}
-                        (c icons-tb/TbCaretRightFilled))
-                     (c :a {:style {:flex-shrink 0 :color "inherit" :text-decoration "none"}
-                            :href href
-                            :key (str level "-link")}
-                        (uix/$ (level->header-keyword level)
-                               {:style {:margin 1}}
-                               text))])
-                  elements))
-
-      (when right-button
-        (sc button-style right-button))))
-
 (defui section
-  [{:keys [id level title children has-subsections inline-code]
-    visibility-prop :visibility
-    breadcrumbs-prop :breadcrumbs}]
+  [{:as node :keys [id path level title children has-subsections inline-code]}]
 
   (let [header-ref (uix/use-ref)
         content-ref (uix/use-ref)
-        content-loaded-ref (uix/use-ref false)
-        [visibility-override set-visibility-override] (uix/use-state nil)
-
-        visibility (or visibility-override visibility-prop DEFAULT_VISIBILITY)
+        visibility (<< [:doc.ui.nodes.get path :folding])
 
         header (level->header-keyword level)
 
@@ -255,7 +226,7 @@
                       :hover {:color :tomato}}
 
         visibility-toggler (fn [value]
-                             (fn [e] (.stopPropagation e) (set-visibility-override value)))
+                             (fn [e] (.stopPropagation e) (>> [:doc.ui.nodes.set path :folding value])))
 
         fold-button (c LuSquareMinus
                        {:on-click (visibility-toggler :folded)})
@@ -270,7 +241,7 @@
         [left-button right-button] (case visibility
                                      :summary [fold-button expand-button]
                                      :folded [expand-button summary-button]
-                                     :expanded [fold-button summary-button])
+                                     [fold-button summary-button])
 
         header-visible (use-visible-intersection
                         header-ref
@@ -288,8 +259,10 @@
                           :rootMargin "0px"
                           :threshold 0})]
 
-    (uix/use-effect #(set-visibility-override nil)
-                    [visibility-prop])
+    (uix/use-effect (fn pouet []
+                      (>> [:doc.ui.nodes.set path :header-visible header-visible])
+                      (>> [:doc.ui.nodes.set path :content-visible content-visible]))
+                    [content-visible header-visible path])
 
     (c :div.section
        {:id id}
@@ -302,134 +275,140 @@
           (if inline-code (c :code title) title)
           (sc button-style right-button))
 
-       (when (and breadcrumbs-prop
-                  content-visible
-                  (not header-visible))
-         (c breadcrumbs
-            {:elements breadcrumbs-prop
-             :title title
-             :button-style button-style
-             :right-button right-button}))
-
-       (when (or @content-loaded-ref
-                 (not= :folded visibility))
-         (reset! content-loaded-ref true)
-         (c :div
-            {:ref content-ref
-             :style {:display (if (= :folded visibility) :none :block)
-                     :p [0 0 0 2]}}
-
-            (-> children
-                (react/Children.map
-                 (fn [c]
-                   (if (= section (.-type c))
-                     (with-extra-props c
-                       {:visibility
-                        (case visibility
-                          :summary :folded
-                          :expanded :expanded
-                          nil)})
-                     c)))))))))
-
-(defui raw [{:keys [html]}]
-  (c :div {:dangerouslySetInnerHTML #js {:__html html}}))
-
-(defui examples [{}]
-  (c (map (fn [[k code]]
-            (c {:key k}
-               (c :h2 (name k))
-               (c code-editor
-                  {:source code})))
-          ex/examples)))
+       (c :div
+          {:ref content-ref
+           :style {:display (if (= :folded visibility) :none :block)
+                   :p [0 0 0 2]}}
+          children))))
 
 (defn render-doc-node [node]
   (case (:type node)
     :section (uix/$ section
-                    (dissoc node :children)
+                    (assoc node :has-subsections
+                           (boolean (seq (:subsections node))))
                     (mapv (fn [i c] (render-doc-node (assoc c :key (str i))))
                           (range)
-                          (:children node)))
+                          (concat (:content node)
+                                  (sort-by :idx (vals (:subsections node))))))
     :raw (uix/$ raw node)
     :code (uix/$ code-editor node)))
 
-(defui sidebar-section
-  [{:keys [id level title children has-subsections inline-code]
-    visibility-prop :visibility}]
+(do :sidebar
+    (defui sidebar-section
+      [{:keys [id level title children has-subsections inline-code]
+        visibility-prop :visibility}]
 
-  (let [header-ref (uix/use-ref)
-        [visibility-override set-visibility-override] (uix/use-state nil)
+      (let [header-ref (uix/use-ref)
+            [visibility-override set-visibility-override] (uix/use-state nil)
 
-        visibility (or visibility-override visibility-prop DEFAULT_VISIBILITY)
+            visibility (or visibility-override visibility-prop DEFAULT_VISIBILITY)
 
-        header (level->header-keyword level)
+            header (level->header-keyword level)
 
-        button-style {:text [:md :bold]
-                      :color :grey3
-                      :hover {:color :tomato}}
+            button-style {:text [:md :bold]
+                          :color :grey3
+                          :hover {:color :tomato}}
 
-        visibility-toggler (fn [value]
-                             (fn [e] (.stopPropagation e) (set-visibility-override value)))
+            visibility-toggler (fn [value]
+                                 (fn [e] (.stopPropagation e) (set-visibility-override value)))
 
-        fold-button (c icons-tb/TbCaretDownFilled
-                       {:on-click (visibility-toggler :folded)})
+            fold-button (c icons-tb/TbCaretDownFilled
+                           {:on-click (visibility-toggler :folded)})
 
-        summary-button (if has-subsections
-                         (c icons-tb/TbCaretRightFilled
-                            {:on-click (visibility-toggler :summary)})
-                         (c icons-tb/TbPoint))
+            summary-button (if has-subsections
+                             (c icons-tb/TbCaretRightFilled
+                                {:on-click (visibility-toggler :summary)})
+                             (c icons-tb/TbPoint))
 
-        button (case visibility
-                 :summary fold-button
-                 :folded summary-button)
-        top-level? (= 1 level)]
+            button (case visibility
+                     :summary fold-button
+                     :folded summary-button)
+            top-level? (= 1 level)]
 
-    (uix/use-effect #(set-visibility-override nil)
-                    [visibility-prop])
+        (uix/use-effect #(set-visibility-override nil)
+                        [visibility-prop])
 
-    (c :div.section
-       {:id id}
-       (when (not top-level?)
-         (c header
-            {:ref header-ref
-             :style {:flex [:start {:items :baseline :gap 1}]}}
-            (sc button-style button)
-            (if inline-code (c :code title) title)))
+        (c :div.section
+           {:id id}
+           (when (not top-level?)
+             (c header
+                {:ref header-ref
+                 :style {:flex [:start {:items :baseline :gap 1}]}}
+                (sc button-style button)
+                (if inline-code (c :code title) title)))
 
-       (when (not= :folded visibility)
-         (c :div
-            {:style {:display (if (= :folded visibility) :none :block)
-                     :p [0 0 0 (if top-level? 0 2)]}}
+           (when (not= :folded visibility)
+             (c :div
+                {:style {:display (if (= :folded visibility) :none :block)
+                         :p [0 0 0 (if top-level? 0 2)]}}
 
-            (-> children
-                (react/Children.map
-                 (fn [c]
-                   (with-extra-props c
-                     {:visibility
-                      (case visibility
-                        :summary :folded
-                        :expanded :expanded
-                        nil)})))))))))
+                (-> children
+                    (react/Children.map
+                     (fn [c]
+                       (with-extra-props c
+                         {:visibility
+                          (case visibility
+                            :summary :folded
+                            :expanded :expanded
+                            nil)})))))))))
 
-(defn render-sidebar-node [node]
-  (when (= :section (:type node))
-    (uix/$ sidebar-section
-           (dissoc node :children)
-           (keep render-sidebar-node (:children node)))))
+    (defn render-sidebar-node [node]
+      (when (= :section (:type node))
+        (uix/$ sidebar-section
+               (dissoc node :children)
+               (keep render-sidebar-node (:children node)))))
 
-(defn sidebar []
-  (sc :div
-      {:bg {:color :white}
-       :p [0 3 0 2]
-       :border {:right [2 :grey2]}
-       :height "100vh"
-       :overflow :scroll
-       :flexi [1 0 :auto]
-       :align-self :stretch}
-      (render-sidebar-node doc/doc-data)))
+    (defui sidebar []
+      (when (<< [:get [:ui :sidebar]])
+        (sc :div
+            {:bg {:color :white}
+             :p [0 3 0 2]
+             :border {:right [2 :grey2]}
+             :height "100vh"
+             :overflow :scroll
+             :flexi [1 0 :auto]
+             :align-self :stretch}
+            (render-sidebar-node doc/doc-data)))))
 
-(defn doc []
+(defui breadcrumbs
+  []
+  (when-let [elements (<< [:doc.ui.breadcrumbs.get])]
+
+    (sc {:m [3 0]
+         :z-index 1000
+         :width :full
+         :bg {:color :white}
+         :position [:fixed {:top 0 :left 0}]
+         :flex [:start {:items :baseline :gap 1}]
+         :border {:bottom [2 :grey1]}
+         :overflow-x :scroll}
+
+        (sc {:flex [:row {:gap 1 :items :baseline}]}
+              (mapcat (fn [{:keys [level href text path]}]
+                        [(c {:style {}
+                             :key (str level "-button")}
+                            (c icons-tb/TbCaretRightFilled))
+                         (c :a {:style {:flex-shrink 0 :color "inherit" :text-decoration "none"}
+                                :href href
+                                :key (str level "-link")}
+                            (uix/$ (level->header-keyword level)
+                                   {:style {:margin 1}}
+                                   text))])
+                      elements))
+
+        #_(when right-button
+            (sc button-style right-button)))))
+
+(defui doc []
   (sc {:height :full :flex [:row {:gap 2 :items :stretch}]}
-      (sidebar)
+      (c sidebar)
       (sc {:height "100vh"
            :overflow :scroll}
+          (c breadcrumbs)
           (render-doc-node doc/doc-data))))
+
+(comment
+  (>> [:upd [:ui :sidebar] not])
+  (>> [:doc.ui.nodes.pp])
+  (<< [:get [:ui :breadcrumbs]])
+  ())

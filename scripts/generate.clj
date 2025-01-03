@@ -128,9 +128,9 @@
                 (range) blocks))))
 
     (defn org-blocks->code-tree
-      [exprs]
-      (reduce (fn [tree [idx {:keys [title path] :as block}]]
-                (if (seq? path)
+      [blocks]
+      (reduce (fn [tree {:keys [idx title path] :as block}]
+                (if (seq path)
                   (update-in tree
                              (interpose :children path)
                              (fn [subtree]
@@ -138,7 +138,7 @@
                                  (assoc subtree :idx idx :path path)
                                  (update subtree :content (fnil conj []) block))))
                   tree))
-              {} (map vector (range) exprs)))
+              {} blocks))
 
     (defn prepare-test-content [content target]
       (mapcat (fn [{:keys [exprs options]}]
@@ -223,37 +223,12 @@
               (str/replace #"\s+" "-")
               (str/trim)))
 
-        (defn breadcrumbs [at]
-          (mapv (fn [path]
-                  {:text (last path)
-                   :level (count path)
-                   :href (->> (map slugify path)
-                              (interpose "/")
-                              (cons "#/")
-                              (apply str))})
-                (next (reductions conj [] at))))
+        (defn slugify-paths [blocks]
+          (mapv (fn [{:as block :keys [path]}]
+                  (assoc block :path (mapv slugify path)))
+                blocks))
 
-        (defn node->markup [{:keys [content children path html source options]}]
-          (cond source (list '$ 'noon.client.ui/code-editor {:source source
-                                                             :options options})
-                html (list '$ 'noon.client.ui/raw {:html html})
-                :else (let [title (last path)
-                            [inline-code simple-title] (if (= \= (first title))
-                                                         [true (str/replace title #"=" "")]
-                                                         [false title])
-                            id (str "/"
-                                    (str/join "/" (map slugify path)))]
-
-                        (concat (list '$ 'noon.client.ui/section
-                                      {:id id
-                                       :level (count path)
-                                       :title simple-title
-                                       :inline-code inline-code
-                                       :breadcrumbs (breadcrumbs (concat (butlast path) (list simple-title)))
-                                       :has-subsections (boolean (seq children))})
-                                (mapv node->markup (concat content (sort-by :idx (vals children))))))))
-
-        (defn node->ui-data [{:keys [content children path html source options]}]
+        (defn node->ui-data [{:keys [content children path html source options idx]}]
           (cond source {:type :code
                         :source source
                         :options options}
@@ -263,20 +238,23 @@
                                                          [true (str/replace title #"=" "")]
                                                          [false title])
                             id (str "/"
-                                    (str/join "/" (map slugify path)))]
+                                    (str/join "/" path))]
 
                         {:type :section
                          :id id
+                         :idx idx
+                         :path path
                          :level (count path)
                          :title simple-title
                          :inline-code inline-code
-                         :breadcrumbs (breadcrumbs (concat (butlast path) (list simple-title)))
-                         :has-subsections (boolean (seq children))
-                         :children (mapv node->ui-data (concat content (sort-by :idx (vals children))))})))
+                         :content (mapv node->ui-data content)
+                         :subsections (update-vals children node->ui-data)})))
 
         (defn org-file->client-markup [file]
           (->> (scan-org-file file)
+               ; (take 60) vec
                (htmlify-text-blocks)
+               (slugify-paths)
                (org-blocks->code-tree)))
 
         (comment
@@ -284,7 +262,8 @@
             (org-file->client-markup "src/noon/doc/noon.org"))
 
           (->> (scan-org-file "src/noon/doc/noon.org")
-               (htmlify-text-blocks))
+               (slugify-paths)
+               (org-blocks->code-tree))
 
           (first (mapv node->markup (vals (org-file->client-markup "src/noon/doc/noon.org"))))))
 

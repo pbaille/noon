@@ -4729,3 +4729,5 @@ It assumes VSL special edition (volumes 1+ and 2+)
               (shuftup d0 d3 d6)
               (dup 8)))
 #+end_src
+
+**** the end
