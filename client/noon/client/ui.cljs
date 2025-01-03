@@ -23,8 +23,6 @@
 
 (def EDITOR_THEME cm-themes/quietlight)
 
-#_(js/console.log cm-themes)
-
 (do :help
 
     (defn use-atom [atom]

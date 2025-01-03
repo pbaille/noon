@@ -23,13 +23,12 @@
                                  :outline :none
                                  :box-shadow :none}
         :margin {:bottom "100vh"}
-        :width {:max 800}
-        }
+        :width {:max 800}}
        ($ doc/doc)
        #_($ ui/section
-          {:level 1 :path [] :title "Examples"
-           :visibility :folded}
-          ($ ui/examples)))
+            {:level 1 :path [] :title "Examples"
+             :visibility :folded}
+            ($ ui/examples)))
    root))
 
 (defn ^:dev/after-load reload []
