@@ -33,9 +33,9 @@
                             {:on-click (visibility-toggler :summary)}))
 
         [left-button right-button] (case visibility
-                                     :summary [fold-button expand-button]
-                                     :folded [expand-button summary-button]
-                                     [fold-button summary-button])
+                                     :summary [expand-button fold-button]
+                                     :folded [summary-button]
+                                     :expanded [fold-button])
 
         header-visible (hooks/use-visible-intersection
                         header-ref
@@ -65,9 +65,9 @@
            :style {:flex [:start {:items :baseline :gap 1}]
                    :border {:bottom [2 :grey1]}
                    :p {:bottom 1}}}
-          (sc button-style left-button)
           (if inline-code (c :code title) title)
-          (sc button-style right-button))
+          (sc button-style left-button)
+          (when right-button (sc button-style right-button)))
 
        (c :div
           {:ref content-ref
