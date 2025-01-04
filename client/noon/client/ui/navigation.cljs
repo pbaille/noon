@@ -7,7 +7,10 @@
             ["react-icons/tb" :as icons-tb]))
 
 (def link-styles
-  {:flex-shrink 0 :color "inherit" :text-decoration "none"
+  {:flex-shrink 0
+   :color "inherit"
+   :text :semibold
+   :text-decoration "none"
    :hover {:color :light-skyblue}})
 
 (defui sidebar-section
@@ -62,9 +65,9 @@
 (defui sidebar []
   (sc :div
       {:flex :column
-       :bg {:color :white}
-       :p [0 3 0 0]
-       :border {:right [2 :grey2]}
+       :bg {:color [:gray {:a 0.05}]}
+       :p [3 3 0 2]
+       ; :border {:right [2 :grey2]}
        :height "100vh"
        :overflow :scroll
        :flexi [1 0 :auto]
