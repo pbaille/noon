@@ -18,7 +18,14 @@
 
     (defn ns-form->file-path [x src-path]
       (and (ns-decl? x)
-           (str/join "/" (cons src-path (str/split (second x) #"\."))))))
+           (str/join "/" (cons src-path (str/split (second x) #"\.")))))
+
+    (defn slugify [s]
+      (-> (or s "")
+          (str/lower-case)
+          (str/replace #"[^\w\s-]" "")
+          (str/replace #"\s+" "-")
+          (str/trim))))
 
 (do :org->clj
     (defn org-str->clj-str [org-str & {:keys [ns-form]}]
@@ -82,15 +89,15 @@
               :current-text nil}]
         (if-let [[line & lines] (seq lines)]
           (cond (str/starts-with? line "*")
-                (let [{:keys [level title]} (parse-org-headline line)]
+                (let [{:keys [level title]} (parse-org-headline line)
+                      path' (take (dec level) (concat path (repeat nil)))]
                   (recur lines
                          (assoc state
                                 :blocks (if current-text
                                           (into blocks [{:text current-text :path path}
-                                                        {:path path :title title}])
-                                          (conj blocks {:path path :title title}))
-                                :path (concat (take (dec level) (concat path (repeat nil)))
-                                              (list title))
+                                                        {:path path' :title title}])
+                                          (conj blocks {:path path' :title title}))
+                                :path (concat path' (list title))
                                 :current-text nil)))
 
                 (str/starts-with? line "#+begin_src clojure")
@@ -124,69 +131,77 @@
                                                     line)))
                 :else
                 (recur lines state))
-          (mapv (fn [i b] (assoc b :idx i))
-                (range) blocks))))
 
-    (defn org-blocks->code-tree
+          (mapv (fn [i {:as block :keys [path]}]
+                  (assoc block
+                         :idx i
+                         :path (mapv slugify path)))
+                (range)
+                blocks))))
+
+    (defn org-blocks->tree
       [blocks]
       (reduce (fn [tree {:keys [idx title path] :as block}]
-                (if (seq path)
+                #_(println path (concat path (list (slugify title))))
+                (if title
+                  (let [path' (concat path (list (slugify title)))]
+                    (update-in tree (interpose :children path')
+                               assoc :title title :path (vec path') :idx idx))
                   (update-in tree
                              (interpose :children path)
                              (fn [subtree]
-                               (if title
-                                 (assoc subtree :idx idx :path path)
-                                 (update subtree :content (fnil conj []) block))))
-                  tree))
+                               (update subtree :content (fnil conj []) block)))))
               {} blocks))
 
-    (defn prepare-test-content [content target]
-      (mapcat (fn [{:keys [exprs options]}]
-                (map (fn [expr]
-                       (let [expr `(t/is (noon.freeze/freeze ~expr))]
-                         (cond (:no-tests options) nil
-                               (:clj-only options) (when (= target :clj) expr)
-                               (:cljs-only options) (when (= target :cljs) expr)
-                               :else expr)))
-                     exprs))
-              content))
+    (do :tests
 
-    (defn code-tree->tests [from target tree]
-      (keep (fn [[k {:keys [content children]}]]
-              (if (or (seq children) (seq content))
-                (list* 't/testing k
-                       (concat (prepare-test-content content target)
-                               (code-tree->tests (conj from k) target children)))))
-            (sort-by (comp :idx val)
-                     tree)))
+        (defn prepare-test-content [content target]
+          (mapcat (fn [{:keys [exprs options]}]
+                    (map (fn [expr]
+                           (let [expr `(t/is (noon.freeze/freeze ~expr))]
+                             (cond (:no-tests options) nil
+                                   (:clj-only options) (when (= target :clj) expr)
+                                   (:cljs-only options) (when (= target :cljs) expr)
+                                   :else expr)))
+                         exprs))
+                  content))
 
-    (defn replace-rational-literals [s]
-      (clojure.string/replace
-       s
-       #"(-?\d+)/(\d+)\b"
-       (fn [[_ n d]]
-         (str "(/ " n " " d ")"))))
+        (defn code-tree->tests [from target tree]
+          (keep (fn [[k {:keys [content children]}]]
+                  (if (or (seq children) (seq content))
+                    (list* 't/testing k
+                           (concat (prepare-test-content content target)
+                                   (code-tree->tests (conj from k) target children)))))
+                (sort-by (comp :idx val)
+                         tree)))
 
-    (defn org->test-ns-str [file target]
-      (let [code-str
-            (->> (scan-org-file file)
-                 (remove :text)
-                 (org-blocks->code-tree)
-                 (code-tree->tests [] target)
-                 (list* 't/deftest 'noon-tests)
-                 (str (list 'ns 'noon.doc.noon-org-test
-                            (list :require (case target
-                                             :clj '[clojure.test :as t]
-                                             :cljs '[cljs.test :as t])
+        (defn replace-rational-literals [s]
+          (clojure.string/replace
+           s
+           #"(-?\d+)/(\d+)\b"
+           (fn [[_ n d]]
+             (str "(/ " n " " d ")"))))
 
-                                  '[noon.eval :refer [play noon score]]
-                                  '[noon.freeze]))
-                      "\n"))]
-        (if (= :cljs target)
-          (replace-rational-literals code-str)
-          code-str)))
+        (defn org->test-ns-str [file target]
+          (let [code-str
+                (->> (scan-org-file file)
+                     (remove :text)
+                     (org-blocks->tree)
+                     (code-tree->tests [] target)
+                     (list* 't/deftest 'noon-tests)
+                     (str (list 'ns 'noon.doc.noon-org-test
+                                (list :require (case target
+                                                 :clj '[clojure.test :as t]
+                                                 :cljs '[cljs.test :as t])
 
-    (do :client-markup-gen
+                                      '[noon.eval :refer [play noon score]]
+                                      '[noon.freeze]))
+                          "\n"))]
+            (if (= :cljs target)
+              (replace-rational-literals code-str)
+              code-str))))
+
+    (do :client-data
 
         (defn org-to-html
           [input-str]
@@ -216,27 +231,14 @@
                          text-blocks
                          html-content))))
 
-        (defn slugify [s]
-          (-> (or s "")
-              (str/lower-case)
-              (str/replace #"[^\w\s-]" "")
-              (str/replace #"\s+" "-")
-              (str/trim)))
-
-        (defn slugify-paths [blocks]
-          (mapv (fn [{:as block :keys [path]}]
-                  (assoc block :path (mapv slugify path)))
-                blocks))
-
-        (defn node->ui-data [{:keys [content children path html source options idx]}]
+        (defn node->ui-data [{:keys [title content children path html source options idx]}]
           (cond source {:type :code
                         :source source
                         :options options}
                 html {:type :raw :html html}
-                :else (let [title (last path)
-                            [inline-code simple-title] (if (= \= (first title))
-                                                         [true (str/replace title #"=" "")]
-                                                         [false title])
+                :else (let [[inline-code title] (if (= \= (first title))
+                                                  [true (str/replace title "=" "")]
+                                                  [false title])
                             id (str "/"
                                     (str/join "/" path))]
 
@@ -245,25 +247,23 @@
                          :idx idx
                          :path path
                          :level (count path)
-                         :title simple-title
+                         :title title
                          :inline-code inline-code
                          :content (mapv node->ui-data content)
-                         :subsections (update-vals children node->ui-data)})))
+                         :children (update-vals children node->ui-data)})))
 
         (defn org-file->client-markup [file]
           (->> (scan-org-file file)
                ; (take 60) vec
                (htmlify-text-blocks)
-               (slugify-paths)
-               (org-blocks->code-tree)))
+               (org-blocks->tree)))
 
         (comment
           (def code-tree
             (org-file->client-markup "src/noon/doc/noon.org"))
 
           (->> (scan-org-file "src/noon/doc/noon.org")
-               (slugify-paths)
-               (org-blocks->code-tree))
+               (org-blocks->tree))
 
           (first (mapv node->markup (vals (org-file->client-markup "src/noon/doc/noon.org"))))))
 
@@ -304,7 +304,9 @@
       (spit "client/noon/client/doc.cljs"
             (str "(ns noon.client.doc)\n\n"
                  "(def doc-data\n  "
-                 (first (mapv node->ui-data (vals (org-file->client-markup "src/noon/doc/noon.org"))))
+                 (node->ui-data (get (org-file->client-markup "src/noon/doc/noon.org")
+                                     "noon"))
+                 #_(with-out-str (pp/pprint (first (mapv node->ui-data (vals (org-file->client-markup "src/noon/doc/noon.org"))))))
                  ")"))))
 
 (defn build-all []
