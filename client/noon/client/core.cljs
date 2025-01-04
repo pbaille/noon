@@ -7,24 +7,9 @@
 
 (defonce root (uix.dom/create-root (js/document.getElementById "app")))
 
-(def styles {:p 0
-             :text [:sans {:leading :normal}]
-             ".cm-editor" {:bg {:color "transparent"}}
-             "code" {:bg {:color [:gray {:a 0.1}]}
-                     :color [:black {:a 0.8}]
-                     :p [1 0.5]
-                     :text :bold
-                     :rounded 1}
-             "code.focus" {:bg {:color [:tomato {:a 0.5}]}}
-             ".cm-editor.cm-focused" {:border {:width 0}
-                                      :outline :none
-                                      :box-shadow :none}
-             :height "100vh"
-             :width {:max 800}})
-
 (defn render []
   (uix.dom/render-root
-   (sc styles (c ui/doc))
+   (c ui/doc)
    root))
 
 (defn ^:dev/after-load reload []
