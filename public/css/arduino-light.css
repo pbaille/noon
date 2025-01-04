@@ -1,0 +1,156 @@
+/*
+
+Arduino® Light Theme - Stefania Mellai <s.mellai@arduino.cc>
+
+*/
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  background: #FFFFFF;
+}
+
+.hljs,
+.hljs-subst {
+  color: #434f54;
+}
+
+.hljs-keyword,
+.hljs-attribute,
+.hljs-selector-tag,
+.hljs-doctag,
+.hljs-name {
+  color: #00979D;
+}
+
+.hljs-built_in,
+.hljs-literal,
+.hljs-bullet,
+.hljs-code,
+.hljs-addition {
+  color: #D35400;
+}
+
+.hljs-regexp,
+.hljs-symbol,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-link,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: #00979D;
+}
+
+.hljs-type,
+.hljs-string,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-quote,
+.hljs-template-tag,
+.hljs-deletion {
+  color: #005C5F;
+}
+
+.hljs-title,
+.hljs-section {
+  color: #880000;
+  font-weight: bold;
+}
+
+.hljs-comment {
+  color: rgba(149,165,166,.8);
+}
+
+.hljs-meta-keyword {
+  color: #728E00;
+}
+
+.hljs-meta {
+  color: #434f54;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+.hljs-function {
+  color: #728E00;
+}
+
+.hljs-number {
+  color: #8A7B52;  
+}
+
+
+.cm-editor {
+  background: #FFFFFF;
+  color: #434f54;
+  font-family: monospace;
+}
+
+.cm-content {
+  padding: 0.5em;
+}
+
+/* Keywords, Attributes, Selectors */
+.cm-keyword,
+.cm-attribute,
+.cm-tag {
+  color: #00979D;
+}
+
+/* Built-ins, Literals, Additions */
+.cm-builtin,
+.cm-literal,
+.cm-bullet,
+.cm-operator {
+  color: #D35400;
+}
+
+/* Strings, Types, IDs, Classes */
+.cm-string,
+.cm-type,
+.cm-variable-2 {
+  color: #005C5F;
+}
+
+/* Titles and Sections */
+.cm-header {
+  color: #880000;
+  font-weight: bold;
+}
+
+/* Comments */
+.cm-comment {
+  color: rgba(149,165,166,0.8);
+}
+
+/* Meta Keywords */
+.cm-meta {
+  color: #728E00;
+}
+
+/* Numbers */
+.cm-number {
+  color: #8A7B52;
+}
+
+/* Functions */
+.cm-variable,
+.cm-function {
+  color: #728E00;
+}
+
+/* Emphasis and Strong Text */
+.cm-em {
+  font-style: italic;
+}
+
+.cm-strong {
+  font-weight: bold;
+}
