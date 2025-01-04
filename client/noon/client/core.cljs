@@ -15,6 +15,7 @@
                      :p [1 0.5]
                      :text :bold
                      :rounded 1}
+             "code.focus" {:bg {:color [:tomato {:a 0.5}]}}
              ".cm-editor.cm-focused" {:border {:width 0}
                                       :outline :none
                                       :box-shadow :none}
