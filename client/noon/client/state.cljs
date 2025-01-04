@@ -44,7 +44,7 @@
 
                            :summary (update-in db [:doc :ui :nodes]
                                                (fn [nodes]
-                                                 (-> (assoc-in nodes [path :folding] :expanded)
+                                                 (-> (assoc-in nodes [path :folding] :summary)
                                                      (flat-tree/update-children
                                                       path (fn [node] (assoc node :folding :folded))))))
 
