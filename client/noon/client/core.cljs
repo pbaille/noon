@@ -10,7 +10,7 @@
 (def styles {:p 0
              :text [:sans {:leading :normal}]
              ".cm-editor" {:bg {:color "transparent"}}
-             "code" {;; :bg {:color [:gray {:a 0.1}]}
+             "code" {:bg {:color [:gray {:a 0.1}]}
                      :color [:black {:a 0.8}]
                      :p [1 0.5]
                      :text :bold
