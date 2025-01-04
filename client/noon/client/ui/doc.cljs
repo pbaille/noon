@@ -19,15 +19,34 @@
     :raw (uix/$ ui.misc/raw node)
     :code (uix/$ ui.code-editor/code-editor node)))
 
+(def doc-styles {:p 0
+                 :text [:sans {:leading :normal}]
+                 ".cm-editor" {:bg {:color "transparent"}}
+                 "code" {:bg {:color [:gray {:a 0.1}]}
+                         :color [:black {:a 0.8}]
+                         :p [1 0.5]
+                         :text :bold
+                         :rounded 1}
+                 "code.focus" {:bg {:color [:tomato {:a 0.5}]}}
+                 ".cm-editor.cm-focused" {:border {:width 0}
+                                          :outline :none
+                                          :box-shadow :none}
+                 :height "100vh"})
+
 (defui doc []
   (let [mode (<< [:get [:doc :ui :navigation-mode]])]
     (case mode
-      :sidebar (sc {:height :full :flex [:row {:gap 2 :items :stretch}]}
+      :sidebar (sc (merge doc-styles
+                          {:height :full
+                           :flex [:row {:gap 2 :items :stretch}]
+                           :width {:max 1100}})
                    (c ui.navigation/sidebar)
-                   (sc {:height "100vh"
+                   (sc {:p [2 3 0 0] :height "100vh"
                         :overflow :scroll}
                        (render-doc-node (<< [:doc.tree.get []]))))
-      :breadcrumbs (sc {:p [2 0]}
+      :breadcrumbs (sc (merge doc-styles
+                              {:p [2 0]
+                               :width {:max 800}})
                        (c ui.navigation/breadcrumbs)
                        (render-doc-node (<< [:doc.tree.get []]))))))
 

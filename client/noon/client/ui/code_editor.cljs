@@ -89,7 +89,7 @@
 
             (c :.code-editor-input_content
 
-               {:style {:overflow :hidden
+               {:style {:overflow :scroll
                         :position :relative
                         :width :full}
                 :on-click (fn [_] (set-editing true))
@@ -97,7 +97,7 @@
 
                (sc :.code-editor-input_overlay
 
-                   {:z-index (if evaluating 10000 0)
+                   {:z-index (if evaluating 10000 -1)
                     :position [:absolute [0 0 0 0]]
                     :size :full
                     :bg {:color [:white {:a 0.5}]}
@@ -149,12 +149,21 @@
                    :p (if error? [0.5 0.3] [0.3 0.7])
                    :flexi [1 1 :auto]}
 
-                  (c CodeMirror
-                     {:value (str/trim (or (some-> return :error .-message)
-                                           (u/pretty-str (:result return))))
-                      :editable false
-                      :extensions EDITOR_EXTENSIONS
-                      :theme EDITOR_THEME
-                      :basic-setup #js {:lineNumbers false
-                                        :foldGutter false
-                                        :highlightActiveLine false}})))))))
+                  (if editing
+
+                    (c CodeMirror
+                       {:value (str/trim (or (some-> return :error .-message)
+                                             (u/pretty-str (:result return))))
+                        :editable false
+                        :extensions EDITOR_EXTENSIONS
+                        :theme EDITOR_THEME
+                        :basic-setup #js {:lineNumbers false
+                                          :foldGutter false
+                                          :highlightActiveLine false}})
+
+                    (sc {"pre" {:m 0 :p 0}
+                         "code.hljs" {:bg {:color [:white {:a 0}]}}}
+                        (c Highlight
+                           {:class "clojure"}
+                           (str (str/trim (or (some-> return :error .-message)
+                                              (u/pretty-str (:result return))))))))))))))
