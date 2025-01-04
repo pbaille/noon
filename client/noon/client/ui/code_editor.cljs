@@ -91,8 +91,7 @@
 
                {:style {:overflow :hidden
                         :position :relative
-                        :width :full
-                        "pre" {:m 0 :p 0}}
+                        :width :full}
                 :on-click (fn [_] (set-editing true))
                 :on-blur (fn [_] (set-editing false))}
 
@@ -118,9 +117,11 @@
                      :basic-setup #js {:lineNumbers false
                                        :foldGutter false
                                        :highlightActiveLine false}})
-                 (c Highlight
-                    {:class "clojure"}
-                    (str source)))))
+                 (sc {"pre" {:m 0 :p 0}
+                      "code.hljs" {:bg {:color :white}}}
+                     (c Highlight
+                        {:class "clojure"}
+                        (str source))))))
         (when return
 
           (sc :code-editor-output
