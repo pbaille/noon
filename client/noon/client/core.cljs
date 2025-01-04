@@ -1,5 +1,5 @@
 (ns noon.client.core
-  (:require [noon.client.ui :as ui]
+  (:require [noon.client.ui.doc :as ui]
             [uic.component :refer [c sc]]
             [uix.dom]
             [stylefy.core :as stylefy]
@@ -7,10 +7,10 @@
 
 (defonce root (uix.dom/create-root (js/document.getElementById "app")))
 
-(def styles {:p [2 0]
+(def styles {:p 0
              :text [:sans {:leading :normal}]
              ".cm-editor" {:bg {:color "transparent"}}
-             "code" {:bg {:color [:gray {:a 0.1}]}
+             "code" {;; :bg {:color [:gray {:a 0.1}]}
                      :color [:black {:a 0.8}]
                      :p [1 0.5]
                      :text :bold
@@ -18,7 +18,7 @@
              ".cm-editor.cm-focused" {:border {:width 0}
                                       :outline :none
                                       :box-shadow :none}
-             :margin {:bottom "100vh"}
+             :height "100vh"
              :width {:max 800}})
 
 (defn render []
