@@ -7,7 +7,7 @@
             [noon.client.ui.utils :as ui.utils]))
 
 (defui section
-  [{:keys [id path level title children has-subsections inline-code]}]
+  [{:keys [id path idx level title children has-subsections inline-code]}]
 
   (let [header-ref (uix/use-ref)
         content-ref (uix/use-ref)
@@ -54,9 +54,10 @@
                           :threshold 0})]
 
     (uix/use-effect (fn pouet []
+                      (>> [:doc.ui.nodes.set path :idx idx])
                       (>> [:doc.ui.nodes.set path :header-visible header-visible])
                       (>> [:doc.ui.nodes.set path :content-visible content-visible]))
-                    [content-visible header-visible path])
+                    [content-visible header-visible path idx])
 
     (c :div.section
        {:id id}

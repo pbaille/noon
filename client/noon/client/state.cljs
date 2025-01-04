@@ -50,9 +50,13 @@
 
                            :folded (assoc-in db [:doc :ui :nodes path :folding] :folded)))}
 
-          :sidebar {:folding {:get (sub [db [_ path]]
-                                        (or (get-in db [:doc :ui :nodes path :sidebar :folding])
-                                            :folded))
+          :sidebar {:folding {:get (signal [{nodes [:get [:doc :ui :nodes]]
+                                             current-path [:doc.ui.current-path]}
+                                            [_ path]]
+                                           (if (flat-tree/subpath? current-path path)
+                                             :expanded
+                                             (or (get-in nodes [path :sidebar :folding])
+                                                 :folded)))
                               :set (dbf [db [_ path value]]
                                         (case value
                                           :expanded (update-in db [:doc :ui :nodes]
@@ -62,13 +66,18 @@
                                                                       path (fn [node] (assoc-in node [:sidebar :folding] :folded))))))
                                           :folded (assoc-in db [:doc :ui :nodes path :sidebar :folding] :folded)))}}
 
-          :breadcrumbs {:get
-                        (sub [db _]
+          :current-path (sub [db _]
                              (->> (get-in db [:doc :ui :nodes])
                                   (sort-by (comp count key) >)
-                                  (some (fn [[path {:keys [content-visible header-visible]}]]
+                                  (keep (fn [[path {:keys [idx content-visible header-visible]}]]
                                           (if (and content-visible (not header-visible))
-                                            (breadcrumbs path))))))}}
+                                            [path idx])))
+                                  (sort-by second >)
+                                  (ffirst)))
+
+          :breadcrumbs {:get
+                        (signal [{current-path [:doc.ui.current-path]} _]
+                                (breadcrumbs current-path))}}
          :tree {:get (sub [db [_ path]]
                           (get-in db (concat [:doc :tree]
                                              (interleave (repeat :subsections) path))))}}})

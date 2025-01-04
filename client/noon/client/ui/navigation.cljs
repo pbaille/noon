@@ -18,6 +18,8 @@
 
   (let [visibility (<< [:doc.ui.sidebar.folding.get path])
 
+        current-path (<< [:doc.ui.current-path])
+
         header (ui.utils/level->header-keyword (inc level))
 
         button-style {:text [:md :bold]
@@ -37,8 +39,10 @@
 
         button (case visibility
                  :expanded fold-button
-                 :folded summary-button)]
+                 :folded summary-button)
+        focus? (= current-path path)]
 
+    #_(println current-path)
     (c :div.section
        {:key (str path)}
        (c header
@@ -46,9 +50,11 @@
                    :flex [:start {:items :baseline :gap 1}]}}
           (sc button-style button)
           (c :a
-             {:style link-styles
+             {:style (merge link-styles
+                            (when focus?
+                              {:color :tomato}))
               :href (str "#" id)}
-             (if inline-code (c :code title) title)))
+             (if inline-code (c :code {:class (when focus? "focus")} title) title)))
 
        (c :div
           {:style {:display (if (= :folded visibility) :none :block)
@@ -69,6 +75,7 @@
        :p [3 3 0 2]
        ; :border {:right [2 :grey2]}
        :height "100vh"
+       :width 250
        :overflow :scroll
        :flexi [1 0 :auto]
        :align-self :stretch

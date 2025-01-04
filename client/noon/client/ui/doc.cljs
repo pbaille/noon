@@ -21,14 +21,15 @@
 
 (defui doc []
   (let [mode (<< [:get [:doc :ui :navigation-mode]])]
-    (sc {:height :full :flex [:row {:gap 2 :items :stretch}]}
-        (when (= mode :sidebar)
-          (c ui.navigation/sidebar))
-        (sc {:height "100vh"
-             :overflow :scroll}
-            (when (= mode :breadcrumbs)
-              (c ui.navigation/breadcrumbs))
-            (render-doc-node (<< [:doc.tree.get []]))))))
+    (case mode
+      :sidebar (sc {:height :full :flex [:row {:gap 2 :items :stretch}]}
+                   (c ui.navigation/sidebar)
+                   (sc {:height "100vh"
+                        :overflow :scroll}
+                       (render-doc-node (<< [:doc.tree.get []]))))
+      :breadcrumbs (sc {:p [2 0]}
+                       (c ui.navigation/breadcrumbs)
+                       (render-doc-node (<< [:doc.tree.get []]))))))
 
 (comment
   (>> [:upd [:ui :sidebar] not])
