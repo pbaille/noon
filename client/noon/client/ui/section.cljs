@@ -43,12 +43,18 @@
                          :rootMargin "-55px"
                          :threshold 0})]
 
+    ;; registering node
     (uix/use-effect (fn pouet []
                       #_(println "registering node" path)
                       (>> [:doc.ui.nodes.upd path (fn [node] (merge node {:header-ref header-ref
-                                                                          :header-visible header-visible
                                                                           :idx idx}))]))
-                    [path idx header-visible])
+                    [path idx])
+
+    ;; ping of visibility changes
+    ;; it triggers the :current-path signal
+    (uix/use-effect (fn pouet []
+                      (>> [:doc.ui.nodes.upd path (fn [node] (merge node {:header-visible header-visible}))]))
+                    [path header-visible])
 
     (c :div.section
        {:id id
