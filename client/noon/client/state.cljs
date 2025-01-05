@@ -75,9 +75,16 @@
                                   (sort-by second >)
                                   (ffirst)))
 
-          :breadcrumbs {:get
-                        (signal [{current-path [:doc.ui.current-path]} _]
-                                (breadcrumbs current-path))}}
+          :breadcrumbs (signal [{current-path [:doc.ui.current-path]} _]
+                               (breadcrumbs current-path))
+
+          :navigation-mode {:get (sub [db _] (get-in db [:doc :ui :navigation-mode]))
+                            :set (dbf [db [_ value]]
+                                      (case value
+                                        (:sidebar :breadcrumbs)
+                                        (assoc-in db
+                                                  [:doc :ui :navigation-mode]
+                                                  value)))}}
          :tree {:get (sub [db [_ path]]
                           (get-in db (concat [:doc :tree]
                                              (interleave (repeat :subsections) path))))}}})
