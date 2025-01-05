@@ -2,6 +2,7 @@
   (:require [uix.core :as uix :refer [defui]]
             [uic.component :refer [c sc]]
             [noon.client.state :refer [<< >>]]
+            [noon.client.doc :as doc]
             [noon.client.ui.section :as ui.section]
             [noon.client.ui.misc :as ui.misc]
             [noon.client.ui.code-editor :as ui.code-editor]
@@ -19,6 +20,9 @@
     :raw (uix/$ ui.misc/raw node)
     :code (uix/$ ui.code-editor/code-editor node)))
 
+(def doc-content
+  (render-doc-node doc/doc-data))
+
 (def doc-styles {:p 0
                  :text [:sans {:leading :normal}]
                  ".cm-editor" {:bg {:color "transparent"}}
@@ -34,21 +38,16 @@
                  :height "100vh"})
 
 (defui doc []
-  (let [mode (<< [:get [:doc :ui :navigation-mode]])]
-    (case mode
-      :sidebar (sc (merge doc-styles
-                          {:height :full
-                           :flex [:row {:gap 2 :items :stretch}]
-                           :width {:max 1100}})
-                   (c ui.navigation/sidebar)
-                   (sc {:p [2 3 0 0] :height "100vh"
-                        :overflow :scroll}
-                       (render-doc-node (<< [:doc.tree.get []]))))
-      :breadcrumbs (sc (merge doc-styles
-                              {:p [2 0]
-                               :width {:max 800}})
-                       (c ui.navigation/breadcrumbs)
-                       (render-doc-node (<< [:doc.tree.get []]))))))
+  (sc (merge doc-styles
+             {:height :full
+              :flex [:row {:gap 2 :items :stretch}]})
+      (c ui.navigation/sidebar)
+      (c ui.navigation/breadcrumbs)
+      (sc {:p [2 3 0 0]
+           :height "100vh"
+           :overflow :scroll
+           :width {:max 800}}
+          doc-content)))
 
 (comment
   (>> [:upd [:ui :sidebar] not])

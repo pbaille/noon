@@ -68,46 +68,72 @@
            (assoc node :key (str (:idx node)))
            (keep render-sidebar-node (sort-by :idx (vals (:children node)))))))
 
+(def sidebar-elements
+  (keep render-sidebar-node (sort-by :idx (vals (:children doc/doc-data)))))
+
 (defui sidebar []
-  (sc :div
-      {:flex :column
-       :bg {:color [:gray {:a 0.05}]}
-       :p [3 3 0 2]
-       ; :border {:right [2 :grey2]}
-       :height "100vh"
-       :width 250
-       :overflow :scroll
-       :flexi [1 0 :auto]
-       :align-self :stretch
-       ;; :transition "width 0.3s ease"
-       }
-      (keep render-sidebar-node (sort-by :idx (vals (:children doc/doc-data))))))
+  (let [mode (<< [:doc.ui.navigation-mode.get])
+        icon (case mode
+               :sidebar icons-tb/TbLayoutSidebarLeftCollapseFilled
+               :breadcrumbs icons-tb/TbLayoutSidebarLeftExpandFilled)]
+    (sc {:flex [:row {:items :center}]}
+        (sc :div
+            {:flex :column
+             :bg {:color [:gray {:a 0.05}]}
+             ; :border {:right [2 :grey2]}
+             :height "100vh"
+             :overflow :scroll
+             :flexi [1 0 :auto]
+             :align-self :stretch
+             :& (case mode
+                  :sidebar {:width 250
+                            :p [3 3 0 2]}
+                  :breadcrumbs {:width 0
+                                :p 0})
+              :transition "all 0.3s ease"
+             }
+            sidebar-elements)
+        (sc {:p [0.5 1]
+             :width 25
+             :color :grey12
+             :rounded [0 1 1 0]
+             :bg {:color [:gray {:a 0.05}]}
+             :hover {:color :tomato}}
+            (c icon {:style {:width 25}
+                     :on-click (fn [] (>> [:doc.ui.navigation-mode.set
+                                           (case mode
+                                             :sidebar :breadcrumbs
+                                             :breadcrumbs :sidebar)]))})))))
 
 (defui breadcrumbs
   []
-  (when-let [elements (<< [:doc.ui.breadcrumbs.get])]
-
-    (sc {:m [3 0]
+  (let [elements (<< [:doc.ui.breadcrumbs])
+        mode (<< [:doc.ui.navigation-mode.get])]
+    (sc :div.breadcrumbs
+        {:m [3 0]
          :z-index 1000
          :width :full
          :bg {:color :white}
          :position [:fixed {:top 0 :left 0}]
-         :flex [:start {:items :baseline :gap 1}]
-         :border {:bottom [2 :grey1]}
-         :overflow-x :scroll}
+         :overflow-x :scroll
+         :& (if (or (empty? elements)
+                    (not= :breadcrumbs mode))
+              {:display :none :border :none}
+              {:flex [:start {:items :baseline :gap 1}]
+               :border {:bottom [2 :grey1]}})}
 
         (sc {:flex [:row {:gap 1 :items :baseline}]}
             (mapcat (fn [{:keys [level href text]}]
-                        [(c {:style {}
-                             :key (str level "-button")}
-                            (c icons-tb/TbCaretRightFilled))
-                         (c :a {:style {:flex-shrink 0 :color "inherit" :text-decoration "none"}
-                                :href href
-                                :key (str level "-link")}
-                            (uix/$ (ui.utils/level->header-keyword level)
-                                   {:style {:margin 1}}
-                                   text))])
-                      elements))
+                      [(c {:style {}
+                           :key (str level "-button")}
+                          (c icons-tb/TbCaretRightFilled))
+                       (c :a {:style {:flex-shrink 0 :color "inherit" :text-decoration "none"}
+                              :href href
+                              :key (str level "-link")}
+                          (uix/$ (ui.utils/level->header-keyword level)
+                                 {:style {:margin 1}}
+                                 text))])
+                    elements))
 
         #_(when right-button
             (sc button-style right-button)))))
