@@ -53,14 +53,16 @@
              {:style (merge link-styles
                             (when focus?
                               {:color :tomato}))
-              :href (str "#" id)}
+              :href (str "#" id)
+              :on-click (visibility-toggler :expanded)}
              (if inline-code (c :code {:class (when focus? "focus")} title) title)))
 
-       (c :div
-          {:style {:display (if (= :folded visibility) :none :block)
-                   :p [0 0 0 2]}}
+       (sc {:p {:left 0.85}}
+           (sc {:display (if (= :folded visibility) :none :block)
+                :p {:left 1.15}
+                :border {:left [2 [:gray {:a 0.1}] ]}}
 
-          children))))
+               children)))))
 
 (defn render-sidebar-node [node]
   (when (= :section (:type node))
@@ -95,7 +97,7 @@
             sidebar-elements)
         (sc {:p [0.5 1]
              :width 25
-             :color :grey12
+             :color :grey6
              :rounded [0 1 1 0]
              :bg {:color [:gray {:a 0.05}]}
              :hover {:color :tomato}}
