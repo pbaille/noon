@@ -22,12 +22,16 @@
                        (get-in db [:doc :ui :nodes path k]))
 
                   :set
-                  (dbf [db [_ path k v]]
-                       (assoc-in db [:doc :ui :nodes path k] v))
+                  (dbf [db [_ path v]]
+                       (assoc-in db [:doc :ui :nodes path] v))
+
+                  :upd
+                  (dbf [db [_ path f]]
+                       (update-in db [:doc :ui :nodes path] f))
 
                   :pp
                   (event [cofx [_ k]]
-                         (let [nodes (get-in (:db cofx) [:doc :ui :nodes])]
+                         (let [nodes (get-in cofx [:db :doc :ui :nodes])]
                            {:pp [(if k (get nodes k) k)]}))}
 
           :folding {:get
@@ -68,14 +72,16 @@
 
           :current-path (sub [db _]
                              (->> (get-in db [:doc :ui :nodes])
-                                  (sort-by (comp count key) >)
-                                  (keep (fn [[path {:keys [idx content-visible header-visible]}]]
-                                          (if (and content-visible (not header-visible))
-                                            [path idx])))
-                                  (sort-by second >)
-                                  (ffirst)))
+                                  (sort-by (comp :idx val))
+                                  (reduce (fn [ret [path node]]
+                                            (if (neg? (.-top (.getBoundingClientRect @(:header-ref node))))
+                                              (cons path ret)
+                                              (reduced ret)))
+                                          ())
+                                  (first)))
 
           :breadcrumbs (signal [{current-path [:doc.ui.current-path]} _]
+                               #_(println "bc" current-path)
                                (breadcrumbs current-path))
 
           :navigation-mode {:get (sub [db _] (get-in db [:doc :ui :navigation-mode]))
