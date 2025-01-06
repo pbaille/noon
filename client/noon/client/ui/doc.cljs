@@ -6,7 +6,8 @@
             [noon.client.ui.section :as ui.section]
             [noon.client.ui.misc :as ui.misc]
             [noon.client.ui.code-editor :as ui.code-editor]
-            [noon.client.ui.navigation :as ui.navigation]))
+            [noon.client.ui.sidebar :as ui.sidebar]
+            [noon.client.ui.breadcrumbs :as ui.breadcrumbs]))
 
 (defn render-doc-node [node]
   (case (:type node)
@@ -41,12 +42,13 @@
   (sc (merge doc-styles
              {:height :full
               :flex [:row {:gap 2 :items :stretch}]})
-      (c ui.navigation/sidebar)
-      (c ui.navigation/breadcrumbs)
+      (c ui.sidebar/sidebar)
+      (c ui.breadcrumbs/breadcrumbs)
       (sc {:p [2 3 0 0]
            :height "100vh"
            :overflow :scroll
-           :width {:max 800}}
+           :width {:max 800
+                   :min 400}}
           doc-content)))
 
 (comment

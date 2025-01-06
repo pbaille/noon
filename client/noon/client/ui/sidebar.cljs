@@ -1,4 +1,4 @@
-(ns noon.client.ui.navigation
+(ns noon.client.ui.sidebar
   (:require [uix.core :as uix :refer [defui]]
             [uic.component :refer [c sc]]
             [noon.client.ui.utils :as ui.utils]
@@ -24,7 +24,8 @@
 
         button-style {:text [:md :bold]
                       :color :grey3
-                      :hover {:color :tomato}}
+                      :hover {:color :tomato}
+                      :flex-shrink 0}
 
         visibility-toggler (fn [value]
                              (fn [e] (.stopPropagation e) (>> [:doc.ui.sidebar.folding.set path value])))
@@ -92,8 +93,7 @@
                             :p [3 3 0 2]}
                   :breadcrumbs {:width 0
                                 :p 0})
-              :transition "all 0.3s ease"
-             }
+             :transition "all 0.3s ease"}
             sidebar-elements)
         (sc {:p [0.5 1]
              :width 25
@@ -106,36 +106,3 @@
                                            (case mode
                                              :sidebar :breadcrumbs
                                              :breadcrumbs :sidebar)]))})))))
-
-(defui breadcrumbs
-  []
-  (let [elements (<< [:doc.ui.breadcrumbs])
-        mode (<< [:doc.ui.navigation-mode.get])]
-    (sc :div.breadcrumbs
-        {:m [3 0]
-         :z-index 1000
-         :width :full
-         :bg {:color :white}
-         :position [:fixed {:top 0 :left 0}]
-         :overflow-x :scroll
-         :& (if (or (empty? elements)
-                    (not= :breadcrumbs mode))
-              {:display :none :border :none}
-              {:flex [:start {:items :baseline :gap 1}]
-               :border {:bottom [2 :grey1]}})}
-
-        (sc {:flex [:row {:gap 1 :items :baseline}]}
-            (mapcat (fn [{:keys [level href text]}]
-                      [(c {:style {}
-                           :key (str level "-button")}
-                          (c icons-tb/TbCaretRightFilled))
-                       (c :a {:style {:flex-shrink 0 :color "inherit" :text-decoration "none"}
-                              :href href
-                              :key (str level "-link")}
-                          (uix/$ (ui.utils/level->header-keyword level)
-                                 {:style {:margin 1}}
-                                 text))])
-                    elements))
-
-        #_(when right-button
-            (sc button-style right-button)))))
