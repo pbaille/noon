@@ -33,28 +33,34 @@
 
         [left-button right-button] (case visibility
                                      :summary [expand-button fold-button]
-                                     :folded [summary-button]
+                                     :folded [(or summary-button expand-button)]
                                      :expanded [fold-button])
-        header-visible (hooks/use-visible-intersection
-                        header-ref
-                        (fn [entry]
-                          (.-isIntersecting entry))
-                        {:root nil
-                         :rootMargin "-55px"
-                         :threshold 0})]
+        header-visibility (hooks/use-visible-intersection
+                           header-ref
+                           (fn [entry]
+                             (let [r (.-intersectionRatio entry)]
+                               (cond (= 0 r) :invisible
+                                     (= 1 r) :visible
+                                     :else :partial)))
+                           {:root nil
+                            :rootMargin "0px"
+                            :threshold [0 1]})]
 
     ;; registering node
     (uix/use-effect (fn pouet []
                       #_(println "registering node" path)
                       (>> [:doc.ui.nodes.upd path (fn [node] (merge node {:header-ref header-ref
-                                                                          :idx idx}))]))
-                    [path idx])
+                                                                          :idx idx
+                                                                          :title title
+                                                                          :inline-code inline-code}))]))
+                    [path title idx inline-code])
 
     ;; ping of visibility changes
     ;; it triggers the :current-path signal
     (uix/use-effect (fn pouet []
-                      (>> [:doc.ui.nodes.upd path (fn [node] (merge node {:header-visible header-visible}))]))
-                    [path header-visible])
+                      #_(println "trigg " path header-visibility)
+                      (>> [:doc.ui.nodes.upd path (fn [node] (merge node {:header-visible header-visibility}))]))
+                    [path header-visibility])
 
     (c :div.section
        {:id id
@@ -62,6 +68,7 @@
        (c header
           {:ref header-ref
            :style {:flex [:start {:items :baseline :gap 1}]
+                   :width :full
                    :border {:bottom [2 :grey1]}
                    :p {:bottom 1}}}
           (if inline-code (c :code title) title)
