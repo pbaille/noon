@@ -5,6 +5,10 @@
   (= (vec parent)
      (vec (butlast child))))
 
+(defn parent-path [path]
+  (when (next path)
+    (vec (butlast path))))
+
 (defn subpath? [descendant parent]
   (or (child-path? descendant parent)
       (when-let [descendant-parent (seq (butlast descendant))]
