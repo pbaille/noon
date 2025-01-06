@@ -3,15 +3,17 @@
             [noon.client.doc :as doc]
             [noon.client.utils.flat-tree :as flat-tree]))
 
-(defn breadcrumbs [at]
+(defn breadcrumbs [at nodes]
   (mapv (fn [path]
-          {:path path
-           :text (last path)
-           :level (count path)
-           :href (->> path
-                      (interpose "/")
-                      (cons "#/")
-                      (apply str))})
+          (let [node (get nodes (vec path))]
+            {:path path
+             :inline-code (:inline-code node)
+             :text (:title node)
+             :level (count path)
+             :href (->> path
+                        (interpose "/")
+                        (cons "#/")
+                        (apply str))}))
         (next (reductions conj [] at))))
 
 (def tree
@@ -43,16 +45,34 @@
                     (dbf [db [_ path value]]
                          (case value
                            :expanded (update-in db [:doc :ui :nodes]
-                                                flat-tree/update-recursively-from path
-                                                (fn [node] (assoc node :folding :expanded)))
+                                                (fn [nodes]
+                                                  (println :expand path (flat-tree/parent-path path))
+                                                  (-> nodes
+                                                      (flat-tree/update-recursively-from
+                                                       path (fn [node] (assoc node :folding :expanded)))
+                                                      (assoc-in [(flat-tree/parent-path path) :folding]
+                                                                :expanded))))
 
                            :summary (update-in db [:doc :ui :nodes]
                                                (fn [nodes]
-                                                 (-> (assoc-in nodes [path :folding] :summary)
+                                                 (-> nodes
+                                                     (assoc-in [path :folding] :summary)
+                                                     (assoc-in [(flat-tree/parent-path path) :folding] :expanded)
                                                      (flat-tree/update-children
                                                       path (fn [node] (assoc node :folding :folded))))))
 
-                           :folded (assoc-in db [:doc :ui :nodes path :folding] :folded)))}
+                           :folded (assoc-in db [:doc :ui :nodes path :folding] :folded)))
+
+                    :visible-nodes
+                    (sub [db [_ _]]
+                         (let [nodes (get-in db [:doc :ui :nodes])
+                               folded-paths (keep (fn [[path {:keys [folding]}]]
+                                                    (when (= :folded folding) path))
+                                                  nodes)]
+                           (remove (fn [[path _]]
+                                     (some (fn [p] (flat-tree/subpath? path p))
+                                           folded-paths))
+                                   nodes)))}
 
           :sidebar {:folding {:get (signal [{nodes [:get [:doc :ui :nodes]]
                                              current-path [:doc.ui.current-path]}
@@ -70,19 +90,25 @@
                                                                       path (fn [node] (assoc-in node [:sidebar :folding] :folded))))))
                                           :folded (assoc-in db [:doc :ui :nodes path :sidebar :folding] :folded)))}}
 
-          :current-path (sub [db _]
-                             (->> (get-in db [:doc :ui :nodes])
-                                  (sort-by (comp :idx val))
-                                  (reduce (fn [ret [path node]]
-                                            (if (neg? (.-top (.getBoundingClientRect @(:header-ref node))))
-                                              (cons path ret)
-                                              (reduced ret)))
-                                          ())
-                                  (first)))
+          :current-path (signal [{nodes [:doc.ui.folding.visible-nodes]} _]
+                                (->> nodes
+                                     (sort-by (comp :idx val))
+                                     (reduce (fn [ret [path node]]
+                                               (if (>= 2 (.-top (.getBoundingClientRect @(:header-ref node))))
+                                                 (cons path ret)
+                                                 (reduced ret)))
+                                             ())
+                                     (first)))
 
-          :breadcrumbs (signal [{current-path [:doc.ui.current-path]} _]
-                               #_(println "bc" current-path)
-                               (breadcrumbs current-path))
+          :breadcrumbs {:get (signal [{nodes [:get [:doc :ui :nodes]]
+                                       current-path [:doc.ui.current-path]} _]
+                                     (drop-last (:breadcrumbs-offset (get nodes current-path) 0)
+                                                (breadcrumbs current-path nodes)))
+
+                        :shrink (dbf [db [_ path]]
+                                     (update-in db
+                                                [:doc :ui :nodes path :breadcrumbs-offset]
+                                                (fnil inc 0)))}
 
           :navigation-mode {:get (sub [db _] (get-in db [:doc :ui :navigation-mode]))
                             :set (dbf [db [_ value]]
