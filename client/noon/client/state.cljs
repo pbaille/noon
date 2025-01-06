@@ -102,21 +102,13 @@
 
           :breadcrumbs {:get (signal [{nodes [:get [:doc :ui :nodes]]
                                        current-path [:doc.ui.current-path]} _]
-                                     (drop-last (:breadcrumbs-offset (get nodes current-path) 0)
-                                                (breadcrumbs current-path nodes)))
-
-                        :shrink (dbf [db [_ path]]
-                                     (update-in db
-                                                [:doc :ui :nodes path :breadcrumbs-offset]
-                                                (fnil inc 0)))}
+                                     (breadcrumbs current-path nodes))}
 
           :navigation-mode {:get (sub [db _] (get-in db [:doc :ui :navigation-mode]))
                             :set (dbf [db [_ value]]
                                       (case value
                                         (:sidebar :breadcrumbs)
-                                        (assoc-in db
-                                                  [:doc :ui :navigation-mode]
-                                                  value)))}}
+                                        (assoc-in db [:doc :ui :navigation-mode] value)))}}
          :tree {:get (sub [db [_ path]]
                           (get-in db (concat [:doc :tree]
                                              (interleave (repeat :subsections) path))))}}})

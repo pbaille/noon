@@ -21,8 +21,9 @@
         visibility-toggler (fn [value]
                              (fn [e] (.stopPropagation e) (>> [:doc.ui.folding.set path value])))
 
-        fold-button (c LuSquareMinus
-                       {:on-click (visibility-toggler :folded)})
+        fold-button (when (not (= 1 level))
+                      (c LuSquareMinus
+                         {:on-click (visibility-toggler :folded)}))
 
         expand-button (c LuSquarePlus
                          {:on-click (visibility-toggler :expanded)})
@@ -34,7 +35,8 @@
         [left-button right-button] (case visibility
                                      :summary [expand-button fold-button]
                                      :folded [(or summary-button expand-button)]
-                                     :expanded [fold-button])
+                                     :expanded [(or fold-button summary-button)])
+
         header-visibility (hooks/use-visible-intersection
                            header-ref
                            (fn [entry]

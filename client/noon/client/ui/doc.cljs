@@ -1,5 +1,6 @@
 (ns noon.client.ui.doc
-  (:require [uix.core :as uix :refer [defui]]
+  (:require [clojure.string :as str]
+            [uix.core :as uix :refer [defui]]
             [uic.component :refer [c sc]]
             [noon.client.state :refer [<< >>]]
             [noon.client.doc :as doc]
@@ -39,6 +40,13 @@
                  :height "100vh"})
 
 (defui doc []
+
+  ;; if url contains hash part, we scroll to it
+  (uix/use-effect (fn []
+                    (let [hash (-> js/window .-location .-hash (str/replace #"^#" ""))]
+                      (when-let [element (.getElementById js/document hash)]
+                        (.scrollIntoView element #js {:behavior "smooth"})))))
+
   (sc (merge doc-styles
              {:height :full
               :flex [:row {:gap 2 :items :stretch}]})
