@@ -38,3 +38,14 @@
      [ref f options])
 
     return))
+
+(defn use-window-size []
+  (let [[size set-size] (uix/use-state [0 0])]
+    (uix/use-layout-effect
+     (fn []
+       (let [update-size #(set-size [(.-innerWidth js/window) (.-innerHeight js/window)])]
+         (.addEventListener js/window "resize" update-size)
+         (update-size)
+         #(do (.removeEventListener js/window "resize" update-size))))
+     [])
+    size))
