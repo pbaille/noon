@@ -23,7 +23,7 @@
     (defn slugify [s]
       (-> (or s "")
           (str/lower-case)
-          (str/replace #"[^\w\s-]" "")
+          (str/replace #"[^\w\s-]" "_")
           (str/replace #"\s+" "-")
           (str/trim))))
 
