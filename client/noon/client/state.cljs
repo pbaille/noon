@@ -1,5 +1,5 @@
 (ns noon.client.state
-  (:require [uic.state :as state :refer [signal sub dbf effect event]]
+  (:require [uic.state :as state :refer [signal sub dbf event]]
             [noon.client.doc :as doc]
             [noon.client.constants :as constants]
             [noon.client.utils.flat-tree :as flat-tree]))
@@ -93,7 +93,7 @@
 
           :current-path (signal [{mode [:doc.ui.navigation-mode.get]
                                   nodes [:doc.ui.folding.visible-nodes]
-                                  scrolling-pos [:doc.ui.scrolling.position.get]}
+                                  _scrolling-pos [:doc.ui.scrolling.position.get]}
                                  _]
                                 (->> nodes
                                      (sort-by (comp :idx val))

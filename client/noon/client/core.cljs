@@ -1,6 +1,6 @@
 (ns noon.client.core
   (:require [noon.client.ui.doc :as ui]
-            [uic.component :refer [c sc]]
+            [uic.component :refer [c]]
             [uix.dom]
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]))

@@ -62,5 +62,5 @@
                    :position [:absolute {:right 0}]
                    :color :grey6
                    :hover {:color :light-skyblue}}
-           :href "https://github.com/pbaille/noon"}
+           :href constants/GITHUB_REPO_URL}
           (c FaGithub)))))

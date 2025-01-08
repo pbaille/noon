@@ -30,9 +30,9 @@
                         binaryage/devtools {:mvn/version "1.0.0"}
                         stylefy/stylefy {:mvn/version "3.2.0"}
                         stylefy/generic-dom {:mvn/version "3.0.0"}
-                        uic/uic {#_:local/root #_"/Users/pierrebaille/Code/WIP/uic"
-                                 :git/url "https://github.com/pbaille/uic.git"
-                                 :sha "8341a453fedf12afa2b94d4fd80e7d0725ed0028"}
+                        pbaille/uic {#_:local/root #_"/Users/pierrebaille/Code/WIP/uic"
+                                     :git/url "https://github.com/pbaille/uic.git"
+                                     :sha "f9438052038d233d0b210e4425953acc10bf110f"}
                         com.pitch/uix.core {:mvn/version "1.2.0"}
                         com.pitch/uix.dom {:mvn/version "1.2.0"}}}
 
