@@ -93,7 +93,9 @@
                                           :folded (assoc-in db [:doc :ui :nodes path :sidebar :folding] :folded)))}}
 
           :current-path (signal [{mode [:doc.ui.navigation-mode.get]
-                                  nodes [:doc.ui.folding.visible-nodes]} _]
+                                  nodes [:doc.ui.folding.visible-nodes]
+                                  scrolling-pos [:doc.ui.scrolling.position.get]}
+                                 _]
                                 (->> nodes
                                      (sort-by (comp :idx val))
                                      (reduce (fn [ret [path node]]
@@ -112,13 +114,18 @@
                             :set (dbf [db [_ value]]
                                       (case value
                                         (:sidebar :breadcrumbs)
-                                        (assoc-in db [:doc :ui :navigation-mode] value)))}}
+                                        (assoc-in db [:doc :ui :navigation-mode] value)))}
+          :scrolling {:position {:set (dbf [db [_ pos]]
+                                           (assoc-in db [:doc :ui :scrolling :position] pos))
+                                 :get (sub [db _]
+                                           (get-in db [:doc :ui :scrolling :position]))}}}
          :tree {:get (sub [db [_ path]]
                           (get-in db (concat [:doc :tree]
                                              (interleave (repeat :subsections) path))))}}})
 
 (def initial-db
   {:doc {:ui {:navigation-mode :sidebar #_:breadcrumbs
+              :scrolling {:position 0}
               :nodes {}}
          :tree doc/doc-data}})
 

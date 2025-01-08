@@ -3,7 +3,6 @@
             [uic.component :refer [c sc]]
             ["react-icons/lu" :refer [LuSquarePlus LuSquareMinus LuSquareMenu]]
             [noon.client.state :refer [<< >>]]
-            [noon.client.ui.hooks :as hooks]
             [noon.client.ui.utils :as ui.utils]))
 
 (defui section
@@ -36,18 +35,7 @@
         [left-button right-button] (case visibility
                                      :summary [expand-button fold-button]
                                      :folded [(or summary-button expand-button)]
-                                     :expanded [(or fold-button summary-button)])
-
-        header-visibility (hooks/use-visible-intersection
-                           header-ref
-                           (fn [entry]
-                             (let [r (.-intersectionRatio entry)]
-                               (cond (= 0 r) :invisible
-                                     (= 1 r) :visible
-                                     :else :partial)))
-                           {:root (js/document.getElementById "doc-container")
-                            :rootMargin "0px"
-                            :threshold [0 1]})]
+                                     :expanded [(or fold-button summary-button)])]
 
     ;; registering node
     (uix/use-effect (fn pouet []
@@ -57,13 +45,6 @@
                                                                           :title title
                                                                           :inline-code inline-code}))]))
                     [path title idx inline-code])
-
-    ;; ping of visibility changes
-    ;; it triggers the :current-path signal
-    (uix/use-effect (fn pouet []
-                      #_(println "trigg " path header-visibility)
-                      (>> [:doc.ui.nodes.upd path (fn [node] (merge node {:header-visible header-visibility}))]))
-                    [path header-visibility])
 
     (c :div.section
        {:on-click (fn [_] (>> [:doc.ui.nodes.pp path]))}

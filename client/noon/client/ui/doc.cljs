@@ -60,7 +60,7 @@
                    :min 400}}
           (c ui.breadcrumbs/breadcrumbs)
           (c :div#doc-container.no-scrollbar
-             {:on-scroll (fn [_] (println :scrolling))
+             {:on-scroll (fn [event] (>> [:doc.ui.scrolling.position.set (.-scrollTop (.-target event))]))
               :style {:flex-shrink 1
                       :overflow :scroll}}
              doc-content))))

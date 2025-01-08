@@ -33,10 +33,7 @@
                        :width :full
                        :bg {:color :white}
                        :flex-shrink 0
-                       #_:transition #_"height 1s ease"
-                       #_:position #_[:fixed {:top 0 :left 0}]
-                       :overflow-x :hidden
-                       :overflow-y :hidden
+                       :overflow :hidden
                        :flex [:start :wrap {:items :baseline :gap 1}]
                        :border {:bottom [2 :grey1]}}
                       (if (not= :breadcrumbs mode)
@@ -52,7 +49,7 @@
                           (c icons-tb/TbCaretRightFilled)))
                     (c header {:on-click (fn [_]
                                            (scroll-to-element-smoothly (subs href 1)))
-                               :style {:p [1 0]
+                               :style {:p 0
                                        :cursor :pointer
                                        :hover {:color :light-skyblue}}}
                        (if inline-code
