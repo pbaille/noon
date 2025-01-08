@@ -3,6 +3,7 @@
             [uic.component :refer [c sc]]
             [noon.client.ui.utils :as ui.utils]
             [noon.client.state :refer [<< >>]]
+            [noon.client.constants :as constants]
             [noon.client.doc :as doc]
             ["react-icons/tb" :as icons-tb]))
 
@@ -12,6 +13,17 @@
    :text :semibold
    :text-decoration "none"
    :hover {:color :light-skyblue}})
+
+(defn goto-element [element-id]
+  (let [element (.getElementById js/document element-id)
+        element-position (.-offsetTop element)
+        scroll-options #js {:top element-position
+                            :left 0
+                            :behavior "instant"}
+        container (.getElementById js/document constants/DOC_CONTAINER_ID)]
+    (when element
+      (.scrollTo container scroll-options)
+      (ui.utils/set-url-hash-no-scroll element-id))))
 
 (defui sidebar-section
   [{:keys [id path level title children inline-code]}]
@@ -33,7 +45,9 @@
         fold-button (c icons-tb/TbCaretDownFilled
                        {:on-click (visibility-toggler :folded)})
 
-        summary-button (if (seq children)
+        children? (seq children)
+
+        summary-button (if children?
                          (c icons-tb/TbCaretRightFilled
                             {:on-click (visibility-toggler :expanded)})
                          (c icons-tb/TbPoint))
@@ -54,14 +68,15 @@
              {:style (merge link-styles
                             (when focus?
                               {:color :tomato}))
-              :href (str "#" id)
-              :on-click (visibility-toggler :expanded)}
+              :on-click (fn [e]
+                          (goto-element id)
+                          (if children? ((visibility-toggler :expanded) e)))}
              (if inline-code (c :code {:class (when focus? "focus")} title) title)))
 
        (sc {:p {:left 0.85}}
            (sc {:display (if (= :folded visibility) :none :block)
                 :p {:left 1.15}
-                :border {:left [2 [:gray {:a 0.1}] ]}}
+                :border {:left [2 [:gray {:a 0.1}]]}}
 
                children)))))
 

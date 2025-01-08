@@ -1,9 +1,8 @@
 (ns noon.client.state
   (:require [uic.state :as state :refer [signal sub dbf effect event]]
             [noon.client.doc :as doc]
+            [noon.client.constants :as constants]
             [noon.client.utils.flat-tree :as flat-tree]))
-
-(def BREADCRUMBS_HEIGHT 55)
 
 (defn breadcrumbs [at nodes]
   (mapv (fn [path]
@@ -99,8 +98,8 @@
                                 (->> nodes
                                      (sort-by (comp :idx val))
                                      (reduce (fn [ret [path node]]
-                                               (if (> (case mode :sidebar 0 :breadcrumbs BREADCRUMBS_HEIGHT)
-                                                      (.-top (.getBoundingClientRect @(:header-ref node))))
+                                               (if (>= (case mode :sidebar 0 :breadcrumbs constants/BREADCRUMBS_HEIGHT)
+                                                       (js/Math.floor (.-top (.getBoundingClientRect @(:header-ref node)))))
                                                  (cons path ret)
                                                  (reduced ret)))
                                              ())

@@ -8,7 +8,8 @@
             [noon.client.ui.misc :as ui.misc]
             [noon.client.ui.code-editor :as ui.code-editor]
             [noon.client.ui.sidebar :as ui.sidebar]
-            [noon.client.ui.breadcrumbs :as ui.breadcrumbs]))
+            [noon.client.ui.breadcrumbs :as ui.breadcrumbs]
+            [noon.client.constants :as constants]))
 
 (defn render-doc-node [node]
   (case (:type node)
@@ -45,7 +46,7 @@
   (uix/use-effect (fn []
                     (let [hash (-> js/window .-location .-hash (str/replace #"^#" ""))]
                       (when-let [element (.getElementById js/document hash)]
-                        (.scrollIntoView element #js {:behavior "smooth"}))))
+                        (.scrollIntoView element #js {:behavior "instant"}))))
                   [])
 
   (sc :div.doc
@@ -59,8 +60,9 @@
            :width {:max 800
                    :min 400}}
           (c ui.breadcrumbs/breadcrumbs)
-          (c :div#doc-container.no-scrollbar
-             {:on-scroll (fn [event] (>> [:doc.ui.scrolling.position.set (.-scrollTop (.-target event))]))
+          (c :div.no-scrollbar
+             {:id constants/DOC_CONTAINER_ID
+              :on-scroll (fn [event] (>> [:doc.ui.scrolling.position.set (.-scrollTop (.-target event))]))
               :style {:flex-shrink 1
                       :overflow :scroll}}
              doc-content))))
