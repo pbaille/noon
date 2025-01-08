@@ -4,7 +4,8 @@
             [noon.client.ui.utils :as ui.utils]
             [noon.client.state :refer [<<]]
             [noon.client.constants :as constants]
-            ["react-icons/tb" :as icons-tb]))
+            ["react-icons/tb" :as icons-tb]
+            ["react-icons/fa" :refer [FaGithub]]))
 
 (defn scroll-to-element [element-id & [behavior]]
   (let [element (.getElementById js/document element-id)
@@ -24,15 +25,16 @@
         mode (<< [:doc.ui.navigation-mode.get])]
 
     (c :div.breadcrumbs
-       {:style (merge {:p 0
+       {:style (merge {:m {:right 3}
                        :height constants/BREADCRUMBS_HEIGHT
                        :z-index 1000
-                       :width :full
+                       #_:width #_:full
                        :bg {:color :white}
                        :flex-shrink 0
                        :overflow :hidden
                        :flex [:start :wrap {:items :baseline :gap 1}]
-                       :border {:bottom [2 :grey1]}}
+                       :border {:bottom [2 :grey1]}
+                       :position :relative}
                       (if (not= :breadcrumbs mode)
                         {:height 0 :p [0 0] :border {:border [0 :white]}}))}
 
@@ -52,4 +54,13 @@
                        (if inline-code
                          (c :code text)
                          text)))))
-             elements))))
+             elements)
+
+       (c :a
+          {:style {:p 2
+                   :text :xl
+                   :position [:absolute {:right 0}]
+                   :color :grey6
+                   :hover {:color :light-skyblue}}
+           :href "https://github.com/pbaille/noon"}
+          (c FaGithub)))))

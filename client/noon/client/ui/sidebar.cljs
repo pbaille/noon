@@ -5,7 +5,8 @@
             [noon.client.state :refer [<< >>]]
             [noon.client.constants :as constants]
             [noon.client.doc :as doc]
-            ["react-icons/tb" :as icons-tb]))
+            ["react-icons/tb" :as icons-tb]
+            ["react-icons/fa" :refer [FaGithub]]))
 
 (def link-styles
   {:flex-shrink 0
@@ -103,13 +104,22 @@
              :overflow :scroll
              :flexi [1 0 :auto]
              :align-self :stretch
+             :position :relative
              :& (case mode
                   :sidebar {:width 250
                             :p [3 3 0 2]}
                   :breadcrumbs {:width 0
                                 :p 0})
              :transition "all 0.3s ease"}
-            sidebar-elements)
+            sidebar-elements
+            (c :a
+               {:style {:p 2
+                        :text :xl
+                        :color :grey6
+                        :position [:absolute {:bottom 0 :right 0}]
+                        :hover {:color :light-skyblue}}
+                :href constants/GITHUB_REPO_URL}
+               (c FaGithub)))
         (case mode
           :sidebar (sc {:p [0.5 1]
                         :width 25
