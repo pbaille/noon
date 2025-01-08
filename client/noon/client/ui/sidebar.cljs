@@ -95,14 +95,20 @@
                                 :p 0})
              :transition "all 0.3s ease"}
             sidebar-elements)
-        (sc {:p [0.5 1]
-             :width 25
-             :color :grey6
-             :rounded [0 1 1 0]
-             :bg {:color [:gray {:a 0.05}]}
-             :hover {:color :tomato}}
-            (c icon {:style {:width 25}
-                     :on-click (fn [] (>> [:doc.ui.navigation-mode.set
-                                           (case mode
-                                             :sidebar :breadcrumbs
-                                             :breadcrumbs :sidebar)]))})))))
+        (case mode
+          :sidebar (sc {:p [0.5 1]
+                        :width 25
+                        :color :grey6
+                        :rounded [0 1 1 0]
+                        :bg {:color [:gray {:a 0.05}]}
+                        :hover {:color :tomato}}
+                       (c icon {:style {:width 25}
+                                :on-click (fn [] (>> [:doc.ui.navigation-mode.set :breadcrumbs]))}))
+          :breadcrumbs (c {:on-click (fn [] (>> [:doc.ui.navigation-mode.set :sidebar]))
+                           :style {:p [0.5 1]
+                                   :width 10
+                                   :height 30
+                                   :color :grey6
+                                   :rounded [0 1 1 0]
+                                   :bg {:color [:tomato {:a 0.4}]}
+                                   :hover {:bg {:color [:tomato {:a 0.7}]}}}})))))

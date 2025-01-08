@@ -11,6 +11,7 @@
 
   (let [header-ref (uix/use-ref)
         visibility (<< [:doc.ui.folding.get path])
+        mode (<< [:doc.ui.navigation-mode.get])
 
         header (ui.utils/level->header-keyword level)
 
@@ -44,7 +45,7 @@
                                (cond (= 0 r) :invisible
                                      (= 1 r) :visible
                                      :else :partial)))
-                           {:root nil
+                           {:root (js/document.getElementById "doc-container")
                             :rootMargin "0px"
                             :threshold [0 1]})]
 
@@ -65,19 +66,22 @@
                     [path header-visibility])
 
     (c :div.section
-       {:id id
-        :on-click (fn [_] (>> [:doc.ui.nodes.pp path]))}
+       {:on-click (fn [_] (>> [:doc.ui.nodes.pp path]))}
        (c header
           {:ref header-ref
-           :style {:flex [:start {:items :baseline :gap 1}]
-                   :width :full
-                   :border {:bottom [2 :grey1]}
-                   :p {:bottom 1}}}
+           :id id
+           :style (merge {:flex [:start {:items :baseline :gap 1}]
+                          :width :full
+                          :border {:bottom [2 :grey1]}
+                          :p [0 1]}
+                         (if-not (or (= mode :sidebar)
+                                     (> level 1))
+                           {:display :none}))}
           (if inline-code (c :code title) title)
           (sc button-style left-button)
           (when right-button (sc button-style right-button)))
 
        (c :div
           {:style {:display (if (= :folded visibility) :none :block)
-                   :p [0 0 0 2]}}
+                   :p [0 0 0 (case mode :breadcrumbs 1 :sidebar 2)]}}
           children))))

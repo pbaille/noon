@@ -45,19 +45,25 @@
   (uix/use-effect (fn []
                     (let [hash (-> js/window .-location .-hash (str/replace #"^#" ""))]
                       (when-let [element (.getElementById js/document hash)]
-                        (.scrollIntoView element #js {:behavior "smooth"})))))
+                        (.scrollIntoView element #js {:behavior "smooth"}))))
+                  [])
 
-  (sc (merge doc-styles
+  (sc :div.doc
+      (merge doc-styles
              {:height :full
-              :flex [:row {:gap 2 :items :stretch}]})
+              :flex [:row {:gap 1 :items :stretch}]})
       (c ui.sidebar/sidebar)
-      (c ui.breadcrumbs/breadcrumbs)
-      (sc {:p [2 3 0 0]
+      (sc {:p 0 #_[2 3 0 0]
            :height "100vh"
-           :overflow :scroll
+           :flex :column
            :width {:max 800
                    :min 400}}
-          doc-content)))
+          (c ui.breadcrumbs/breadcrumbs)
+          (c :div#doc-container.no-scrollbar
+             {:on-scroll (fn [_] (println :scrolling))
+              :style {:flex-shrink 1
+                      :overflow :scroll}}
+             doc-content))))
 
 (comment
   (>> [:upd [:ui :sidebar] not])

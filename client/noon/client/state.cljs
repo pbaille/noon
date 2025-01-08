@@ -3,6 +3,8 @@
             [noon.client.doc :as doc]
             [noon.client.utils.flat-tree :as flat-tree]))
 
+(def BREADCRUMBS_HEIGHT 55)
+
 (defn breadcrumbs [at nodes]
   (mapv (fn [path]
           (let [node (get nodes (vec path))]
@@ -90,11 +92,13 @@
                                                                       path (fn [node] (assoc-in node [:sidebar :folding] :folded))))))
                                           :folded (assoc-in db [:doc :ui :nodes path :sidebar :folding] :folded)))}}
 
-          :current-path (signal [{nodes [:doc.ui.folding.visible-nodes]} _]
+          :current-path (signal [{mode [:doc.ui.navigation-mode.get]
+                                  nodes [:doc.ui.folding.visible-nodes]} _]
                                 (->> nodes
                                      (sort-by (comp :idx val))
                                      (reduce (fn [ret [path node]]
-                                               (if (>= 2 (.-top (.getBoundingClientRect @(:header-ref node))))
+                                               (if (> (case mode :sidebar 0 :breadcrumbs BREADCRUMBS_HEIGHT)
+                                                      (.-top (.getBoundingClientRect @(:header-ref node))))
                                                  (cons path ret)
                                                  (reduced ret)))
                                              ())
