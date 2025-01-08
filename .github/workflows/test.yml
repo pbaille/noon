@@ -35,7 +35,7 @@ jobs:
         clj-kondo: '2024.11.14'
 
     - name: Run clj-kondo Linting
-      run: clj-kondo --lint src test
+      run: clj-kondo --lint src test client
 
     - name: Generating noon org tests
       run: bb build-doc-tests
