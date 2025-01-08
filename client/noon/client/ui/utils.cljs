@@ -1,6 +1,5 @@
 (ns noon.client.ui.utils
-  (:require [uix.core :as uix]
-            [noon.client.constants :as constants]))
+  (:require [uix.core :as uix]))
 
 (defn with-extra-props [component extra-props]
   (let [children (.-children (.-props component))]
