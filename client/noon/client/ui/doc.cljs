@@ -54,7 +54,7 @@
              {:height :full
               :flex [:row {:gap 1 :items :stretch}]})
       (c ui.sidebar/sidebar)
-      (sc {:p 0 #_[2 3 0 0]
+      (sc {:p 0
            :height "100vh"
            :flex :column
            :width {:max 800
@@ -64,7 +64,8 @@
              {:id constants/DOC_CONTAINER_ID
               :on-scroll (fn [event] (>> [:doc.ui.scrolling.position.set (.-scrollTop (.-target event))]))
               :style {:flex-shrink 1
-                      :overflow :scroll}}
+                      :overflow :scroll
+                      :p {:right 3}}}
              doc-content))))
 
 (comment
