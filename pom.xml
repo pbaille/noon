@@ -4,7 +4,7 @@
   <packaging>jar</packaging>
   <groupId>org.clojars.pbaille</groupId>
   <artifactId>noon</artifactId>
-  <version>0.1.4</version>
+  <version>0.1.5</version>
   <name>noon</name>
   <description>A Clojure library for algorithmic music composition</description>
   <url>https://github.com/pbaille/noon</url>
@@ -12,7 +12,7 @@
     <url>https://github.com/pbaille/noon</url>
     <connection>scm:git:git://github.com/pbaille/noon.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/pbaille/noon.git</developerConnection>
-    <tag>0.1.4</tag>
+    <tag>0.1.5</tag>
   </scm>
   <licenses>
     <license>
