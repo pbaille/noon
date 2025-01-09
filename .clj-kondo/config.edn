@@ -1,1 +1,14 @@
-{:config-paths ["../resources/clj-kondo.exports/com.pbaille/noon"]}
+{:config-paths ["../resources/clj-kondo.exports/com.pbaille/noon"]
+ :linters {:missing-else-branch {:level :off}
+           :unused-value {:level :off}
+           :uninitialized-var {:level :off}
+           :clojure-lsp/unused-public-var {:level :off}
+           :redundant-do {:level :off}
+           :use {:level :off}
+           :unresolved-var {:exclude [clj-commons.byte-streams/to-input-stream]}}
+ :config-in-call {clojure.core/do {:unused-value {:level :off}}}
+ :config-in-comment {:linters {:unresolved-symbol {:level :off}
+                               :unresolved-namespace {:level :off}
+                               :invalid-arity {:level :off}}}
+ :config-in-ns {noon.doc.noon {:ignore [:unused-referred-var :refer-all :unused-namespace]}
+                noon.doc.noon-org-test {:ignore [:inline-def]}}}

@@ -1,23 +1,10 @@
-{:linters {:missing-else-branch {:level :off}
-           :unused-value {:level :off}
-           :uninitialized-var {:level :off}
-           :clojure-lsp/unused-public-var {:level :off}
-           :redundant-do {:level :off}
-           :use {:level :off}
-           :unresolved-var {:exclude [clj-commons.byte-streams/to-input-stream]}}
- :lint-as {backtick/template clojure.core/comment
+{:lint-as {backtick/template clojure.core/comment
            noon.utils.misc/source-str clojure.core/comment
            noon.utils.sci/sci-namespaces clojure.core/comment
            noon.eval/score clojure.core/comment
            noon.eval/eval clojure.core/comment
            noon.eval/play clojure.core/comment
            noon.freeze/freeze clojure.core/comment}
- :config-in-call {clojure.core/do {:unused-value {:level :off}}}
- :config-in-comment {:linters {:unresolved-symbol {:level :off}
-                               :unresolved-namespace {:level :off}
-                               :invalid-arity {:level :off}}}
- :config-in-ns {noon.doc.noon {:ignore [:unused-referred-var :refer-all :unused-namespace]}
-                noon.doc.noon-org-test {:ignore [:inline-def]}}
  :hooks {:analyze-call {noon.utils.chance/gen noon.utils.chance/gen
                         noon.utils.chance/defcoll noon.utils.chance/defcoll}
          :macroexpand {noon.utils.chance/defgen noon.utils.chance/defgen
