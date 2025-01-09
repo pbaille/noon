@@ -166,7 +166,7 @@
             (case type
               :triad (h/structure :triad)
               :tetrad (h/structure :tetrad))
-            _ (println structure-name structure-update type)
+            ;; _ (println structure-name structure-update type)
             degree-updates
             (mapv (fn [[degree alteration]]
                     (degree-alteration-update degree alteration))

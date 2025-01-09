@@ -752,7 +752,7 @@
            :tags [:incubator :score-update-builder]}
           [x & xs]
           (let [[n [f & {:as options}]] (if (number? x) [x xs] [nil (cons x xs)])]
-            (println n f options)
+            #_(println n f options)
             (sf_ (let [u (score/->score-update f)
                        seed (if (:next options) (score/update-score _ u) _)
                        scores (->> (iterate u seed)

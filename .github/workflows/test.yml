@@ -44,7 +44,7 @@ jobs:
       run: npm install
         
     - name: Run CLJ tests
-      run: clojure -M:test
+      run: clojure -X:test
       
     - name: Run CLJS tests
       run: npx shadow-cljs compile test && node out/test.js
