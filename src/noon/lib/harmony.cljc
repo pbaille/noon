@@ -34,7 +34,7 @@
             :else x))
 
     (defn upd [& xs]
-      (mapv ->pitch-update xs))
+      (updates/chain* (mapv ->pitch-update xs)))
 
     (u/defn* lin
       "Build an update similarly to `noon.score/lin` but interpret keywords using `noon.parse.harmony`."

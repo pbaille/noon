@@ -110,7 +110,7 @@ The option map let you stay what you want to do with your score.
 
 example:
 
-#+begin_src clojure :clj-only
+#+begin_src clojure :no-tests :clj-only
 (noon {:play true
        :tracks {0 :chorium}} ;; try to change soundfont here
 
@@ -127,7 +127,7 @@ example:
 
 In addition to those soundfonts, you can send the output of noon to any output device available on your machine.
 
-#+begin_src clojure :clj-only
+#+begin_src clojure :no-tests :clj-only
 (require 'noon.midi)
 ;; retrieve a device by name
 (def bus1 (noon.midi/get-output-device "Bus 1"))
