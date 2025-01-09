@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <packaging>jar</packaging>
-  <groupId>org.clojars.pbaille</groupId>
+  <groupId>com.pbaille</groupId>
   <artifactId>noon</artifactId>
-  <version>0.1.5</version>
+  <version>0.1.6</version>
   <name>noon</name>
   <description>A Clojure library for algorithmic music composition</description>
   <url>https://github.com/pbaille/noon</url>
@@ -12,7 +12,7 @@
     <url>https://github.com/pbaille/noon</url>
     <connection>scm:git:git://github.com/pbaille/noon.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/pbaille/noon.git</developerConnection>
-    <tag>0.1.5</tag>
+    <tag>0.1.6</tag>
   </scm>
   <licenses>
     <license>
