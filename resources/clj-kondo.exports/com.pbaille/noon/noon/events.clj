@@ -1,5 +1,5 @@
-(ns hooks.noon.events
-  (:require [hooks.noon.constants :as constants]))
+(ns noon.events
+  (:require [noon.constants :as constants]))
 
 (defmacro import-wrap-harmony-update-constructors [& xs]
   `(do ~@(mapv (fn [x]
