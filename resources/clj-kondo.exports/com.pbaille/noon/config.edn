@@ -1,10 +1,9 @@
-{:lint-as {backtick/template clojure.core/comment
-           noon.utils.misc/source-str clojure.core/comment
+{:lint-as {noon.utils.misc/source-str clojure.core/comment
            noon.utils.sci/sci-namespaces clojure.core/comment
-           noon.eval/score clojure.core/comment
-           noon.eval/eval clojure.core/comment
-           noon.eval/play clojure.core/comment
            noon.freeze/freeze clojure.core/comment}
+ :config-in-call {noon.eval/play {:ignore true}
+                  noon.eval/score {:ignore true}
+                  noon.eval/eval {:ignore true}}
  :hooks {:analyze-call {noon.utils.chance/gen noon.utils.chance/gen
                         noon.utils.chance/defcoll noon.utils.chance/defcoll}
          :macroexpand {noon.utils.chance/defgen noon.utils.chance/defgen

@@ -6,6 +6,7 @@
            :redundant-do {:level :off}
            :use {:level :off}
            :unresolved-var {:exclude [clj-commons.byte-streams/to-input-stream]}}
+ :lint-as {backtick/template clojure.core/comment}
  :config-in-call {clojure.core/do {:unused-value {:level :off}}}
  :config-in-comment {:linters {:unresolved-symbol {:level :off}
                                :unresolved-namespace {:level :off}
