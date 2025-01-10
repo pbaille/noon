@@ -12,9 +12,7 @@
             ["react-spinners/BeatLoader" :default spinner]
             ["@uiw/codemirror-themes-all" :as cm-themes]
             [noon.client.ui.misc :as ui.misc]
-            ["react-highlight" :default Highlight]
-            #_["thememirror" :as tm]
-            #_["@lezer/highlight" :as h]))
+            ["react-highlight" :default Highlight]))
 
 (def EDITOR_EXTENSIONS
   #js [(clojure)])
