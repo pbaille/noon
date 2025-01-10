@@ -27,6 +27,7 @@ Then you should be able to play something like this:
 
 ``` clojure
 (require '[noon.eval :refer [play]])
+
 (play (par s0 s1 s2))
 ```
 
