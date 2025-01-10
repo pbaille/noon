@@ -19,6 +19,12 @@ https://github.com/user-attachments/assets/324a2e7c-7d13-4cc5-aedb-141f8a8347e9
 Add the following dependency to your `deps.edn`:
 
 ``` clojure
+com.pbaille/noon {:mvn/version "0.1.6"}
+```
+
+Or this for latest version:
+
+``` clojure
 com.pbaille/noon {:git/url "https://github.com/pbaille/noon.git"
                   :sha "a0b34e5d19fd6d1f34d6e8bcab17555d1752820e"}
 ```
