@@ -1,5 +1,5 @@
 (ns noon.test
-  (:require #_[noon.doc.noon-org-test]
+  (:require [noon.doc.noon-org-test]
             [noon.lib.harmony-test]
             [noon.lib.melody-test]
             [noon.lib.rythmn-test]
