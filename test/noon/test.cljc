@@ -1,5 +1,5 @@
 (ns noon.test
-  (:require [noon.doc.noon-org-test]
+  (:require #_[noon.doc.noon-org-test]
             [noon.lib.harmony-test]
             [noon.lib.melody-test]
             [noon.lib.rythmn-test]
@@ -28,7 +28,7 @@
   #?(:cljs (t/run-all-tests #"^noon\..*test$")
      :clj (test-runner/test {:dirs ["test"]}))
 
-  (println @freezer))
+  #_(println @freezer))
 
 (comment
   (reset! freezer {})
