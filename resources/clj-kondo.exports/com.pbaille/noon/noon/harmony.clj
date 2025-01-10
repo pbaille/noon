@@ -1,4 +1,4 @@
-(ns hooks.noon.harmony)
+(ns noon.harmony)
 
 (defmacro defsteps [prefix max f]
   (cons 'do

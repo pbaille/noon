@@ -1,0 +1,32 @@
+{:lint-as {backtick/template clojure.core/comment
+           noon.utils.misc/source-str clojure.core/comment
+           noon.utils.sci/sci-namespaces clojure.core/comment
+           noon.eval/score clojure.core/comment
+           noon.eval/eval clojure.core/comment
+           noon.eval/play clojure.core/comment
+           noon.freeze/freeze clojure.core/comment}
+ :hooks {:analyze-call {noon.utils.chance/gen noon.utils.chance/gen
+                        noon.utils.chance/defcoll noon.utils.chance/defcoll}
+         :macroexpand {noon.utils.chance/defgen noon.utils.chance/defgen
+                       noon.events/efn noon.score/lambda
+                       noon.events/ef_ noon.score/lambda_
+                       noon.score/sfn noon.score/lambda
+                       noon.score/sf_ noon.score/lambda_
+                       noon.score/e->s noon.score/lambda
+                       noon.utils.misc/defn* noon.utils.misc/defn*
+                       noon.utils.misc/f_ noon.utils.misc/f_
+                       noon.utils.misc/>_ noon.utils.misc/>_
+                       noon.events/import-wrap-harmony-update-constructors noon.events/import-wrap-harmony-update-constructors
+                       noon.events/import-wrap-harmony-updates noon.events/import-wrap-harmony-updates
+                       noon.events/-def-channels noon.events/-def-channels
+                       noon.events/-def-velocities noon.events/-def-velocities
+                       noon.events/-def-durations noon.events/-def-durations
+                       noon.events/-def-tracks noon.events/-def-tracks
+                       noon.events/-def-wrapped noon.events/-def-wrapped
+                       noon.events/-def-steps noon.events/-def-steps
+                       noon.events/-def-shifts noon.events/-def-shifts
+                       noon.events/-def-degrees noon.events/-def-degrees
+                       noon.lib.multi/forking-update noon.score/lambda
+                       noon.lib.multi/multi-update noon.score/lambda
+                       noon.harmony/defsteps noon.harmony/defsteps
+                       noon.utils.misc/defreduction noon.utils.misc/defreduction}}}

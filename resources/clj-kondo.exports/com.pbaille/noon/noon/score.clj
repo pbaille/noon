@@ -1,5 +1,5 @@
-(ns hooks.noon.score
-  (:require hooks.noon.constants))
+(ns noon.score
+  (:require noon.constants))
 
 (defmacro lambda
   [arg & body]

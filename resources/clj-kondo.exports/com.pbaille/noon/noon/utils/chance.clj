@@ -1,4 +1,4 @@
-(ns hooks.noon.utils.chance
+(ns noon.utils.chance
   (:require [clj-kondo.hooks-api :as api]))
 
 (defn gen [{:keys [node]}]

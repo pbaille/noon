@@ -2,11 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [ main, master ]
     paths-ignore:
       - 'README.md'  # Ignore README update pushes
   pull_request:
-    branches: [ main, master ]
 
 jobs:
   test:

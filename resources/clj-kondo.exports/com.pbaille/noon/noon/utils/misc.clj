@@ -1,4 +1,4 @@
-(ns hooks.noon.utils.misc)
+(ns noon.utils.misc)
 
 (defmacro >_
       "shorthand for (as-> x _ ...)"
