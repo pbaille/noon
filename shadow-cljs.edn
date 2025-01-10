@@ -1,4 +1,4 @@
-{:deps {:aliases [:test :client]}
+{:deps {:aliases [:cljs-test :client]}
 
  :nrepl {:port 9000}
 
