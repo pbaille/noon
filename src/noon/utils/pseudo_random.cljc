@@ -3,9 +3,9 @@
    When non deterministic functions are used to produce a score,
    it is valuable to be able to capture the seed of randomnes in order to reproduce at a later point."
   (:refer-clojure :exclude [rand rand-nth rand-int shuffle])
-  (:require [clojure.core :as core])
-  #?(:clj (:require [noon.utils.misc :as u])
-     :cljs (:require ["prando" :as Prando]))
+  (:require [clojure.core :as core]
+            #?(:clj [noon.utils.misc :as u]
+               :cljs ["prando" :as Prando]))
   #?(:cljs (:require-macros [noon.utils.pseudo-random :refer [with-rand]])))
 
 (def MAX_LONG #?(:clj Long/MAX_VALUE :cljs js/Number.MAX_SAFE_INTEGER))
