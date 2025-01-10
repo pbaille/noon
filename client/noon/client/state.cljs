@@ -32,10 +32,10 @@
                   (dbf [db [_ path f]]
                        (update-in db [:doc :ui :nodes path] f))
 
-                  :pp
-                  (event [cofx [_ k]]
+                  #_:pp
+                  #_(event [cofx [_ k]]
                          (let [nodes (get-in cofx [:db :doc :ui :nodes])]
-                           #_{:pp [(if k (get nodes k) k)]}))}
+                           {:pp [(if k (get nodes k) k)]}))}
 
           :folding {:get
                     (sub [db [_ path]]

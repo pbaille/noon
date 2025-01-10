@@ -128,7 +128,7 @@
                      (swap! stop-fns* conj stop)
                      {:noon.midi/playing id})))))
 
-    (defn midi [& {:as options :keys [mute data track-idx->sequencer]}]
+    (defn midi [& {:as options :keys [data track-idx->sequencer]}]
       (when audio-context
         (let [track->soundfont-kit (fn [t]
                                      (case (track-idx->sequencer t)
