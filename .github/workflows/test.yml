@@ -47,4 +47,4 @@ jobs:
       run: clojure -X:test
       
     - name: Run CLJS tests
-      run: npx shadow-cljs compile test && node out/test.js
+      run: clojure -M:cljs-test
