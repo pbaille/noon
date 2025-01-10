@@ -35,7 +35,7 @@
                   :pp
                   (event [cofx [_ k]]
                          (let [nodes (get-in cofx [:db :doc :ui :nodes])]
-                           {:pp [(if k (get nodes k) k)]}))}
+                           #_{:pp [(if k (get nodes k) k)]}))}
 
           :folding {:get
                     (sub [db [_ path]]
@@ -47,7 +47,7 @@
                          (case value
                            :expanded (update-in db [:doc :ui :nodes]
                                                 (fn [nodes]
-                                                  (println :expand path (flat-tree/parent-path path))
+                                                  #_(println :expand path (flat-tree/parent-path path))
                                                   (-> nodes
                                                       (flat-tree/update-recursively-from
                                                        path (fn [node] (assoc node :folding :expanded)))
