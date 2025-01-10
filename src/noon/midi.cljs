@@ -1,7 +1,6 @@
 (ns noon.midi
   "WIP, many features are missing compared to clj version"
-  (:require ["tone" :as Tone]
-            ["smplr" :refer [Soundfont]]
+  (:require ["smplr" :refer [Soundfont]]
             [noon.data.GM :as gm]))
 
 ;; https://github.com/alda-lang/alda-sound-engine-clj/blob/master/src/alda/sound/midi.clj
@@ -20,6 +19,11 @@
 (def MIDI_RESOLUTION 2048)
 
 (do :midi
+
+    (def audio-context
+      (when (exists? js/AudioContext)
+        (new js/AudioContext)))
+    #_(js/console.log audio-context)
 
     (def playing* (atom false))
 
@@ -51,7 +55,7 @@
 
     (defn get-instrument [instrument-name kit]
       (or (get @soundfonts* [instrument-name kit])
-          (when-let [sf (.-load (Soundfont. (.-_context (.-context Tone))
+          (when-let [sf (.-load (Soundfont. audio-context
                                             #js {:instrument instrument-name
                                                  :kit kit}))]
             (swap! soundfonts* assoc [instrument-name kit] sf)
@@ -61,7 +65,6 @@
       "Call all recorded stop-fns* and set playing* to false"
       []
       #_(println "stopping midi")
-      #_(.stop Tone/Transport (.now Tone))
       (doseq [f (concat @stop-fns*
                         (vals @on-done-callbacks*))]
         (f))
@@ -72,7 +75,6 @@
       [noon-data & {:keys [bpm id track->kit]}]
       (stop-midi)
       (println "loading instruments...")
-      #_(js/console.log Tone)
       (let [playing-id (reset! playing* id)
             stretch-ratio (/ 60 bpm)
             stretch (fn [x] (* stretch-ratio x))
@@ -96,7 +98,7 @@
 
             (.then (fn [xs]
                      (js/console.log "scheduling events...")
-                     (let [t0 (.now Tone)
+                     (let [t0 (.-currentTime audio-context)
                            time-until-end
                            (reduce (fn [end-pos [instrument events]]
                                      (reduce (fn [end-pos {:as _note :keys [channel pitch velocity duration position]}]
@@ -119,22 +121,22 @@
                                       (+ 1000 (* 1000 time-until-end)))
 
                        {:id playing-id
-                        :stop (fn [] (doseq [[i _] xs] (.stop i)))
-                        :started (.start Tone/Transport)})))
+                        :stop (fn [] (doseq [[i _] xs] (.stop i)))})))
 
             (.then (fn [{:keys [id stop]}]
                      (println "playing...")
                      (swap! stop-fns* conj stop)
                      {:noon.midi/playing id})))))
 
-    (defn midi [& {:as options :keys [data track-idx->sequencer]}]
-      (let [track->soundfont-kit (fn [t]
-                                   (case (track-idx->sequencer t)
-                                     :fluid "FluidR3_GM"
-                                     :default "MusyngKite"
-                                     "MusyngKite"))]
-        {:play (fn [] (play data (assoc options :track->kit track->soundfont-kit)))
-         :close (fn [] (stop-midi))}))
+    (defn midi [& {:as options :keys [mute data track-idx->sequencer]}]
+      (when audio-context
+        (let [track->soundfont-kit (fn [t]
+                                     (case (track-idx->sequencer t)
+                                       :fluid "FluidR3_GM"
+                                       :default "MusyngKite"
+                                       "MusyngKite"))]
+          {:play (fn [] (play data (assoc options :track->kit track->soundfont-kit)))
+           :close (fn [] (stop-midi))})))
 
     (comment (def simple-tup
                [{:patch [0 4] :channel 0, :pitch 67, :voice 0, :duration (/ 1 3)  , :position (/ 2 3) , :velocity 80, :track 0}
