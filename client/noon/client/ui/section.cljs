@@ -64,5 +64,5 @@
 
        (c :div
           {:style {:display (if (= :folded visibility) :none :block)
-                   :p [0 0 0 (case mode :breadcrumbs 1 :sidebar 2)]}}
+                   :p [0 0 2 (case mode :breadcrumbs 1 :sidebar 2)]}}
           children))))
