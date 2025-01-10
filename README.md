@@ -20,7 +20,7 @@ Add the following dependency to your `deps.edn`:
 
 ``` clojure
 com.pbaille/noon {:git/url "https://github.com/pbaille/noon.git"
-                  :sha ""}
+                  :sha "fd161535cf2fc3b16e5141bc1ab660595e6be44b"}
 ```
 
 Then you should be able to play something like this:
