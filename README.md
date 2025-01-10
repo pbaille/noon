@@ -16,5 +16,5 @@ https://github.com/user-attachments/assets/324a2e7c-7d13-4cc5-aedb-141f8a8347e9
 
 ``` clojure
 com.pbaille/noon {:git/url "https://github.com/pbaille/noon.git"
-                  :sha "<LATEST_HASH>"}
+                  :sha "4d39d8a999f0c16ec1d919a7d7386252321fe51b"}
 ```
