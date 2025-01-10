@@ -2,41 +2,41 @@
 
 * Noon
 
-Noon is a clojure library that helps with *musical composition and exploration*.
-It provides a way to compose, play and export music as *MIDI*.
+Noon is a Clojure library for *musical composition and exploration*.
+It provides ways to compose, play, and export music as *MIDI*.
 
-The initial goal was to be able to define musical fragments in a very declarative way.
-Leveraging clojure and functional programming powers in order to *generate, manipulate and organize* musical content.
+The initial goal was to define musical fragments declaratively,
+leveraging Clojure and functional programming to *generate, manipulate, and organize* musical content.
 
 ** Motivation
 
-Firstly, I was somewhat frustrated by the experience of computer-assisted music composition.
-The tools commonly used for this, called digital audio workstations (DAWs), which include for example Logic Audio or Cubase, are certainly powerful, but quite laborious in use in my opinion.
-The feedback loop seems a bit long to me. Changes are repetitive and quite slow, we spend a lot of time clicking, drag and dropping, and little time actually listening.
+I was frustrated with computer-assisted music composition.
+The main tools used for this are digital audio workstations (DAWs) like Logic Audio and Cubase. While powerful, these tools can be laborious to use.
+The feedback loop is too long. Making changes is repetitive and slow - too much time is spent clicking and dragging instead of listening.
 
-On the other hand, having primarily studied jazz, I would have liked to find the same kind of approach when composing with a computer.
-In jazz (or other non classical music genres), a composition often consists of a melody and a chord grid. Its realization is largely left to the musician who interprets it.
-This allows a composition to be relatively different from one version to another, compared to a piece composed in MIDI in a digital audio workstation which is quite rigid.
+Having studied jazz primarily, I wanted a similar approach when composing with computers.
+In jazz (and other non-classical genres), a composition typically consists of just a melody and chord progression. Much of the realization is left to the performing musician.
+This allows compositions to vary significantly between performances, unlike the rigid pieces composed in MIDI using DAWs.
 
 The improvisation and interpretation techniques used by musicians can be partially emulated by a computer.
-Of course, what makes the essence of a very beautiful improvisation or interpretation will probably never be artificially reproduced, nevertheless it would be interesting to see how far we can go. Certain musical contexts and techniques require great speed of execution or calculation, and for that the machine is unbeatable.
+Of course, the essence of a beautiful improvisation or interpretation will probably never be artificially reproduced; nevertheless, it would be interesting to see how far we can go. Certain musical contexts and techniques require great speed of execution or calculation, and for that, the machine is unbeatable.
 
-Trying to use already existing musical libraries, I felt that this level of abstraction was not accessible to a degree that suits my needs.
-- The [[https://github.com/overtone/overtone][overtone library]] is focusing mainly on sound synthesis, but not much on high level musical abstraction.
-- The [[https://github.com/daveyarwood/alda-clj][alda library]] is low level, close to the MIDI representation in terms of abstraction level.
-- The [[https://github.com/ctford/leipzig][leipzig library]] is aiming in this direction but I think we can go even further.
+Trying to use existing musical libraries, I felt that this level of abstraction was not accessible to a degree that suited my needs.
+- The [[https://github.com/overtone/overtone][overtone library]] focuses mainly on sound synthesis, but not much on high-level musical abstraction.
+- The [[https://github.com/daveyarwood/alda-clj][alda library]] is low level, close to the MIDI representation in terms of abstraction.
+- The [[https://github.com/ctford/leipzig][leipzig library]] aims in this direction, but I think we can go even further.
 
-To sum up a bit, we could say that the level of musical abstraction currently in force in digital audio workstations is quite low.
-In contrast to the level of abstraction generally used by musicians to think about music.
-A level of abstraction that is too low will require a lot of work to realize ideas that are thought of quickly, and this leads to the relative slowness of the feedback cycle.
+To sum up, the level of musical abstraction currently in force in digital audio workstations is quite low.
+This contrasts with the level of abstraction generally used by musicians to think about music.
+A level of abstraction that is too low will require a lot of work to realize ideas that are thought of quickly, leading to the relative slowness of the feedback cycle.
 
-One of the objectives of this language will therefore be to allow the user to manipulate higher level musical abstractions, such as for example:
+One of the objectives of this language will therefore be to allow the user to manipulate higher-level musical abstractions, such as:
 - a modulation
 - a melodic contour
-- a melodic or harmonic, diatonic or chromatic approach or embellishment.
+- a melodic or harmonic, diatonic or chromatic approach or embellishment
 - voice leading
-- an inversion of a chord or melody.
-The kind of ideas that musicians use to talk about music in a more concise and above all more general way.
+- an inversion of a chord or melody
+These are the kinds of ideas that musicians use to talk about music in a more concise and, above all, more general way.
 
 ** Elements
 
@@ -46,9 +46,9 @@ The kind of ideas that musicians use to talk about music in a more concise and a
 
 An event is the basic building block we are dealing with.
 
-It can represent any MIDI event, a note, a control change etc...
+It can represent any MIDI event, such as a note or a control change.
 
-It is represented using a clojure map
+It is represented using a Clojure map.
 
 #+begin_src clojure :pp
 noon.events/DEFAULT_EVENT
@@ -56,7 +56,7 @@ noon.events/DEFAULT_EVENT
 
 **** Score
 
-A score is a collection of events, represented using a clojure set.
+A score is a collection of events, represented using a Clojure set.
 
 #+begin_src clojure :pp
 (score) ; the `noon.eval/score` function is used to build score, more on it later
@@ -82,10 +82,10 @@ Here a minimal example:
 
 **** Options
 
-The option map let you stay what you want to do with your score.
+The option map lets you specify what you want to do with your score.
 
 - =:midi true=
-  Write the score as MIDI file.
+  Write the score as a MIDI file.
   Default to false.
 
 - =:bpm <number>=
@@ -101,8 +101,8 @@ The option map let you stay what you want to do with your score.
   File extensions will be appended to this filename.
 
 - =:tracks {<track-idx> <sequencer> ...}=
-  Set each track idxs to a =javax.sound.midi.Sequencer=
-  This library comes with 4 nice soundfonts that sounds way better than builtin one (=:default=):
+  Set each track index to a =javax.sound.midi.Sequencer=.
+  This library comes with 4 nice soundfonts that sound way better than the built-in one (=:default=):
   1. =:squid=
   2. =:chorium=
   3. =:fluid=
@@ -141,7 +141,7 @@ In addition to those soundfonts, you can send the output of noon to any output d
 
 ***** Musescore options
 
-If you have [[https://musescore.org/en][musecore]] installed on your machine, you can emit music XML and pdf score.
+If you have [[https://musescore.org/en][musescore]] installed on your machine, you can emit music XML and PDF scores.
 
 - =:xml true=
   write the score as musicXML file.
@@ -151,7 +151,7 @@ If you have [[https://musescore.org/en][musecore]] installed on your machine, yo
 
 ***** mp3 export
 
-It is possible to create an mp3 file by passing this option:
+It is possible to create an MP3 file by passing this option:
 
 =:mp3 true=
 
@@ -165,7 +165,7 @@ It is possible to create an mp3 file by passing this option:
 **** score
 
 As we've just seen, we can create a score with the =score= function.
-With no arguments it simply returns the default score containing only a middle C.
+With no arguments, it simply returns the default score containing only a middle C.
 
 #+begin_src clojure :pp
 (score)
@@ -173,7 +173,7 @@ With no arguments it simply returns the default score containing only a middle C
 
 The =score= function can take any number of arguments, each one being a score transformation.
 
-Those transformations are applied in order to the default score.
+These transformations are applied in order to the default score.
 
 #+begin_src clojure :pp
 '(score transformation1 transformation2 ...)
@@ -181,20 +181,20 @@ Those transformations are applied in order to the default score.
 
 **** =noon.eval/play=
 
-As a convenience, this thin =noon.eval/noon= wrapper let you play a score with fewer keystrokes:
+As a convenience, this thin =noon.eval/noon= wrapper lets you play a score with fewer keystrokes:
 
 #+begin_src clojure
 '(play transformation1 transformation2 ...)
 #+end_src
 
-Which is is roughly equivalent to:
+Which is roughly equivalent to:
 
 #+begin_src clojure
 '(noon {:play true}
        (score transformation1 transformation2 ...))
 #+end_src
 
-More concretly:
+More concretely:
 
 #+begin_src clojure
 (play dur2
@@ -203,7 +203,7 @@ More concretly:
 
 *** Transformations 1
 
-There is a bunch of transformations available, let's see the basics.
+There are a bunch of transformations available, let's see the basics.
 
 **** Pitches
 
@@ -227,8 +227,8 @@ Here some examples of pitches:
 (play Gb2)
 #+end_src
 
-Pitches are not often used as is, we will prefer more relative constructs like intervals, patterns etc...
-But it may be a little overwhelming to start with, so for now we will use them to introduce the basics building blocks of the system.
+Pitches are not often used as is; we will prefer more relative constructs like intervals, patterns, etc.
+But it may be a little overwhelming to start with, so for now, we will use them to introduce the basic building blocks of the system.
 
 **** Durations
 
@@ -242,7 +242,7 @@ We can operate on durations by multiplying or dividing them.
 (play dur:3) ; divides it by 3
 #+end_src
 
-There is also a more flexible (and verbose) way to build duration transformations.
+There is also a more flexible (and verbose) way to build duration transformations:
 
 #+begin_src clojure :pp
 (dur 2) ; sets the duration to 2
@@ -264,11 +264,11 @@ Those 3 forms return a transformation that can be used in =score= or =play=
 
 **** Velocities
 
-Velocity is the force with which a note is played, and it is vitally important in making MIDI performances sound human.
+Velocity is the force with which a note is played, and it is vitally important for making MIDI performances sound human.
 
-In midi the velocity is a number between 0 and 127.
+In MIDI, the velocity is a number between 0 and 127.
 
-For easing notation, 12 levels of velocity are defined as vars.
+For easier notation, 12 levels of velocity are defined as vars.
 
 #+begin_src clojure
 (play vel0) ; silent
@@ -289,7 +289,7 @@ For easing notation, 12 levels of velocity are defined as vars.
 Like for duration there is also a more flexible form:
 
 #+begin_src clojure
-(play (vel 100)) ; sets the midi velocity of the current event to 100 (forte).
+(play (vel 100)) ; sets the MIDI velocity of the current event to 100 (forte).
 #+end_src
 
 #+begin_src clojure
@@ -305,14 +305,14 @@ We can compose any number of transformations together using a clojure vector.
 #+end_src
 
 #+begin_src clojure
-(play [F#-1 dur4 (vel 127)]) ; F# above the middle C with quadruple duration and max velocity.
+(play [F#-1 dur4 (vel 127)]) ; F# above middle C with quadruple duration and max velocity.
 #+end_src
 
 #+begin_src clojure
 (play [(vel 127) dur4 F#-1]) ; the order do not matter in this case.
 #+end_src
 
-The =play= and =score= forms, when given several arguments are doing exactly this
+The =play= and =score= forms, when given several arguments, are doing exactly this:
 
 #+begin_src clojure
 (play F#-1 dur4) ; is the same as (play [F#-1 dur4])
@@ -320,14 +320,14 @@ The =play= and =score= forms, when given several arguments are doing exactly thi
 
 **** Concatenation
 
-Using the =lin= function we can create our first melody.
+Using the =lin= function, we can create our first melody.
 The =lin= function takes an arbitrary number of transformations and concatenate their results into one score.
 
 #+begin_src clojure
 (play (lin C0 E0 G0 B0))
 #+end_src
 
-=lin= accept any valid transformation, here we are using composite transformations.
+=lin= accepts any valid transformation; here we are using composite transformations.
 
 #+begin_src clojure
 (play (lin [C0 dur:2]
@@ -338,13 +338,13 @@ The =lin= function takes an arbitrary number of transformations and concatenate 
 
 **** Superposition
 
-Using the =par= function we can stack things up.
+Using the =par= function, we can stack things up.
 
 #+begin_src clojure
 (play (par C0 Eb0 G0)) ; a C minor chord.
 #+end_src
 
-A pianissimo, double duration, Csus4 chord:
+A pianissimo, double-duration, Csus4 chord:
 
 #+begin_src clojure
 (play vel2
@@ -354,11 +354,11 @@ A pianissimo, double duration, Csus4 chord:
 
 **** Sounds
 
-By default, we are using general MIDI to emit sounds, it is not the most exciting way to play MIDI but it is everywhere and gives you a rapid feedback without extra setup.
+By default, we are using general MIDI to emit sounds. It is not the most exciting way to play MIDI, but it is everywhere and gives you rapid feedback without extra setup.
 
-Of course if you want to use fancy VSTs in a proper DAW you can, one of the feature of this library is to export MIDI files after all.
+Of course, if you want to use fancy VSTs in a proper DAW, you can; one of the features of this library is to export MIDI files, after all.
 
-Here how you can leverage general MIDI sounds:
+Here's how you can leverage general MIDI sounds:
 
 #+begin_src clojure
 (play (patch :clarinet) (lin C0 E0 G#0 B0))
@@ -376,9 +376,9 @@ noon.vst.general-midi/summary
 
 **** Channels
 
-In most of the tunes we write, we want several instruments playing together.
+In most of the tunes we write, we want several instruments to play together.
 
-In MIDI there is this concept of channel, it serve the purpose to separate different streams of events.
+In MIDI, there is this concept of a channel; it serves the purpose of separating different streams of events.
 
 #+begin_src clojure
 (play
@@ -705,9 +705,9 @@ the =chans= function is doing the same thing as =par= except that it put each el
 (play (chans c0 c3 c7))
 #+end_src
 
-To be more precise it put each of its argument on subsequent midi channels starting at the current one. By default, we are on channel 0, so here the C will stay on channel 0, the Eb will go on channel 1 and the G on channel 2.
+To be more precise, it puts each of its arguments on subsequent MIDI channels starting at the current one. By default, we are on channel 0, so here the C will stay on channel 0, the Eb will go on channel 1, and the G on channel 2.
 
-When we want more fine control we can use the =chan= function, that works like =vel= and =dur=
+When we want more fine control, we can use the =chan= function, which works like =vel= and =dur=.
 
 #+begin_src clojure :pp
 (chan 1) ; set midi channel to 1
@@ -721,7 +721,7 @@ When we want more fine control we can use the =chan= function, that works like =
 (chan inc) ; increment the current midi channel.
 #+end_src
 
-We can achieve the same thing as the first expression of the section using =par= and =chan= like this:
+We can achieve the same thing as the first expression of the section using =par= and =chan=, like this:
 
 #+begin_src clojure
 (play (par [(chan 0) c0]
@@ -731,7 +731,7 @@ We can achieve the same thing as the first expression of the section using =par=
 
 **** Tracks
 
-Tracks are a way of not be limited to only 16 channels, you can create virtually as many as you want. Most of the time, 16 channels are enough but who knows... The =tracks= function works exactly like the =chans= function, except that it operates on the =:track= entry of events.
+Tracks are a way of not being limited to only 16 channels; you can create virtually as many as you want. Most of the time, 16 channels are enough, but who knows... The =tracks= function works exactly like the =chans= function, except that it operates on the =:track= entry of events.
 
 #+begin_src clojure
 (play
@@ -757,9 +757,9 @@ By default we are on track 0. So the second argument of tracks goes on track 1. 
 
 *** Mapping
 
-All the transformations we've seen so far are acting on a score to produce another score, but sometimes what we need is to apply a transformation on each event of a score, for this we are using the =each= function.
+All the transformations we've seen so far act on a score to produce another score, but sometimes what we need is to apply a transformation to each event of a score; for this, we use the =each= function.
 
-As an illustration, here those two fragments:
+As an illustration, here are those two fragments:
 
 #+begin_src clojure
 (play (lin c0 c1 c2 c3)
@@ -771,24 +771,24 @@ As an illustration, here those two fragments:
       (each (tup c0 o1))) ; each event of the score is transformed using this `tup` transformation.
 #+end_src
 
-One important thing to be aware of is that events will be mapped in place, so if the given transformation expand the score, some superposition will occur.
+One important thing to be aware of is that events will be mapped in place, so if the given transformation expands the score, some superposition will occur.
 
 #+begin_src clojure
 (play (lin c0 o1)
       (each [dur:4 (rep 8 c1-)]))
 #+end_src
 
-Some others functions exists to transform only subparts of the score, if interested you can look at =$by= and/or =parts=.
+Some other functions exist to transform only subparts of the score; if interested, you can look at =$by= and/or =parts=.
 
 *** Dynamism
 
-For now our scores are pretty static, and don't use the power of clojure much. Since this library is built out of simple functions it should be a easy to do so.
+For now, our scores are pretty static and don't use the power of Clojure much. Since this library is built out of simple functions, it should be easy to do so.
 
-There is a bunch of things to know in order to ease things.
+There are a bunch of things to know in order to ease things.
 
 **** Star functions
 
-Variadic functions have a 'star' counterpart that accepts a sequence instead of variadic args.
+Variadic functions have a 'star' counterpart that accepts a sequence instead of variadic arguments.
 
 #+begin_src clojure :pp
 (tup c1 c2 c3)
@@ -806,11 +806,11 @@ or
 (tup* (list c1 c2 c3))
 #+end_src
 
-It ease things a bit when using clojure to generate arguments of those functions. Avoiding to write =apply= everywhere.
+It eases things a bit when using Clojure to generate arguments for those functions, avoiding the need to write =apply= everywhere.
 
 **** Map functions
 
-maps can be used to compose event transformations
+Maps can be used to compose event transformations.
 
 #+begin_src clojure
 (play {:velocity (fn [x] (/ x 2)), :duration (fn [x] (* x 2))})
@@ -830,7 +830,7 @@ maps can be used to compose event transformations
 
 *** Non determinism
 
-It is quite fun to insert a bit of randomness in our scores.
+It is quite fun to insert a bit of randomness into our scores.
 
 #+begin_src clojure  :no-tests
 (play
@@ -838,11 +838,11 @@ It is quite fun to insert a bit of randomness in our scores.
  (rep 4 (rand-nth [c3 c4 c3- c4-])))
 #+end_src
 
-We can use some great available tools like =test.check.generators= to handle non determinism. That being said, some commonly used non-deterministic functions are available directly.
+We can use some great available tools like =test.check.generators= to handle non-determinism. That being said, some commonly used non-deterministic functions are available directly.
 
 **** =one-of=
 
-=one-of= picks randomly one of the given transformations and apply it.
+=one-of= randomly picks one of the given transformations and applies it.
 
 #+begin_src clojure
 (play (one-of o1- o1))
@@ -854,7 +854,7 @@ We can use some great available tools like =test.check.generators= to handle non
 
 **** =maybe=
 
-=maybe= is very similar to =one-of= except it has a chance to do nothing (identity transformation).
+=maybe= is very similar to =one-of=, except it has a chance to do nothing (identity transformation).
 
 #+begin_src clojure
 (play (maybe o1 o2)) ; may do nothing, or one octave up, or two octave up
@@ -870,7 +870,7 @@ We can use some great available tools like =test.check.generators= to handle non
 
 **** =probs=
 
-=probs= gives you more control over the probability of occurence of the given transformations.
+=probs= gives you more control over the probability of occurrence of the given transformations.
 
 #+begin_src clojure
 (play (probs {o1 4, o1- 1})) ; 4/5 to go up one octave, 1/5 chance to go down one octave
@@ -882,9 +882,9 @@ We can use some great available tools like =test.check.generators= to handle non
 
 **** =any-that=
 
-=any-that= is similar to =one-of= except it takes an extra first argument that check if the picked transformation is valid.
+=any-that= is similar to =one-of=, except it takes an extra first argument that checks if the picked transformation is valid.
 
-A melody of 60 notes using the 6 given intervals but remaining in the given pitch bounds:
+A melody of 60 notes using the 6 given intervals while remaining within the given pitch bounds:
 
 #+begin_src clojure
 (play dur:8
@@ -893,14 +893,14 @@ A melody of 60 notes using the 6 given intervals but remaining in the given pitc
                      c2 c5 c7 c2- c5- c7-)))
 #+end_src
 
-The =within-pitch-bounds?= is just a score transformation that return the score unchanged if it is within the given bounds, else it returns =nil=. Any function of this kind can be used has first argument to =any-that=.
+The =within-pitch-bounds?= is just a score transformation that returns the score unchanged if it is within the given bounds; otherwise, it returns =nil=. Any function of this kind can be used as the first argument to =any-that=.
 
 **** =!=
 
-the =!= macro can be useful to deal with raw non deterministic expressions. here the docstring:
+The =!= macro can be useful to deal with raw non-deterministic expressions. Here is the docstring:
 
 #+begin_quote
-Takes a non deterministic expression resulting in a score transformation. return a score transformation that wraps the expression so that it is evaluated each time the transformation is used.
+Takes a non-deterministic expression resulting in a score transformation. Returns a score transformation that wraps the expression so that it is evaluated each time the transformation is used.
 #+end_quote
 
 #+begin_src clojure  :no-tests
@@ -913,9 +913,9 @@ Takes a non deterministic expression resulting in a score transformation. return
 
 **** Shuffling
 
-As in the previews example, building a =tup= or a =lin= with shuffled sequence of transformation is quite fun.
+As in the previous example, building a =tup= or a =lin= with a shuffled sequence of transformations is quite fun.
 
-So two shortcuts are defined:
+So, two shortcuts are defined:
 
 #+begin_src clojure
 (play (shuftup d0 d2 d4 d6))
@@ -927,19 +927,19 @@ So two shortcuts are defined:
 
 *** Harmony
 
-It is time to enter more deeply into the harmonic system. In this part we will see how to deal with scales, modes, chords, modulations and more...
+It is time to delve more deeply into the harmonic system. In this part, we will see how to deal with scales, modes, chords, modulations, and more...
 
 **** Intervals 2
 
-So far we've seen 3 types of intervals, chromatic steps, diatonic steps and octaves (aka tonic shifts). Let see the two remaining kinds of steps.
+So far, we've seen 3 types of intervals: chromatic steps, diatonic steps, and octaves (aka tonic shifts). Let's see the two remaining kinds of steps.
 
 ***** Steps
 
 ****** Structural
 
-Most of the time, our music is based on chords.
+Most of the time, music is based on chords.
 
-Structural steps are targeting chord notes. By default the harmony is set to C Major scale, and C Major chord (C major triad).
+Structural steps target chord notes. By default, the harmony is set to the C Major scale and C Major chord (C major triad).
 
 #+begin_src clojure
 (play (s-step 1)) ; ascending third
@@ -949,7 +949,7 @@ Structural steps are targeting chord notes. By default the harmony is set to C M
 (play (s-step 2)) ; ascending fifth
 #+end_src
 
-As other steps, corresponding vars are defined:
+As with other steps, corresponding vars are defined:
 
 #+begin_src clojure
 (play s1)
@@ -987,7 +987,7 @@ As other steps, corresponding vars are defined:
 
 ****** Tonic
 
-The last kind of step is the tonic one.
+The last kind of step is the tonic step.
 
 It let you jump to the root of the tonality.
 
@@ -999,7 +999,7 @@ It let you jump to the root of the tonality.
 (play (t-step -1)) ; above tonic
 #+end_src
 
-As other steps corresponding vars are defined:
+As with other steps, corresponding vars are defined:
 
 #+begin_src clojure
 (play t1)
@@ -1025,7 +1025,7 @@ As other steps corresponding vars are defined:
 
 **** Implementation
 
-Those four types of steps can be seen as belonging to 4 successive layers build on each others.
+These four types of steps can be seen as belonging to 4 successive layers built on each other.
 
 1. chromatic: =[0 1 2 3 4 5 6 7 8 9 10 11]=
   the chromatic layer, 12 successive semitones
@@ -1036,7 +1036,7 @@ Those four types of steps can be seen as belonging to 4 successive layers build 
 4. tonic: =[0]=
   the root
 
-As you see, the chromatic layers and tonic layers are trivial, so they are omitted in the harmonic context representation.
+As you can see, the chromatic layers and tonic layers are trivial, so they are omitted in the harmonic context representation.
 
 The harmonic context can be found under the :pitch key of any event.
 
@@ -1049,7 +1049,7 @@ The harmonic context can be found under the :pitch key of any event.
   :position {:t 0, :s 0, :d 0, :c 0}})
 #+end_src
 
-The :origin key hold the pitch from where our layers starts (in both directions).
+The :origin key holds the pitch from where our layers start (in both directions).
 
 The :position key holds a map with the 4 layers indexes
 
@@ -1063,7 +1063,7 @@ The :position key holds a map with the 4 layers indexes
 
 **** Shifts
 
-At least we will understand the nuance between steps and shifts. To do so let's compare tonic steps and tonic shifts (aka octaves).
+At last, we will understand the nuance between steps and shifts. To do so, let's compare tonic steps and tonic shifts (aka octaves).
 
 At first glance they seems to be equivalent:
 
@@ -1075,7 +1075,7 @@ At first glance they seems to be equivalent:
 (play (t-step 1))
 #+end_src
 
-In this case they are indeed equivalent, in each case a C1 is played. But how about this ?
+In this case, they are indeed equivalent; in each case, a C1 is played. But how about this?
 
 #+begin_src clojure
 (play s1 (t-shift 1)) ; plays a E1
@@ -1085,15 +1085,15 @@ In this case they are indeed equivalent, in each case a C1 is played. But how ab
 (play s1 (t-step 1)) ; plays a C1
 #+end_src
 
-In the first expression (the shift) we have transposed the score (a E0 note) by 1 tonic layer index. In the second one (the step) we have stepped to the next tonic layer index.
+In the first expression (the shift), we have transposed the score (an E0 note) by 1 tonic layer index. In the second one (the step), we have stepped to the next tonic layer index.
 
-In practice, apart for octaves, shifts are not used so often, thats the reason why they don't have defined vars as steps have. They are mainly used in more complex harmonic operations (voice leading etc...).
+In practice, apart from octaves, shifts are not used so often; that's the reason why they don't have defined vars as steps have. They are mainly used in more complex harmonic operations (voice leading, etc.).
 
 **** Tonality
 
 ***** =scale=
 
-By default the major scale is used, but it can be changed. Most of the known scales and modes are available via the =scale= function or directly by name.
+By default, the major scale is used, but it can be changed. Most of the known scales and modes are available via the =scale= function or directly by name.
 
 #+begin_src clojure :pp
 noon.constants/modes ; modes full list
@@ -1109,7 +1109,7 @@ noon.constants/modes ; modes full list
 
 ***** =structure=
 
-By default we use the triad structure (tonic, third, fifth), but it can be changed. Some common structures are predefined and available by name.
+By default, we use the triad structure (tonic, third, fifth), but it can be changed. Some common structures are predefined and available by name.
 
 #+begin_src clojure :pp
 noon.constants/structures ; full structure list
@@ -1125,9 +1125,9 @@ noon.constants/structures ; full structure list
 
 ***** =origin=
 
-The last thing we need to setup an harmonic context is an origin pitch.
+The last thing we need to set up a harmonic context is an origin pitch.
 
-By default the origin is setup to middle C.
+By default, the origin is set up to middle C.
 
 We can use the =origin= function to change this
 
@@ -1143,9 +1143,9 @@ We can use the =origin= function to change this
 
 ***** =root=
 
-The root update works a bit like =origin= but it takes a pitch-class instead of a pitch. It moves the :origin of the harmonic context to the closest pitch matching the given pitch class.
+The root update works a bit like =origin=, but it takes a pitch-class instead of a pitch. It moves the :origin of the harmonic context to the closest pitch matching the given pitch class.
 
-For instance if the origin is on =C0=, =(root :B)= will put the origin on =B-1= because =B-1= is closer to =C0= than =B0=.
+For instance, if the origin is on =C0=, =(root :B)= will put the origin on =B-1= because =B-1= is closer to =C0= than =B0=.
 
 #+begin_src clojure :pp
 (score (root :D))
@@ -1166,7 +1166,7 @@ For instance if the origin is on =C0=, =(root :B)= will put the origin on =B-1= 
 
 ***** =transpose=
 
-The transpose update takes an interval or a position and use it to update the origin of the harmonic context
+The transpose update takes an interval or a position and uses it to update the origin of the harmonic context.
 
 #+begin_src clojure
 (play (scale :lydianb7) (rup 6 d2) (rep 4 (transpose c3-)))
@@ -1174,13 +1174,13 @@ The transpose update takes an interval or a position and use it to update the or
 
 ***** =rebase=
 
-Sometimes when changing the harmonic context, we want to stay on the same pitch, the =rebase= function let you do that.
+Sometimes, when changing the harmonic context, we want to stay on the same pitch; the =rebase= function lets you do that.
 
 #+begin_src clojure :pp
 (score (rebase (root :E)))
 #+end_src
 
-Here we are modulating to E major, but we are staying on the pitch we were on (=C0=).
+Here, we are modulating to E major, but we are staying on the pitch we were on (=C0=).
 
 #+begin_src clojure :pp
 (=
@@ -1188,9 +1188,9 @@ Here we are modulating to E major, but we are staying on the pitch we were on (=
  {:t 0, :s -1, :d 0, :c 1})
 #+end_src
 
-This position points to =C0= but in the context of E major.
+This position points to =C0=, but in the context of E major.
 
-The =rebase= function can take several harmonic context transformations.
+The =rebase= function can take several harmonic context transformations:
 
 #+begin_src clojure :pp
 (score (rebase (root :E) (scale :mixolydianb6)))
@@ -1198,7 +1198,7 @@ The =rebase= function can take several harmonic context transformations.
 
 ***** =degree=
 
-Move to the nth degree of the current scale (mode), negative indexes are allowed.
+Move to the nth degree of the current scale (mode); negative indexes are allowed.
 
 #+begin_src clojure :pp
 (score (degree 2)) ; move to the 3rd degree of C major, E phrygian
@@ -1208,7 +1208,7 @@ Move to the nth degree of the current scale (mode), negative indexes are allowed
 (score (scale :melodic-minor) (degree -1)) ; move to the 7th degree of C melodic minor, B superlocrian.
 #+end_src
 
-Roman numeral vars are also available to change degree.
+Roman numeral vars are also available to change the degree.
 
 #+begin_src clojure
 (play (patch :trumpet) (lin I IV V I) (each (tup s0 s1 s2)))
@@ -1216,17 +1216,17 @@ Roman numeral vars are also available to change degree.
 
 ***** parser
 
-It is possible to express harmonic transformations via keyword notation.
-Chord color, key, mode and structure can be combined as a keyword for more concision and expressiveness.
+It is possible to express harmonic transformations via keyword notation:
+Chord color, key, mode, and structure can be combined as a keyword for more concision and expressiveness.
 
-This feature is still very much a work in progress but is already usable.
+This feature is still very much a work in progress, but it is already usable.
 
-Here is a list of components that can be composed together to express complex harmonic context:
+Here is a list of components that can be composed together to express a complex harmonic context:
 
 ****** root
 
-Pitch classes can be used to specify the root of the tonality.
-They can be followed or not with extra components like chord structure or mode.
+Pitch classes can be used to specify the root of the tonality:
+They can be followed or not by extra components like chord structure or mode.
 
 
 #+begin_src clojure
@@ -1248,7 +1248,7 @@ They can be followed or not with extra components like chord structure or mode.
 
 ****** degree
 
-Roman degree notation can be used to denote relative motion to another harmonic context.
+Roman degree notation can be used to denote relative motion to another harmonic context:
 
 
 #+begin_src clojure
@@ -1275,7 +1275,7 @@ Common triad notation can be used:
 - =o= (diminished triad)
 - =+= (augmented triad)
 
-An example using the four 4 triad colors.
+An example using the four triad colors:
 
 #+begin_src clojure
 (play (lin (h/upd :CM)
@@ -1285,7 +1285,7 @@ An example using the four 4 triad colors.
       (each (par s0 s1 s2)))
 #+end_src
 
-With =noon.lib.harmony/lin= (a variant of =lin= that understand this notation), it can be expressed in a more concise manner.
+With =noon.lib.harmony/lin= (a variant of =lin= that understands this notation), it can be expressed in a more concise manner.
 
 #+begin_src clojure
 (play (h/lin :CM :C#o :Dm :Eb+)
@@ -1311,7 +1311,7 @@ Common tetrad notation:
 
 ****** modifiers
 
-Modes or structures can be altered with degree modifiers:
+Modes or structures can be altered with degree modifiers.
 
 #+begin_src clojure
 (play (h/lin :G7b9 :CM79)
@@ -1326,9 +1326,9 @@ Modes or structures can be altered with degree modifiers:
 
 ****** structure shorthand
 
-This a non standard way to write structures can be handy for uncommon cases.
+This non-standard way to write structures can be handy for uncommon cases.
 
-The =s= character is followed by a suite of scale-idxs representing the structure.
+The =s= character is followed by a suite of scale indices representing the structure.
 
 #+begin_src clojure
 (play (h/upd :s1234) ; tonic + second +third + fourth
@@ -1344,7 +1344,7 @@ The =s= character is followed by a suite of scale-idxs representing the structur
 
 ****** modes
 
-Common modes names are supported:
+Common mode names are supported:
 
 - dorian: =dorian= or =dor=
 - phrygian: =phrygian= or =phry=
@@ -1363,7 +1363,7 @@ Common modes names are supported:
 - ultralocrian: =ultralocrian=
 
 
-Basics examples:
+Basic examples:
 
 #+begin_src clojure
 (play (h/upd :ionian)
@@ -1383,18 +1383,18 @@ With extra modifiers:
 
 
 ****** =upd=
-As seen in above examples, the =noon.harmony/upd= function turns a keyword describing an harmonic-context into a usable score update.
+As seen in the above examples, the =noon.harmony/upd= function turns a keyword describing a harmonic context into a usable score update.
 ****** =lin=
-The =noon.harmony/lin= function is the same as the =noon.updates/lin= function, excepts it can understand ahrmonic keywords.
+The =noon.harmony/lin= function is the same as the =noon.updates/lin= function, except it can understand harmonic keywords.
 ****** =tup=
-The =noon.harmony/tup= function is the same as the =noon.updates/tup= function, excepts it can understand ahrmonic keywords.
+The =noon.harmony/tup= function is the same as the =noon.updates/tup= function, except it can understand harmonic keywords.
 ****** implementation
-The instaparse library is used to parse harmonic keywords, the grammar is located at =noon.parse.harmony-grammar/grammar=
+The instaparse library is used to parse harmonic keywords; the grammar is located at =noon.parse.harmony-grammar/grammar=.
 
 
 ** Composing
 
-When composing music, 4 major aspects are considered: melody, rythmn, harmony and tone. In this section some tools to deal with those aspects will be introduced.
+When composing music, 4 major aspects are considered: melody, rhythm, harmony, and tone. In this section, some tools to deal with those aspects will be introduced.
 
 #+begin_src clojure :pp
 (require
@@ -1406,11 +1406,11 @@ When composing music, 4 major aspects are considered: melody, rythmn, harmony an
 
 *** Melody
 
-Let see some ways to deal with melodies.
+Let's see some ways to deal with melodies.
 
 **** Bounding
 
-One of the most common things we want to be able to control when generating melodies is the range.
+One of the most common things we want to control when generating melodies is the range.
 
 ***** within-pitch-bounds?
 
@@ -1424,7 +1424,7 @@ This function returns nil if any event of the score is not in the given pitch bo
 (= (score Eb0 (within-pitch-bounds? :C0 :C1)) (score Eb0))
 #+end_src
 
-This function is handy in conjuction with the =any-that= or =fst-that= forms.
+This function is handy in conjunction with the =any-that= or =fst-that= forms.
 
 #+begin_src clojure
 (play
@@ -1433,7 +1433,7 @@ This function is handy in conjuction with the =any-that= or =fst-that= forms.
  (rep 60 (any-that (within-pitch-bounds? :C0 :C1) c1 c1- c5 c5-)))
 #+end_src
 
-The =fst-that= form takes a test and any number of update that will be tried in order until one pass the test.
+The =fst-that= form takes a test and any number of updates that will be tried in order until one passes the test.
 
 #+begin_src clojure
 (play
@@ -1457,7 +1457,7 @@ Rotating a melody is a way to evolve it while preserving its identity.
 
 ***** Forms
 
-The =noon.lib.melody/rotation= accepts several types of argument:
+The =noon.lib.melody/rotation= accepts several types of arguments:
 
 #+begin_src clojure :pp
 (m/rotation 2) ; rotate two notes forward
@@ -1483,7 +1483,7 @@ The =noon.lib.melody/rotation= accepts several types of argument:
 (m/rotation [0 1/2]) ; random rotation between first and half the size
 #+end_src
 
-This kind of argument (that I will call a 'member-pick') will be used at many other places within this section, it came from the =noon.utils.sequences/member= function, here the docstring:
+This kind of argument (that I will call a 'member-pick') will be used in many other places within this section. It comes from the =noon.utils.sequences/member= function. Here is the docstring:
 
 Find or pick an element within a sequence 's.
 available forms:
@@ -1495,7 +1495,7 @@ available forms:
 
 ***** Chords
 
-Not only pure melodies can be rotated, if we feed chords into the =rotation= transformation it behaves as intended.
+Not only pure melodies can be rotated; if we feed chords into the =rotation= transformation, it behaves as intended.
 
 #+begin_src clojure
 (play (fit (rep 8 d1)) (each (par d0 d3 d6)) (m/rotation 1/4))
@@ -1503,11 +1503,11 @@ Not only pure melodies can be rotated, if we feed chords into the =rotation= tra
 
 **** Permutations
 
-Another way to transform a melody while preserving a bit of its identity is to permute it. But for long melody, a random permutation can make it so distant to the original that it miss the point. For this reason, permutations are ordered and requested by complexity (similarity degree with the original)
+Another way to transform a melody while preserving a bit of its identity is to permute it. But for long melodies, a random permutation can make it so distant from the original that it misses the point. For this reason, permutations are ordered and requested by complexity (similarity degree with the original).
 
 ***** Forms
 
-Like the rotation function, the =permutation= function uses a 'member-pick argument.
+Like the rotation function, the =permutation= function uses a 'member-pick' argument.
 
 #+begin_src clojure :pp
 (m/permutation 2) ; the second most similar permutation
@@ -1555,7 +1555,7 @@ Like the rotation function, the =permutation= function uses a 'member-pick argum
 
 ****** Grade
 
-The permutations are categorised by grade, the grade of a permutation correspond to the number of splits that has to be made on the original seq to obtain it. For instance a grade 1 permutation is one that we can obtain by splitting our original sequence in 2 parts.
+The permutations are categorized by grade. The grade of a permutation corresponds to the number of splits that have to be made on the original sequence to obtain it. For instance, a grade 1 permutation is one that we can obtain by splitting our original sequence into 2 parts.
 
 #+begin_src clojure :pp
 (require '[noon.utils.sequences :as seqs])
@@ -1565,7 +1565,7 @@ The permutations are categorised by grade, the grade of a permutation correspond
  '((2 3 0 1) (1 2 3 0) (3 0 1 2)))
 #+end_src
 
-This way to categorise permutations can be helpful to have more control over the similarity of the resulting permutation. In addition to this the returned permutations for a given grade are ordered starting from the more balanced splits. As you can see in the previous example, (2 3 0 1) is the first permutation of grade 1, and contains 2 splits of size 2: (2 3) and (0 1).
+This way of categorizing permutations can be helpful to have more control over the similarity of the resulting permutation. In addition to this, the returned permutations for a given grade are ordered starting from the more balanced splits. As you can see in the previous example, (2 3 0 1) is the first permutation of grade 1 and contains 2 splits of size 2: (2 3) and (0 1).
 
 We can leverage those grades via our =m/permutation= function like this:
 
@@ -1579,15 +1579,15 @@ We can leverage those grades via our =m/permutation= function like this:
 
 ****** Layers
 
-As we've seen, our melodies are built on different harmonic layers (chromatic, diatonic, structural and tonic), the =m/permutation= function is letting you act on or inside a particular layer.
+As we've seen, our melodies are built on different harmonic layers (chromatic, diatonic, structural, and tonic). The =m/permutation= function lets you act on or inside a particular layer.
 
-As an example for this, please consider this kind of melody.
+As an example of this, please consider this kind of melody:
 
 #+begin_src clojure
 (play dur2 (tup s0 s1 s2 s3) (each (tup d1 d1- d0)))
 #+end_src
 
-We start with an ascension on the structural layer, then adding some diatonic ornementation on each structural degree. Those diatonic notes have meaning relatively to the structural degrees they are based upon. If we do a raw permutation on this melodic line we are losing those relations. With the :layer option we can permute only the structural layer keeping those diatonic ornementations untouched.
+We start with an ascension on the structural layer, then add some diatonic ornamentation on each structural degree. Those diatonic notes have meaning relative to the structural degrees they are based upon. If we do a raw permutation on this melodic line, we lose those relations. With the :layer option, we can permute only the structural layer, keeping those diatonic ornamentations untouched.
 
 #+begin_src clojure
 (play
@@ -1603,7 +1603,7 @@ TODO
 
 **** Mixed example
 
-In the following example you can get a sense of the effect of deriving a melody from simple transformations.
+In the following example, you can get a sense of the effect of deriving a melody from simple transformations.
 
 #+begin_src clojure
 (play
@@ -1630,7 +1630,7 @@ In the following example you can get a sense of the effect of deriving a melody 
 
 **** Contour
 
-The idea of contour is quite simple. When you see a melody on a score or a pianoroll, by linking the successive notes you can make a line. This line has a certain shape, some melodies with different notes share the same shape (contour). The contour of a melody greatly participate to its identification by the listener. So by keeping a contour and changing the notes, we can ensure a kind of continuity in our melodic developments.
+The idea of contour is quite simple. When you see a melody on a score or a piano roll, by linking the successive notes, you can make a line. This line has a certain shape; some melodies with different notes share the same shape (contour). The contour of a melody greatly contributes to its identification by the listener. So by keeping a contour and changing the notes, we can ensure a kind of continuity in our melodic developments.
 
 For instance those different melodies are all sharing the same contour: [0 2 1 2]
 
@@ -1654,31 +1654,31 @@ For instance those different melodies are all sharing the same contour: [0 2 1 2
 (play (tup s2 s4 d8 s4))
 #+end_src
 
-You can clearly hear the similarity between those
+You can clearly hear the similarity between these.
 
 ***** contour
 
 :docstring
 
 #+begin_quote
-changing the melodic contour of a score.
+Changing the melodic contour of a score.
 
-        forms:
-        (contour :mirror <options>) : mirror the contour of the score.
-        (contour :rotation <options>) : rotate the contour of the score.
-        (contour :similar <options>) : get a different score with the same contour.
+        Forms:
+        (contour :mirror <options>) : Mirror the contour of the score.
+        (contour :rotation <options>) : Rotate the contour of the score.
+        (contour :similar <options>) : Get a different score with the same contour.
 
-        <options>
-        a map that may contain some of those keys:
+        <Options>
+        A map that may contain some of these keys:
 
         :layer : (all commands, default to score's lowest harmonic layer)
-            The harmonic layer on which the contour transformation is performed
+            The harmonic layer on which the contour transformation is performed.
 
         :pick | :nth : (:rotation and :similar commands, default to :random)
-            A 'member-pick (see `member function) to select one particular outcome.
+            A 'member-pick' (see `member` function) to select one particular outcome.
 
         :extent : (:similar command only)
-            A vector of min and max amount of deformation that we want to apply to the score.
+            A vector of the minimum and maximum amount of deformation that we want to apply to the score.
 
         :delta : (:similar command only)
             The amount of shrinking or growing we want to apply to the score.
@@ -1686,51 +1686,51 @@ changing the melodic contour of a score.
 
 ***** Demo
 
-Let's take this simple arpegio to start
+Let's take this simple arpeggio to start:
 
 #+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2)) ; {:contour [0 1 2 3 1 2]}
 #+end_src
 
-Here the way to obtain the mirror contour of the previous arpegio.
+Here's the way to obtain the mirror contour of the previous arpeggio.
 
 #+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :mirror)) ; {:contour [3 2 1 0 3 2]}
 #+end_src
 
-Next let's try contour rotations:
+Next, let's try contour rotations:
 
-Here we are picking the first rotation (with the option =:nth=)
+Here, we are picking the first rotation (with the option =:nth=).
 
 #+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :rotation {:nth 1})) ; {:contour [1 2 3 0 2 3]}
 #+end_src
 
-Every contour index has been shifted one step up, the highest one returning all the way down.
+Every contour index has been shifted one step up, with the highest one returning all the way down.
 
-Lets get the last rotation using a 'member-pick argument.
+Let's get the last rotation using a 'member-pick' argument.
 
 #+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :rotation {:pick -1})) ; {:contour [3 0 1 2 0 1]}
 #+end_src
 
-If no :pick or :nth option is given, select a random one.
+If no :pick or :nth option is given, a random one is selected.
 
 #+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :rotation))
 #+end_src
 
-One of the nice things with contours is that it can serve to generate many melodies. Using the =:similar= commands we can do this.
+One of the nice things about contours is that they can serve to generate many melodies. Using the =:similar= commands, we can do this.
 
-Here we are randomly picking a similar score that is one structural step wider (:delta 1) that the original one.
+Here, we are randomly picking a similar score that is one structural step wider (:delta 1) than the original one.
 
 #+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :similar {:delta 1}))
 #+end_src
 
-In all the previous exemples, the contour was computed over the structural layer. When the layer is not specified, the score's lowest harmonic layer is used, here the structural layer.
+In all the previous examples, the contour was computed over the structural layer. When the layer is not specified, the score's lowest harmonic layer is used, here the structural layer.
 
-As an illustration let's look at the effect of specifying the layer within the :mirror contour operation:
+As an illustration, let's look at the effect of specifying the layer within the :mirror contour operation:
 
 #+begin_src clojure
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :mirror)) ; Original example
@@ -1744,7 +1744,7 @@ As an illustration let's look at the effect of specifying the layer within the :
 (play (tup s0 s1 s2 s3 s1 s2) (m/contour :mirror {:layer :c})) ; Mirror chromatically, resulting in a F minor arpegio (it can help with 'negative harmony')
 #+end_src
 
-One of the similar scores between those shrinked by 2 diatonic step and those expanded by 3 diatonic steps (:extent [-2 3] :layer :d).
+One of the similar scores between those shrunk by 2 diatonic steps and those expanded by 3 diatonic steps (:extent [-2 3] :layer :d).
 
 #+begin_src clojure
 (play
@@ -1773,7 +1773,7 @@ There are several ways to do this:
    (nlin> 4 (one-of s1- s1)))))
 #+end_src
 
-The =simple-line= function is built on top of the more general function =noon.lib.melody/line=
+The =simple-line= function is built on top of the more general function =noon.lib.melody/line=.
 
 #+begin_src clojure
 (play
@@ -1795,11 +1795,11 @@ The =simple-line= function is built on top of the more general function =noon.li
 
 *** Rythmn
 
-So far we havn't discuss rythmn so much, let see what we have at our disposal to deal with it.
+So far, we haven't discussed rhythm much; let's see what we have at our disposal to deal with it.
 
 **** Simple
 
-As we've seen earlier, we can use the =duration= related transformations to write simple rythmns
+As we've seen earlier, we can use the =duration=-related transformations to write simple rhythms.
 
 #+begin_src clojure
 (play
@@ -1808,7 +1808,7 @@ As we've seen earlier, we can use the =duration= related transformations to writ
  (lin same dur:2 dur:2 same dur2 same same))
 #+end_src
 
-This is not a pretty way to write it ! We can use the =_= shortcut instead of =same=, and the =tup= function for making this a bit more readable.
+This is not a pretty way to write it! We can use the =_= shortcut instead of =same=, and the =tup= function to make this a bit more readable.
 
 #+begin_src clojure
 (play (patch :woodblock) dur:4 (lin _ (tup _ _) _ dur2 _ _))
@@ -1820,13 +1820,13 @@ We can also use the =dupt= function if we prefer.
 (play (patch :woodblock) dur:4 (lin _ (dupt 2) _ dur2 _ _))
 #+end_src
 
-We could have done it like so too:
+We could have done it like this too:
 
 #+begin_src clojure
 (play (patch :woodblock) dur2 (tup* (map dur [1 1/2 1/2 1 2 1 1])))
 #+end_src
 
-There is a function to help writing a rythmn this way:
+There is a function to help write a rhythm this way:
 
 #+begin_src clojure
 (play dur2 (r/durtup 1 1/2 1/2 1 2 1 1))
@@ -1836,35 +1836,35 @@ There is a function to help writing a rythmn this way:
 (play dur2 (r/durtup* [1 1/2 1/2 1 2 1 1]))
 #+end_src
 
-Writing those kind of rythmns is not the funniest thing to do of course, let see how we can generate and transform rythmns.
+Writing those kinds of rhythms is not the funniest thing to do, of course; let's see how we can generate and transform rhythms.
 
 **** Generation
 
-The main tool we have at our disposal to create a rythmn is the noon.lib.melody/gen-tup
+The main tool we have at our disposal to create a rhythm is the noon.lib.melody/gen-tup.
 
 ***** gen-tup
 
-form:
+Form:
        (gen-tup resolution size & options)
 
-       Generates a rythmic tup based on the given arguments:
+       Generates a rhythmic tup based on the given arguments:
        resolution: the number of subdivisions that we will use.
        size: the number of notes that the generated tup will contain.
        options:
-         euclidean: generates an euclydean tup.
+         euclidean: generates a Euclidean tup.
          durations: the multiples of =resolution= that we are allowed to use (fractionals allowed).
-         shifted: the possibility for the generated tup to not begin on beat.
+         shifted: the possibility for the generated tup to not begin on the beat.
          
 
 ***** Examples
 
-randomly dispose 5 notes into 8 subdivisions.
+Randomly dispose 5 notes into 8 subdivisions.
 
 #+begin_src clojure
 (play (patch :woodblock) (r/gen-tup 8 5) (dup 4))
 #+end_src
 
-Lets add a metronome
+Let's add a metronome:
 
 #+begin_src clojure
 (play
@@ -1874,7 +1874,7 @@ Lets add a metronome
  (dup 4))
 #+end_src
 
-A bit slower
+A bit slower:
 
 #+begin_src clojure
 (play
@@ -1896,7 +1896,7 @@ Let's try 12/8
  (dup 4))
 #+end_src
 
-Using the =:shifted= keyword you can give your tup a chance to not start on beat.
+Using the =:shifted= keyword, you can give your tup a chance to not start on the beat.
 
 #+begin_src clojure
 (play
@@ -1907,9 +1907,9 @@ Using the =:shifted= keyword you can give your tup a chance to not start on beat
  (dup 4))
 #+end_src
 
-You can specifies which durations are allowed with the =:durations= option
+You can specify which durations are allowed with the =:durations= option.
 
-here we are generating a tuple of resolution 12 and size 5, using only 2/12 and 3/12 durations.
+Here, we are generating a tuple of resolution 12 and size 5, using only 2/12 and 3/12 durations.
 
 #+begin_src clojure
 (play
@@ -1933,7 +1933,7 @@ A 3 voices example:
  (dup 4))
 #+end_src
 
-The =:euclidean= flag let you generate euclidean rythmns: https://blog.landr.com/euclidean-rhythms/
+The =:euclidean= flag lets you generate Euclidean rhythms: https://blog.landr.com/euclidean-rhythms/
 
 #+begin_src clojure
 (play
@@ -2003,11 +2003,11 @@ Fancy variation:
 
 **** Transformation
 
-Once we have written or generated a rythmn we may want to make it evolve, here is some functions that can help.
+Once we have written or generated a rhythm, we may want to make it evolve. Here are some functions that can help.
 
 ***** noon.lib.melody
 
-We can use the previously seen functions from =noon.lib.melody= to permute or rotate a rythmn.
+We can use the previously seen functions from =noon.lib.melody= to permute or rotate a rhythm.
 
 #+begin_src clojure
 (play
@@ -2021,11 +2021,11 @@ We can use the previously seen functions from =noon.lib.melody= to permute or ro
 
 ***** r/rotation
 
-Unlike =noon.lib.melody/rotation= this function do not operates on a note basis
+Unlike =noon.lib.melody/rotation=, this function does not operate on a note basis.
 
 ****** Example
 
-Rotating a score by the given duration
+Rotating a score by the given duration:
 
 #+begin_src clojure
 (play
@@ -2036,7 +2036,7 @@ Rotating a score by the given duration
    (lin _ (r/rotation 1/2) (r/rotation 1/4) (r/rotation -1/4))]))
 #+end_src
 
-You can rotate by any duration, even if it do not really make sense.
+You can rotate by any duration, even if it does not really make sense.
 
 #+begin_src clojure
 (play
@@ -2046,7 +2046,7 @@ You can rotate by any duration, even if it do not really make sense.
  (dup 4))
 #+end_src
 
-You can also rotate relatively to score duration. Here we are starting with a score of duration 2. With the form (r/rotation :relative -1/4) we are rotating it a quarter of its duration backward.
+You can also rotate relative to score duration. Here, we are starting with a score of duration 2. With the form (r/rotation :relative -1/4), we are rotating it a quarter of its duration backward.
 
 #+begin_src clojure
 (play
@@ -2057,7 +2057,7 @@ You can also rotate relatively to score duration. Here we are starting with a sc
  (dup 4))
 #+end_src
 
-There is also forms to randomly pick a rotation (rotation :rand-by <increment>) : pick a random rotation using increment as resolution. (rotation :rand-sub <n>) : split the score in 'n parts and rotate to a randomly picked one.
+There are also forms to randomly pick a rotation: (rotation :rand-by <increment>) picks a random rotation using increment as resolution. (rotation :rand-sub <n>) splits the score into 'n' parts and rotates to a randomly picked one.
 
 #+begin_src clojure
 (play
@@ -2099,7 +2099,7 @@ Here we are picking a random permutation of our score splitted in 4 equal parts.
  (dup 4))
 #+end_src
 
-Like we've seen with =noon.lib.melody/permutation=, there is several way to choose a particular permutation. With the second argument we can specify how to pick one.
+As we've seen with =noon.lib.melody/permutation=, there are several ways to choose a particular permutation. With the second argument, we can specify how to pick one.
 
 #+begin_src clojure :pp
 (r/permutation 4 1) ; picking the most similar base 4 permutation
@@ -2117,7 +2117,7 @@ Like we've seen with =noon.lib.melody/permutation=, there is several way to choo
 (r/permutation 8 :rand) ; picking a random base 8 permutation
 #+end_src
 
-fun:
+Fun:
 
 #+begin_src clojure
 (play
@@ -2139,13 +2139,13 @@ fun:
 
 *** Harmony
 
-Within the lib.harmony module you will find some tools to deal with chords.
+Within the lib.harmony module, you will find some tools to deal with chords.
 
 **** Voicings
 
-In musical terms, a voicing is a particular agencement of a chord. When we speak of a chord like for instance G7, we are not specifying the precise way we will dispose its components.
+In musical terms, a voicing is a particular arrangement of a chord. When we speak of a chord like, for instance, G7, we are not specifying the precise way we will arrange its components.
 
-It can be played in closed position
+It can be played in closed position:
 
 #+begin_src clojure
 (play (patch :electric-piano-1) V tetrad (par s0 s1 s2 s3))
@@ -2179,13 +2179,13 @@ downward double inversions
 (play (patch :vibraphone) o1 (par s0 s1 s2) (rep 4 (h/inversion -2)))
 #+end_src
 
-In those particular exemples we could have done the same using s1 and s2-, here the equivalent of the first example:
+In those particular examples, we could have done the same using s1 and s2-. Here is the equivalent of the first example:
 
 #+begin_src clojure
 (play (patch :vibraphone) (par s0 s1 s2) (rep 4 s1))
 #+end_src
 
-But it is not always the case with more complex chords
+But it is not always the case with more complex chords.
 
 #+begin_src clojure
 (play
@@ -2198,9 +2198,9 @@ But it is not always the case with more complex chords
 
 ***** Drops
 
-A drop is voicing where some notes have been sent into upper octaves.
+A drop is a voicing where some notes have been sent into upper octaves.
 
-Here some common drops:
+Here are some common drops:
 
 #+begin_src clojure :pp
 (let
@@ -2221,7 +2221,7 @@ Here some common drops:
 
 ****** drop
 
-This function help you to drop a voicing. It takes the same polymorphic kind of argument (called a 'member-pick') that we've seen with =noon.lib.melody/permutation= and =noon.lib.melody/rotation=.
+This function helps you to drop a voicing. It takes the same polymorphic kind of argument (called a 'member-pick') that we've seen with =noon.lib.melody/permutation= and =noon.lib.melody/rotation=.
 
 ******* Examples
 
@@ -2255,9 +2255,9 @@ A chord progression is simply a succession of different chords, cyclic or not.
 
 ***** Voice leading
 
-When dealing with chord progression one of the first thing to consider is called voice leading, it is the way voicings succession is handled.
+When dealing with chord progressions, one of the first things to consider is called voice leading; it is the way voicing successions are handled.
 
-Let's start with a very common chord progression.
+Let's start with a very common chord progression:
 
 #+begin_src clojure
 (play
@@ -2267,7 +2267,7 @@ Let's start with a very common chord progression.
  (dup 2))
 #+end_src
 
-It do not sound bad but it can arguably be better.
+It does not sound bad, but it can arguably be better.
 
 #+begin_src clojure
 (play
@@ -2278,9 +2278,9 @@ It do not sound bad but it can arguably be better.
  (dup 2))
 #+end_src
 
-The =voice-led= transformation is using inversions and drops in order to minimize voices motion between successive chords.
+The =voice-led= transformation uses inversions and drops in order to minimize voice motion between successive chords.
 
-It is a really smooth way to transition between voicings but it would be nice to get the original bass motion back.
+It is a really smooth way to transition between voicings, but it would be nice to get the original bass motion back.
 
 #+begin_src clojure
 (play
@@ -2309,13 +2309,13 @@ The voice-led function is quite resource consuming and remain to be optimized...
 
 ***** Melodies
 
-Once you have a chord progression, you may want to apply a melody on it.
+Once you have a chord progression, you may want to apply a melody to it.
 
-One way to do so is to use the =noon.lib.harmony/align-contexts= transformation
+One way to do so is to use the =noon.lib.harmony/align-contexts= transformation.
 
 ****** align-contexts
 
-Let's start with a simple chord progression in minor.
+Let's start with a simple chord progression in minor:
 
 #+begin_src clojure
 (play
@@ -2327,7 +2327,7 @@ Let's start with a simple chord progression in minor.
 
 the tup is applied on each chord without any inversion.
 
-With =noon.lib.harmony/align-contexts= we can connect contexts together with minimal offsets, resulting in more conjoint motions.
+With =noon.lib.harmony/align-contexts=, we can connect contexts together with minimal offsets, resulting in more conjoint motions.
 
 #+begin_src clojure
 (play
@@ -2338,9 +2338,9 @@ With =noon.lib.harmony/align-contexts= we can connect contexts together with min
  (each (tup s0 s1 s2)))
 #+end_src
 
-The word 'context' may seem a bit confusing, what it really stands for is 'harmonic context', the harmonic context can be found under the =:pitch= key of any event.
+The word 'context' may seem a bit confusing; what it really stands for is 'harmonic context'. The harmonic context can be found under the =:pitch= key of any event.
 
-A more elaborated example
+A more elaborate example:
 
 #+begin_src clojure
 (play
@@ -2366,9 +2366,9 @@ A more elaborated example
 
 ****** harmonic-zip
 
-This transformation helps you to zip a melody on a chord progression. This way you don't have to worry at all about the chords, just write a melody it will be adjusted to chord changes.
+This transformation helps you to zip a melody onto a chord progression. This way, you don't have to worry at all about the chords; just write a melody, and it will be adjusted to chord changes.
 
-Let's first write a simple melodic pattern.
+Let's first write a simple melodic pattern:
 
 #+begin_src clojure :pp
 (play
@@ -2378,7 +2378,7 @@ Let's first write a simple melodic pattern.
  (adjust {:duration 4}))
 #+end_src
 
-Now let's use the =h/harmonic-zip= function to apply this to a chord progression.
+Now, let's use the =h/harmonic-zip= function to apply this to a chord progression.
 
 #+begin_src clojure :pp
 (play
@@ -2389,7 +2389,7 @@ Now let's use the =h/harmonic-zip= function to apply this to a chord progression
  (adjust {:duration 6}))
 #+end_src
 
-Almost the same with comping.
+Almost the same with comping:
 
 #+begin_src clojure
 (play
@@ -2413,7 +2413,7 @@ Almost the same with comping.
 
 *** Harmonic
 
-Some experiences built on top of an harmonic idea.
+Some experiences built on top of a harmonic idea.
 
 **** simple I IV VII I
 
@@ -2424,7 +2424,7 @@ Some experiences built on top of an harmonic idea.
       (each (tup s0 s1 s2)))
 #+end_src
 
-Experimenting passing notes:
+Experimenting with passing notes:
 
 #+begin_src clojure :results silent
 (play (scale :harmonic-minor)
@@ -2470,7 +2470,7 @@ Experimenting passing notes:
       ;; grid
       (lin I IV I V)
       (h/align-contexts :s)
-      ;; on each chord
+      ;; on each chord:
       (each (chans
           ;; rythmn
           [(patch :woodblock) C0 (dupt 4)]
@@ -2485,7 +2485,7 @@ Experimenting passing notes:
            (each (probs {[(par s0 s2) (maybe (tup s0 s1))] 3
                       [(tup s3 s1 (par s2 s0) s1-)] 2
                       [(tup d1- s0 d1 s0) (maybe (m/rotation 2))] 1}))]))
-      ;; repeat one time
+      ;; repeat one time:
       (dup 2))
 #+end_src
 
@@ -2529,7 +2529,7 @@ Experimenting passing notes:
 
 **** Tritonal experiment
 
-A rich harmonic sequence using V I progressions over tritonal modulation cycle (like Giant step).
+A rich harmonic sequence using V I progressions over a tritonal modulation cycle (like Giant Step).
 
 #+begin_src clojure :results silent
 (play {:description "tritonal chord sequence shifts by minor thirds"}
@@ -2695,7 +2695,7 @@ A chord sequence based on I V progressions in major and minor.
 
 **** Not too happy birthday
 
-A simple experiment on happy birthday chords turned into minor.
+A simple experiment on Happy Birthday chords turned into minor.
 
 #+begin_src clojure :results silent
 (play
@@ -2728,7 +2728,7 @@ A simple experiment on happy birthday chords turned into minor.
 
 **** I.m.M7 VI.alt bVI.7.#11 bII.7.sus4
 
-A very artificial sounding chord sequence using quartal voicings and ninuplets (tup of size 9)
+A very artificial-sounding chord sequence using quartal voicings and ninuplets (tup of size 9).
 
 #+begin_src clojure :results silent
 (play (lin [I melodic-minor] [VI superlocrian] [VIb lydianb7] [IIb mixolydian])
@@ -4381,7 +4381,7 @@ Trying to produce vibrating textures by playing very fast note sequences.
 
 **** Gradual melodic transformation
 
-Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody derives using transposition, rotation and permutation.
+Random harmonic sequence using IV II and VI degrees on vibraphone; ocarina melody derives using transposition, rotation, and permutation.
 
 #+begin_src clojure :results silent
 (play (chans
@@ -4572,8 +4572,8 @@ Random harmonic seq using IV II and VI degrees on vibraphone, ocarina melody der
 
 **** =noon.lib.rythmn/bintup=
 
-An experiment around =noon.lib.rythmn/gen-bintup=
-The =gen-bintup= function is used to produce a bass line and a fast rythmic texture alternating between electric-piano and marimba.
+An experiment around =noon.lib.rythmn/gen-bintup=.
+The =gen-bintup= function is used to produce a bass line and a fast rhythmic texture alternating between electric piano and marimba.
 
 #+begin_src clojure :results silent
 (play dur6
@@ -4705,8 +4705,8 @@ The =gen-bintup= function is used to produce a bass line and a fast rythmic text
 **** Vienna symphonic library
 
 Using the awesome Vienna Symphonic Library for playback.
-The Vienna Ensemble setup file is provided =vsl/setup1.vep64=
-It assumes VSL special edition (volumes 1+ and 2+)
+The Vienna Ensemble setup file is provided =vsl/setup1.vep64=.
+It assumes VSL special edition (volumes 1+ and 2+).
 
 #+begin_src clojure :clj-only
 (vsl/noon {:play true}
