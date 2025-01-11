@@ -260,23 +260,23 @@
 
         (comment
           (def code-tree
-            (org-file->client-markup "src/noon/doc/noon.org"))
+            (org-file->client-markup "doc/noon.org"))
 
-          (->> (scan-org-file "src/noon/doc/noon.org")
+          (->> (scan-org-file "doc/noon.org")
                (org-blocks->tree))
 
-          (first (mapv node->markup (vals (org-file->client-markup "src/noon/doc/noon.org"))))))
+          (first (mapv node->markup (vals (org-file->client-markup "doc/noon.org"))))))
 
     (comment
 
-      (org->test-ns-str "src/noon/doc/noon.org" :clj)
+      (org->test-ns-str "doc/noon.org" :clj)
 
-      (let [file "src/noon/doc/noon.org"]
+      (let [file "doc/noon.org"]
         (->> (org-file->clojure-expressions file)
              #_(expressions->code-tree)
              #_(code-tree->tests [] :cljs)))
 
-      (let [file "src/noon/doc/noon.org"]
+      (let [file "doc/noon.org"]
         (->> (org-file->clojure-expressions file)
              (map (fn [node]
                     (if-let [text (:text node)]
@@ -291,22 +291,22 @@
       (let [file "test/noon/doc/noon_org_test"
             clj-file (str file ".clj")
             cljs-file (str file ".cljs")]
-        (spit clj-file (org->test-ns-str "src/noon/doc/noon.org" :clj))
-        (spit cljs-file (org->test-ns-str "src/noon/doc/noon.org" :cljs))))
+        (spit clj-file (org->test-ns-str "doc/noon.org" :clj))
+        (spit cljs-file (org->test-ns-str "doc/noon.org" :cljs))))
 
     (defn build-doc-ns [& _]
-      (let [clj-file "src/noon/doc/noon.clj"]
-        (org->clj "src/noon/doc/noon.org"
+      (let [clj-file "src/noon/doc.clj"]
+        (org->clj "doc/noon.org"
                   clj-file
-                  'noon.doc.noon)))
+                  'noon.doc)))
 
     (defn build-client-doc-ns [& _]
       (spit "client/noon/client/doc.cljs"
             (str "(ns noon.client.doc)\n\n"
                  "(def doc-data\n  "
-                 (node->ui-data (get (org-file->client-markup "src/noon/doc/noon.org")
+                 (node->ui-data (get (org-file->client-markup "doc/noon.org")
                                      "noon"))
-                 #_(with-out-str (pp/pprint (first (mapv node->ui-data (vals (org-file->client-markup "src/noon/doc/noon.org"))))))
+                 #_(with-out-str (pp/pprint (first (mapv node->ui-data (vals (org-file->client-markup "doc/noon.org"))))))
                  ")"))))
 
 (defn build-all []

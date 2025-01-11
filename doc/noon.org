@@ -1,12 +1,9 @@
-#+OPTIONS: H:9
-
 * Noon
 
 Noon is a Clojure library for *musical composition and exploration*.
 It provides ways to compose, play, and export music as *MIDI*.
 
-The initial goal was to define musical fragments declaratively,
-leveraging Clojure and functional programming to *generate, manipulate, and organize* musical content.
+The initial goal was to define musical fragments declaratively, leveraging Clojure and functional programming to *generate, manipulate, and organize* musical content.
 
 ** Motivation
 
