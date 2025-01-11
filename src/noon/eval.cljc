@@ -21,26 +21,7 @@
   #?(:cljs (:require-macros [noon.eval :refer [play noon]])))
 
 (def default-namespaces
-  (namespaces/sci-namespaces
-   [noon.updates :refer :all]
-   [noon.events :as events :refer [ef_ efn]]
-   [noon.score :as score :refer [score sf_ sfn e->s]]
-   [noon.output :as out :refer [noon #?(:clj play)]]
-   [noon.harmony :as hc]
-   [noon.midi :as midi]
-   [noon.numbers :refer [mul div add sub]]
-   [noon.lib.harmony :as h]
-   [noon.lib.melody :as m]
-   [noon.lib.rythmn :as r]
-   [noon.utils.misc :as u]
-   [noon.constants :as constants]
-   [noon.utils.pseudo-random :as rand]
-   [noon.utils.sequences :as seqs]
-   [noon.vst.general-midi]
-   [clojure.math.combinatorics :as combinatorics]
-   #?@(:clj [[noon.utils.multi-val :as multi-val]
-             [noon.vst.vsl :as vsl :refer [vsl]]])
-   #?(:cljs [noon.sci.macros :refer :all])))
+  (namespaces/sci-namespaces))
 
 (defn fresh-context []
   (sci/init
