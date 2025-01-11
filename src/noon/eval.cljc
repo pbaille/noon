@@ -18,7 +18,7 @@
               [noon.sci.macros]])
    #?@(:clj [[noon.vst.vsl]
              [noon.utils.multi-val]]))
-  #?(:cljs (:require-macros [noon.eval :refer [play noon]])))
+  #?(:cljs (:require-macros [noon.eval :refer [score play noon]])))
 
 (def default-namespaces
   (namespaces/sci-namespaces))

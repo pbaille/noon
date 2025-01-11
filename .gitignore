@@ -15,6 +15,7 @@ vsl/*
 /.shadow-cljs/
 /public/js/*
 /client/noon/client/doc.cljs
+/test/noon/doc/*
 /.clj-kondo/.cache/
 /.clj-kondo/.lock
 /out/

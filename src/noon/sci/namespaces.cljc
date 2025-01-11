@@ -31,7 +31,7 @@
             [noon.vst.general-midi]
             [clojure.math.combinatorics :as combinatorics])
           (if cljs?
-            '([noon.sci-macros :refer :all]
+            '([noon.sci.macros :refer :all]
               [noon.output :as out :refer [noon]])
             '([noon.utils.multi-val :as multi-val]
               [noon.vst.vsl :as vsl :refer [vsl]]
