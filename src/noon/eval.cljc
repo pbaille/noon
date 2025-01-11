@@ -13,16 +13,15 @@
    [noon.vst.general-midi]
    [sci.core :as sci]
    [noon.utils.pseudo-random]
-   [noon.utils.sci :as sci-utils]
+   [noon.sci.namespaces :as namespaces]
    #?@(:cljs [[sci.async :as scia]
-              [noon.sci-macros]])
+              [noon.sci.macros]])
    #?@(:clj [[noon.vst.vsl]
-             [noon.utils.multi-val]
-             [clojure.string :as str]]))
+             [noon.utils.multi-val]]))
   #?(:cljs (:require-macros [noon.eval :refer [play noon]])))
 
 (def default-namespaces
-  (sci-utils/sci-namespaces
+  (namespaces/sci-namespaces
    [noon.updates :refer :all]
    [noon.events :as events :refer [ef_ efn]]
    [noon.score :as score :refer [score sf_ sfn e->s]]
@@ -41,11 +40,11 @@
    [clojure.math.combinatorics :as combinatorics]
    #?@(:clj [[noon.utils.multi-val :as multi-val]
              [noon.vst.vsl :as vsl :refer [vsl]]])
-   #?(:cljs [noon.sci-macros :refer :all])))
+   #?(:cljs [noon.sci.macros :refer :all])))
 
 (defn fresh-context []
   (sci/init
-   {:namespaces (update-vals default-namespaces sci-utils/deref-def-bindings)}))
+   {:namespaces (update-vals default-namespaces namespaces/deref-def-bindings)}))
 
 (def default-ctx
   (fresh-context))
@@ -105,39 +104,14 @@
 
 
 
-#?(:clj (do :ns-spit
-
-            (defn- ns->filename [ns-sym]
-              (-> (name ns-sym)
-                  (str/replace "." "/")
-                  (str/replace "-" "_")))
-
-            (defn clj-ns-form [ns-sym]
-              (list 'ns ns-sym
-                    (cons :require
-                          (:ns-requirements (meta default-namespaces)))))
-
-            (defn spit-ns
-              [{:keys [ns path content target]}]
-              (spit (str path "/" (ns->filename ns) "." (or target "clj"))
-                    (str/join "\n\n"
-                              (cons (clj-ns-form 'noon.tries.generated)
-                                    content))))
-
-            (comment
-              (spit-ns '{:ns noon.tries.spit-test
-                         :path "src"
-                         :content [(play (tup s0 s1))]}))))
-
 (comment
   (play (tup s0 s1 s2))
 
   (macroexpand '(play (tup s0 s1 s2)))
 
   (noon {:midi true}
-        (mk (tup s0 s1))))
+        (mk (tup s0 s1)))
 
-(comment
   (eval '(noon.score/score))
   (eval '(mk))
   (eval '(tup s0))

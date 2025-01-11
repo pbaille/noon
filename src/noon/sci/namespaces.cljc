@@ -1,4 +1,4 @@
-(ns noon.utils.sci)
+(ns noon.sci.namespaces)
 
 (defmacro sci-namespaces [& xs]
   (let [refer-map
@@ -42,7 +42,8 @@
                           (deref v)))))
 
 
-;; this should probably not be here, but babashka needs it to compile noon-org.clj
+;; This is a duplicated in noon.eval, have to find a better way
+;; Should probably not be here, but babashka needs it to compile noon-org.clj
 (def DEFAULT_REQUIREMENTS
   '(sci-utils/sci-namespaces
     [noon.updates :refer :all]

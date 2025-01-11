@@ -1,7 +1,7 @@
 (ns generate
   (:require [clojure.string :as str]
             [babashka.process :as bpr]
-            [noon.utils.sci :as sci-utils]
+            [noon.sci.namespaces :as sci.namespaces]
             [clojure.pprint :as pp]))
 
 (do :help
@@ -68,7 +68,7 @@
 
       (spit clj-file
             (org-str->clj-str (slurp org-file)
-                              :ns-form (with-out-str (pp/pprint (sci-utils/clj-ns-form ns-sym)))))))
+                              :ns-form (with-out-str (pp/pprint (sci.namespaces/clj-ns-form ns-sym)))))))
 
 (do :noon-org->test-files
 
