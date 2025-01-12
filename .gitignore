@@ -21,3 +21,4 @@ vsl/*
 /out/
 /resources/midi/soundfonts/
 /src/noon/doc.clj
+/cljs-test-runner-out/
