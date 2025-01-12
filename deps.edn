@@ -1,4 +1,5 @@
 {:paths ["src" "resources"]
+
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         org.clojure/data.json {:mvn/version "2.4.0"}
         org.clojure/math.combinatorics {:mvn/version "0.3.0"}
@@ -10,20 +11,25 @@
         instaparse/instaparse {:mvn/version "1.5.0"}
         clj-http/clj-http {:mvn/version "3.13.0"}
         org.babashka/sci {:mvn/version "0.9.44"}}
+
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}}
           :ns-default build}
+
   :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "0.2.2"}}
            :exec-fn deps-deploy.deps-deploy/deploy
            :exec-args {:installer :remote
                        :artifact "target/noon-0.1.6.jar"}}
+
   :test {:extra-paths ["test"]
          :extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}
                       #_ch.qos.logback/logback-classic #_{:mvn/version "1.4.11"}}
          :exec-fn noon.test/run-all}
+
   :cljs-test {:extra-paths ["test"]
               :extra-deps {olical/cljs-test-runner {:mvn/version "3.8.1"}}
               :main-opts ["-m" "cljs-test-runner.main"]}
+
   :client {:extra-paths ["client"]
            :extra-deps {org.clojure/clojurescript {:mvn/version "1.11.132"}
                         thheller/shadow-cljs {:mvn/version "2.28.19"}
@@ -36,7 +42,5 @@
                         com.pitch/uix.core {:mvn/version "1.2.0"}
                         com.pitch/uix.dom {:mvn/version "1.2.0"}}}
 
-  ;; building noon.client.guide.cljs file
   :scripts {:extra-paths ["scripts"]
-            :extra-deps {zprint/zprint {:mvn/version "1.2.9"}
-                         commonmark-hiccup/commonmark-hiccup {:mvn/version "0.2.0"}}}}}
+            :extra-deps {zprint/zprint {:mvn/version "1.2.9"}}}}}
