@@ -374,7 +374,6 @@
 
         (def SOUNDFONTS
           (atom {:s3-base-url "https://pbaille-noon.s3.eu-west-3.amazonaws.com/soundfonts/"
-                 :resource-path "midi/soundfonts/"
                  :local-path "resources/midi/soundfonts/"
                  :files {:chorium "choriumreva.sf2"
                          :squid "squid.sf2"
@@ -396,9 +395,9 @@
 
         (defn soundfont-resource [name-kw]
           (if-let [filename (get-in @SOUNDFONTS [:files name-kw])]
-            (or (io/resource (str (get @SOUNDFONTS :resource-path) filename))
-                (let [path (str (get @SOUNDFONTS :local-path) filename)]
-                  (when (.exists (io/file path)) (.toURL (io/file path))))
+            (or (let [path (str (get @SOUNDFONTS :local-path) filename)]
+                  (when (.exists (io/file path))
+                    (.toURL (io/file path))))
                 (do (println "Soundfont is not locally available, downloading it...")
                     (download-soundfont name-kw)))
             (u/throw* "Unknown soundfont: " name-kw
