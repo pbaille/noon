@@ -4,7 +4,6 @@
                     [clojure.pprint :as pprint]
                     [me.raynes.fs :as fs]
                     [backtick :as bt]
-                    [clj-commons.byte-streams :as bs]
                     [clojure.data.codec.base64 :as b64])
      :cljs (:require [clojure.string :as str]
                      [cljs.pprint :as pprint]))
@@ -385,7 +384,7 @@
                    ~@(if doc [doc])
                    (reduction (fn ~argv ~@body)))))))
 
-#?(:clj (do :serialisation
+#?(:clj (do "serialisation"
 
             (defn serialize-to-base64 [obj]
               (let [baos (ByteArrayOutputStream.)
@@ -397,5 +396,5 @@
 
             (defn unserialize-from-base64 [s]
               (let [bytes (b64/decode (.getBytes s))
-                    ois (ObjectInputStream. (bs/to-input-stream bytes))]
+                    ois (ObjectInputStream. ((requiring-resolve 'clj-commons.byte-streams/to-input-stream) bytes))]
                 (.readObject ois)))))
