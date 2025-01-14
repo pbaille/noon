@@ -1,4 +1,4 @@
-(ns noon.externals
+(ns noon.output.externals
   (:require [clojure.java.shell :as shell]
             [noon.utils.misc :as u]))
 

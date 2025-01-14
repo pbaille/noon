@@ -5,7 +5,7 @@
    [noon.events]
    [noon.updates]
    [noon.output]
-   [noon.midi]
+   [noon.output.midi]
    [noon.lib.harmony]
    [noon.lib.melody]
    [noon.lib.rythmn]

@@ -1,4 +1,4 @@
-(ns noon.midi
+(ns noon.output.midi
   (:require [noon.utils.misc :as u]
             [clojure.string :as str]
             [clojure.java.io :as io]

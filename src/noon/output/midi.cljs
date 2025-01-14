@@ -1,9 +1,7 @@
-(ns noon.midi
+(ns noon.output.midi
   "WIP, many features are missing compared to clj version"
   (:require ["smplr" :refer [Soundfont]]
             [noon.data.GM :as gm]))
-
-;; https://github.com/alda-lang/alda-sound-engine-clj/blob/master/src/alda/sound/midi.clj
 
 (def DEFAULT_EVENT
   {:position 0
@@ -51,7 +49,7 @@
         #_(println "will execute callback: " (get @on-done-callbacks* playing-id))
         (when-let [cb (get @on-done-callbacks* playing-id)]
           (cb))
-        {:noon.midi/done playing-id}))
+        {:noon.output.midi/done playing-id}))
 
     (defn get-instrument [instrument-name kit]
       (or (get @soundfonts* [instrument-name kit])
@@ -126,7 +124,7 @@
             (.then (fn [{:keys [id stop]}]
                      (println "playing...")
                      (swap! stop-fns* conj stop)
-                     {:noon.midi/playing id})))))
+                     {:noon.output.midi/playing id})))))
 
     (defn midi [& {:as options :keys [data track-idx->sequencer]}]
       (when audio-context

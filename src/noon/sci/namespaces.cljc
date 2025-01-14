@@ -19,7 +19,7 @@
             [noon.events :as events :refer [ef_ efn]]
             [noon.score :as score :refer [score sf_ sfn e->s]]
             [noon.harmony :as hc]
-            [noon.midi :as midi]
+            [noon.output.midi :as midi]
             [noon.numbers :refer [mul div add sub]]
             [noon.lib.harmony :as h]
             [noon.lib.melody :as m]

@@ -13,7 +13,7 @@ More precisely, using =noon.eval= top forms is similar to being in a namespace w
             [noon.lib.melody :as m]
             [noon.lib.rythmn :as r]
             [noon.numbers :refer [mul div add sub]]
-            [noon.midi :as midi]
+            [noon.output.midi :as midi]
             [noon.utils.misc :as u]
             [noon.constants :as constants]
             [noon.utils.pseudo-random :as rand]

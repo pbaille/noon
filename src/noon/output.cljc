@@ -1,7 +1,7 @@
 (ns noon.output
   (:require [noon.score :as score]
-            [noon.midi :as midi]
-            #?@(:clj [[noon.externals :as externals]
+            [noon.output.midi :as midi]
+            #?@(:clj [[noon.output.externals :as externals]
                       [noon.utils.misc :as u]]))
   #?(:cljs (:require-macros [noon.output :refer [play]])))
 

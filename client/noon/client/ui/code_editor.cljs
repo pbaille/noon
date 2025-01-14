@@ -1,6 +1,6 @@
 (ns noon.client.ui.code-editor
   (:require [noon.eval :as eval]
-            [noon.midi :as midi]
+            [noon.output.midi :as midi]
             [uix.core :as uix :refer [defui]]
             [uic.component :refer [c sc]]
             [noon.utils.misc :as u]
