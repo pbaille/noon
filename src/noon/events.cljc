@@ -1,7 +1,7 @@
 (ns noon.events
   "Noon events are maps that represent a MIDI event.
    This ns is help to deal with such maps and defines some useful event updates (functions from event to event)"
-  (:require [noon.harmony :as h]
+  (:require [noon.harmonic-context :as h]
             [noon.utils.misc :as u :refer [t t?]]
             [noon.utils.maps :as m]
             [noon.utils.chance :as g]
@@ -158,11 +158,11 @@
 
 (do :pitch
 
-    "Wraps noon.harmony functionality under the :pitch key of events."
+    "Wraps noon.harmonic-context functionality under the :pitch key of events."
 
     #?(:clj (defmacro import-wrap-harmony-update-constructors [& xs]
               `(do ~@(map (fn [x]
-                            (let [original-sym (symbol "noon.harmony" (name x))]
+                            (let [original-sym (symbol "noon.harmonic-context" (name x))]
                               `(defn ~x
                                  ~(str "Build an harmonic event-update using " original-sym
                                        "\n  The resulting transformation will be used to update the :pitch value of the received event.\n\n"
@@ -174,7 +174,7 @@
                                              "undocumented"))
                                  {:tags [:event-update :harmonic]}
                                  [~'& xs#]
-                                 (let [u# (apply ~(symbol "noon.harmony" (name x)) xs#)]
+                                 (let [u# (apply ~(symbol "noon.harmonic-context" (name x)) xs#)]
                                    (map->efn
                                     {:pitch
                                      (fn [ctx#]
@@ -183,7 +183,7 @@
 
     #?(:clj (defmacro import-wrap-harmony-updates [& xs]
               `(do ~@(map (fn [x]
-                            (let [original-sym (symbol "noon.harmony" (name x))]
+                            (let [original-sym (symbol "noon.harmonic-context" (name x))]
                               (list 'def (with-meta x
                                            {:doc (str "Updates the :pitch value of the received event using "
                                                       original-sym
@@ -195,7 +195,7 @@
                                       {:pitch
                                        (fn [ctx#]
                                          #_(println ctx#)
-                                         (h/upd ctx# ~(symbol "noon.harmony" (name x))))}))))
+                                         (h/upd ctx# ~(symbol "noon.harmonic-context" (name x))))}))))
                           xs))))
 
     (do :defs

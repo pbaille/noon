@@ -2,7 +2,7 @@
   (:require #_[clojure.java.io :as io]
             [instaparse.core :as insta]
             [noon.constants :as constants]
-            [noon.harmony :as h]
+            [noon.harmonic-context :as h]
             [noon.utils.misc :as u]
             [noon.parse.harmony-grammar :as grammar]))
 

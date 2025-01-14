@@ -2,7 +2,7 @@
   "A score is a collection of events, represented using a clojure set."
   (:refer-clojure :exclude [iter])
   (:require [clojure.core :as c]
-            [noon.harmony :as h]
+            [noon.harmonic-context :as h]
             [noon.events :as events]
             [noon.utils.misc :as u :refer [t t?]]
             [noon.utils.chance :as g]

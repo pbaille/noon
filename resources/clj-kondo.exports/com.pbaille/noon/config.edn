@@ -27,5 +27,5 @@
                        noon.events/-def-degrees noon.events/-def-degrees
                        noon.lib.multi/forking-update noon.score/lambda
                        noon.lib.multi/multi-update noon.score/lambda
-                       noon.harmony/defsteps noon.harmony/defsteps
+                       noon.harmonic-context/defsteps noon.harmonic-context/defsteps
                        noon.utils.misc/defreduction noon.utils.misc/defreduction}}}

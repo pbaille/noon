@@ -6,7 +6,7 @@
             [noon.score :as score :refer [score]]
             [noon.output :refer [play noon]]
             [noon.utils.pseudo-random :as pr]
-            [noon.harmony :as nh]))
+            [noon.harmonic-context :as nh]))
 
 (comment
 

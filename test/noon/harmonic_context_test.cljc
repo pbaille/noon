@@ -1,5 +1,5 @@
-(ns noon.harmony-test
-  (:require [noon.harmony :as h]
+(ns noon.harmonic-context-test
+  (:require [noon.harmonic-context :as h]
             [clojure.test :refer [deftest testing is]]))
 
 (defn limit-bds [bds & [limit]]

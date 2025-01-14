@@ -9,7 +9,7 @@
             [noon.utils.chance :as g]
             [noon.utils.misc :as u :refer [f_ t defn*]]
             [noon.utils.maps :as maps]
-            [noon.harmony :as h]
+            [noon.harmonic-context :as h]
             [noon.vst.index :as vst])
   #?(:cljs (:require-macros [noon.updates :refer [!]])))
 

@@ -1380,11 +1380,11 @@ With extra modifiers:
 
 
 ****** =upd=
-As seen in the above examples, the =noon.harmony/upd= function turns a keyword describing a harmonic context into a usable score update.
+As seen in the above examples, the =noon.lib.harmony/upd= function turns a keyword describing a harmonic context into a usable score update.
 ****** =lin=
-The =noon.harmony/lin= function is the same as the =noon.updates/lin= function, except it can understand harmonic keywords.
+The =noon.lib.harmony/lin= function is the same as the =noon.updates/lin= function, except it can understand harmonic keywords.
 ****** =tup=
-The =noon.harmony/tup= function is the same as the =noon.updates/tup= function, except it can understand harmonic keywords.
+The =noon.lib.harmony/tup= function is the same as the =noon.updates/tup= function, except it can understand harmonic keywords.
 ****** implementation
 The instaparse library is used to parse harmonic keywords; the grammar is located at =noon.parse.harmony-grammar/grammar=.
 
@@ -2759,7 +2759,7 @@ How to fill between the notes of this simple line?
 
 #+begin_src clojure :results silent
 (def fill-diatonically
-  "A very low level way to connect subsequent notes diatonically using `noon.harmony` directly.
+  "A very low level way to connect subsequent notes diatonically using `noon.harmonic-context` directly.
    It feels too complicated for such a simple thing..."
   (sf_ (let [sorted (sort-by :position _)
              couples (partition 2 1 sorted)]
@@ -2793,7 +2793,7 @@ Let's generalise to other layers:
 #+begin_src clojure :results silent
 (defn fill-line
   "This evolution of fill-diatonically let the user specify the harmonic layer.
-   It is still relying on `noon.harmony` which is not great."
+   It is still relying on `noon.harmonic-context` which is not great."
   [layer]
   (sf_ (let [sorted (sort-by :position _)
              couples (partition 2 1 sorted)]
@@ -2860,7 +2860,7 @@ Next step will be to have control over the number of notes between targets.
 
 The problem here is that the precedent note overlaps the targeting notes.
 
-Using the =noon.harmony/simplest-connections= we can connect two notes in a given amount of steps using.
+Using the =noon.harmonic-context/simplest-connections= we can connect two notes in a given amount of steps using.
 Let's build a function that leverage that to fill subsequent notes in a melodic way.
 
 #+begin_src clojure :results silent

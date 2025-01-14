@@ -4,7 +4,7 @@
   (:require [noon.score :as score]
             [noon.events :as events]
             [noon.updates :as updates]
-            [noon.harmony :as h]
+            [noon.harmonic-context :as h]
             [noon.constants :as nc]
             [noon.utils.misc :as u]
             [noon.utils.contour :as uc]

@@ -4,7 +4,7 @@
             [noon.utils.contour :as c]
             [noon.utils.sequences :as s]
             [noon.utils.misc :as u]
-            [noon.harmony :as h]
+            [noon.harmonic-context :as h]
             [clojure.math.combinatorics :as comb]
             [noon.utils.pseudo-random :as pr]
             [noon.numbers :as numbers]
@@ -202,7 +202,7 @@
 (do :connect
 
     (defn simple-connection
-      "A simple connection function that leverage `noon.harmony/simplest-connection`"
+      "A simple connection function that leverage `noon.harmonic-context/simplest-connection`"
       [sizes]
       (fn [chunk1 chunk2]
         (when-not (and (= 1 (count chunk1))

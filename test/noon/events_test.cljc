@@ -184,7 +184,7 @@
 
   (testing "pitch"
 
-    ;; see noon.harmony test for wrapped :pitch transformations testing
+    ;; see noon.harmonic-context test for wrapped :pitch transformations testing
 
     (is (= (e0> u/t3 :pitch)
            (e0> u/s1 u/t3 :pitch)

@@ -1,7 +1,7 @@
-(ns noon.harmony
+(ns noon.harmonic-context
   (:require [noon.utils.misc :as u :refer [t t?]]
             [noon.constants :as constants])
-  #?(:cljs (:require-macros [noon.harmony :refer [-def-wrapped defsteps]])))
+  #?(:cljs (:require-macros [noon.harmonic-context :refer [-def-wrapped defsteps]])))
 
 (do :impl
 
@@ -432,13 +432,13 @@
                     (get-in ctx [:position l]) (update-in ctx [:position l] + n)
                     :else ctx))))
 
-            (def ^{:doc "Builds a tonic shift update. see `noon.harmony/layer-shift` documentation."}
+            (def ^{:doc "Builds a tonic shift update. see `noon.harmonic-context/layer-shift` documentation."}
               t-shift (layer-shift :t))
-            (def ^{:doc "Builds a structural shift update. see `noon.harmony/layer-shift` documentation."}
+            (def ^{:doc "Builds a structural shift update. see `noon.harmonic-context/layer-shift` documentation."}
               s-shift (layer-shift :s))
-            (def ^{:doc "Builds a diatonic shift update. see `noon.harmony/layer-shift` documentation."}
+            (def ^{:doc "Builds a diatonic shift update. see `noon.harmonic-context/layer-shift` documentation."}
               d-shift (layer-shift :d))
-            (def ^{:doc "Builds a chromatic shift update. see `noon.harmony/layer-shift` documentation."}
+            (def ^{:doc "Builds a chromatic shift update. see `noon.harmonic-context/layer-shift` documentation."}
               c-shift (layer-shift :c))
 
             #_(upd (hc)
@@ -585,11 +585,11 @@
           (fn [ctx]
             ((repitch (hc->pitch ctx)) (reduce upd ctx fs))))
 
-        (def ^{:doc "Build an update that change the scale of the received context without changing its pitch. see `noon.harmony/scale`"}
+        (def ^{:doc "Build an update that change the scale of the received context without changing its pitch. see `noon.harmonic-context/scale`"}
           rescale (comp rebase scale))
-        (def ^{:doc "Build an update that change the structure of the received context without changing its pitch. see `noon.harmony/scale`"}
+        (def ^{:doc "Build an update that change the structure of the received context without changing its pitch. see `noon.harmonic-context/scale`"}
           restructure (comp rebase structure))
-        (def ^{:doc "Build an update that change the origin of the received context without changing its pitch. see `noon.harmony/scale`"}
+        (def ^{:doc "Build an update that change the origin of the received context without changing its pitch. see `noon.harmonic-context/scale`"}
           reorigin (comp rebase origin)))
 
     (do :update
@@ -684,10 +684,10 @@
                (structure new-structure)
                (origin (hc->pitch new-origin))))))
 
-    (def ^{:doc "Build an update that changes the root of the received context, without changing its pitch. see `noon.harmony/root`."}
+    (def ^{:doc "Build an update that changes the root of the received context, without changing its pitch. see `noon.harmonic-context/root`."}
       reroot (comp rebase root))
 
-    (def ^{:doc "Build an update that changes the degree of the received context, without changing its pitch. see `noon.harmony/degree`."}
+    (def ^{:doc "Build an update that changes the degree of the received context, without changing its pitch. see `noon.harmonic-context/degree`."}
       redegree (comp rebase degree))
 
     (defn transpose

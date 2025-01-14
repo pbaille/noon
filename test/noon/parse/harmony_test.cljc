@@ -1,7 +1,7 @@
 (ns noon.parse.harmony-test
   (:require [noon.parse.harmony :as p :refer [parse]]
             [clojure.test :refer [testing deftest is]]
-            [noon.harmony :as h]))
+            [noon.harmonic-context :as h]))
 
 (deftest parser
 

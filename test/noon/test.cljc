@@ -12,7 +12,7 @@
             [noon.utils.pseudo-random-test]
             [noon.utils.sequences-test]
             [noon.events-test]
-            [noon.harmony-test]
+            [noon.harmonic-context-test]
             [noon.numbers-test]
             [noon.parse.harmony-test]
             [noon.score-test]
