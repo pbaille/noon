@@ -1,7 +1,6 @@
 * noon.eval
 
-The =noon.eval= namespace is leveraging the great =babashka.sci= library to bring different noon parts together into a friendly user interface.
-More precisely, using =noon.eval= top forms is similar to being in a namespace with those requirements.
+The =noon.eval= namespace leverages the excellent =babashka.sci= library to integrate various Noon components into a user-friendly interface. More specifically, using top forms in =noon.eval= is akin to being in a namespace with these requirements.
 
 #+begin_src clojure
 (ns my.namespace
@@ -21,8 +20,7 @@ More precisely, using =noon.eval= top forms is similar to being in a namespace w
             ))
 #+end_src
 
-It also helps to support the clojurescript side of things where some restrictions are taking place.
-The =:refer :all= syntax is not possible in cljs, and the =noon.updates= namespace is containing a lot of vars that you probably  don't want to write or prefix.
+It also supports the ClojureScript side of things where some restrictions arise. The =:refer :all= syntax is not available in ClojureScript, and the =noon.updates= namespace contains many vars that you might not want to explicitly refer to or prefix.
 
-The three main forms that =noon.eval= exposes (=score= , =play= , =noon=) are macros mainly for the sake of this.
-Under this, the noon API consists mainly of functions dealing with data, the two main underlying forms (=noon.output/noon=, =noon.score/score=) are functions and you can do everything you want using them directly.
+The three main forms that =noon.eval= exposes (=score=, =play=, =noon=) are macros, primarily for this reason. Beneath this syntactic convenience, the Noon API mainly consists of functions for handling data. The two principal underlying forms (=noon.output/noon=, =noon.score/score=) are functions, and you can achieve anything you need using them directly.
+Under this syntactic convenience, the noon API consists mainly of functions dealing with data, the two main underlying forms (=noon.output/noon=, =noon.score/score=) are functions and you can do everything you want using them directly.
