@@ -15,7 +15,7 @@
 
 (do :event-updates
 
-    (def ^{:tags [:event-update]} e0
+    (def ^{:tags [:event-update :identity]} e0
       (t :event-update identity))
 
     (defn dur
@@ -44,7 +44,7 @@
 
         (defn vel-humanize
           "Build an event update that humanize the :velocity value.
-           please refer to the `noon.score/humanize` doc."
+           please refer to the `noon.numbers/humanize` doc."
           [max-step & [bounds]]
           (let [f (numbers/humanize {:bounds bounds :max-step max-step})]
             (ef_ (update _ :velocity f))))
@@ -136,7 +136,7 @@
        (cond (keyword? x) (patch (vst/pick x))
              (vector? x) (ef_ (assoc _ :patch x))
              (number? x) (patch nil x)
-             :else (u/throw* "noon.score/patch :: bad argument " x)))
+             :else (u/throw* "noon.updates/patch :: bad argument " x)))
       ([bank program]
        (patch [bank program])))
 
@@ -211,16 +211,16 @@
 (do :score-updates
 
     (def ^{:doc "Identity transformation"
-           :tags [:base :score-update]}
+           :tags [:base :score-update :identity]}
       same
       (sf_ _))
 
     (def ^{:doc "Identity transformation"
-           :tags [:base :score-update]}
+           :tags [:base :score-update :identity]}
       _ same)
 
     (defn* k
-      {:doc "Act like 'noon.score/score, ignoring current score."
+      {:doc "Act like `noon.score/score`, ignoring current score."
        :tags [:base :score-update-builder]}
       [updates]
       (sf_ (score/score* updates)))
@@ -231,19 +231,19 @@
       (sf_ #{}))
 
     (defn* chain
-      {:doc "Compose several updates together linearly."
+      {:doc "Compose several `updates` together linearly."
        :tags [:base :score-update-builder]}
       [updates]
       (score/chain-score-updates updates))
 
     (defn* par
-      {:doc "Apply several update on a score merging the results."
+      {:doc "Apply several `updates` on a score merging the results."
        :tags [:base :score-update-builder :parallel]}
       [updates]
       (sf_ (score/merge-scores (map #(score/update-score _ %) updates))))
 
     (defn* par>
-      {:doc "Accumulative 'par."
+      {:doc "Accumulative version of `noon.updates/par`."
        :tags [:score-update-builder :accumulative :parallel]}
       [updates]
       (sf_ (loop [segments [_] updates updates]
@@ -252,20 +252,22 @@
                (score/merge-scores (next segments))))))
 
     (defn* each
-      {:doc "Apply an update to each events of a score."
+      {:doc "Apply an update to each events of a score.
+             If several `updates` are given, acts like:
+             `(chain (each update1) (each update2) ...)`"
        :tags [:base :score-update-builder :traversing]}
       [updates]
       (sf_ (reduce score/map-update _ updates)))
 
     (defn* lin
-      {:doc "Apply each `update` to the received score and concatenate the results."
+      {:doc "Apply each given update to the score and concatenate the results."
        :tags [:base :score-update-builder :linear]}
       [updates]
       (sf_ (score/concat-scores
             (map #(score/update-score _ %) updates))))
 
     (defn* lin>
-      {:doc "Accumulative 'lin."
+      {:doc "Accumulative version of `noon.update/lin`."
        :tags [:base :score-update-builder :linear :accumulative]}
       [updates]
       (sf_ (loop [segments [_] updates updates]
@@ -274,7 +276,7 @@
                (score/concat-scores (next segments))))))
 
     (defn* fit
-      {:doc "Wraps the given transformation 'x, stretching its output to the input score duration.
+      {:doc "Wraps the given update, stretching its output to the input score duration.
              In other words, turn any transformation into another one that do not change the duration of its input score."
        :tags [:base :score-update-builder]}
       [updates]
@@ -282,35 +284,35 @@
                             {:duration (score/score-duration _)})))
 
     (defn* tup
-      {:doc "Like 'lin but preserve the length of the input score"
+      {:doc "Like `noon.updates/lin` but preserve the length of the input score"
        :tags [:base :score-update-builder :linear]}
       [updates] (fit (lin* updates)))
 
     (defn* tup>
-      {:doc "Accumulative 'tup."
+      {:doc "Accumulative version of `noon.updates/tup`."
        :tags [:score-update-builder :accumulative :linear]}
       [updates] (fit (lin>* updates)))
 
     (defn* append
-      {:doc "Like 'lin but insert the current score before."
+      {:doc "Like `noon.updates/lin` but insert the current score before."
        :tags [:base :score-update-builder :linear]}
       [updates]
       (lin* (cons same updates)))
 
     (defn* append>
-      {:doc "Accumulative 'append."
+      {:doc "Accumulative version of `noon.updates/append`."
        :tags [:score-update-builder :linear :accumulative]}
       [updates]
       (chain* (map append updates)))
 
     (defn* superpose
-      {:doc "Like 'par but keep the current score."
+      {:doc "Like `noon.updates/par` but keep the current score."
        :tags [:base :score-update-builder :parallel]}
       [updates]
       (par* (cons same updates)))
 
     (defn* superpose>
-      {:doc "Accumulative 'superpose."
+      {:doc "Accumulative version of `noon.updates/superpose`."
        :tags [:score-update-builder :parallel :accumulative]}
       [updates]
       (chain* (map superpose updates)))
@@ -358,7 +360,10 @@
       [n update] (lin* (repeat n update)))
 
     (defn* parts
-      {:doc "Apply updates to subscores: (parts sel1 upd1 sel2 upd2 ...)"
+      {:doc "Apply updates to subscores: (parts sel1 upd1 sel2 upd2 ...)
+             Takes a flat serie of pairs, each pair consists of a selector and an update.
+             For each pair:
+             The selector is extracting a subscore form the score, this subscore is fed into the paired update."
        :tags [:base :score-update-builder :partial]}
       [xs]
       (sf_ (reduce (fn [s [filt upd]]
@@ -413,7 +418,7 @@
     (defn in-place
       {:doc "Turn the given update `u` into an update that reposition received score to position zero before applying `u` to it.
              The resulting score is then adjusted to its initial duration and shifted to its original position.
-             This is useful when you need to scan update a score. It is similar to what the `noon.score/each` function is doing."
+             This is useful when you need to scan update a score. It is similar to what the `noon.updates/each` function is doing."
        :tags [:base :score-update-builder :temporal]}
       [u]
       (sf_ (let [score-origin (score/score-origin _)
@@ -422,7 +427,7 @@
                                  [u (adjust {:position score-origin :duration score-duration})]))))
 
     (defn* fork-with
-      {:doc "Like `noon.score/par` but let you the opportunity to do something on the score based on the index of the branch before applying corresponding update."
+      {:doc "Like `noon.updates/par` but let you the opportunity to do something on the score based on the index of the branch before applying corresponding update."
        :tags [:score-update-builder]}
       [branch-idx->update branch-updates]
       (par* (map-indexed (fn [i update] (chain (branch-idx->update i) update))
@@ -454,12 +459,12 @@
       (sf_ (score/reverse-score _)))
 
     (defn event-scale
-      {:doc "Restrains and scale one event `dimension` to the given bounds over the whole score."
+      {:doc "Restrains and scale one event `dimension` to the given `bounds` over the whole score."
        :tags [:score-update-builder :scaling :bounding]}
-      [dimension x]
+      [dimension bounds]
       (let [[min-out max-out]
-            (cond (number? x) [0 x]
-                  (vector? x) x)]
+            (cond (number? bounds) [0 bounds]
+                  (vector? bounds) bounds)]
         (sf_ (let [[min-in max-in] (mapv dimension (score/score-bounds _ dimension))
                    f #(u/scale-range % min-in max-in min-out max-out)]
                (score/update-score _ (each (events/ef_ (update _ dimension f))))))))
@@ -595,7 +600,7 @@
           (! (pr/rand-nth updates)))
 
         (defn* maybe
-          {:doc "Like `noon.score/one-of`, return an update that choose randomly one of the given `updates`, but can also do nothing."
+          {:doc "Like `noon.updates/one-of`, return an update that choose randomly one of the given `updates`, but can also do nothing."
            :tags [:score-update-builder :non-deterministic]}
           [updates]
           (one-of* (cons same updates)))
@@ -652,7 +657,7 @@
     (do :incubator
 
         (defn* voices>
-          {:doc "Like `noon.score/par>` but keep track of voice number."
+          {:doc "Like `noon.updates/par>` but keep track of voice number."
            :tags [:incubator :score-update-builder]}
           [updates]
           (par>* (map (fn [i update] (chain (voice+ i) update))
@@ -660,12 +665,12 @@
                       updates)))
 
         (defn nlin>
-          {:doc "Creates a `noon.score/lin>` of size `n` using `update`."
+          {:doc "Creates a `noon.updates/lin>` of size `n` using `update`."
            :tags [:incubator :score-update-builder]}
           [n update] (lin>* (repeat n update)))
 
         (defn ntup>
-          {:doc "Creates a `noon.score/tup>` of size `n` using `update`."
+          {:doc "Creates a `noon.updates/tup>` of size `n` using `update`."
            :tags [:incubator :score-update-builder]}
           [n update] (tup>* (repeat n update)))
 
@@ -764,7 +769,7 @@
 
         (defn connect-by
           {:doc "Build an update that use `f` to join successive score's chunks.
-                 - Chunks the score with `noon.score/chunk-score` accordingly to `by`, resulting in a list of scores.
+                 - Chunks the score with `noon.updates/chunk-score` accordingly to `by`, resulting in a list of scores.
                  - Iterates this sorted list by pair, applying `f` to each one producing a new score.
                  - all those scores are merged together."
            :tags [:incubator :score-update-builder :traversing]}
