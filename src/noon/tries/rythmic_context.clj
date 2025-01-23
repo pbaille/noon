@@ -1,7 +1,8 @@
 (ns noon.tries.rythmic-context
   (:require [noon.events :as events]
             [noon.utils.misc :as u]
-            [noon.score :as score]))
+            [noon.score :as score]
+            [clojure.walk :as walk]))
 
 (do :help
 
@@ -45,10 +46,10 @@
       (let [simplified (layer-simplify lr)
             simplified-focus (layer-simplify focus-lr)
             common-res (* (:resolution simplified) (:resolution simplified-focus))
-            lr' #tap (set-resolution lr common-res)
-            focus-lr' #tap (set-resolution focus-lr common-res)]
+            lr' (set-resolution lr common-res)
+            focus-lr' (set-resolution focus-lr common-res)]
         (layer-simplify
-         (layer (- common-res (:index focus-lr'))
+         (layer (:length focus-lr')
                 (- (:index lr') (:index focus-lr'))
                 (:length lr')))))
 
@@ -139,19 +140,19 @@
          (compare (+ pos1 dur1)
                   (+ pos2 dur2))]))
 
-    (do :rebase
+    (comment :rebase
 
-        (defn rebase-ctx
-          "Replace the first layers of `ctx` by `base-ctx`, adjusting remaining layers accordingly."
-          [ctx base-ctx]
-          (if-let [[bc1 & bcs] (seq base-ctx)]
-            (let [den (lcm (:resolution (first ctx))
-                           (:resolution bc1))]
-              den)
-            ctx))
+             (defn rebase-ctx
+               "Replace the first layers of `ctx` by `base-ctx`, adjusting remaining layers accordingly."
+               [ctx base-ctx]
+               (if-let [[bc1 & bcs] (seq base-ctx)]
+                 (let [den (lcm (:resolution (first ctx))
+                                (:resolution bc1))]
+                   den)
+                 ctx))
 
-        (rebase-ctx (mk [4 2 1] [5 2 3])
-                    (mk [2 1 1])))
+             (rebase-ctx (mk [4 2 1] [5 2 3])
+                         (mk [2 1 1])))
 
     (comment
       (tup []
@@ -173,12 +174,6 @@
                               score)]
         [(set (grouped false)) (set (grouped true))]))
 
-    (defn ->old-format [score]
-      (set (map (fn [e]
-                  (let [[position duration] (ctx->pos-dur (:time e))]
-                    (assoc e :position position :duration duration)))
-                score)))
-
     (defn score->timescale
       "Get the timescale of `score`
        (every events hold it under the :timescale key)"
@@ -195,6 +190,56 @@
                           score))
                    scores
                    (tup [] (map score->timescale scores)))))
+
+    (defn focus-subscore
+      [ctx score]
+      (assert (= 1 (count ctx))
+              "Only single layer contexts are supported in focus-subscore")
+      (set (map (fn [e]
+                  (update e :time (fn [ectx]
+                                    (update ectx 0 focus-layer (first ctx)))))
+                score)))
+
+    (defn embed-subscore
+      [ctx score]
+      (assert (= 1 (count ctx))
+              "Only single layer contexts are supported in embed-subscore")
+      (set (map (fn [e] (update e :time (fn [ectx]
+                                          (update ectx 0 embed-layer (first ctx)))))
+                score)))
+
+    (defn ->old-format [score]
+      (set (map (fn [e]
+                  (let [[position duration] (ctx->pos-dur (:time e))]
+                    (assoc e :position position :duration duration)))
+                score)))
+
+    (defn ->timetree
+      ([score]
+       (->timetree score (comp :position :pitch)))
+      ([score event->edn]
+       (let [tree (reduce (fn [tree event]
+                            (update-in tree (->> (:time event)
+                                                 (map (juxt :resolution :index :length))
+                                                 (interpose :children))
+                                       update :content
+                                       (fn [content]
+                                         (conj (or content [])
+                                               (event->edn event)))))
+                          {} score)
+
+             sort-tree (fn self [tree]
+                         (when tree
+                           (cons := (sort-by key
+                                             (update-vals tree (fn [{:keys [children content]}]
+                                                                 (if-let [children (self children)]
+                                                                   (if content
+                                                                     (conj content children)
+                                                                     children)
+                                                                   content)))))))]
+         (sort-tree tree)))))
+
+(do :updates
 
     (u/defn* rtup
       "like regular tup but using rythmn-context"
@@ -220,107 +265,132 @@
                    (concat-scores scores
                                   (reduce + (map score->timescale scores))))))
 
-    (defn focus-subscore
-      [ctx score]
-      (assert (= 1 (count ctx))
-              "Only single layer contexts are supported in focus-subscore")
-      (let [[selection remaining] (split-score score ctx)]
-        (set (map (fn [e]
-                    (update e :time (fn [ectx]
-                                      (update ectx 0 focus-layer (first ctx)))))
-                  selection))))
-
-    (defn embed-subscore
-      [ctx score]
-      (assert (= 1 (count ctx))
-              "Only single layer contexts are supported in embed-subscore")
-      (set (map (fn [e] (update e :time (fn [ectx]
-                                          (update ectx 0 embed-layer (first ctx)))))
-                score)))
-
     (defn parts
       [& ctx-update-pairs]
       (score/sfn score
                  (reduce (fn [score [ctx upd]]
                            (let [[selection remaining] (split-score score ctx)
-                                 normalised-selection (focus-subscore ctx selection)
-                                 updated-selection (score/update-score normalised-selection upd)
-                                 repositioned-events (embed-subscore ctx updated-selection)]
+                                 focused-score (focus-subscore ctx selection)
+                                 updated-subscore (score/update-score focused-score upd)
+                                 embedded-subscore (embed-subscore ctx updated-subscore)]
                              (into remaining
-                                   repositioned-events)))
+                                   embedded-subscore)))
                          score
                          (partition 2 ctx-update-pairs))))
 
-    (comment
-      (do :help
-          (require '[noon.output :refer [noon play]])
-          (require '[noon.updates :as upds :refer [s0 s1 s2 s3 s4 s5 s1- s2- s3- s4- s5-
-                                                   d0 d1 d2 d3 d4 d5 d6 d1- d2- d3- d4- d5-
-                                                   o1 o2 o1- o2-]])
-          (def score0 #{(assoc events/DEFAULT_EVENT
-                               :time [])})
+    (defn rmap
+      [& xs]
+      (score/sfn score
+                 (as-> score _
+                   (group-by (comp first :time) _)
+                   (update-vals _ set)
+                   (mapcat (fn [[layer score]]
+                             (let [focused (focus-subscore [layer] score)
+                                   updated (reduce score/update-score focused xs)
+                                   embedded (embed-subscore [layer] updated)]
+                               #_(clojure.pprint/pprint {:score (->timetree score)
+                                                         :focused (->timetree focused)
+                                                         :updated (->timetree updated)
+                                                         :embedded (->timetree embedded)})
+                               embedded))
+                           _)
+                   (set _)))))
 
-          (defn mk-score [& updates]
-            (reduce score/update-score score0 updates))
 
-          (defn play-score [score]
-            (noon {:play true
-                   :bpm (/ 60 (score->timescale score))}
-                  (->old-format score)))
+(comment :dev
+         (do (require '[noon.output :refer [noon play]])
+             (require '[noon.updates
+                        :as upds
+                        :refer [s0 s1 s2 s3 s4 s5 s1- s2- s3- s4- s5-
+                                d0 d1 d2 d3 d4 d5 d6 d1- d2- d3- d4- d5-
+                                o1 o2 o1- o2-]])
 
-          (defn p [& xs]
-            (play-score (apply mk-score xs))))
+             (def score0 #{(assoc events/DEFAULT_EVENT
+                                  :time [])})
 
-      (t> :tup-score
-          (mk-score (rlin s0 [s1 (rscale 2)] s2)
-                    (rtup s0 s1 s2)))
+             (defn mk-score [& updates]
+               (reduce score/update-score score0 updates))
 
-      (play-score
-       (tap> (focus-subscore
-              (mk [3 1 2])
-              (mk-score
-               (rlin s0 [s1 (rscale 2)] s2)
-               (rtup d0 d3- d3)))))
+             (defn play-score [score]
+               (noon {:play true
+                      :bpm (/ 60 (score->timescale score))}
+                     (->old-format score)))
 
-      (+ 1 2)
+             (defn p [& xs]
+               (play-score (apply mk-score xs)))))
 
-      (t> :sub-score
-          (select-subscore
-           (mk [2 1 1])
-           (mk-score (rlin s0 [s1 (rscale 2)] s2)
-                     (rtup s0 s1))))
+(comment
 
-      (t> :sub-embed-score
-          (embed-subscore
-           (mk [2 1 1])
-           (select-subscore
-            (mk [2 1 1])
-            (mk-score (rlin s0 [s1 (rscale 2)] s2)
-                      (rtup s0 s1)))))
+  (->timetree
+   (mk-score (rtup s0 s1 s2)
+             (rmap (rtup o1 o1-))
+             #_(rscale 4))
+   (comp :position :pitch))
 
-      (p (rlin s0 s1 s2)
-         (rtup d0 d1 d2)
-         (parts (mk [3 1 2]) upds/o1))
+  (play-score
+   (mk-score (rtup s0 s1 s2)
+             (rmap (rtup o1 o1-))
+             (rscale 4)))
 
-      (p (rlin s0 [s1 (rscale 2)] s2)
-         (rtup d0 d1 d2)
-         (parts (mk [3 1 2]) (rtup upds/_ [(rscale 2) o1])))
+  (map (fn [e] (ctx->pos-dur (:time e)))
+       (mk-score (rtup s0 s1 s2)
+                 (rmap (rtup o1 o1-))))
 
-      (noon {:play true
-             :bpm 20}
-            (->old-format
-             (mk-score (rlin s0 s1 s2)
-                       (parts (mk [3 1 1])
-                              (rtup d0 [(rscale 2) d1] d2)
-                              (mk [3 2 1])
-                              upds/o1))))
+  (->timetree
+   (mk-score (rlin s0 [s1 (rscale 2)] s2)
+             (rtup s0 s1))
+   (comp :position :pitch))
 
-      (sort-by ctx->pos-dur
-               (map :time
-                    (reduce score/update-score
-                            score0
-                            [(rlin s0 [s1 (rscale 2)] s2)
-                             (rtup d0 d1 d2)
-                             (parts (mk [4 1 2]) (rtup upds/_ upds/o1))])))
-      (play (upds/lin s0 [upds/dur2 s1] s2)
-            (upds/tup d0 d1 d2))))
+  (t> :tup-score
+      (mk-score (rlin s0 [s1 (rscale 2)] s2)
+                (rtup s0 s1 s2)))
+
+  (play-score
+   (tap> (focus-subscore
+          (mk [3 1 2])
+          (mk-score
+           (rlin s0 [s1 (rscale 2)] s2)
+           (rtup d0 d3- d3)))))
+
+  (+ 1 2)
+
+  (t> :sub-score
+      (select-subscore
+       (mk [2 1 1])
+       (mk-score (rlin s0 [s1 (rscale 2)] s2)
+                 (rtup s0 s1))))
+
+  (t> :sub-embed-score
+      (embed-subscore
+       (mk [2 1 1])
+       (select-subscore
+        (mk [2 1 1])
+        (mk-score (rlin s0 [s1 (rscale 2)] s2)
+                  (rtup s0 s1)))))
+
+  (p (rlin s0 s1 s2)
+     (rtup d0 d1 d2)
+     (parts (mk [3 1 2]) upds/o1))
+
+  (p (rlin s0 [s1 (rscale 2)] s2)
+     (rtup d0 d1 d2)
+     (parts (mk [3 1 2]) (rtup upds/_ [(rscale 2) o1])))
+
+  (noon {:play true
+         :bpm 20}
+        (->old-format
+         (mk-score (rlin s0 s1 s2)
+                   (parts (mk [3 1 1])
+                          (rtup d0 [(rscale 2) d1] d2)
+                          (mk [3 2 1])
+                          upds/o1))))
+
+  (sort-by ctx->pos-dur
+           (map :time
+                (reduce score/update-score
+                        score0
+                        [(rlin s0 [s1 (rscale 2)] s2)
+                         (rtup d0 d1 d2)
+                         (parts (mk [4 1 2]) (rtup upds/_ upds/o1))])))
+  (play (upds/lin s0 [upds/dur2 s1] s2)
+        (upds/tup d0 d1 d2)))
