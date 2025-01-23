@@ -98,7 +98,7 @@
 
 (do :ctx
 
-    (defn time-context
+    (defn time-ctx
       "build a rythmic context given successive `layers`
        layer are vectors of the form [resolution index length]."
       [& layers]
@@ -118,7 +118,7 @@
              (reductions + 0 format)
              format)))
 
-    (defn time->pos-dur
+    (defn time-ctx->pos-dur
       "given `ctx`, returns a vector [start-position duration]"
       [ctx]
       (reduce (fn [[pos dur] {:keys [resolution index length]}]
@@ -128,14 +128,14 @@
               [0 1]
               ctx))
 
-    (defn compare-time-contexts
+    (defn compare-time-ctxs
       "compare time bounds of `ctx1` and `ctx2`
        returns a vector of 2 elements such that:
        [(compare <ctx2-start-pos> <ctx1-start-pos>>)
         (compare <ctx-1-end-pos> <ctx2-end-pos>>)]"
       [ctx1 ctx2]
-      (let [[pos1 dur1] (time->pos-dur ctx1)
-            [pos2 dur2] (time->pos-dur ctx2)]
+      (let [[pos1 dur1] (time-ctx->pos-dur ctx1)
+            [pos2 dur2] (time-ctx->pos-dur ctx2)]
         [(compare pos2 pos1)
          (compare (+ pos1 dur1)
                   (+ pos2 dur2))]))
@@ -150,7 +150,7 @@
       (time-tup []
                 [1 2 1])
 
-      (mapv time->pos-dur (time-tup []
+      (mapv time-ctx->pos-dur (time-tup []
                                     [1 2 1]))))
 
 (do :score
@@ -161,7 +161,7 @@
        the second including events outside (or overlapping) `ctx`."
       [score ctx]
       (let [grouped (group-by (fn [event]
-                                (let [[a b] (compare-time-contexts ctx (:time event))]
+                                (let [[a b] (compare-time-ctxs ctx (:time event))]
                                   (or (= -1 a) (= -1 b))))
                               score)]
         [(set (grouped false)) (set (grouped true))]))
@@ -202,7 +202,7 @@
 
     (defn ->old-format [score]
       (set (map (fn [e]
-                  (let [[position duration] (time->pos-dur (:time e))]
+                  (let [[position duration] (time-ctx->pos-dur (:time e))]
                     (assoc e :position position :duration duration)))
                 score)))
 
@@ -277,24 +277,6 @@
                    (group-by (comp first :time) _)
                    (update-vals _ set)
                    (mapcat (fn [[layer score]]
-                             (let [focused (focus-subscore [layer] score)
-                                   updated (reduce score/update-score focused xs)
-                                   embedded (embed-subscore [layer] updated)]
-                               #_(clojure.pprint/pprint {:score (->timetree score)
-                                                         :focused (->timetree focused)
-                                                         :updated (->timetree updated)
-                                                         :embedded (->timetree embedded)})
-                               embedded))
-                           _)
-                   (set _))))
-
-    (defn rmap2
-      [& xs]
-      (score/sfn score
-                 (as-> score _
-                   (group-by (comp first :time) _)
-                   (update-vals _ set)
-                   (mapcat (fn [[layer score]]
                              (let [focused (set (map #(update % :time remove-base-layer) score))
                                    updated (reduce score/update-score focused xs)
                                    embedded (set (map #(update % :time cons-layer layer) updated))]
@@ -335,10 +317,10 @@
 
   (play-score
    (mk-score (rtup s0 s1 s2)
-             (rmap2 (rtup o1 o1-))
+             (rmap (rtup o1 o1-))
              (rscale 4)))
 
-  (map (fn [e] (time->pos-dur (:time e)))
+  (map (fn [e] (time-ctx->pos-dur (:time e)))
        (mk-score (rtup s0 s1 s2)
                  (rmap (rtup o1 o1-))))
 
@@ -353,7 +335,7 @@
 
   (play-score
    (tap> (focus-subscore
-          (time-context [3 1 2])
+          (time-ctx [3 1 2])
           (mk-score
            (rlin s0 [s1 (rscale 2)] s2)
            (rtup d0 d3- d3)))))
@@ -362,41 +344,41 @@
 
   (t> :sub-score
       (select-subscore
-       (time-context [2 1 1])
+       (time-ctx [2 1 1])
        (mk-score (rlin s0 [s1 (rscale 2)] s2)
                  (rtup s0 s1))))
 
   (t> :sub-embed-score
       (embed-subscore
-       (time-context [2 1 1])
+       (time-ctx [2 1 1])
        (select-subscore
-        (time-context [2 1 1])
+        (time-ctx [2 1 1])
         (mk-score (rlin s0 [s1 (rscale 2)] s2)
                   (rtup s0 s1)))))
 
   (p (rlin s0 s1 s2)
      (rtup d0 d1 d2)
-     (parts (time-context [3 1 2]) upds/o1))
+     (parts (time-ctx [3 1 2]) upds/o1))
 
   (p (rlin s0 [s1 (rscale 2)] s2)
      (rtup d0 d1 d2)
-     (parts (time-context [3 1 2]) (rtup upds/_ [(rscale 2) o1])))
+     (parts (time-ctx [3 1 2]) (rtup upds/_ [(rscale 2) o1])))
 
   (noon {:play true
          :bpm 20}
         (->old-format
          (mk-score (rlin s0 s1 s2)
-                   (parts (time-context [3 1 1])
+                   (parts (time-ctx [3 1 1])
                           (rtup d0 [(rscale 2) d1] d2)
-                          (time-context [3 2 1])
+                          (time-ctx [3 2 1])
                           upds/o1))))
 
-  (sort-by time->pos-dur
+  (sort-by time-ctx->pos-dur
            (map :time
                 (reduce score/update-score
                         score0
                         [(rlin s0 [s1 (rscale 2)] s2)
                          (rtup d0 d1 d2)
-                         (parts (time-context [4 1 2]) (rtup upds/_ upds/o1))])))
+                         (parts (time-ctx [4 1 2]) (rtup upds/_ upds/o1))])))
   (play (upds/lin s0 [upds/dur2 s1] s2)
         (upds/tup d0 d1 d2)))
