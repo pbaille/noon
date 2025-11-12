@@ -11,6 +11,8 @@
                       :preloads [devtools.preload]}
            :output-dir "public/js"
            :asset-path "js"
+           :js-options {:resolve {"highlight.js/lib/languages/isbl.js" false
+                                  "highlight.js/lib/languages/routeros.js" false}}
            :compiler-options {:optimizations :simple
                               :output-feature-set :es8
                               :output-wrapper false}}
