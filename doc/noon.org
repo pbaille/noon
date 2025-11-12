@@ -73,7 +73,7 @@ Here a minimal example:
 (noon
  ;; the play option let you play the given score
  {:play true}
- ;; calling score without argument just build the default score (middle C)
+ ;; calling score without arguments just builds the default score (middle C)
  (score))
 #+end_src
 
@@ -424,7 +424,7 @@ c2- ; equivalent to (c-step -2)
 
 All chromatic steps from =c36= to =c36-= are available.
 
-If we apply the =c3= step to the default score, it transpose the default middle C (=C0=) 3 semitones up to =Eb0= (or =D#0=).
+If we apply the =c3= step to the default score, it transposes the default middle C (=C0=) 3 semitones up to =Eb0= (or =D#0=).
 
 #+begin_src clojure
 (play c3)
@@ -488,18 +488,18 @@ As a quick example, pretty self explanatory (but explained in more details later
 (play dur:4 (root :Eb) (scale :hungarian) (lin d0 d1 d2 d3 d4 d5 d6 d7))
 #+end_src
 
-There is 2 more type of steps: *structural* and *tonic*, but we will see them later.
+There are 2 more types of steps: *structural* and *tonic*, but we will see them later.
 
 ***** Octaves
 
-Paraphrasing wiki:
+Paraphrasing Wikipedia:
 #+BEGIN_QUOTE
 In music, an octave is the interval between one musical pitch and another with double its frequency. The octave relationship is a natural phenomenon that has been referred to as *the basic miracle of music*. The interval between the first and second harmonics of the harmonic series is an octave.
 #+END_QUOTE
 
 In noon, octaves are a different kind of interval, they belong to the =shift= family.
 
-The nuance will appear more clearly later... Until then, let see how to use them:
+The nuance will appear more clearly later... Until then, let's see how to use them:
 
 #+begin_src clojure
 (play (t-shift 1)) ; one octave up.
@@ -515,13 +515,13 @@ The nuance will appear more clearly later... Until then, let see how to use them
 
 **** =lin=
 
-As we have seen, =lin= let you create a succession of events:
+As we have seen, =lin= lets you create a succession of events:
 
 #+begin_src clojure
 (play (lin C0 E0 G0 B0))
 #+end_src
 
-Let's try to go further with it by composing it with another =lin=:
+Let's extend this further by composing it with another =lin=:
 
 #+begin_src clojure
 (play dur:8 (lin c0 c3 c6) (lin c0 c2 c3 c5))
@@ -537,7 +537,7 @@ Let see what happens here:
 
 **** =tup=
 
-=tup= stands for tuplet and is analogous to =lin= but keep the duration of the given score unchanged.
+=tup= stands for tuplet and is analogous to =lin= but keeps the duration of the given score unchanged.
 
 #+begin_src clojure
 (play (tup c1 c2 c3 c4 c5 c6 c7 c8))
@@ -696,7 +696,7 @@ Like =lin= and =tup=, =par= has its accumulative counterpart:
 
 **** Channels
 
-the =chans= function is doing the same thing as =par= except that it put each element on a separate MIDI channel.
+The =chans= function is doing the same thing as =par= except that it puts each element on a separate MIDI channel.
 
 #+begin_src clojure
 (play (chans c0 c3 c7))
@@ -862,7 +862,7 @@ We can use some great available tools like =test.check.generators= to handle non
 #+end_src
 
 #+begin_src clojure
-(play dur:8 (rep 50 (maybe c1 c1-))) ; you can notice melodic repetitions unlike with the corresponding one-of example.
+(play dur:8 (rep 50 (maybe c1 c1-))) ; you can notice melodic repetitions unlike the corresponding one-of example.
 #+end_src
 
 **** =probs=
@@ -1254,7 +1254,7 @@ Roman degree notation can be used to denote relative motion to another harmonic 
 
 
 #+begin_src clojure
-(h/upd :IIm7) ; same with with additional chord color minor seventh.
+(h/upd :IIm7) ; same with additional chord color minor seventh.
 #+end_src
 
 
@@ -1734,11 +1734,11 @@ As an illustration, let's look at the effect of specifying the layer within the 
 #+end_src
 
 #+begin_src clojure
-(play (tup s0 s1 s2 s3 s1 s2) (m/contour :mirror {:layer :d})) ; Mirrored diatonically, resulting in a F major arpegio
+(play (tup s0 s1 s2 s3 s1 s2) (m/contour :mirror {:layer :d})) ; Mirrored diatonically, resulting in an F major arpeggio
 #+end_src
 
 #+begin_src clojure
-(play (tup s0 s1 s2 s3 s1 s2) (m/contour :mirror {:layer :c})) ; Mirror chromatically, resulting in a F minor arpegio (it can help with 'negative harmony')
+(play (tup s0 s1 s2 s3 s1 s2) (m/contour :mirror {:layer :c})) ; Mirror chromatically, resulting in an F minor arpeggio (it can help with 'negative harmony')
 #+end_src
 
 One of the similar scores between those shrunk by 2 diatonic steps and those expanded by 3 diatonic steps (:extent [-2 3] :layer :d).
@@ -2469,7 +2469,7 @@ Experimenting with passing notes:
       (h/align-contexts :s)
       ;; on each chord:
       (each (chans
-          ;; rythmn
+          ;; rhythm
           [(patch :woodblock) C0 (dupt 4)]
           [(patch :tinkle-bell) C0 (r/gen-tup 12 5 {:durations [1 2 3]})]
           ;; comping
@@ -2747,7 +2747,7 @@ A very artificial-sounding chord sequence using quartal voicings and ninuplets (
 *** Melodic
 
 **** Target notes
-Building good rythmic melodies is not easy.
+Building good rhythmic melodies is not easy.
 Here, I will try to start from target notes and fill the holes between them.
 
 #+begin_src clojure :results silent
