@@ -17,6 +17,20 @@
                               :output-feature-set :es8
                               :output-wrapper false}}
 
+          :playground
+          {:target :browser
+           :modules {:playground {:init-fn noon.client.playground/init}}
+           :devtools {:http-root "public"
+                      :http-port 8998
+                      :preloads [devtools.preload]}
+           :output-dir "public/js"
+           :asset-path "js"
+           :js-options {:resolve {"highlight.js/lib/languages/isbl.js" false
+                                  "highlight.js/lib/languages/routeros.js" false}}
+           :compiler-options {:optimizations :simple
+                              :output-feature-set :es8
+                              :output-wrapper false}}
+
           #_:test #_{:target :node-test
                      :output-to "out/node-tests.js"}
 
