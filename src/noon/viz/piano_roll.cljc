@@ -112,25 +112,25 @@
 ;; ── Channel-based coloring ───────────────────────────────────────
 
 (def channel-colors
-  "Hand-picked vibrant colors for MIDI channels 0–15.
+  "Muted, distinct colors for MIDI channels 0–15.
    Each entry is {:fill <hex> :stroke <hex>}.
-   First 8 optimized for typical multi-instrument scores."
-  [{:fill "#7c3aed" :stroke "#6d28d9"}   ; 0 — violet
-   {:fill "#f43f5e" :stroke "#e11d48"}   ; 1 — rose
-   {:fill "#0d9488" :stroke "#0f766e"}   ; 2 — teal
-   {:fill "#d97706" :stroke "#b45309"}   ; 3 — amber
-   {:fill "#0284c7" :stroke "#0369a1"}   ; 4 — sky
-   {:fill "#c026d3" :stroke "#a21caf"}   ; 5 — fuchsia
-   {:fill "#65a30d" :stroke "#4d7c0f"}   ; 6 — lime
-   {:fill "#475569" :stroke "#334155"}   ; 7 — slate
-   {:fill "#dc2626" :stroke "#b91c1c"}   ; 8 — red
-   {:fill "#2563eb" :stroke "#1d4ed8"}   ; 9 — blue
-   {:fill "#059669" :stroke "#047857"}   ; 10 — emerald
-   {:fill "#ea580c" :stroke "#c2410c"}   ; 11 — orange
-   {:fill "#9333ea" :stroke "#7e22ce"}   ; 12 — purple
-   {:fill "#0891b2" :stroke "#0e7490"}   ; 13 — cyan
-   {:fill "#ca8a04" :stroke "#a16207"}   ; 14 — yellow
-   {:fill "#be185d" :stroke "#9d174d"}]) ; 15 — pink
+   Soft enough for dense scores, distinct enough to tell apart."
+  [{:fill "#818cf8" :stroke "#6366f1"}   ; 0 — indigo
+   {:fill "#fb7185" :stroke "#f43f5e"}   ; 1 — rose
+   {:fill "#2dd4bf" :stroke "#14b8a6"}   ; 2 — teal
+   {:fill "#fbbf24" :stroke "#f59e0b"}   ; 3 — amber
+   {:fill "#38bdf8" :stroke "#0ea5e9"}   ; 4 — sky
+   {:fill "#c084fc" :stroke "#a855f7"}   ; 5 — purple
+   {:fill "#a3e635" :stroke "#84cc16"}   ; 6 — lime
+   {:fill "#94a3b8" :stroke "#64748b"}   ; 7 — slate
+   {:fill "#f87171" :stroke "#ef4444"}   ; 8 — red
+   {:fill "#60a5fa" :stroke "#3b82f6"}   ; 9 — blue
+   {:fill "#34d399" :stroke "#10b981"}   ; 10 — emerald
+   {:fill "#fb923c" :stroke "#f97316"}   ; 11 — orange
+   {:fill "#a78bfa" :stroke "#8b5cf6"}   ; 12 — violet
+   {:fill "#22d3ee" :stroke "#06b6d4"}   ; 13 — cyan
+   {:fill "#facc15" :stroke "#eab308"}   ; 14 — yellow
+   {:fill "#f472b6" :stroke "#ec4899"}]) ; 15 — pink
 
 (defn- hsl [h s l]
   (str "hsl(" h ", " s "%, " l "%)"))

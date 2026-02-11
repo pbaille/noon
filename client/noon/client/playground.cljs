@@ -294,29 +294,42 @@
                   (sc {:flex [:row {:gap 0.4 :items :center :wrap :wrap}]}
                       (sc {:text [:xs :bold] :color :grey4 :text-transform :uppercase :letter-spacing "0.5px" :p {:right 0.5}}
                           "channels")
-                      (mapv (fn [ch]
-                              (let [hidden? (contains? hidden-channels ch)
-                                    fill (:fill (nth pr/channel-colors (mod ch 16)))]
-                                (c :button
-                                   {:key (str "ch-" ch)
-                                    :style {:p [0.3 0.6]
-                                            :text [:xs :medium]
-                                            :font-family "'SF Mono', 'Fira Code', monospace"
-                                            :border {:width 0}
-                                            :rounded 1
-                                            :bg {:color (if hidden? "#f1f5f9" fill)}
-                                            :color (if hidden? "#94a3b8" "#fff")
-                                            :cursor :pointer
-                                            :transition "all 0.15s ease"
-                                            :hover {:opacity 0.85}}
-                                    :on-click #(set-hidden-channels
-                                                (if hidden?
-                                                  (disj hidden-channels ch)
-                                                  (if (< (count hidden-channels) (dec (count all-channels)))
-                                                    (conj hidden-channels ch)
-                                                    hidden-channels)))}
-                                   (str "ch " ch))))
-                            all-channels)))
+                      (sc {:flex [:row {:items :center}]
+                           :rounded 0.5
+                           :overflow :hidden
+                           :bg {:color "#f1f5f9"}
+                           :p 0.15}
+                          (mapv (fn [ch]
+                                  (let [hidden? (contains? hidden-channels ch)
+                                        fill (:fill (nth pr/channel-colors (mod ch 16)))]
+                                    (c :button
+                                       {:key (str "ch-" ch)
+                                        :style {:flex [:row {:items :center :gap 0.25}]
+                                                :p [0.25 0.5]
+                                                :border {:width 0}
+                                                :rounded 0.4
+                                                :bg {:color (if hidden? :transparent "#fff")}
+                                                :color (if hidden? "#94a3b8" "#1e293b")
+                                                :cursor :pointer
+                                                :font-size "10px"
+                                                :font-weight 500
+                                                :font-family "'SF Mono', 'Fira Code', monospace"
+                                                :transition "all 0.15s ease"
+                                                :box-shadow (when-not hidden? "0 1px 3px rgba(0,0,0,0.08)")
+                                                :hover (when hidden? {:color "#64748b"})}
+                                        :on-click #(set-hidden-channels
+                                                    (if hidden?
+                                                      (disj hidden-channels ch)
+                                                      (if (< (count hidden-channels) (dec (count all-channels)))
+                                                        (conj hidden-channels ch)
+                                                        hidden-channels)))}
+                                       (c :span {:style {:display :inline-block
+                                                          :width "7px" :height "7px"
+                                                          :border-radius "50%"
+                                                          :background fill
+                                                          :opacity (if hidden? 0.35 1)}})
+                                       (str "ch " ch))))
+                                all-channels))))
 
                 ;; Piano roll
                 (sc {:flexi [1 1 0]

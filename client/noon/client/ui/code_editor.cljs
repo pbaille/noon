@@ -62,23 +62,29 @@
                   label)))
             options)))
 
-;; ── Channel pill toggle ─────────────────────────────────────────
+;; ── Channel toggle pill ──────────────────────────────────────────
 
 (defui channel-toggle [{:keys [ch active color on-click]}]
   (c :button
      {:style {:flex [:row {:items :center :gap 0.25}]
-              :p [0.2 0.45]
+              :p [0.25 0.5]
               :border {:width 0}
-              :rounded 1
-              :bg {:color (if active color "#f1f5f9")}
-              :color (if active "#fff" "#94a3b8")
+              :rounded 0.4
+              :bg {:color (if active "#fff" :transparent)}
+              :color (if active "#1e293b" "#94a3b8")
               :cursor :pointer
               :font-size "10px"
               :font-weight 500
               :font-family "'SF Mono', 'Fira Code', monospace"
               :transition "all 0.15s ease"
-              :hover {:opacity 0.85}}
+              :box-shadow (when active "0 1px 3px rgba(0,0,0,0.08)")
+              :hover (when-not active {:color "#64748b"})}
       :on-click on-click}
+     (c :span {:style {:display :inline-block
+                        :width "7px" :height "7px"
+                        :border-radius "50%"
+                        :background color
+                        :opacity (if active 1 0.35)}})
      (str "ch " ch)))
 
 ;; ── Piano roll view ──────────────────────────────────────────────
@@ -99,10 +105,13 @@
                  {:value   color-mode
                   :options [[:kind "Kind"] [:channel "Channel"]]
                   :on-change set-color-mode})
-              ;; Channel pills (channel mode only)
+              ;; Channel toggles (channel mode only)
               (when (= color-mode :channel)
-                (sc {:flex [:row {:gap 0.25 :items :center}]
-                     :p {:left 0.2}}
+                (sc {:flex [:row {:items :center}]
+                     :rounded 0.5
+                     :overflow :hidden
+                     :bg {:color "#f1f5f9"}
+                     :p 0.15}
                     (mapv (fn [ch]
                             (let [vis? (not (contains? hidden ch))
                                   fill (:fill (nth pr/channel-colors (mod ch 16)))]
