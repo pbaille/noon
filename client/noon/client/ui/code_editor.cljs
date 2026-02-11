@@ -1,7 +1,9 @@
 (ns noon.client.ui.code-editor
   (:require [noon.eval :as eval]
             [noon.output.midi :as midi]
-            [uix.core :as uix :refer [defui]]
+            [noon.score :as score]
+            [noon.viz.piano-roll :as pr]
+            [uix.core :as uix :refer [defui $]]
             [uic.component :refer [c sc]]
             [noon.utils.misc :as u]
             [clojure.string :as str]
@@ -17,13 +19,31 @@
 (def EDITOR_EXTENSIONS
   #js [(clojure)])
 
-
 (def EDITOR_THEME cm-themes/quietlight)
+
+(defn- result->score
+  "Extract a noon score from an eval result, if present.
+   `play` returns a map with {:score <score>} in metadata.
+   `score` returns the score directly."
+  [result]
+  (cond
+    (score/score? result) result
+    (some-> (meta result) :score) (:score (meta result))
+    :else nil))
+
+(defui piano-roll-view [{:keys [score]}]
+  (sc {:overflow-x :auto
+       :overflow-y :hidden
+       "svg" {:display :block}}
+      (c :div {:dangerouslySetInnerHTML
+               #js {:__html (ui.misc/hiccup->html
+                             (pr/piano-roll score {:target-width 500}))}})))
 
 (defui code-editor [{:keys [source options]}]
   (let [input-editor-ref (uix/use-ref)
         [source set-source] (uix/use-state source)
         [return set-return] (uix/use-state nil)
+        [score* set-score] (uix/use-state nil)
         [editing set-editing] (uix/use-state false)
         [evaluating set-evaluating] (uix/use-state false)
         [playing set-playing] (uix/use-state false)
@@ -60,6 +80,7 @@
                 :on-click (if return
                             (fn [_]
                               (set-return nil)
+                              (set-score nil)
                               (set-playing false)
                               (eval/stop))
                             (fn [_]
@@ -77,6 +98,7 @@
                                                       (when-let [id (some-> x :result :id)]
                                                         (set-playing true)
                                                         (midi/on-done-playing id (fn [] (set-playing false))))
+                                                      (set-score (some-> x :result result->score))
                                                       (set-evaluating false)
                                                       (set-return x))))
                                                  15)))))}
@@ -137,7 +159,9 @@
                           :color (if error? :red color)
                           :p [1 0.5]
                           :align-self :stretch}
-                  :on-click (fn [_] (set-return nil))}
+                  :on-click (fn [_]
+                              (set-return nil)
+                              (set-score nil))}
                  (c icons-vsc/VscClose))
 
               (sc :.code-editor-output_content
@@ -147,21 +171,27 @@
                    :p (if error? [0.5 0.3] [0.3 0.7])
                    :flexi [1 1 :auto]}
 
-                  (if editing
+                  (if score*
 
-                    (c CodeMirror
-                       {:value (str/trim (or (some-> return :error .-message)
-                                             (u/pretty-str (:result return))))
-                        :editable false
-                        :extensions EDITOR_EXTENSIONS
-                        :theme EDITOR_THEME
-                        :basic-setup #js {:lineNumbers false
-                                          :foldGutter false
-                                          :highlightActiveLine false}})
+                    ;; Piano roll view for scores
+                    ($ piano-roll-view {:score score*})
 
-                    (sc {"pre" {:m 0 :p 0}
-                         "code.hljs" {:bg {:color [:white {:a 0}]}}}
-                        (c Highlight
-                           {:class "clojure"}
-                           (str (str/trim (or (some-> return :error .-message)
-                                              (u/pretty-str (:result return))))))))))))))
+                    ;; Text output for non-score results or errors
+                    (if editing
+
+                      (c CodeMirror
+                         {:value (str/trim (or (some-> return :error .-message)
+                                               (u/pretty-str (:result return))))
+                          :editable false
+                          :extensions EDITOR_EXTENSIONS
+                          :theme EDITOR_THEME
+                          :basic-setup #js {:lineNumbers false
+                                            :foldGutter false
+                                            :highlightActiveLine false}})
+
+                      (sc {"pre" {:m 0 :p 0}
+                           "code.hljs" {:bg {:color [:white {:a 0}]}}}
+                          (c Highlight
+                             {:class "clojure"}
+                             (str (str/trim (or (some-> return :error .-message)
+                                                (u/pretty-str (:result return)))))))))))))))

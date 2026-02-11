@@ -214,7 +214,7 @@
                     (c :button
                        {:style {:p [0.5 1.25]
                                 :text [:sm :semibold]
-                                :border [0]
+                                :border {:width 0}
                                 :rounded 1
                                 :bg {:color (cond error :red
                                                   evaluating :grey3
