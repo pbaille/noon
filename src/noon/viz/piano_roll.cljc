@@ -111,11 +111,26 @@
 
 ;; ── Channel-based coloring ───────────────────────────────────────
 
-(def ^:private default-channel-hues
-  "16 maximally-spaced hues for MIDI channels 0-15.
-   First 8 optimized for common multi-channel use."
-  [220 10 145 45 280 175 335 80
-   250 110 350 90 310 200 55 160])
+(def channel-colors
+  "Hand-picked vibrant colors for MIDI channels 0–15.
+   Each entry is {:fill <hex> :stroke <hex>}.
+   First 8 optimized for typical multi-instrument scores."
+  [{:fill "#7c3aed" :stroke "#6d28d9"}   ; 0 — violet
+   {:fill "#f43f5e" :stroke "#e11d48"}   ; 1 — rose
+   {:fill "#0d9488" :stroke "#0f766e"}   ; 2 — teal
+   {:fill "#d97706" :stroke "#b45309"}   ; 3 — amber
+   {:fill "#0284c7" :stroke "#0369a1"}   ; 4 — sky
+   {:fill "#c026d3" :stroke "#a21caf"}   ; 5 — fuchsia
+   {:fill "#65a30d" :stroke "#4d7c0f"}   ; 6 — lime
+   {:fill "#475569" :stroke "#334155"}   ; 7 — slate
+   {:fill "#dc2626" :stroke "#b91c1c"}   ; 8 — red
+   {:fill "#2563eb" :stroke "#1d4ed8"}   ; 9 — blue
+   {:fill "#059669" :stroke "#047857"}   ; 10 — emerald
+   {:fill "#ea580c" :stroke "#c2410c"}   ; 11 — orange
+   {:fill "#9333ea" :stroke "#7e22ce"}   ; 12 — purple
+   {:fill "#0891b2" :stroke "#0e7490"}   ; 13 — cyan
+   {:fill "#ca8a04" :stroke "#a16207"}   ; 14 — yellow
+   {:fill "#be185d" :stroke "#9d174d"}]) ; 15 — pink
 
 (defn- hsl [h s l]
   (str "hsl(" h ", " s "%, " l "%)"))
@@ -133,12 +148,17 @@
 ;; Both modes produce the same shape: {channel -> {kind -> {:fill :stroke}}}
 ;; so svg-notes can be mode-agnostic.
 
-(defn- channel-color
-  "Single fill/stroke pair for a channel hue. Used in :channel mode
-   where all notes on a channel share the same color regardless of kind."
-  [hue]
-  (let [c {:fill (hsl hue 58 52) :stroke (hsl hue 66 42)}]
-    {:tonic c :structural c :diatonic c :chromatic c}))
+(defn- resolve-channel-color
+  "Get fill/stroke for a channel index, using custom hues or the default palette."
+  [ch hues]
+  (if hues
+    ;; Legacy: derive from hue number
+    (let [hue (nth hues (mod ch (count hues)))
+          c {:fill (hsl hue 58 52) :stroke (hsl hue 66 42)}]
+      {:tonic c :structural c :diatonic c :chromatic c})
+    ;; Default: hand-picked vibrant palette
+    (let [c (nth channel-colors (mod ch (count channel-colors)))]
+      {:tonic c :structural c :diatonic c :chromatic c})))
 
 (defn- resolve-colors
   "Build a channel-indexed color map: {channel -> {kind -> {:fill :stroke}}}.
@@ -146,11 +166,9 @@
    In :channel mode, each channel gets a single flat color (no kind shading)."
   [{:keys [color-mode palette hues]} channels]
   (if (= color-mode :channel)
-    (let [hue-vec (or hues default-channel-hues)]
-      (into {}
-            (map (fn [ch]
-                   [ch (channel-color (nth hue-vec (mod ch (count hue-vec))))]))
-            channels))
+    (into {}
+          (map (fn [ch] [ch (resolve-channel-color ch hues)]))
+          channels)
     ;; :kind mode (default)
     (let [kind-colors (resolve-palette palette)]
       (into {}

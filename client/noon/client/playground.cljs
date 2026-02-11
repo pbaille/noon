@@ -295,17 +295,27 @@
                       (sc {:text [:xs :bold] :color :grey4 :text-transform :uppercase :letter-spacing "0.5px" :p {:right 0.5}}
                           "channels")
                       (mapv (fn [ch]
-                              (let [hidden? (contains? hidden-channels ch)]
-                                ($ pill {:key (str "ch-" ch)
-                                         :text (str "ch " ch)
-                                         :selected (not hidden?)
-                                         :on-click #(set-hidden-channels
-                                                     (if hidden?
-                                                       (disj hidden-channels ch)
-                                                       ;; Don't allow hiding all channels
-                                                       (if (< (count hidden-channels) (dec (count all-channels)))
-                                                         (conj hidden-channels ch)
-                                                         hidden-channels)))})))
+                              (let [hidden? (contains? hidden-channels ch)
+                                    fill (:fill (nth pr/channel-colors (mod ch 16)))]
+                                (c :button
+                                   {:key (str "ch-" ch)
+                                    :style {:p [0.3 0.6]
+                                            :text [:xs :medium]
+                                            :font-family "'SF Mono', 'Fira Code', monospace"
+                                            :border {:width 0}
+                                            :rounded 1
+                                            :bg {:color (if hidden? "#f1f5f9" fill)}
+                                            :color (if hidden? "#94a3b8" "#fff")
+                                            :cursor :pointer
+                                            :transition "all 0.15s ease"
+                                            :hover {:opacity 0.85}}
+                                    :on-click #(set-hidden-channels
+                                                (if hidden?
+                                                  (disj hidden-channels ch)
+                                                  (if (< (count hidden-channels) (dec (count all-channels)))
+                                                    (conj hidden-channels ch)
+                                                    hidden-channels)))}
+                                   (str "ch " ch))))
                             all-channels)))
 
                 ;; Piano roll
