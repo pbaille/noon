@@ -87,7 +87,9 @@
 (def ^:private harmony-bg "rgba(99, 102, 241, 0.06)")
 (def ^:private harmony-line "rgba(99, 102, 241, 0.25)")
 
-(def ^:private row-h 18)
+(def ^:private max-row-h 18)
+(def ^:private min-row-h 8)
+(def ^:private target-grid-h 350)
 (def ^:private kb-w 44)
 (def ^:private note-pad 1.5)
 
@@ -180,19 +182,21 @@
   (let [pitches   (mapv :pitch notes)
         min-pitch (- (apply min pitches) padding)
         max-pitch (+ (apply max pitches) padding 1)
+        n-rows    (- max-pitch min-pitch)
+        row-h     (min max-row-h (max min-row-h (/ target-grid-h n-rows)))
         max-time  (apply max (map #(+ (:position %) (:duration %)) notes))
         ts        (if (zero? max-time)
                     400
                     (min (max (/ target-width max-time) 150) 700))
         x0        (if show-keyboard kb-w 0)
         grid-w    (max (ceil (* max-time ts)) 60)
-        n-rows    (- max-pitch min-pitch)
         grid-h    (* n-rows row-h)]
     {:min-pitch  min-pitch
      :max-pitch  max-pitch
      :max-time   max-time
      :time-scale ts
      :x0         x0
+     :row-h      row-h
      :grid-w     grid-w
      :n-rows     n-rows
      :grid-h     grid-h
@@ -205,7 +209,7 @@
 
 (defn- svg-grid-rows
   "Background rows — white for natural keys, light grey for sharps/flats."
-  [{:keys [min-pitch max-pitch x0 grid-w]}]
+  [{:keys [min-pitch max-pitch x0 grid-w row-h]}]
   (into [:g]
         (mapcat
          (fn [p]
@@ -240,7 +244,7 @@
 
 (defn- svg-keyboard
   "Piano keyboard labels on the left edge."
-  [{:keys [min-pitch max-pitch]}]
+  [{:keys [min-pitch max-pitch row-h]}]
   (into [:g]
         (mapcat
          (fn [p]
@@ -252,7 +256,7 @@
                (or (zero? (mod p 12)) (= p min-pitch))
                (conj [:text {:x (- kb-w 5) :y (+ y (/ row-h 2) 3.5)
                              :text-anchor "end"
-                             :font-size 8.5
+                             :font-size (min 8.5 (- row-h 2))
                              :font-family mono-font
                              :fill (if blk "#e5e7eb" "#6b7280")}
                       (note-name p)])))))
@@ -260,28 +264,29 @@
 
 (defn- svg-notes
   "Colored, rounded note rectangles with optional pitch labels."
-  [{:keys [x0 time-scale max-pitch colors]} notes]
-  (into [:g]
-        (mapcat
-         (fn [note]
-           (let [x     (+ x0 (* (:position note) time-scale))
-                 y     (+ (* (- max-pitch (:pitch note) 1) row-h) note-pad)
-                 w     (max (- (* (:duration note) time-scale) 1) 3)
-                 h     (- row-h (* note-pad 2))
-                 color (get colors (:kind note) (:chromatic colors))]
-             (cond-> [[:rect {:x x :y y :width w :height h
-                              :rx 2.5 :ry 2.5
-                              :fill (:fill color) :stroke (:stroke color)
-                              :stroke-width 0.75 :opacity 0.92}]]
-               (> w 24)
-               (conj [:text {:x (+ x (/ w 2)) :y (+ y (/ h 2) 3)
-                             :text-anchor "middle"
-                             :font-size 8
-                             :font-family mono-font
-                             :fill (if (#{:tonic :structural} (:kind note)) "#fff" "#475569")
-                             :font-weight 500}
-                      (nth note-names (mod (:pitch note) 12))])))))
-        notes))
+  [{:keys [x0 time-scale max-pitch row-h colors]} notes]
+  (let [note-pad (min note-pad (* row-h 0.1))]
+    (into [:g]
+          (mapcat
+           (fn [note]
+             (let [x     (+ x0 (* (:position note) time-scale))
+                   y     (+ (* (- max-pitch (:pitch note) 1) row-h) note-pad)
+                   w     (max (- (* (:duration note) time-scale) 1) 3)
+                   h     (- row-h (* note-pad 2))
+                   color (get colors (:kind note) (:chromatic colors))]
+               (cond-> [[:rect {:x x :y y :width w :height h
+                                :rx 2.5 :ry 2.5
+                                :fill (:fill color) :stroke (:stroke color)
+                                :stroke-width 0.75 :opacity 0.92}]]
+                 (> w 24)
+                 (conj [:text {:x (+ x (/ w 2)) :y (+ y (/ h 2) 3)
+                               :text-anchor "middle"
+                               :font-size (min 8 (- row-h 2))
+                               :font-family mono-font
+                               :fill (if (#{:tonic :structural} (:kind note)) "#fff" "#475569")
+                               :font-weight 500}
+                        (nth note-names (mod (:pitch note) 12))])))))
+          notes)))
 
 (defn- svg-border
   "Thin border around the grid area."
