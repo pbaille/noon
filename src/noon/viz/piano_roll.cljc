@@ -13,11 +13,15 @@
      (pr/piano-roll (score (lin I IV V I) (each (tup s0 s1 s2)))
                     {:title \"I-IV-V-I\" :target-width 600})
 
+     ;; With a named palette
+     (pr/piano-roll (score (tup s0 s1 s2))
+                    {:palette :ember-ocean})
+
      ;; Grouped (multiple scores, stacked)
      (pr/piano-roll-group
        [{:label \"major\" :score (score (tup d0 d1 d2 d3 d4 d5 d6 d7))}
         {:label \"dorian\" :score (score (scale :dorian) (tup d0 d1 d2 d3 d4 d5 d6 d7))}]
-       {:shared-pitch-range true})
+       {:shared-pitch-range true :palette :purple-gold})
 
    Clay/Kindly:
      Output carries ^{:kindly/kind :kind/hiccup} metadata.
@@ -30,17 +34,73 @@
 (def ^:private note-names
   ["C" "C♯" "D" "D♯" "E" "F" "F♯" "G" "G♯" "A" "A♯" "B"])
 
-(def ^:private layer-colors
-  {:tonic      {:fill "#1a56db" :stroke "#1446b3" :label "Tonic"}
-   :structural {:fill "#3b82f6" :stroke "#2563eb" :label "Structural"}
-   :diatonic   {:fill "#93c5fd" :stroke "#60a5fa" :label "Diatonic"}
-   :chromatic  {:fill "#d1d5db" :stroke "#9ca3af" :label "Chromatic"}})
+(def ^:private layer-labels
+  {:tonic "Tonic" :structural "Structural" :diatonic "Diatonic" :chromatic "Chromatic"})
 
 (def ^:private layer-order
   {:tonic 0 :structural 1 :diatonic 2 :chromatic 3})
 
+(def palettes
+  "Named color palettes for note layers.
+   Each palette maps layer kind to {:fill :stroke}.
+   Use via the :palette option in piano-roll / piano-roll-group."
+  {:ocean        {:tonic      {:fill "#1a56db" :stroke "#1446b3"}
+                  :structural {:fill "#3b82f6" :stroke "#2563eb"}
+                  :diatonic   {:fill "#93c5fd" :stroke "#60a5fa"}
+                  :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
+
+   :indigo-teal  {:tonic      {:fill "#4f46e5" :stroke "#4338ca"}
+                  :structural {:fill "#6366f1" :stroke "#4f46e5"}
+                  :diatonic   {:fill "#2dd4bf" :stroke "#14b8a6"}
+                  :chromatic  {:fill "#cbd5e1" :stroke "#94a3b8"}}
+
+   :purple-gold  {:tonic      {:fill "#7c3aed" :stroke "#6d28d9"}
+                  :structural {:fill "#a78bfa" :stroke "#8b5cf6"}
+                  :diatonic   {:fill "#fbbf24" :stroke "#f59e0b"}
+                  :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
+
+   :rose-cyan    {:tonic      {:fill "#e11d48" :stroke "#be123c"}
+                  :structural {:fill "#f472b6" :stroke "#ec4899"}
+                  :diatonic   {:fill "#22d3ee" :stroke "#06b6d4"}
+                  :chromatic  {:fill "#cbd5e1" :stroke "#94a3b8"}}
+
+   :ember-ocean  {:tonic      {:fill "#ea580c" :stroke "#c2410c"}
+                  :structural {:fill "#fb923c" :stroke "#f97316"}
+                  :diatonic   {:fill "#38bdf8" :stroke "#0ea5e9"}
+                  :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
+
+   :forest-berry {:tonic      {:fill "#059669" :stroke "#047857"}
+                  :structural {:fill "#34d399" :stroke "#10b981"}
+                  :diatonic   {:fill "#c084fc" :stroke "#a855f7"}
+                  :chromatic  {:fill "#cbd5e1" :stroke "#94a3b8"}}
+
+   :sapphire-amber {:tonic      {:fill "#1d4ed8" :stroke "#1e40af"}
+                    :structural {:fill "#60a5fa" :stroke "#3b82f6"}
+                    :diatonic   {:fill "#fbbf24" :stroke "#f59e0b"}
+                    :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
+
+   :slate-coral  {:tonic      {:fill "#475569" :stroke "#334155"}
+                  :structural {:fill "#94a3b8" :stroke "#64748b"}
+                  :diatonic   {:fill "#fb7185" :stroke "#f43f5e"}
+                  :chromatic  {:fill "#e2e8f0" :stroke "#cbd5e1"}}})
+
 (def ^:private harmony-bg "rgba(99, 102, 241, 0.06)")
 (def ^:private harmony-line "rgba(99, 102, 241, 0.25)")
+
+(def ^:private row-h 18)
+(def ^:private kb-w 44)
+(def ^:private note-pad 1.5)
+
+(def ^:private mono-font "'SF Mono', 'Fira Code', 'Menlo', monospace")
+(def ^:private sans-font "-apple-system, 'Helvetica Neue', sans-serif")
+
+(def ^:private default-opts
+  {:target-width   500
+   :show-keyboard  true
+   :show-harmonies true
+   :show-legend    true
+   :padding        1
+   :palette        :ocean})
 
 ;; ── Helpers ──────────────────────────────────────────────────────
 
@@ -54,6 +114,18 @@
 (defn- ceil [x]
   #?(:clj  (long (Math/ceil (double x)))
      :cljs (js/Math.ceil x)))
+
+(defn- resolve-colors
+  "Resolve :palette option to a colors map.
+   Accepts a keyword (palette name) or a map (custom colors)."
+  [palette]
+  (cond
+    (keyword? palette) (or (get palettes palette)
+                           (throw (ex-info (str "Unknown palette: " palette
+                                                ". Available: " (keys palettes))
+                                           {:palette palette})))
+    (map? palette)     palette
+    :else              (get palettes :ocean)))
 
 ;; ── Score → data ─────────────────────────────────────────────────
 
@@ -69,16 +141,20 @@
                 :channel  (:channel e)
                 :pitch    (hc/hc->chromatic-value p)
                 :kind     (cond
-                            (hc/tonic-equivalent? p)     :tonic
-                            (hc/structural-equivalent? p) :structural
-                            (hc/diatonic-equivalent? p)  :diatonic
-                            :else                        :chromatic)}))))
+                            (hc/tonic-equivalent? p)      :tonic
+                            (hc/structural-equivalent? p)  :structural
+                            (hc/diatonic-equivalent? p)    :diatonic
+                            :else                          :chromatic)}))))
 
 (defn score->harmonies
   "Extract harmony boundary segments from a score.
-   Returns [{:position :duration} ...], one per harmonic context span."
+   Returns [{:position :duration} ...], one per harmonic context span.
+   Groups by scale, structure, and diatonic origin — chromatic
+   transpositions within the same harmony don't create new segments."
   [s]
-  (let [event->harmony (fn [e] (dissoc (:pitch e) :position))]
+  (let [event->harmony (fn [e]
+                         (let [{:keys [scale structure origin]} (:pitch e)]
+                           [scale structure (:d origin)]))]
     (->> (filter :pitch s)
          (sort-by :position)
          (partition-by event->harmony)
@@ -96,39 +172,44 @@
 
 ;; ── Layout computation ───────────────────────────────────────────
 
-(defn- pitch-bounds
-  "Compute {:min :max} pitch range from notes, with padding."
-  [notes padding]
-  (let [pitches (mapv :pitch notes)]
-    {:min (- (apply min pitches) padding)
-     :max (+ (apply max pitches) padding 1)}))
+(defn- compute-layout
+  "Derive all spatial layout values from notes and options.
+   Returns a map used by all rendering functions.
+   Includes resolved :colors for renderers that need them."
+  [notes {:keys [target-width show-keyboard padding palette]}]
+  (let [pitches   (mapv :pitch notes)
+        min-pitch (- (apply min pitches) padding)
+        max-pitch (+ (apply max pitches) padding 1)
+        max-time  (apply max (map #(+ (:position %) (:duration %)) notes))
+        ts        (if (zero? max-time)
+                    400
+                    (min (max (/ target-width max-time) 150) 700))
+        x0        (if show-keyboard kb-w 0)
+        grid-w    (max (ceil (* max-time ts)) 60)
+        n-rows    (- max-pitch min-pitch)
+        grid-h    (* n-rows row-h)]
+    {:min-pitch  min-pitch
+     :max-pitch  max-pitch
+     :max-time   max-time
+     :time-scale ts
+     :x0         x0
+     :grid-w     grid-w
+     :n-rows     n-rows
+     :grid-h     grid-h
+     :svg-w      (+ x0 grid-w 1)
+     :svg-h      (+ grid-h 1)
+     :colors     (resolve-colors palette)}))
 
-(defn- time-scale
-  "Compute pixels-per-beat so the roll fits target-width."
-  [notes target-width]
-  (let [max-time (apply max (map #(+ (:position %) (:duration %)) notes))]
-    (if (zero? max-time)
-      400
-      (min (max (/ target-width max-time) 150) 700))))
-
-;; ── SVG building blocks ──────────────────────────────────────────
-
-(def ^:private row-h 18)
-(def ^:private kb-w 44)
-(def ^:private note-pad 1.5)
-
-(defn- pitch-y
-  "Y coordinate for a pitch row (higher pitch = lower Y)."
-  [max-pitch pitch]
-  (* (- max-pitch pitch 1) row-h))
+;; ── SVG renderers ────────────────────────────────────────────────
+;; Each takes a layout map as first arg, plus its own data when needed.
 
 (defn- svg-grid-rows
   "Background rows — white for natural keys, light grey for sharps/flats."
-  [min-pitch max-pitch x0 grid-w]
+  [{:keys [min-pitch max-pitch x0 grid-w]}]
   (into [:g]
         (mapcat
          (fn [p]
-           (let [y (pitch-y max-pitch p)]
+           (let [y (* (- max-pitch p 1) row-h)]
              [[:rect {:x x0 :y y :width grid-w :height row-h
                       :fill (if (black-key? p) "#f5f5f5" "#fff")}]
               [:line {:x1 x0 :y1 (+ y row-h) :x2 (+ x0 grid-w 1) :y2 (+ y row-h)
@@ -138,13 +219,13 @@
 
 (defn- svg-harmonies
   "Alternating tint + dashed vertical lines at harmony boundaries."
-  [harmonies x0 ts grid-h]
+  [{:keys [x0 time-scale grid-h]} harmonies]
   (when (> (count harmonies) 1)
     (into [:g]
           (keep-indexed
            (fn [i h]
-             (let [x (+ x0 (* (:position h) ts))
-                   w (* (:duration h) ts)
+             (let [x (+ x0 (* (:position h) time-scale))
+                   w (* (:duration h) time-scale)
                    children (cond-> []
                               (odd? i)
                               (conj [:rect {:x x :y 0 :width w :height grid-h
@@ -159,11 +240,11 @@
 
 (defn- svg-keyboard
   "Piano keyboard labels on the left edge."
-  [min-pitch max-pitch]
+  [{:keys [min-pitch max-pitch]}]
   (into [:g]
         (mapcat
          (fn [p]
-           (let [y   (pitch-y max-pitch p)
+           (let [y   (* (- max-pitch p 1) row-h)
                  blk (black-key? p)]
              (cond-> [[:rect {:x 0 :y y :width kb-w :height row-h
                               :fill (if blk "#374151" "#f9fafb")
@@ -172,22 +253,22 @@
                (conj [:text {:x (- kb-w 5) :y (+ y (/ row-h 2) 3.5)
                              :text-anchor "end"
                              :font-size 8.5
-                             :font-family "'SF Mono', 'Fira Code', monospace"
+                             :font-family mono-font
                              :fill (if blk "#e5e7eb" "#6b7280")}
                       (note-name p)])))))
         (range min-pitch max-pitch)))
 
 (defn- svg-notes
   "Colored, rounded note rectangles with optional pitch labels."
-  [notes x0 ts max-pitch]
+  [{:keys [x0 time-scale max-pitch colors]} notes]
   (into [:g]
         (mapcat
          (fn [note]
-           (let [x     (+ x0 (* (:position note) ts))
-                 y     (+ (pitch-y max-pitch (:pitch note)) note-pad)
-                 w     (max (- (* (:duration note) ts) 1) 3)
+           (let [x     (+ x0 (* (:position note) time-scale))
+                 y     (+ (* (- max-pitch (:pitch note) 1) row-h) note-pad)
+                 w     (max (- (* (:duration note) time-scale) 1) 3)
                  h     (- row-h (* note-pad 2))
-                 color (get layer-colors (:kind note) (:chromatic layer-colors))]
+                 color (get colors (:kind note) (:chromatic colors))]
              (cond-> [[:rect {:x x :y y :width w :height h
                               :rx 2.5 :ry 2.5
                               :fill (:fill color) :stroke (:stroke color)
@@ -196,54 +277,84 @@
                (conj [:text {:x (+ x (/ w 2)) :y (+ y (/ h 2) 3)
                              :text-anchor "middle"
                              :font-size 8
-                             :font-family "'SF Mono', 'Fira Code', monospace"
+                             :font-family mono-font
                              :fill (if (#{:tonic :structural} (:kind note)) "#fff" "#475569")
                              :font-weight 500}
                       (nth note-names (mod (:pitch note) 12))])))))
         notes))
 
-(defn- svg-legend
-  "Color legend as an HTML div (not SVG)."
-  [kinds]
+(defn- svg-border
+  "Thin border around the grid area."
+  [{:keys [x0 grid-w grid-h]}]
+  [:rect {:x x0 :y 0 :width grid-w :height grid-h
+          :fill "none" :stroke "#ddd" :stroke-width 1}])
+
+;; ── HTML renderers ───────────────────────────────────────────────
+
+(defn- legend
+  "Color legend as an HTML div."
+  [colors kinds]
   (let [sorted (sort-by layer-order kinds)]
     (into [:div {:style {:display "flex" :gap "14px" :margin-bottom "10px"
                          :font-size "10.5px" :color "#555"}}]
           (map (fn [kind]
                  [:div {:style {:display "flex" :align-items "center" :gap "4px"}}
                   [:div {:style {:width "10px" :height "10px" :border-radius "2px"
-                                 :background (get-in layer-colors [kind :fill])}}]
-                  [:span {} (get-in layer-colors [kind :label])]]))
+                                 :background (get-in colors [kind :fill])}}]
+                  [:span {} (get layer-labels kind)]]))
           sorted)))
+
+(defn- label-bar
+  "Small monospace label above a roll."
+  [text]
+  [:div {:style {:font-size     "11px"
+                 :font-weight   500
+                 :color         "#444"
+                 :font-family   mono-font
+                 :margin-bottom "2px"}}
+   text])
+
+(defn- title-bar
+  "Bold monospace title above a roll."
+  [text]
+  [:div {:style {:font-size     "13px"
+                 :font-weight   600
+                 :color         "#333"
+                 :margin-bottom "6px"
+                 :font-family   mono-font}}
+   text])
+
+(defn- separator []
+  [:div {:style {:height "1px" :background "#e5e7eb" :margin "4px 0"}}])
+
+(defn- wrap-hiccup
+  "Outer wrapper div with kindly metadata."
+  [& children]
+  (with-meta
+    (into [:div {:style {:display     "inline-block"
+                         :padding     "20px"
+                         :font-family sans-font}}]
+          (remove nil?)
+          children)
+    {:kindly/kind :kind/hiccup}))
 
 ;; ── Roll assembly ────────────────────────────────────────────────
 
 (defn- build-roll
-  "Assemble one piano roll SVG from pre-computed data."
-  [notes harmonies {:keys [min-pitch max-pitch time-scale show-keyboard show-harmonies]}]
-  (let [x0       (if show-keyboard kb-w 0)
-        max-time (apply max (map #(+ (:position %) (:duration %)) notes))
-        grid-w   (max (ceil (* max-time time-scale)) 60)
-        n-rows   (- max-pitch min-pitch)
-        grid-h   (* n-rows row-h)
-        w        (+ x0 grid-w 1)
-        h        (+ grid-h 1)]
+  "Assemble one piano roll SVG from layout and data."
+  [layout notes harmonies {:keys [show-keyboard show-harmonies]}]
+  (let [{:keys [svg-w svg-h]} layout]
     [:svg {:xmlns   "http://www.w3.org/2000/svg"
-           :width   w :height h
-           :viewBox (str "0 0 " w " " h)
+           :width   svg-w :height svg-h
+           :viewBox (str "0 0 " svg-w " " svg-h)
            :style   {:display "block"}}
-     ;; Grid background
-     (svg-grid-rows min-pitch max-pitch x0 grid-w)
-     ;; Harmony boundaries
+     (svg-grid-rows layout)
      (when show-harmonies
-       (svg-harmonies harmonies x0 time-scale grid-h))
-     ;; Grid border
-     [:rect {:x x0 :y 0 :width grid-w :height grid-h
-             :fill "none" :stroke "#ddd" :stroke-width 1}]
-     ;; Keyboard
+       (svg-harmonies layout harmonies))
+     (svg-border layout)
      (when show-keyboard
-       (svg-keyboard min-pitch max-pitch))
-     ;; Notes
-     (svg-notes notes x0 time-scale max-pitch)]))
+       (svg-keyboard layout))
+     (svg-notes layout notes)]))
 
 ;; ── Public API ───────────────────────────────────────────────────
 
@@ -258,40 +369,21 @@
      :show-harmonies — harmony boundary markers (default true)
      :show-legend    — color legend above roll (default true)
      :title          — optional title string
-     :padding        — pitch range padding in semitones (default 1)"
-  [score & [{:keys [target-width show-keyboard show-harmonies show-legend title padding]
-             :or   {target-width   500
-                    show-keyboard  true
-                    show-harmonies true
-                    show-legend    true
-                    padding        1}
-             :as   opts}]]
-  (let [notes     (score->notes score)
-        harmonies (score->harmonies score)
-        _         (assert (seq notes) "Score has no pitched events")
-        bounds    (pitch-bounds notes padding)
-        ts        (time-scale notes target-width)
-        kinds     (distinct (map :kind notes))]
-    (with-meta
-      [:div {:style {:display     "inline-block"
-                     :padding     "20px"
-                     :font-family "-apple-system, 'Helvetica Neue', sans-serif"}}
-       (when title
-         [:div {:style {:font-size     "13px"
-                        :font-weight   600
-                        :color         "#333"
-                        :margin-bottom "6px"
-                        :font-family   "'SF Mono', 'Fira Code', 'Menlo', monospace"}}
-          title])
-       (when show-legend
-         (svg-legend kinds))
-       (build-roll notes harmonies
-                   {:min-pitch      (:min bounds)
-                    :max-pitch      (:max bounds)
-                    :time-scale     ts
-                    :show-keyboard  show-keyboard
-                    :show-harmonies show-harmonies})]
-      {:kindly/kind :kind/hiccup})))
+     :padding        — pitch range padding in semitones (default 1)
+     :palette        — keyword (e.g. :ember-ocean) or custom colors map (default :ocean)
+                       See `palettes` for available names."
+  ([score] (piano-roll score {}))
+  ([score opts]
+   (let [{:keys [show-legend title]
+          :as   opts} (merge default-opts opts)
+         notes     (score->notes score)
+         harmonies (score->harmonies score)
+         _         (assert (seq notes) "Score has no pitched events")
+         layout    (compute-layout notes opts)]
+     (wrap-hiccup
+      (when title (title-bar title))
+      (when show-legend (legend (:colors layout) (distinct (map :kind notes))))
+      (build-roll layout notes harmonies opts)))))
 
 (defn piano-roll-group
   "Render multiple labeled scores as a stacked group.
@@ -306,53 +398,40 @@
      :show-keyboard      — show piano keyboards (default true)
      :show-harmonies     — show harmony boundaries (default true)
      :show-legend        — show shared legend (default true)
-     :padding            — pitch range padding (default 1)"
-  [items & [{:keys [shared-pitch-range target-width show-keyboard show-harmonies show-legend padding]
-             :or   {shared-pitch-range false
-                    target-width       500
-                    show-keyboard      true
-                    show-harmonies     true
-                    show-legend        true
-                    padding            1}}]]
-  (let [all-data      (mapv (fn [{:keys [label score]}]
-                              (let [notes     (score->notes score)
-                                    harmonies (score->harmonies score)]
-                                {:label label :notes notes :harmonies harmonies}))
-                            items)
-        all-notes     (into [] (mapcat :notes) all-data)
-        _             (assert (seq all-notes) "No pitched events in any score")
-        kinds         (distinct (map :kind all-notes))
-        ts            (time-scale all-notes target-width)
-        shared-bounds (when shared-pitch-range
-                        (pitch-bounds all-notes padding))]
-    (with-meta
-      [:div {:style {:display     "inline-block"
-                     :padding     "20px"
-                     :font-family "-apple-system, 'Helvetica Neue', sans-serif"}}
-       (when show-legend
-         (svg-legend kinds))
-       (into [:div {:style {:display        "flex"
-                            :flex-direction "column"
-                            :gap            "6px"}}]
-             (map-indexed
-              (fn [i {:keys [label notes harmonies]}]
-                [:div {}
-                 (when (pos? i)
-                   [:div {:style {:height     "1px"
-                                  :background "#e5e7eb"
-                                  :margin     "4px 0"}}])
-                 [:div {:style {:font-size     "11px"
-                                :font-weight   500
-                                :color         "#444"
-                                :font-family   "'SF Mono', 'Fira Code', 'Menlo', monospace"
-                                :margin-bottom "2px"}}
-                  label]
-                 (let [bounds (or shared-bounds (pitch-bounds notes padding))]
-                   (build-roll notes harmonies
-                               {:min-pitch      (:min bounds)
-                                :max-pitch      (:max bounds)
-                                :time-scale     ts
-                                :show-keyboard  show-keyboard
-                                :show-harmonies show-harmonies}))])
-              all-data))]
-      {:kindly/kind :kind/hiccup})))
+     :padding            — pitch range padding (default 1)
+     :palette            — keyword (e.g. :ember-ocean) or custom colors map (default :ocean)
+                           See `palettes` for available names."
+  ([items] (piano-roll-group items {}))
+  ([items opts]
+   (let [{:keys [shared-pitch-range show-legend]
+          :as   opts} (merge default-opts opts)
+
+         all-data  (mapv (fn [{:keys [label score]}]
+                           {:label     label
+                            :notes     (score->notes score)
+                            :harmonies (score->harmonies score)})
+                         items)
+
+         all-notes (into [] (mapcat :notes) all-data)
+         _         (assert (seq all-notes) "No pitched events in any score")
+
+         shared-layout (when shared-pitch-range
+                         (compute-layout all-notes opts))
+
+         colors    (:colors (or shared-layout (compute-layout all-notes opts)))
+
+         rolls     (into [:div {:style {:display        "flex"
+                                        :flex-direction "column"
+                                        :gap            "6px"}}]
+                         (map-indexed
+                          (fn [i {:keys [label notes harmonies]}]
+                            (let [layout (or shared-layout (compute-layout notes opts))]
+                              [:div {}
+                               (when (pos? i) (separator))
+                               (when label (label-bar label))
+                               (build-roll layout notes harmonies opts)])))
+                         all-data)]
+
+     (wrap-hiccup
+      (when show-legend (legend colors (distinct (map :kind all-notes))))
+      rolls))))
