@@ -133,16 +133,23 @@
 ;; Both modes produce the same shape: {channel -> {kind -> {:fill :stroke}}}
 ;; so svg-notes can be mode-agnostic.
 
+(defn- channel-color
+  "Single fill/stroke pair for a channel hue. Used in :channel mode
+   where all notes on a channel share the same color regardless of kind."
+  [hue]
+  (let [c {:fill (hsl hue 58 52) :stroke (hsl hue 66 42)}]
+    {:tonic c :structural c :diatonic c :chromatic c}))
+
 (defn- resolve-colors
   "Build a channel-indexed color map: {channel -> {kind -> {:fill :stroke}}}.
    In :kind mode, every channel shares the same palette colors.
-   In :channel mode, each channel gets its own hue-derived shades."
+   In :channel mode, each channel gets a single flat color (no kind shading)."
   [{:keys [color-mode palette hues]} channels]
   (if (= color-mode :channel)
     (let [hue-vec (or hues default-channel-hues)]
       (into {}
             (map (fn [ch]
-                   [ch (kind-shades (nth hue-vec (mod ch (count hue-vec))))]))
+                   [ch (channel-color (nth hue-vec (mod ch (count hue-vec))))]))
             channels))
     ;; :kind mode (default)
     (let [kind-colors (resolve-palette palette)]
@@ -366,25 +373,19 @@
   "Color legend as an HTML div.
    Adapts to color mode:
      :kind    — shows kind swatches (tonic/structural/diatonic/chromatic)
-     :channel — multi-channel: channel hue labels + kind shade hint
-                single-channel: kind swatches in that channel's hue"
+     :channel — multi-channel: channel color labels
+                single-channel: single flat color"
   [colors channels kinds color-mode]
   (if (and (= color-mode :channel) (> (count channels) 1))
     ;; ── Channel mode, multi-channel ──
-    [:div {:style {:display "flex" :flex-direction "column" :gap "6px"
-                   :margin-bottom "10px" :font-size "10.5px" :color "#555"}}
-     (into [:div {:style {:display "flex" :gap "12px" :align-items "center"}}]
-           (map (fn [ch]
-                  [:div {:style {:display "flex" :align-items "center" :gap "4px"}}
-                   [:div {:style {:width "10px" :height "10px" :border-radius "2px"
-                                  :background (get-in colors [ch :structural :fill])}}]
-                   [:span {} (str "ch " ch)]]))
-           (sort channels))
-     [:div {:style {:display "flex" :gap "10px" :font-size "9.5px" :color "#999"}}
-      [:span {} "dark → tonic"]
-      [:span {} "medium → structural"]
-      [:span {} "light → diatonic"]
-      [:span {} "grey → chromatic"]]]
+    (into [:div {:style {:display "flex" :gap "12px" :align-items "center"
+                         :margin-bottom "10px" :font-size "10.5px" :color "#555"}}]
+          (map (fn [ch]
+                 [:div {:style {:display "flex" :align-items "center" :gap "5px"}}
+                  [:div {:style {:width "10px" :height "10px" :border-radius "2px"
+                                 :background (get-in colors [ch :tonic :fill])}}]
+                  [:span {} (str "ch " ch)]]))
+          (sort channels))
     ;; ── Kind mode (or channel mode, single channel) ──
     (let [ch (first channels)]
       (into [:div {:style {:display "flex" :gap "14px" :margin-bottom "10px"

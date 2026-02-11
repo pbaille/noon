@@ -31,23 +31,71 @@
     (some-> (meta result) :score) (:score (meta result))
     :else nil))
 
-(defui mini-pill [{:keys [text selected on-click color]}]
+(def ^:private default-channel-hues
+  [220 10 145 45 280 175 335 80 250 110 350 90 310 200 55 160])
+
+;; ── Segmented control ────────────────────────────────────────────
+
+(defui segment [{:keys [text active on-click first? last?]}]
   (c :button
-     {:style {:p [0.15 0.5]
-              :text [:xs :medium]
-              :font-family "'SF Mono', 'Fira Code', monospace"
-              :border [1 (if selected :grey6 :grey3)]
-              :rounded 0.5
-              :bg {:color (if selected (or color :grey7) :white)}
-              :color (if selected :white :grey5)
+     {:style {:p [0.2 0.55]
+              :border {:width 0}
+              :rounded (cond first? [0.35 0 0 0.35]
+                             last?  [0 0.35 0.35 0]
+                             :else  0)
+              :bg {:color (if active "#374151" :transparent)}
+              :color (if active "#fff" "#9ca3af")
               :cursor :pointer
               :font-size "10px"
-              :hover {:border [1 :grey5]}}
+              :font-weight (if active 500 400)
+              :font-family "'SF Mono', 'Fira Code', monospace"
+              :transition "all 0.15s ease"
+              :hover (when-not active {:color "#6b7280"})}
       :on-click on-click}
      text))
 
-(def ^:private default-channel-hues
-  [220 10 145 45 280 175 335 80 250 110 350 90 310 200 55 160])
+(defui segmented-control [{:keys [value options on-change]}]
+  (let [n (count options)]
+    (sc {:flex [:row {:items :center}]
+         :border [1 "#e5e7eb"]
+         :rounded 0.4
+         :overflow :hidden
+         :bg {:color "#f9fafb"}}
+        (mapv (fn [i [k label]]
+                ($ segment {:key (name k)
+                            :text label
+                            :active (= k value)
+                            :on-click #(on-change k)
+                            :first? (zero? i)
+                            :last? (= i (dec n))}))
+              (map-indexed vector options)))))
+
+;; ── Channel dot toggle ───────────────────────────────────────────
+
+(defui channel-toggle [{:keys [ch active hue on-click]}]
+  (c :button
+     {:style {:flex [:row {:items :center :gap 0.2}]
+              :p [0.15 0.3]
+              :border {:width 0}
+              :bg {:color :transparent}
+              :cursor :pointer
+              :opacity (if active 1 0.3)
+              :transition "opacity 0.15s ease"
+              :hover {:opacity (if active 1 0.55)}}
+      :on-click on-click}
+     (c :span {:style {:display :inline-block
+                        :width "7px" :height "7px"
+                        :border-radius "50%"
+                        :background (str "hsl(" hue ", "
+                                         (if active "60%" "15%") ", "
+                                         (if active "50%" "70%") ")")}})
+     (c :span {:style {:font-size "10px"
+                        :font-family "'SF Mono', 'Fira Code', monospace"
+                        :color (if active "#374151" "#9ca3af")
+                        :font-weight (if active 500 400)}}
+        (str ch))))
+
+;; ── Piano roll view ──────────────────────────────────────────────
 
 (defui piano-roll-view [{:keys [score]}]
   (let [all-channels (pr/score->channels score)
@@ -57,28 +105,23 @@
     (sc {:overflow-x :auto
          :overflow-y :hidden
          :p [0.5 0]}
-        ;; Controls row (shown for multi-channel scores)
+        ;; Toolbar (shown for multi-channel scores)
         (when multi?
-          (sc {:flex [:row {:gap 0.5 :items :center :wrap :wrap}]
-               :p [0.3 0.5]}
-              ;; Color mode toggle
-              (sc {:text [:xs] :color :grey4 :p {:right 0.2} :font-size "9px"} "color")
-              ($ mini-pill {:text "Kind" :selected (= color-mode :kind)
-                            :on-click #(set-color-mode :kind)})
-              ($ mini-pill {:text "Channel" :selected (= color-mode :channel)
-                            :on-click #(set-color-mode :channel)})
-              ;; Channel toggles (channel mode only)
+          (sc {:flex [:row {:gap 0.6 :items :center}]
+               :p [0.4 0.5]}
+              ($ segmented-control
+                 {:value   color-mode
+                  :options [[:kind "Kind"] [:channel "Channel"]]
+                  :on-change set-color-mode})
+              ;; Channel dots (channel mode only)
               (when (= color-mode :channel)
-                (sc {:flex [:row {:gap 0.3 :items :center}]
-                     :p {:left 0.5}}
-                    (sc {:text [:xs] :color :grey4 :p {:right 0.2} :font-size "9px"} "|")
+                (sc {:flex [:row {:gap 0.15 :items :center}]
+                     :p {:left 0.3}}
                     (mapv (fn [ch]
                             (let [vis? (not (contains? hidden ch))]
-                              ($ mini-pill
-                                 {:key ch
-                                  :text (str "ch " ch)
-                                  :selected vis?
-                                  :color (str "hsl(" (nth default-channel-hues (mod ch 16)) ", 60%, 50%)")
+                              ($ channel-toggle
+                                 {:key ch :ch ch :active vis?
+                                  :hue (nth default-channel-hues (mod ch 16))
                                   :on-click #(set-hidden
                                               (if vis?
                                                 (if (< (count hidden) (dec (count all-channels)))
