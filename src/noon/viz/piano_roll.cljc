@@ -89,7 +89,7 @@
 
 (def ^:private max-row-h 18)
 (def ^:private min-row-h 8)
-(def ^:private target-grid-h 350)
+(def ^:private target-grid-h 350.0)
 (def ^:private kb-w 44)
 (def ^:private note-pad 1.5)
 

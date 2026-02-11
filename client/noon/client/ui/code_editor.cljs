@@ -33,9 +33,9 @@
 
 (defui piano-roll-view [{:keys [score]}]
   (sc {:overflow-x :auto
-       :overflow-y :hidden
-       "svg" {:display :block}}
-      (c :div {:dangerouslySetInnerHTML
+       :overflow-y :hidden}
+      (c :div {:style {:width :max-content}
+               :dangerouslySetInnerHTML
                #js {:__html (ui.misc/hiccup->html
                              (pr/piano-roll score {:target-width 500}))}})))
 
