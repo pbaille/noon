@@ -350,34 +350,48 @@
                       (note-name p)])))))
         (range min-pitch max-pitch)))
 
+(defn- render-note-rects
+  "Render a single note as rect + optional label."
+  [{:keys [x0 time-scale max-pitch row-h colors]} note opacity]
+  (let [note-pad (min note-pad (* row-h 0.1))
+        x     (+ x0 (* (:position note) time-scale))
+        y     (+ (* (- max-pitch (:pitch note) 1) row-h) note-pad)
+        w     (max (- (* (:duration note) time-scale) 1) 3)
+        h     (- row-h (* note-pad 2))
+        color (get-in colors [(:channel note) (:kind note)]
+                     (get-in colors [(:channel note) :chromatic]
+                             {:fill "#d1d5db" :stroke "#9ca3af"}))]
+    (cond-> [[:rect {:x x :y y :width w :height h
+                     :rx 2.5 :ry 2.5
+                     :fill (:fill color) :stroke (:stroke color)
+                     :stroke-width 0.75 :opacity opacity}]]
+      (> w 24)
+      (conj [:text {:x (+ x (/ w 2)) :y (+ y (/ h 2) 3)
+                     :text-anchor "middle"
+                     :font-size (min 8 (- row-h 2))
+                     :font-family mono-font
+                     :fill (if (#{:tonic :structural} (:kind note)) "#fff" "#475569")
+                     :font-weight 500
+                     :opacity opacity}
+             (nth note-names (mod (:pitch note) 12))]))))
+
 (defn- svg-notes
   "Colored, rounded note rectangles with optional pitch labels.
-   Color is determined by channel (hue) × kind (shade)."
-  [{:keys [x0 time-scale max-pitch row-h colors]} notes]
-  (let [note-pad (min note-pad (* row-h 0.1))]
+   Color is determined by channel (hue) × kind (shade).
+   Supports :dimmed-channels (set of ch numbers rendered at low opacity)
+   and :channel-order (vec of ch numbers; last = on top in SVG z-order)."
+  [layout notes {:keys [dimmed-channels channel-order]}]
+  (let [dimmed?  (set (or dimmed-channels []))
+        by-ch    (group-by :channel notes)
+        order    (or channel-order (sort (keys by-ch)))]
     (into [:g]
-          (mapcat
-           (fn [note]
-             (let [x     (+ x0 (* (:position note) time-scale))
-                   y     (+ (* (- max-pitch (:pitch note) 1) row-h) note-pad)
-                   w     (max (- (* (:duration note) time-scale) 1) 3)
-                   h     (- row-h (* note-pad 2))
-                   color (get-in colors [(:channel note) (:kind note)]
-                                (get-in colors [(:channel note) :chromatic]
-                                        {:fill "#d1d5db" :stroke "#9ca3af"}))]
-               (cond-> [[:rect {:x x :y y :width w :height h
-                                :rx 2.5 :ry 2.5
-                                :fill (:fill color) :stroke (:stroke color)
-                                :stroke-width 0.75 :opacity 0.92}]]
-                 (> w 24)
-                 (conj [:text {:x (+ x (/ w 2)) :y (+ y (/ h 2) 3)
-                               :text-anchor "middle"
-                               :font-size (min 8 (- row-h 2))
-                               :font-family mono-font
-                               :fill (if (#{:tonic :structural} (:kind note)) "#fff" "#475569")
-                               :font-weight 500}
-                        (nth note-names (mod (:pitch note) 12))])))))
-          notes)))
+          (map (fn [ch]
+                 (let [ch-notes (get by-ch ch)
+                       opacity  (if (dimmed? ch) 0.25 0.92)]
+                   (into [:g]
+                         (mapcat #(render-note-rects layout % opacity))
+                         ch-notes))))
+          order)))
 
 (defn- svg-border
   "Thin border around the grid area."
@@ -452,8 +466,9 @@
 ;; ── Roll assembly ────────────────────────────────────────────────
 
 (defn- build-roll
-  "Assemble one piano roll SVG from layout and data."
-  [layout notes harmonies {:keys [show-keyboard show-harmonies]}]
+  "Assemble one piano roll SVG from layout and data.
+   Options may include :dimmed-channels and :channel-order for svg-notes."
+  [layout notes harmonies {:keys [show-keyboard show-harmonies dimmed-channels channel-order]}]
   (let [{:keys [svg-w svg-h]} layout]
     [:svg {:xmlns   "http://www.w3.org/2000/svg"
            :width   svg-w :height svg-h
@@ -465,7 +480,8 @@
      (svg-border layout)
      (when show-keyboard
        (svg-keyboard layout))
-     (svg-notes layout notes)]))
+     (svg-notes layout notes {:dimmed-channels dimmed-channels
+                              :channel-order channel-order})]))
 
 ;; ── Public API ───────────────────────────────────────────────────
 

@@ -64,27 +64,42 @@
 
 ;; ── Channel toggle pill ──────────────────────────────────────────
 
-(defui channel-toggle [{:keys [ch active color on-click]}]
+(defn- cycle-ch-state
+  "Cycle a channel through :visible → :dimmed → :hidden → :visible.
+   Prevents all channels from being hidden simultaneously."
+  [ch-states ch all-channels]
+  (let [current    (get ch-states ch :visible)
+        next-state (case current :visible :dimmed, :dimmed :hidden, :hidden :visible)
+        proposed   (assoc ch-states ch next-state)]
+    (if (and (= next-state :hidden)
+             (every? #(= :hidden (get proposed % :visible)) all-channels))
+      (assoc ch-states ch :visible)
+      proposed)))
+
+(defui channel-toggle [{:keys [ch state color on-click]}]
   (c :button
      {:style {:flex [:row {:items :center :gap 0.25}]
               :p [0.25 0.5]
               :border {:width 0}
               :rounded 0.4
-              :bg {:color (if active "#fff" :transparent)}
-              :color (if active "#1e293b" "#94a3b8")
+              :bg {:color (case state :visible "#fff", :dimmed "#fff", "#f1f5f9")}
+              :color (case state :visible "#1e293b", :dimmed "#94a3b8", "#cbd5e1")
               :cursor :pointer
               :font-size "10px"
               :font-weight 500
               :font-family "'SF Mono', 'Fira Code', monospace"
               :transition "all 0.15s ease"
-              :box-shadow (when active "0 1px 3px rgba(0,0,0,0.08)")
-              :hover (when-not active {:color "#64748b"})}
+              :box-shadow (case state
+                            :visible "0 1px 3px rgba(0,0,0,0.08)"
+                            :dimmed  "0 1px 2px rgba(0,0,0,0.04)"
+                            nil)
+              :hover (when (not= state :visible) {:color "#64748b"})}
       :on-click on-click}
      (c :span {:style {:display :inline-block
                         :width "7px" :height "7px"
                         :border-radius "50%"
                         :background color
-                        :opacity (if active 1 0.35)}})
+                        :opacity (case state :visible 1, :dimmed 0.4, 0.15)}})
      (str "ch " ch)))
 
 ;; ── Piano roll view ──────────────────────────────────────────────
@@ -93,7 +108,8 @@
   (let [all-channels (pr/score->channels score)
         multi? (> (count all-channels) 1)
         [color-mode set-color-mode] (uix/use-state :kind)
-        [hidden set-hidden] (uix/use-state #{})]
+        [ch-states set-ch-states] (uix/use-state {})
+        [focus-ch set-focus-ch] (uix/use-state nil)]
     (sc {:overflow-x :auto
          :overflow-y :hidden
          :p [0.5 0]}
@@ -113,21 +129,24 @@
                      :bg {:color "#f1f5f9"}
                      :p 0.15}
                     (mapv (fn [ch]
-                            (let [vis? (not (contains? hidden ch))
-                                  fill (:fill (nth pr/channel-colors (mod ch 16)))]
+                            (let [state (get ch-states ch :visible)
+                                  fill  (:fill (nth pr/channel-colors (mod ch 16)))]
                               ($ channel-toggle
-                                 {:key ch :ch ch :active vis?
+                                 {:key ch :ch ch :state state
                                   :color fill
-                                  :on-click #(set-hidden
-                                              (if vis?
-                                                (if (< (count hidden) (dec (count all-channels)))
-                                                  (conj hidden ch)
-                                                  hidden)
-                                                (disj hidden ch)))})))
+                                  :on-click (fn []
+                                              (set-ch-states #(cycle-ch-state % ch all-channels))
+                                              (set-focus-ch ch))})))
                           all-channels)))))
-        (let [visible (when (= color-mode :channel)
-                        (let [v (vec (remove hidden all-channels))]
-                          (when (seq v) v)))]
+        (let [visible-chs  (filterv #(= :visible (get ch-states % :visible)) all-channels)
+              dimmed-chs   (filterv #(= :dimmed  (get ch-states % :visible)) all-channels)
+              shown-chs    (into visible-chs dimmed-chs)
+              ;; Channel order: focus-ch rendered last (on top)
+              channel-order (when (and focus-ch (> (count shown-chs) 1))
+                              (let [others (filterv #(not= % focus-ch) shown-chs)]
+                                (conj others focus-ch)))
+              channels     (when (and (= color-mode :channel) (seq shown-chs))
+                             shown-chs)]
           (c :div {:style {:width "max-content"
                            :min-width "100%"}
                    :dangerouslySetInnerHTML
@@ -135,7 +154,9 @@
                                  (pr/piano-roll score
                                                 (cond-> {:target-width 500
                                                          :color-mode color-mode}
-                                                  visible (assoc :channels visible))))}})))))
+                                                  channels      (assoc :channels channels)
+                                                  (seq dimmed-chs) (assoc :dimmed-channels (set dimmed-chs))
+                                                  channel-order (assoc :channel-order channel-order))))}})))))
 
 
 (defui code-editor [{:keys [source options]}]

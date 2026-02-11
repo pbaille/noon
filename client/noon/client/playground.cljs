@@ -117,7 +117,8 @@
         [color-mode set-color-mode] (uix/use-state :kind)
         [palette set-palette] (uix/use-state :ocean)
         [all-channels set-all-channels] (uix/use-state [0])
-        [hidden-channels set-hidden-channels] (uix/use-state #{})
+        [ch-states set-ch-states] (uix/use-state {})
+        [focus-ch set-focus-ch] (uix/use-state nil)
 
         do-eval
         (uix/use-callback
@@ -145,7 +146,8 @@
                          (when s
                            (set-result s)
                            (set-all-channels (pr/score->channels s))
-                           (set-hidden-channels #{}))))))
+                           (set-ch-states {})
+                           (set-focus-ch nil))))))
                  (fn [{:keys [error]}]
                    (set-evaluating false)
                    (set-error (.-message error)))))
@@ -300,7 +302,7 @@
                            :bg {:color "#f1f5f9"}
                            :p 0.15}
                           (mapv (fn [ch]
-                                  (let [hidden? (contains? hidden-channels ch)
+                                  (let [state (get ch-states ch :visible)
                                         fill (:fill (nth pr/channel-colors (mod ch 16)))]
                                     (c :button
                                        {:key (str "ch-" ch)
@@ -308,26 +310,34 @@
                                                 :p [0.25 0.5]
                                                 :border {:width 0}
                                                 :rounded 0.4
-                                                :bg {:color (if hidden? :transparent "#fff")}
-                                                :color (if hidden? "#94a3b8" "#1e293b")
+                                                :bg {:color (case state :visible "#fff", :dimmed "#fff", "#f1f5f9")}
+                                                :color (case state :visible "#1e293b", :dimmed "#94a3b8", "#cbd5e1")
                                                 :cursor :pointer
                                                 :font-size "10px"
                                                 :font-weight 500
                                                 :font-family "'SF Mono', 'Fira Code', monospace"
                                                 :transition "all 0.15s ease"
-                                                :box-shadow (when-not hidden? "0 1px 3px rgba(0,0,0,0.08)")
-                                                :hover (when hidden? {:color "#64748b"})}
-                                        :on-click #(set-hidden-channels
-                                                    (if hidden?
-                                                      (disj hidden-channels ch)
-                                                      (if (< (count hidden-channels) (dec (count all-channels)))
-                                                        (conj hidden-channels ch)
-                                                        hidden-channels)))}
+                                                :box-shadow (case state
+                                                              :visible "0 1px 3px rgba(0,0,0,0.08)"
+                                                              :dimmed  "0 1px 2px rgba(0,0,0,0.04)"
+                                                              nil)
+                                                :hover (when (not= state :visible) {:color "#64748b"})}
+                                        :on-click (fn []
+                                                    (set-ch-states
+                                                     (fn [prev]
+                                                       (let [current    (get prev ch :visible)
+                                                             next-state (case current :visible :dimmed, :dimmed :hidden, :hidden :visible)
+                                                             proposed   (assoc prev ch next-state)]
+                                                         (if (and (= next-state :hidden)
+                                                                  (every? #(= :hidden (get proposed % :visible)) all-channels))
+                                                           (assoc prev ch :visible)
+                                                           proposed))))
+                                                    (set-focus-ch ch))}
                                        (c :span {:style {:display :inline-block
                                                           :width "7px" :height "7px"
                                                           :border-radius "50%"
                                                           :background fill
-                                                          :opacity (if hidden? 0.35 1)}})
+                                                          :opacity (case state :visible 1, :dimmed 0.4, 0.15)}})
                                        (str "ch " ch))))
                                 all-channels))))
 
@@ -346,16 +356,23 @@
                           (c spinner {:color "lightskyblue" :loading true :size 12}))
 
                       result
-                      (let [visible-chs (when (= color-mode :channel)
-                                         (let [v (vec (remove hidden-channels all-channels))]
-                                           (when (seq v) v)))]
+                      (let [visible-chs  (filterv #(= :visible (get ch-states % :visible)) all-channels)
+                            dimmed-chs   (filterv #(= :dimmed  (get ch-states % :visible)) all-channels)
+                            shown-chs    (into visible-chs dimmed-chs)
+                            channel-order (when (and focus-ch (> (count shown-chs) 1))
+                                            (let [others (filterv #(not= % focus-ch) shown-chs)]
+                                              (conj others focus-ch)))
+                            channels     (when (and (= color-mode :channel) (seq shown-chs))
+                                           shown-chs)]
                         (c :div {:dangerouslySetInnerHTML
                                  #js {:__html (hiccup->html
                                                (pr/piano-roll result
                                                               (cond-> {:target-width 600
                                                                        :color-mode color-mode
                                                                        :palette palette}
-                                                                visible-chs (assoc :channels visible-chs))))}}))
+                                                                channels      (assoc :channels channels)
+                                                                (seq dimmed-chs) (assoc :dimmed-channels (set dimmed-chs))
+                                                                channel-order (assoc :channel-order channel-order))))}}))
 
                       :else
                       (sc {:flex :center :height 200 :color :grey3 :text :sm}
