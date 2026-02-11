@@ -31,20 +31,20 @@
     (some-> (meta result) :score) (:score (meta result))
     :else nil))
 
-(defui channel-pill [{:keys [ch selected on-click hue]}]
+(defui mini-pill [{:keys [text selected on-click color]}]
   (c :button
      {:style {:p [0.15 0.5]
               :text [:xs :medium]
               :font-family "'SF Mono', 'Fira Code', monospace"
               :border [1 (if selected :grey6 :grey3)]
               :rounded 0.5
-              :bg {:color (if selected (str "hsl(" hue ", 60%, 50%)") :white)}
+              :bg {:color (if selected (or color :grey7) :white)}
               :color (if selected :white :grey5)
               :cursor :pointer
               :font-size "10px"
               :hover {:border [1 :grey5]}}
       :on-click on-click}
-     (str "ch " ch)))
+     text))
 
 (def ^:private default-channel-hues
   [220 10 145 45 280 175 335 80 250 110 350 90 310 200 55 160])
@@ -52,29 +52,41 @@
 (defui piano-roll-view [{:keys [score]}]
   (let [all-channels (pr/score->channels score)
         multi? (> (count all-channels) 1)
+        [color-mode set-color-mode] (uix/use-state :kind)
         [hidden set-hidden] (uix/use-state #{})]
     (sc {:overflow-x :auto
          :overflow-y :hidden
          :p [0.5 0]}
-        ;; Channel toggles for multi-channel scores
+        ;; Controls row (shown for multi-channel scores)
         (when multi?
-          (sc {:flex [:row {:gap 0.3 :items :center}]
+          (sc {:flex [:row {:gap 0.5 :items :center :wrap :wrap}]
                :p [0.3 0.5]}
-              (sc {:text [:xs] :color :grey4 :p {:right 0.3} :font-size "9px"}
-                  "channels")
-              (mapv (fn [ch]
-                      (let [vis? (not (contains? hidden ch))]
-                        ($ channel-pill
-                           {:key ch :ch ch :selected vis?
-                            :hue (nth default-channel-hues (mod ch 16))
-                            :on-click #(set-hidden
-                                        (if vis?
-                                          (if (< (count hidden) (dec (count all-channels)))
-                                            (conj hidden ch)
-                                            hidden)
-                                          (disj hidden ch)))})))
-                    all-channels)))
-        (let [visible (when multi?
+              ;; Color mode toggle
+              (sc {:text [:xs] :color :grey4 :p {:right 0.2} :font-size "9px"} "color")
+              ($ mini-pill {:text "Kind" :selected (= color-mode :kind)
+                            :on-click #(set-color-mode :kind)})
+              ($ mini-pill {:text "Channel" :selected (= color-mode :channel)
+                            :on-click #(set-color-mode :channel)})
+              ;; Channel toggles (channel mode only)
+              (when (= color-mode :channel)
+                (sc {:flex [:row {:gap 0.3 :items :center}]
+                     :p {:left 0.5}}
+                    (sc {:text [:xs] :color :grey4 :p {:right 0.2} :font-size "9px"} "|")
+                    (mapv (fn [ch]
+                            (let [vis? (not (contains? hidden ch))]
+                              ($ mini-pill
+                                 {:key ch
+                                  :text (str "ch " ch)
+                                  :selected vis?
+                                  :color (str "hsl(" (nth default-channel-hues (mod ch 16)) ", 60%, 50%)")
+                                  :on-click #(set-hidden
+                                              (if vis?
+                                                (if (< (count hidden) (dec (count all-channels)))
+                                                  (conj hidden ch)
+                                                  hidden)
+                                                (disj hidden ch)))})))
+                          all-channels)))))
+        (let [visible (when (= color-mode :channel)
                         (let [v (vec (remove hidden all-channels))]
                           (when (seq v) v)))]
           (c :div {:style {:width "max-content"
@@ -82,7 +94,8 @@
                    :dangerouslySetInnerHTML
                    #js {:__html (ui.misc/hiccup->html
                                  (pr/piano-roll score
-                                                (cond-> {:target-width 500}
+                                                (cond-> {:target-width 500
+                                                         :color-mode color-mode}
                                                   visible (assoc :channels visible))))}})))))
 
 

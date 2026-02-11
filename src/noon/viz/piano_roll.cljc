@@ -13,6 +13,14 @@
      (pr/piano-roll (score (lin I IV V I) (each (tup s0 s1 s2)))
                     {:title \"I-IV-V-I\" :target-width 600})
 
+     ;; With a named palette (kind-based coloring)
+     (pr/piano-roll (score (tup s0 s1 s2))
+                    {:palette :ember-ocean})
+
+     ;; Channel-based coloring (each channel gets its own hue)
+     (pr/piano-roll (score (chans (tup s0 s1 s2) (tup d0 d1 d2)))
+                    {:color-mode :channel})
+
      ;; Filter to specific channels
      (pr/piano-roll (score (chans (tup s0 s1 s2) (tup d0 d1 d2)))
                     {:channels #{0}})
@@ -21,7 +29,7 @@
      (pr/piano-roll-group
        [{:label \"major\" :score (score (tup d0 d1 d2 d3 d4 d5 d6 d7))}
         {:label \"dorian\" :score (score (scale :dorian) (tup d0 d1 d2 d3 d4 d5 d6 d7))}]
-       {:shared-pitch-range true})
+       {:shared-pitch-range true :palette :purple-gold})
 
    Clay/Kindly:
      Output carries ^{:kindly/kind :kind/hiccup} metadata.
@@ -40,9 +48,68 @@
 (def ^:private layer-order
   {:tonic 0 :structural 1 :diatonic 2 :chromatic 3})
 
-;; ── Channel coloring ─────────────────────────────────────────────
-;; Each MIDI channel gets a base hue; note kind (tonic/structural/
-;; diatonic/chromatic) is expressed through saturation & lightness.
+;; ── Color modes ──────────────────────────────────────────────────
+;; Two coloring strategies, toggled via :color-mode option:
+;;   :kind    — notes colored by harmonic kind (tonic/structural/diatonic/chromatic),
+;;              same colors for all channels. Palette selectable.
+;;   :channel — each MIDI channel gets a distinct hue, kind expressed via shade.
+
+;; ── Kind-based palettes ──────────────────────────────────────────
+
+(def palettes
+  "Named color palettes for the :kind color mode.
+   Each palette maps note kind to {:fill :stroke}.
+   Use via the :palette option when :color-mode is :kind."
+  {:ocean        {:tonic      {:fill "#1a56db" :stroke "#1446b3"}
+                  :structural {:fill "#3b82f6" :stroke "#2563eb"}
+                  :diatonic   {:fill "#93c5fd" :stroke "#60a5fa"}
+                  :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
+
+   :indigo-teal  {:tonic      {:fill "#4f46e5" :stroke "#4338ca"}
+                  :structural {:fill "#6366f1" :stroke "#4f46e5"}
+                  :diatonic   {:fill "#2dd4bf" :stroke "#14b8a6"}
+                  :chromatic  {:fill "#cbd5e1" :stroke "#94a3b8"}}
+
+   :purple-gold  {:tonic      {:fill "#7c3aed" :stroke "#6d28d9"}
+                  :structural {:fill "#a78bfa" :stroke "#8b5cf6"}
+                  :diatonic   {:fill "#fbbf24" :stroke "#f59e0b"}
+                  :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
+
+   :rose-cyan    {:tonic      {:fill "#e11d48" :stroke "#be123c"}
+                  :structural {:fill "#f472b6" :stroke "#ec4899"}
+                  :diatonic   {:fill "#22d3ee" :stroke "#06b6d4"}
+                  :chromatic  {:fill "#cbd5e1" :stroke "#94a3b8"}}
+
+   :ember-ocean  {:tonic      {:fill "#ea580c" :stroke "#c2410c"}
+                  :structural {:fill "#fb923c" :stroke "#f97316"}
+                  :diatonic   {:fill "#38bdf8" :stroke "#0ea5e9"}
+                  :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
+
+   :forest-berry {:tonic      {:fill "#059669" :stroke "#047857"}
+                  :structural {:fill "#34d399" :stroke "#10b981"}
+                  :diatonic   {:fill "#c084fc" :stroke "#a855f7"}
+                  :chromatic  {:fill "#cbd5e1" :stroke "#94a3b8"}}
+
+   :sapphire-amber {:tonic      {:fill "#1d4ed8" :stroke "#1e40af"}
+                    :structural {:fill "#60a5fa" :stroke "#3b82f6"}
+                    :diatonic   {:fill "#fbbf24" :stroke "#f59e0b"}
+                    :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
+
+   :slate-coral  {:tonic      {:fill "#475569" :stroke "#334155"}
+                  :structural {:fill "#94a3b8" :stroke "#64748b"}
+                  :diatonic   {:fill "#fb7185" :stroke "#f43f5e"}
+                  :chromatic  {:fill "#e2e8f0" :stroke "#cbd5e1"}}})
+
+(defn- resolve-palette
+  "Resolve a :palette option to a kind-colors map {kind -> {:fill :stroke}}."
+  [palette]
+  (cond
+    (keyword? palette) (or (get palettes palette)
+                           (get palettes :ocean))
+    (map? palette)     palette
+    :else              (get palettes :ocean)))
+
+;; ── Channel-based coloring ───────────────────────────────────────
 
 (def ^:private default-channel-hues
   "16 maximally-spaced hues for MIDI channels 0-15.
@@ -62,15 +129,26 @@
    :diatonic   {:fill (hsl hue 45 66) :stroke (hsl hue 52 58)}
    :chromatic  {:fill (hsl hue 15 78) :stroke (hsl hue 20 70)}})
 
+;; ── Unified color resolution ─────────────────────────────────────
+;; Both modes produce the same shape: {channel -> {kind -> {:fill :stroke}}}
+;; so svg-notes can be mode-agnostic.
+
 (defn- resolve-colors
   "Build a channel-indexed color map: {channel -> {kind -> {:fill :stroke}}}.
-   `hues` is a vector of HSL hue degrees (one per channel index).
-   `channels` is the collection of channel numbers present."
-  [hues channels]
-  (into {}
-        (map (fn [ch]
-               [ch (kind-shades (nth hues (mod ch (count hues))))]))
-        channels))
+   In :kind mode, every channel shares the same palette colors.
+   In :channel mode, each channel gets its own hue-derived shades."
+  [{:keys [color-mode palette hues]} channels]
+  (if (= color-mode :channel)
+    (let [hue-vec (or hues default-channel-hues)]
+      (into {}
+            (map (fn [ch]
+                   [ch (kind-shades (nth hue-vec (mod ch (count hue-vec))))]))
+            channels))
+    ;; :kind mode (default)
+    (let [kind-colors (resolve-palette palette)]
+      (into {}
+            (map (fn [ch] [ch kind-colors]))
+            channels))))
 
 (def ^:private harmony-bg "rgba(99, 102, 241, 0.06)")
 (def ^:private harmony-line "rgba(99, 102, 241, 0.25)")
@@ -90,8 +168,10 @@
    :show-harmonies true
    :show-legend    true
    :padding        1
-   :channels       nil    ;; nil = all channels, or set of ints e.g. #{0 2}
-   :hues           nil})  ;; nil = default-channel-hues, or custom vector of HSL degrees
+   :channels       nil        ;; nil = all channels, or set/vec of ints e.g. #{0 2}
+   :color-mode     :kind      ;; :kind (palette-based) or :channel (hue per channel)
+   :palette        :ocean     ;; palette name or custom map (used in :kind mode)
+   :hues           nil})      ;; custom hue vector (used in :channel mode)
 
 ;; ── Helpers ──────────────────────────────────────────────────────
 
@@ -157,10 +237,10 @@
   "Derive all spatial layout values from notes and options.
    Returns a map used by all rendering functions.
    Includes channel-indexed :colors map."
-  [notes {:keys [target-width show-keyboard padding hues]}]
-  (let [pitches   (mapv :pitch notes)
+  [notes opts]
+  (let [{:keys [target-width show-keyboard padding]} opts
+        pitches   (mapv :pitch notes)
         channels  (distinct (map :channel notes))
-        hue-vec   (or hues default-channel-hues)
         min-pitch (- (apply min pitches) padding)
         max-pitch (+ (apply max pitches) padding 1)
         n-rows    (- max-pitch min-pitch)
@@ -184,7 +264,8 @@
      :svg-w      (+ x0 grid-w 1)
      :svg-h      (+ grid-h 1)
      :channels   (vec (sort channels))
-     :colors     (resolve-colors hue-vec channels)}))
+     :color-mode (:color-mode opts)
+     :colors     (resolve-colors opts channels)}))
 
 ;; ── SVG renderers ────────────────────────────────────────────────
 ;; Each takes a layout map as first arg, plus its own data when needed.
@@ -283,38 +364,37 @@
 
 (defn- legend
   "Color legend as an HTML div.
-   Single channel: shows kind swatches (tonic/structural/diatonic/chromatic).
-   Multi-channel: shows channel hue labels + kind shade explanation."
-  [colors channels kinds]
-  (let [multi? (> (count channels) 1)]
+   Adapts to color mode:
+     :kind    — shows kind swatches (tonic/structural/diatonic/chromatic)
+     :channel — multi-channel: channel hue labels + kind shade hint
+                single-channel: kind swatches in that channel's hue"
+  [colors channels kinds color-mode]
+  (if (and (= color-mode :channel) (> (count channels) 1))
+    ;; ── Channel mode, multi-channel ──
     [:div {:style {:display "flex" :flex-direction "column" :gap "6px"
                    :margin-bottom "10px" :font-size "10.5px" :color "#555"}}
-     ;; Channel row (multi-channel) or kind row (single channel)
-     (if multi?
-       ;; ── Multi-channel: one swatch per channel ──
-       (into [:div {:style {:display "flex" :gap "12px" :align-items "center"}}]
-             (map (fn [ch]
-                    [:div {:style {:display "flex" :align-items "center" :gap "4px"}}
-                     [:div {:style {:width "10px" :height "10px" :border-radius "2px"
-                                    :background (get-in colors [ch :structural :fill])}}]
-                     [:span {} (str "ch " ch)]]))
-             (sort channels))
-       ;; ── Single channel: kind swatches ──
-       (let [ch (first channels)]
-         (into [:div {:style {:display "flex" :gap "14px"}}]
-               (map (fn [kind]
-                      [:div {:style {:display "flex" :align-items "center" :gap "4px"}}
-                       [:div {:style {:width "10px" :height "10px" :border-radius "2px"
-                                      :background (get-in colors [ch kind :fill])}}]
-                       [:span {} (get layer-labels kind)]]))
-               (sort-by layer-order kinds))))
-     ;; Kind shade hint for multi-channel
-     (when multi?
-       [:div {:style {:display "flex" :gap "10px" :font-size "9.5px" :color "#999"}}
-        [:span {} "dark → tonic"]
-        [:span {} "medium → structural"]
-        [:span {} "light → diatonic"]
-        [:span {} "grey → chromatic"]])]))
+     (into [:div {:style {:display "flex" :gap "12px" :align-items "center"}}]
+           (map (fn [ch]
+                  [:div {:style {:display "flex" :align-items "center" :gap "4px"}}
+                   [:div {:style {:width "10px" :height "10px" :border-radius "2px"
+                                  :background (get-in colors [ch :structural :fill])}}]
+                   [:span {} (str "ch " ch)]]))
+           (sort channels))
+     [:div {:style {:display "flex" :gap "10px" :font-size "9.5px" :color "#999"}}
+      [:span {} "dark → tonic"]
+      [:span {} "medium → structural"]
+      [:span {} "light → diatonic"]
+      [:span {} "grey → chromatic"]]]
+    ;; ── Kind mode (or channel mode, single channel) ──
+    (let [ch (first channels)]
+      (into [:div {:style {:display "flex" :gap "14px" :margin-bottom "10px"
+                           :font-size "10.5px" :color "#555"}}]
+            (map (fn [kind]
+                   [:div {:style {:display "flex" :align-items "center" :gap "4px"}}
+                    [:div {:style {:width "10px" :height "10px" :border-radius "2px"
+                                   :background (get-in colors [ch kind :fill])}}]
+                    [:span {} (get layer-labels kind)]]))
+            (sort-by layer-order kinds)))))
 
 (defn- label-bar
   "Small monospace label above a roll."
@@ -392,7 +472,10 @@
      :title          — optional title string
      :padding        — pitch range padding in semitones (default 1)
      :channels       — nil for all channels, or set/vec of channel numbers to show
-     :hues           — nil for defaults, or vector of 16 HSL hue degrees"
+     :color-mode     — :kind (palette-based, default) or :channel (hue per channel)
+     :palette        — palette name or custom map (for :kind mode, default :ocean)
+                       See `palettes` for available names.
+     :hues           — custom hue vector (for :channel mode)"
   ([score] (piano-roll score {}))
   ([score opts]
    (let [{:keys [show-legend title channels]
@@ -407,7 +490,8 @@
      (wrap-hiccup
       (when title (title-bar title))
       (when show-legend
-        (legend (:colors layout) (:channels layout) (distinct (map :kind notes))))
+        (legend (:colors layout) (:channels layout)
+                (distinct (map :kind notes)) (:color-mode layout)))
       (build-roll layout notes harmonies opts)))))
 
 (defn piano-roll-group
@@ -425,7 +509,9 @@
      :show-legend        — show shared legend (default true)
      :padding            — pitch range padding (default 1)
      :channels           — nil for all channels, or set/vec of channel numbers to show
-     :hues               — nil for defaults, or vector of 16 HSL hue degrees"
+     :color-mode         — :kind (palette-based, default) or :channel (hue per channel)
+     :palette            — palette name or custom map (for :kind mode, default :ocean)
+     :hues               — custom hue vector (for :channel mode)"
   ([items] (piano-roll-group items {}))
   ([items opts]
    (let [{:keys [shared-pitch-range show-legend channels]
@@ -463,5 +549,6 @@
 
      (wrap-hiccup
       (when show-legend
-        (legend (:colors ref) (:channels ref) (distinct (map :kind all-notes))))
+        (legend (:colors ref) (:channels ref)
+                (distinct (map :kind all-notes)) (:color-mode ref)))
       rolls))))

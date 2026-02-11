@@ -61,7 +61,15 @@
 
 (def ^:private accent :light-skyblue)
 
-
+(def ^:private palette-entries
+  [[:ocean "Ocean"]
+   [:indigo-teal "Indigo·Teal"]
+   [:purple-gold "Purple·Gold"]
+   [:rose-cyan "Rose·Cyan"]
+   [:ember-ocean "Ember·Ocean"]
+   [:forest-berry "Forest·Berry"]
+   [:sapphire-amber "Sapphire·Amber"]
+   [:slate-coral "Slate·Coral"]])
 
 (def ^:private examples
   [["Triad arpeggio"
@@ -106,6 +114,8 @@
         [error set-error] (uix/use-state nil)
         [evaluating set-evaluating] (uix/use-state false)
         [playing set-playing] (uix/use-state false)
+        [color-mode set-color-mode] (uix/use-state :kind)
+        [palette set-palette] (uix/use-state :ocean)
         [all-channels set-all-channels] (uix/use-state [0])
         [hidden-channels set-hidden-channels] (uix/use-state #{})
 
@@ -258,8 +268,29 @@
                  :width {:min 300}
                  :overflow :hidden}
 
-                ;; Channel toggles (shown when multi-channel)
-                (when (> (count all-channels) 1)
+                ;; Color mode toggle
+                (sc {:flex [:row {:gap 0.4 :items :center :wrap :wrap}]}
+                    (sc {:text [:xs :bold] :color :grey4 :text-transform :uppercase :letter-spacing "0.5px" :p {:right 0.5}}
+                        "color")
+                    ($ pill {:text "Kind" :selected (= color-mode :kind)
+                             :on-click #(set-color-mode :kind)})
+                    ($ pill {:text "Channel" :selected (= color-mode :channel)
+                             :on-click #(set-color-mode :channel)}))
+
+                ;; Palette selector (kind mode)
+                (when (= color-mode :kind)
+                  (sc {:flex [:row {:gap 0.4 :items :center :wrap :wrap}]}
+                      (sc {:text [:xs :bold] :color :grey4 :text-transform :uppercase :letter-spacing "0.5px" :p {:right 0.5}}
+                          "palette")
+                      (mapv (fn [[k label]]
+                              ($ pill {:key (name k)
+                                       :text label
+                                       :selected (= k palette)
+                                       :on-click #(set-palette k)}))
+                            palette-entries)))
+
+                ;; Channel toggles (channel mode, multi-channel)
+                (when (and (= color-mode :channel) (> (count all-channels) 1))
                   (sc {:flex [:row {:gap 0.4 :items :center :wrap :wrap}]}
                       (sc {:text [:xs :bold] :color :grey4 :text-transform :uppercase :letter-spacing "0.5px" :p {:right 0.5}}
                           "channels")
@@ -292,12 +323,15 @@
                           (c spinner {:color "lightskyblue" :loading true :size 12}))
 
                       result
-                      (let [visible-chs (let [v (remove hidden-channels all-channels)]
-                                         (when (seq v) (vec v)))]
+                      (let [visible-chs (when (= color-mode :channel)
+                                         (let [v (vec (remove hidden-channels all-channels))]
+                                           (when (seq v) v)))]
                         (c :div {:dangerouslySetInnerHTML
                                  #js {:__html (hiccup->html
                                                (pr/piano-roll result
-                                                              (cond-> {:target-width 600}
+                                                              (cond-> {:target-width 600
+                                                                       :color-mode color-mode
+                                                                       :palette palette}
                                                                 visible-chs (assoc :channels visible-chs))))}}))
 
                       :else
