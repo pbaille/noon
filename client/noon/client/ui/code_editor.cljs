@@ -33,8 +33,10 @@
 
 (defui piano-roll-view [{:keys [score]}]
   (sc {:overflow-x :auto
-       :overflow-y :hidden}
-      (c :div {:style {:width :max-content}
+       :overflow-y :hidden
+       :p [0.5 0]}
+      (c :div {:style {:width "max-content"
+                        :min-width "100%"}
                :dangerouslySetInnerHTML
                #js {:__html (ui.misc/hiccup->html
                              (pr/piano-roll score {:target-width 500}))}})))
@@ -144,39 +146,63 @@
                         (str source))))))
         (when return
 
-          (sc :code-editor-output
+          (if score*
 
-              {:border {:color [(if error? :red color) {:a 0.2}]
-                        :width 2}
-               :p 0
-               :flex [:row {:items :center}]}
+            ;; ── Piano roll output ──────────────────────────
+            ;; Full-width block layout for horizontal scrolling.
+            (sc :.code-editor-output
 
-              (c :.code-editor-output_left-button
+                {:border {:color [color {:a 0.2}]
+                          :width 2}
+                 :p 0
+                 :position :relative}
 
-                 {:style {:flex :center
-                          :bg {:color :white}
-                          :border {:right [2 [(if error? :red color) {:a 0.2}]]}
-                          :color (if error? :red color)
-                          :p [1 0.5]
-                          :align-self :stretch}
-                  :on-click (fn [_]
-                              (set-return nil)
-                              (set-score nil))}
-                 (c icons-vsc/VscClose))
+                (c :.code-editor-output_close
 
-              (sc :.code-editor-output_content
+                   {:style {:position [:absolute {:top 4 :right 4}]
+                            :z-index 10
+                            :flex :center
+                            :bg {:color [:white {:a 0.8}]}
+                            :color color
+                            :p 0.3
+                            :rounded 1
+                            :cursor :pointer
+                            :hover {:color :grey8}}
+                    :on-click (fn [_]
+                                (set-return nil)
+                                (set-score nil))}
+                   (c icons-vsc/VscClose))
 
-                  {:bg {:color (if error? [:red {:a 0.05}] [color {:a 0.1}])}
-                   :color (if (:error return) [:red {:a 0.45}])
-                   :p (if error? [0.5 0.3] [0.3 0.7])
-                   :flexi [1 1 :auto]}
+                ($ piano-roll-view {:score score*}))
 
-                  (if score*
+            ;; ── Text output (errors / non-score results) ───
+            (sc :code-editor-output
 
-                    ;; Piano roll view for scores
-                    ($ piano-roll-view {:score score*})
+                {:border {:color [(if error? :red color) {:a 0.2}]
+                          :width 2}
+                 :p 0
+                 :flex [:row {:items :center}]}
 
-                    ;; Text output for non-score results or errors
+                (c :.code-editor-output_left-button
+
+                   {:style {:flex :center
+                            :bg {:color :white}
+                            :border {:right [2 [(if error? :red color) {:a 0.2}]]}
+                            :color (if error? :red color)
+                            :p [1 0.5]
+                            :align-self :stretch}
+                    :on-click (fn [_]
+                                (set-return nil)
+                                (set-score nil))}
+                   (c icons-vsc/VscClose))
+
+                (sc :.code-editor-output_content
+
+                    {:bg {:color (if error? [:red {:a 0.05}] [color {:a 0.1}])}
+                     :color (if (:error return) [:red {:a 0.45}])
+                     :p (if error? [0.5 0.3] [0.3 0.7])
+                     :flexi [1 1 :auto]}
+
                     (if editing
 
                       (c CodeMirror
