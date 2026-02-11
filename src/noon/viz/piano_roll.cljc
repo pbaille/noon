@@ -13,15 +13,15 @@
      (pr/piano-roll (score (lin I IV V I) (each (tup s0 s1 s2)))
                     {:title \"I-IV-V-I\" :target-width 600})
 
-     ;; With a named palette
-     (pr/piano-roll (score (tup s0 s1 s2))
-                    {:palette :ember-ocean})
+     ;; Filter to specific channels
+     (pr/piano-roll (score (chans (tup s0 s1 s2) (tup d0 d1 d2)))
+                    {:channels #{0}})
 
      ;; Grouped (multiple scores, stacked)
      (pr/piano-roll-group
        [{:label \"major\" :score (score (tup d0 d1 d2 d3 d4 d5 d6 d7))}
         {:label \"dorian\" :score (score (scale :dorian) (tup d0 d1 d2 d3 d4 d5 d6 d7))}]
-       {:shared-pitch-range true :palette :purple-gold})
+       {:shared-pitch-range true})
 
    Clay/Kindly:
      Output carries ^{:kindly/kind :kind/hiccup} metadata.
@@ -40,49 +40,37 @@
 (def ^:private layer-order
   {:tonic 0 :structural 1 :diatonic 2 :chromatic 3})
 
-(def palettes
-  "Named color palettes for note layers.
-   Each palette maps layer kind to {:fill :stroke}.
-   Use via the :palette option in piano-roll / piano-roll-group."
-  {:ocean        {:tonic      {:fill "#1a56db" :stroke "#1446b3"}
-                  :structural {:fill "#3b82f6" :stroke "#2563eb"}
-                  :diatonic   {:fill "#93c5fd" :stroke "#60a5fa"}
-                  :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
+;; ── Channel coloring ─────────────────────────────────────────────
+;; Each MIDI channel gets a base hue; note kind (tonic/structural/
+;; diatonic/chromatic) is expressed through saturation & lightness.
 
-   :indigo-teal  {:tonic      {:fill "#4f46e5" :stroke "#4338ca"}
-                  :structural {:fill "#6366f1" :stroke "#4f46e5"}
-                  :diatonic   {:fill "#2dd4bf" :stroke "#14b8a6"}
-                  :chromatic  {:fill "#cbd5e1" :stroke "#94a3b8"}}
+(def ^:private default-channel-hues
+  "16 maximally-spaced hues for MIDI channels 0-15.
+   First 8 optimized for common multi-channel use."
+  [220 10 145 45 280 175 335 80
+   250 110 350 90 310 200 55 160])
 
-   :purple-gold  {:tonic      {:fill "#7c3aed" :stroke "#6d28d9"}
-                  :structural {:fill "#a78bfa" :stroke "#8b5cf6"}
-                  :diatonic   {:fill "#fbbf24" :stroke "#f59e0b"}
-                  :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
+(defn- hsl [h s l]
+  (str "hsl(" h ", " s "%, " l "%)"))
 
-   :rose-cyan    {:tonic      {:fill "#e11d48" :stroke "#be123c"}
-                  :structural {:fill "#f472b6" :stroke "#ec4899"}
-                  :diatonic   {:fill "#22d3ee" :stroke "#06b6d4"}
-                  :chromatic  {:fill "#cbd5e1" :stroke "#94a3b8"}}
+(defn- kind-shades
+  "Generate fill/stroke colors for all 4 note kinds from a single hue.
+   Tonic is darkest/most saturated, chromatic is lightest/most desaturated."
+  [hue]
+  {:tonic      {:fill (hsl hue 72 38) :stroke (hsl hue 80 28)}
+   :structural {:fill (hsl hue 60 50) :stroke (hsl hue 68 42)}
+   :diatonic   {:fill (hsl hue 45 66) :stroke (hsl hue 52 58)}
+   :chromatic  {:fill (hsl hue 15 78) :stroke (hsl hue 20 70)}})
 
-   :ember-ocean  {:tonic      {:fill "#ea580c" :stroke "#c2410c"}
-                  :structural {:fill "#fb923c" :stroke "#f97316"}
-                  :diatonic   {:fill "#38bdf8" :stroke "#0ea5e9"}
-                  :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
-
-   :forest-berry {:tonic      {:fill "#059669" :stroke "#047857"}
-                  :structural {:fill "#34d399" :stroke "#10b981"}
-                  :diatonic   {:fill "#c084fc" :stroke "#a855f7"}
-                  :chromatic  {:fill "#cbd5e1" :stroke "#94a3b8"}}
-
-   :sapphire-amber {:tonic      {:fill "#1d4ed8" :stroke "#1e40af"}
-                    :structural {:fill "#60a5fa" :stroke "#3b82f6"}
-                    :diatonic   {:fill "#fbbf24" :stroke "#f59e0b"}
-                    :chromatic  {:fill "#d1d5db" :stroke "#9ca3af"}}
-
-   :slate-coral  {:tonic      {:fill "#475569" :stroke "#334155"}
-                  :structural {:fill "#94a3b8" :stroke "#64748b"}
-                  :diatonic   {:fill "#fb7185" :stroke "#f43f5e"}
-                  :chromatic  {:fill "#e2e8f0" :stroke "#cbd5e1"}}})
+(defn- resolve-colors
+  "Build a channel-indexed color map: {channel -> {kind -> {:fill :stroke}}}.
+   `hues` is a vector of HSL hue degrees (one per channel index).
+   `channels` is the collection of channel numbers present."
+  [hues channels]
+  (into {}
+        (map (fn [ch]
+               [ch (kind-shades (nth hues (mod ch (count hues))))]))
+        channels))
 
 (def ^:private harmony-bg "rgba(99, 102, 241, 0.06)")
 (def ^:private harmony-line "rgba(99, 102, 241, 0.25)")
@@ -102,7 +90,8 @@
    :show-harmonies true
    :show-legend    true
    :padding        1
-   :palette        :ocean})
+   :channels       nil    ;; nil = all channels, or set of ints e.g. #{0 2}
+   :hues           nil})  ;; nil = default-channel-hues, or custom vector of HSL degrees
 
 ;; ── Helpers ──────────────────────────────────────────────────────
 
@@ -117,17 +106,7 @@
   #?(:clj  (long (Math/ceil (double x)))
      :cljs (js/Math.ceil x)))
 
-(defn- resolve-colors
-  "Resolve :palette option to a colors map.
-   Accepts a keyword (palette name) or a map (custom colors)."
-  [palette]
-  (cond
-    (keyword? palette) (or (get palettes palette)
-                           (throw (ex-info (str "Unknown palette: " palette
-                                                ". Available: " (keys palettes))
-                                           {:palette palette})))
-    (map? palette)     palette
-    :else              (get palettes :ocean)))
+
 
 ;; ── Score → data ─────────────────────────────────────────────────
 
@@ -177,9 +156,11 @@
 (defn- compute-layout
   "Derive all spatial layout values from notes and options.
    Returns a map used by all rendering functions.
-   Includes resolved :colors for renderers that need them."
-  [notes {:keys [target-width show-keyboard padding palette]}]
+   Includes channel-indexed :colors map."
+  [notes {:keys [target-width show-keyboard padding hues]}]
   (let [pitches   (mapv :pitch notes)
+        channels  (distinct (map :channel notes))
+        hue-vec   (or hues default-channel-hues)
         min-pitch (- (apply min pitches) padding)
         max-pitch (+ (apply max pitches) padding 1)
         n-rows    (- max-pitch min-pitch)
@@ -202,7 +183,8 @@
      :grid-h     grid-h
      :svg-w      (+ x0 grid-w 1)
      :svg-h      (+ grid-h 1)
-     :colors     (resolve-colors palette)}))
+     :channels   (vec (sort channels))
+     :colors     (resolve-colors hue-vec channels)}))
 
 ;; ── SVG renderers ────────────────────────────────────────────────
 ;; Each takes a layout map as first arg, plus its own data when needed.
@@ -263,7 +245,8 @@
         (range min-pitch max-pitch)))
 
 (defn- svg-notes
-  "Colored, rounded note rectangles with optional pitch labels."
+  "Colored, rounded note rectangles with optional pitch labels.
+   Color is determined by channel (hue) × kind (shade)."
   [{:keys [x0 time-scale max-pitch row-h colors]} notes]
   (let [note-pad (min note-pad (* row-h 0.1))]
     (into [:g]
@@ -273,7 +256,9 @@
                    y     (+ (* (- max-pitch (:pitch note) 1) row-h) note-pad)
                    w     (max (- (* (:duration note) time-scale) 1) 3)
                    h     (- row-h (* note-pad 2))
-                   color (get colors (:kind note) (:chromatic colors))]
+                   color (get-in colors [(:channel note) (:kind note)]
+                                (get-in colors [(:channel note) :chromatic]
+                                        {:fill "#d1d5db" :stroke "#9ca3af"}))]
                (cond-> [[:rect {:x x :y y :width w :height h
                                 :rx 2.5 :ry 2.5
                                 :fill (:fill color) :stroke (:stroke color)
@@ -297,17 +282,39 @@
 ;; ── HTML renderers ───────────────────────────────────────────────
 
 (defn- legend
-  "Color legend as an HTML div."
-  [colors kinds]
-  (let [sorted (sort-by layer-order kinds)]
-    (into [:div {:style {:display "flex" :gap "14px" :margin-bottom "10px"
-                         :font-size "10.5px" :color "#555"}}]
-          (map (fn [kind]
-                 [:div {:style {:display "flex" :align-items "center" :gap "4px"}}
-                  [:div {:style {:width "10px" :height "10px" :border-radius "2px"
-                                 :background (get-in colors [kind :fill])}}]
-                  [:span {} (get layer-labels kind)]]))
-          sorted)))
+  "Color legend as an HTML div.
+   Single channel: shows kind swatches (tonic/structural/diatonic/chromatic).
+   Multi-channel: shows channel hue labels + kind shade explanation."
+  [colors channels kinds]
+  (let [multi? (> (count channels) 1)]
+    [:div {:style {:display "flex" :flex-direction "column" :gap "6px"
+                   :margin-bottom "10px" :font-size "10.5px" :color "#555"}}
+     ;; Channel row (multi-channel) or kind row (single channel)
+     (if multi?
+       ;; ── Multi-channel: one swatch per channel ──
+       (into [:div {:style {:display "flex" :gap "12px" :align-items "center"}}]
+             (map (fn [ch]
+                    [:div {:style {:display "flex" :align-items "center" :gap "4px"}}
+                     [:div {:style {:width "10px" :height "10px" :border-radius "2px"
+                                    :background (get-in colors [ch :structural :fill])}}]
+                     [:span {} (str "ch " ch)]]))
+             (sort channels))
+       ;; ── Single channel: kind swatches ──
+       (let [ch (first channels)]
+         (into [:div {:style {:display "flex" :gap "14px"}}]
+               (map (fn [kind]
+                      [:div {:style {:display "flex" :align-items "center" :gap "4px"}}
+                       [:div {:style {:width "10px" :height "10px" :border-radius "2px"
+                                      :background (get-in colors [ch kind :fill])}}]
+                       [:span {} (get layer-labels kind)]]))
+               (sort-by layer-order kinds))))
+     ;; Kind shade hint for multi-channel
+     (when multi?
+       [:div {:style {:display "flex" :gap "10px" :font-size "9.5px" :color "#999"}}
+        [:span {} "dark → tonic"]
+        [:span {} "medium → structural"]
+        [:span {} "light → diatonic"]
+        [:span {} "grey → chromatic"]])]))
 
 (defn- label-bar
   "Small monospace label above a roll."
@@ -363,6 +370,15 @@
 
 ;; ── Public API ───────────────────────────────────────────────────
 
+(defn score->channels
+  "Return the sorted set of distinct MIDI channel numbers in a score."
+  [s]
+  (->> (filter :pitch s)
+       (map :channel)
+       distinct
+       sort
+       vec))
+
 (defn piano-roll
   "Render a noon score as a piano roll.
 
@@ -375,19 +391,23 @@
      :show-legend    — color legend above roll (default true)
      :title          — optional title string
      :padding        — pitch range padding in semitones (default 1)
-     :palette        — keyword (e.g. :ember-ocean) or custom colors map (default :ocean)
-                       See `palettes` for available names."
+     :channels       — nil for all channels, or set/vec of channel numbers to show
+     :hues           — nil for defaults, or vector of 16 HSL hue degrees"
   ([score] (piano-roll score {}))
   ([score opts]
-   (let [{:keys [show-legend title]
+   (let [{:keys [show-legend title channels]
           :as   opts} (merge default-opts opts)
-         notes     (score->notes score)
+         all-notes (score->notes score)
+         notes     (if channels
+                     (filterv #(contains? (set channels) (:channel %)) all-notes)
+                     all-notes)
          harmonies (score->harmonies score)
-         _         (assert (seq notes) "Score has no pitched events")
+         _         (assert (seq notes) "Score has no pitched events (after channel filter)")
          layout    (compute-layout notes opts)]
      (wrap-hiccup
       (when title (title-bar title))
-      (when show-legend (legend (:colors layout) (distinct (map :kind notes))))
+      (when show-legend
+        (legend (:colors layout) (:channels layout) (distinct (map :kind notes))))
       (build-roll layout notes harmonies opts)))))
 
 (defn piano-roll-group
@@ -404,26 +424,28 @@
      :show-harmonies     — show harmony boundaries (default true)
      :show-legend        — show shared legend (default true)
      :padding            — pitch range padding (default 1)
-     :palette            — keyword (e.g. :ember-ocean) or custom colors map (default :ocean)
-                           See `palettes` for available names."
+     :channels           — nil for all channels, or set/vec of channel numbers to show
+     :hues               — nil for defaults, or vector of 16 HSL hue degrees"
   ([items] (piano-roll-group items {}))
   ([items opts]
-   (let [{:keys [shared-pitch-range show-legend]
+   (let [{:keys [shared-pitch-range show-legend channels]
           :as   opts} (merge default-opts opts)
 
+         chan-set  (when channels (set channels))
+
          all-data  (mapv (fn [{:keys [label score]}]
-                           {:label     label
-                            :notes     (score->notes score)
-                            :harmonies (score->harmonies score)})
+                           (let [notes (cond->> (score->notes score)
+                                         chan-set (filterv #(contains? chan-set (:channel %))))]
+                             {:label     label
+                              :notes     notes
+                              :harmonies (score->harmonies score)}))
                          items)
 
          all-notes (into [] (mapcat :notes) all-data)
-         _         (assert (seq all-notes) "No pitched events in any score")
+         _         (assert (seq all-notes) "No pitched events in any score (after channel filter)")
 
          shared-layout (when shared-pitch-range
                          (compute-layout all-notes opts))
-
-         colors    (:colors (or shared-layout (compute-layout all-notes opts)))
 
          rolls     (into [:div {:style {:display        "flex"
                                         :flex-direction "column"
@@ -435,8 +457,11 @@
                                (when (pos? i) (separator))
                                (when label (label-bar label))
                                (build-roll layout notes harmonies opts)])))
-                         all-data)]
+                         all-data)
+
+         ref (or shared-layout (compute-layout all-notes opts))]
 
      (wrap-hiccup
-      (when show-legend (legend colors (distinct (map :kind all-notes))))
+      (when show-legend
+        (legend (:colors ref) (:channels ref) (distinct (map :kind all-notes))))
       rolls))))

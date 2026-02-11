@@ -61,15 +61,7 @@
 
 (def ^:private accent :light-skyblue)
 
-(def ^:private palette-entries
-  [[:ocean "Ocean"]
-   [:indigo-teal "Indigo·Teal"]
-   [:purple-gold "Purple·Gold"]
-   [:rose-cyan "Rose·Cyan"]
-   [:ember-ocean "Ember·Ocean"]
-   [:forest-berry "Forest·Berry"]
-   [:sapphire-amber "Sapphire·Amber"]
-   [:slate-coral "Slate·Coral"]])
+
 
 (def ^:private examples
   [["Triad arpeggio"
@@ -114,7 +106,8 @@
         [error set-error] (uix/use-state nil)
         [evaluating set-evaluating] (uix/use-state false)
         [playing set-playing] (uix/use-state false)
-        [palette set-palette] (uix/use-state :ocean)
+        [all-channels set-all-channels] (uix/use-state [0])
+        [hidden-channels set-hidden-channels] (uix/use-state #{})
 
         do-eval
         (uix/use-callback
@@ -139,7 +132,10 @@
                                  (score/score? result) result
                                  (some-> (meta result) :score) (-> (meta result) :score)
                                  :else nil)]
-                         (when s (set-result s))))))
+                         (when s
+                           (set-result s)
+                           (set-all-channels (pr/score->channels s))
+                           (set-hidden-channels #{}))))))
                  (fn [{:keys [error]}]
                    (set-evaluating false)
                    (set-error (.-message error)))))
@@ -262,16 +258,24 @@
                  :width {:min 300}
                  :overflow :hidden}
 
-                ;; Palette selector
-                (sc {:flex [:row {:gap 0.4 :items :center :wrap :wrap}]}
-                    (sc {:text [:xs :bold] :color :grey4 :text-transform :uppercase :letter-spacing "0.5px" :p {:right 0.5}}
-                        "palette")
-                    (mapv (fn [[k label]]
-                            ($ pill {:key (name k)
-                                     :text label
-                                     :selected (= k palette)
-                                     :on-click #(set-palette k)}))
-                          palette-entries))
+                ;; Channel toggles (shown when multi-channel)
+                (when (> (count all-channels) 1)
+                  (sc {:flex [:row {:gap 0.4 :items :center :wrap :wrap}]}
+                      (sc {:text [:xs :bold] :color :grey4 :text-transform :uppercase :letter-spacing "0.5px" :p {:right 0.5}}
+                          "channels")
+                      (mapv (fn [ch]
+                              (let [hidden? (contains? hidden-channels ch)]
+                                ($ pill {:key (str "ch-" ch)
+                                         :text (str "ch " ch)
+                                         :selected (not hidden?)
+                                         :on-click #(set-hidden-channels
+                                                     (if hidden?
+                                                       (disj hidden-channels ch)
+                                                       ;; Don't allow hiding all channels
+                                                       (if (< (count hidden-channels) (dec (count all-channels)))
+                                                         (conj hidden-channels ch)
+                                                         hidden-channels)))})))
+                            all-channels)))
 
                 ;; Piano roll
                 (sc {:flexi [1 1 0]
@@ -288,11 +292,13 @@
                           (c spinner {:color "lightskyblue" :loading true :size 12}))
 
                       result
-                      (c :div {:dangerouslySetInnerHTML
-                               #js {:__html (hiccup->html
-                                             (pr/piano-roll result
-                                                            {:palette palette
-                                                             :target-width 600}))}})
+                      (let [visible-chs (let [v (remove hidden-channels all-channels)]
+                                         (when (seq v) (vec v)))]
+                        (c :div {:dangerouslySetInnerHTML
+                                 #js {:__html (hiccup->html
+                                               (pr/piano-roll result
+                                                              (cond-> {:target-width 600}
+                                                                visible-chs (assoc :channels visible-chs))))}}))
 
                       :else
                       (sc {:flex :center :height 200 :color :grey3 :text :sm}
