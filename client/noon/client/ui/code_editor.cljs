@@ -61,14 +61,16 @@
          :rounded 0.4
          :overflow :hidden
          :bg {:color "#f9fafb"}}
-        (mapv (fn [i [k label]]
-                ($ segment {:key (name k)
-                            :text label
-                            :active (= k value)
-                            :on-click #(on-change k)
-                            :first? (zero? i)
-                            :last? (= i (dec n))}))
-              (map-indexed vector options)))))
+        (into []
+              (map-indexed
+               (fn [i [k label]]
+                 ($ segment {:key (name k)
+                             :text label
+                             :active (= k value)
+                             :on-click #(on-change k)
+                             :first? (zero? i)
+                             :last? (= i (dec n))})))
+              options))))
 
 ;; ── Channel dot toggle ───────────────────────────────────────────
 
