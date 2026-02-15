@@ -10,7 +10,7 @@
             ["@uiw/react-codemirror" :default CodeMirror]
             ["@nextjournal/lang-clojure" :refer [clojure]]
             ["react-icons/vsc" :as icons-vsc]
-            ["react-icons/tb" :as icons-tb]
+            ["react-icons/tb" :as icons-tb :refer [TbPiano]]
             ["react-spinners/BeatLoader" :default spinner]
             ["@uiw/codemirror-themes-all" :as cm-themes]
             [noon.client.ui.misc :as ui.misc]
@@ -279,38 +279,22 @@
                  :p 0
                  :position :relative}
 
-                (sc {:position [:absolute {:top 4 :right 4}]
-                     :z-index 10
-                     :flex [:row {:gap 0.25}]}
+                (c :.code-editor-output_close
 
-                    (c :button
-                       {:style {:flex :center
-                                :bg {:color [:white {:a 0.8}]}
-                                :color "#94a3b8"
-                                :border {:width 0}
-                                :p 0.3
-                                :rounded 1
-                                :cursor :pointer
-                                :font-size "12px"
-                                :hover {:color "#64748b"}}
-                        :title "Show text output"
-                        :on-click (fn [_] (set-local-piano-roll false))}
-                       "🎹")
-
-                    (c :button
-                       {:style {:flex :center
-                                :bg {:color [:white {:a 0.8}]}
-                                :color color
-                                :border {:width 0}
-                                :p 0.3
-                                :rounded 1
-                                :cursor :pointer
-                                :hover {:color :grey8}}
-                        :on-click (fn [_]
-                                    (set-return nil)
-                                    (set-score nil)
-                                    (set-local-piano-roll nil))}
-                       (c icons-vsc/VscClose)))
+                   {:style {:position [:absolute {:top 4 :right 4}]
+                            :z-index 10
+                            :flex :center
+                            :bg {:color [:white {:a 0.8}]}
+                            :color color
+                            :p 0.3
+                            :rounded 1
+                            :cursor :pointer
+                            :hover {:color :grey8}}
+                    :on-click (fn [_]
+                                (set-return nil)
+                                (set-score nil)
+                                (set-local-piano-roll nil))}
+                   (c icons-vsc/VscClose))
 
                 ($ piano-roll-view {:score score*}))
 
@@ -344,22 +328,25 @@
                      :flexi [1 1 :auto]
                      :position :relative}
 
-                    ;; 🎹 toggle button for score results
+                    ;; Piano roll toggle button for score results
                     (when score*
                       (c :button
                          {:style {:position [:absolute {:top 4 :right 4}]
                                   :bg {:color [:white {:a 0.9}]}
                                   :border {:width 1 :color "#e2e8f0"}
-                                  :p [0.2 0.4]
+                                  :color "#94a3b8"
+                                  :p 0.3
                                   :rounded 0.4
                                   :cursor :pointer
-                                  :font-size "13px"
+                                  :font-size "14px"
+                                  :line-height 1
                                   :transition "all 0.15s ease"
                                   :hover {:border {:color "#94a3b8"}
+                                          :color "#64748b"
                                           :bg {:color :white}}}
                           :title "Show piano roll"
                           :on-click (fn [_] (set-local-piano-roll true))}
-                         "🎹"))
+                         (c TbPiano)))
 
                     (if editing
 

@@ -5,7 +5,7 @@
             [noon.client.state :refer [<< >>]]
             [noon.client.constants :as constants]
             [noon.client.doc :as doc]
-            ["react-icons/tb" :as icons-tb]
+            ["react-icons/tb" :as icons-tb :refer [TbPiano]]
             ["react-icons/fa" :refer [FaGithub]]))
 
 (def link-styles
@@ -118,18 +118,17 @@
 
                 (let [active? (<< [:piano-rolls.get])]
                   (c :button
-                     {:style {:p [0.3 0.5]
-                              :border {:width 1
-                                       :color (if active? "#87ceeb" "#e2e8f0")}
-                              :rounded 0.4
-                              :bg {:color (if active? [:light-skyblue {:a 0.1}] :white)}
+                     {:style {:p 0.3
+                              :border {:width 0}
+                              :bg {:color :transparent}
+                              :color (if active? :light-skyblue :grey6)
                               :cursor :pointer
-                              :font-size "13px"
+                              :text :xl
                               :transition "all 0.15s ease"
-                              :hover {:border {:color (if active? "#5bb8db" "#94a3b8")}}}
+                              :hover {:color (if active? "#5bb8db" :light-skyblue)}}
                      :title (if active? "Hide all piano rolls" "Show all piano rolls")
                      :on-click (fn [_] (>> [:piano-rolls.toggle]))}
-                     "🎹"))
+                     (c TbPiano)))
 
                 (c :a
                    {:style {:text :xl
