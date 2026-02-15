@@ -388,7 +388,7 @@
 
         (defui demo []
 
-          (let [{:keys [notes harmonies]} (score->piano-roll-data sample-score)]
+          (let [{:keys [notes]} (score->piano-roll-data sample-score)]
             (sc {:height "100vh"
                  :p 2}
                 (c scrollable-pianoroll

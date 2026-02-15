@@ -34,8 +34,7 @@
    Clay/Kindly:
      Output carries ^{:kindly/kind :kind/hiccup} metadata.
      In a Clay notebook, the result renders inline as an interactive SVG."
-  (:require [noon.harmonic-context :as hc]
-            [noon.score :as score]))
+  (:require [noon.harmonic-context :as hc]))
 
 ;; ── Constants ────────────────────────────────────────────────────
 
@@ -135,14 +134,6 @@
 (defn- hsl [h s l]
   (str "hsl(" h ", " s "%, " l "%)"))
 
-(defn- kind-shades
-  "Generate fill/stroke colors for all 4 note kinds from a single hue.
-   Tonic is darkest/most saturated, chromatic is lightest/most desaturated."
-  [hue]
-  {:tonic      {:fill (hsl hue 72 38) :stroke (hsl hue 80 28)}
-   :structural {:fill (hsl hue 60 50) :stroke (hsl hue 68 42)}
-   :diatonic   {:fill (hsl hue 45 66) :stroke (hsl hue 52 58)}
-   :chromatic  {:fill (hsl hue 15 78) :stroke (hsl hue 20 70)}})
 
 ;; ── Unified color resolution ─────────────────────────────────────
 ;; Both modes produce the same shape: {channel -> {kind -> {:fill :stroke}}}

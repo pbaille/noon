@@ -42,7 +42,7 @@
        :p 0.15}
       (into []
             (map-indexed
-             (fn [i [k label]]
+             (fn [_i [k label]]
                (c :button
                   {:key (name k)
                    :style {:p [0.25 0.6]
