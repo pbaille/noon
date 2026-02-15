@@ -19,6 +19,11 @@
 
 (def tree
   {:init (event [_ _] {:pp ["init"]})
+   :piano-rolls {:get (sub [db _] (:piano-rolls db))
+                 :toggle (dbf [db _]
+                              (let [next-val (not (:piano-rolls db))]
+                                (.setItem js/localStorage "noon:piano-rolls" (str next-val))
+                                (assoc db :piano-rolls next-val)))}
    :doc {:ui
          {:nodes {:get
                   (sub [db [_ path k]]
@@ -126,7 +131,8 @@
   {:doc {:ui {:navigation-mode :sidebar #_:breadcrumbs
               :scrolling {:position 0}
               :nodes {}}
-         :tree doc/doc-data}})
+         :tree doc/doc-data}
+   :piano-rolls (= "true" (.getItem js/localStorage "noon:piano-rolls"))})
 
 (let [[subscribe dispatch]
       (state/init-frame {:id :noon-doc

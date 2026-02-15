@@ -14,6 +14,7 @@
             ["react-spinners/BeatLoader" :default spinner]
             ["@uiw/codemirror-themes-all" :as cm-themes]
             [noon.client.ui.misc :as ui.misc]
+            [noon.client.state :refer [<<]]
             ["react-highlight" :default Highlight]))
 
 (def EDITOR_EXTENSIONS
@@ -167,6 +168,9 @@
         [editing set-editing] (uix/use-state false)
         [evaluating set-evaluating] (uix/use-state false)
         [playing set-playing] (uix/use-state false)
+        [local-piano-roll set-local-piano-roll] (uix/use-state nil) ;; nil = follow global, true/false = override
+        global-piano-rolls (<< [:piano-rolls.get])
+        show-piano-roll? (if (some? local-piano-roll) local-piano-roll global-piano-rolls)
         color :light-skyblue
         error? (:error return)]
 
@@ -264,7 +268,7 @@
                         (str source))))))
         (when return
 
-          (if score*
+          (if (and score* show-piano-roll?)
 
             ;; ── Piano roll output ──────────────────────────
             ;; Full-width block layout for horizontal scrolling.
@@ -275,21 +279,38 @@
                  :p 0
                  :position :relative}
 
-                (c :.code-editor-output_close
+                (sc {:position [:absolute {:top 4 :right 4}]
+                     :z-index 10
+                     :flex [:row {:gap 0.25}]}
 
-                   {:style {:position [:absolute {:top 4 :right 4}]
-                            :z-index 10
-                            :flex :center
-                            :bg {:color [:white {:a 0.8}]}
-                            :color color
-                            :p 0.3
-                            :rounded 1
-                            :cursor :pointer
-                            :hover {:color :grey8}}
-                    :on-click (fn [_]
-                                (set-return nil)
-                                (set-score nil))}
-                   (c icons-vsc/VscClose))
+                    (c :button
+                       {:style {:flex :center
+                                :bg {:color [:white {:a 0.8}]}
+                                :color "#94a3b8"
+                                :border {:width 0}
+                                :p 0.3
+                                :rounded 1
+                                :cursor :pointer
+                                :font-size "12px"
+                                :hover {:color "#64748b"}}
+                        :title "Show text output"
+                        :on-click (fn [_] (set-local-piano-roll false))}
+                       "🎹")
+
+                    (c :button
+                       {:style {:flex :center
+                                :bg {:color [:white {:a 0.8}]}
+                                :color color
+                                :border {:width 0}
+                                :p 0.3
+                                :rounded 1
+                                :cursor :pointer
+                                :hover {:color :grey8}}
+                        :on-click (fn [_]
+                                    (set-return nil)
+                                    (set-score nil)
+                                    (set-local-piano-roll nil))}
+                       (c icons-vsc/VscClose)))
 
                 ($ piano-roll-view {:score score*}))
 
@@ -311,7 +332,8 @@
                             :align-self :stretch}
                     :on-click (fn [_]
                                 (set-return nil)
-                                (set-score nil))}
+                                (set-score nil)
+                                (set-local-piano-roll nil))}
                    (c icons-vsc/VscClose))
 
                 (sc :.code-editor-output_content
@@ -319,7 +341,25 @@
                     {:bg {:color (if error? [:red {:a 0.05}] [color {:a 0.1}])}
                      :color (if (:error return) [:red {:a 0.45}])
                      :p (if error? [0.5 0.3] [0.3 0.7])
-                     :flexi [1 1 :auto]}
+                     :flexi [1 1 :auto]
+                     :position :relative}
+
+                    ;; 🎹 toggle button for score results
+                    (when score*
+                      (c :button
+                         {:style {:position [:absolute {:top 4 :right 4}]
+                                  :bg {:color [:white {:a 0.9}]}
+                                  :border {:width 1 :color "#e2e8f0"}
+                                  :p [0.2 0.4]
+                                  :rounded 0.4
+                                  :cursor :pointer
+                                  :font-size "13px"
+                                  :transition "all 0.15s ease"
+                                  :hover {:border {:color "#94a3b8"}
+                                          :bg {:color :white}}}
+                          :title "Show piano roll"
+                          :on-click (fn [_] (set-local-piano-roll true))}
+                         "🎹"))
 
                     (if editing
 

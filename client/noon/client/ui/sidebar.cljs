@@ -112,14 +112,31 @@
                                 :p 0})
              :transition "all 0.3s ease"}
             sidebar-elements
-            (c :a
-               {:style {:p 2
-                        :text :xl
-                        :color :grey6
-                        :position [:absolute {:bottom 0 :right 0}]
-                        :hover {:color :light-skyblue}}
-                :href constants/GITHUB_REPO_URL}
-               (c FaGithub)))
+            (sc {:position [:absolute {:bottom 0 :right 0}]
+                 :flex [:row {:items :center :gap 0.5}]
+                 :p 1}
+
+                (let [active? (<< [:piano-rolls.get])]
+                  (c :button
+                     {:style {:p [0.3 0.5]
+                              :border {:width 1
+                                       :color (if active? "#87ceeb" "#e2e8f0")}
+                              :rounded 0.4
+                              :bg {:color (if active? [:light-skyblue {:a 0.1}] :white)}
+                              :cursor :pointer
+                              :font-size "13px"
+                              :transition "all 0.15s ease"
+                              :hover {:border {:color (if active? "#5bb8db" "#94a3b8")}}}
+                     :title (if active? "Hide all piano rolls" "Show all piano rolls")
+                     :on-click (fn [_] (>> [:piano-rolls.toggle]))}
+                     "🎹"))
+
+                (c :a
+                   {:style {:text :xl
+                            :color :grey6
+                            :hover {:color :light-skyblue}}
+                    :href constants/GITHUB_REPO_URL}
+                   (c FaGithub))))
         (case mode
           :sidebar (sc {:p [0.5 1]
                         :width 25
