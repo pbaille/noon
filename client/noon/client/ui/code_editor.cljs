@@ -284,12 +284,12 @@
                    {:style {:position [:absolute {:top 4 :right 4}]
                             :z-index 10
                             :flex :center
-                            :bg {:color [:white {:a 0.8}]}
+                            :bg {:color :transparent}
                             :color color
+                            :border {:width 0}
                             :p 0.3
-                            :rounded 1
                             :cursor :pointer
-                            :hover {:color :grey8}}
+                            :hover {:color :tomato}}
                     :on-click (fn [_]
                                 (set-return nil)
                                 (set-score nil)
@@ -331,22 +331,21 @@
                     ;; Piano roll toggle button for score results
                     (when score*
                       (c :button
-                         {:style {:position [:absolute {:top 4 :right 4}]
-                                  :bg {:color [:white {:a 0.9}]}
-                                  :border {:width 1 :color "#e2e8f0"}
-                                  :color "#94a3b8"
-                                  :p 0.3
-                                  :rounded 0.4
+                         {:style {:position [:absolute {:top "50%" :right 8}]
+                                  :transform "translateY(-50%)"
+                                  :bg {:color :white}
+                                  :border {:width 0}
+                                  :outline :none
+                                  :color "#b0b8c4"
+                                  :p 0
                                   :cursor :pointer
-                                  :font-size "14px"
-                                  :line-height 1
+                                  :flex :center
                                   :transition "all 0.15s ease"
-                                  :hover {:border {:color "#94a3b8"}
-                                          :color "#64748b"
-                                          :bg {:color :white}}}
+                                  :hover {:color :tomato}}
                           :title "Show piano roll"
                           :on-click (fn [_] (set-local-piano-roll true))}
-                         (c TbPiano)))
+                         (c TbPiano {:size 18})))
+
 
                     (if editing
 

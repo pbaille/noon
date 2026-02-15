@@ -113,21 +113,18 @@
              :transition "all 0.3s ease"}
             sidebar-elements
             (sc {:position [:absolute {:bottom 0 :right 0}]
-                 :flex [:row {:items :center :gap 0.5}]
+                 :flex [:row {:items :center :gap 1}]
                  :p 1}
 
                 (let [active? (<< [:piano-rolls.get])]
-                  (c :button
-                     {:style {:p 0.3
-                              :border {:width 0}
-                              :bg {:color :transparent}
-                              :color (if active? :light-skyblue :grey6)
+                  (c :a
+                     {:style {:text :xl
+                              :color (if active? :tomato :grey6)
                               :cursor :pointer
-                              :text :xl
                               :transition "all 0.15s ease"
-                              :hover {:color (if active? "#5bb8db" :light-skyblue)}}
-                     :title (if active? "Hide all piano rolls" "Show all piano rolls")
-                     :on-click (fn [_] (>> [:piano-rolls.toggle]))}
+                              :hover {:color :tomato}}
+                      :title (if active? "Hide all piano rolls" "Show all piano rolls")
+                      :on-click (fn [_] (>> [:piano-rolls.toggle]))}
                      (c TbPiano)))
 
                 (c :a

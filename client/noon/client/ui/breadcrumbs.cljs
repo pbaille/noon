@@ -64,11 +64,11 @@
                 {:style {:p 0.3
                          :border {:width 0}
                          :bg {:color :transparent}
-                         :color (if active? :light-skyblue :grey6)
+                         :color (if active? :tomato :grey6)
                          :cursor :pointer
                          :text :xl
                          :transition "all 0.15s ease"
-                         :hover {:color (if active? "#5bb8db" :light-skyblue)}}
+                         :hover {:color :tomato}}
                  :title (if active? "Hide all piano rolls" "Show all piano rolls")
                  :on-click (fn [_] (>> [:piano-rolls.toggle]))}
                 (c TbPiano)))
