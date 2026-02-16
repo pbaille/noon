@@ -61,7 +61,7 @@
      [:pre {:class "noon-source"
             :style {:display "none"}}
       source]]
-    [:html/deps {:js [(str *widget-base-url* "/noon-widget.js")]}]]))
+    [:script {:src (str *widget-base-url* "/noon-widget.js")}]]))
 
 (defn noon-editor-group
   "Return a `kind/hiccup` form that renders a group of stacked noon editor widgets.
@@ -84,4 +84,4 @@
     [:div
      [:div {:data-noon-widget-group ""
             :data-entries entries-json}]
-     [:html/deps {:js [(str *widget-base-url* "/noon-widget.js")]}]]))
+     [:script {:src (str *widget-base-url* "/noon-widget.js")}]]))
