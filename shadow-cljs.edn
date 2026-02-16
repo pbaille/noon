@@ -34,6 +34,32 @@
           #_:test #_{:target :node-test
                      :output-to "out/node-tests.js"}
 
+          :widget
+          {:target :browser
+           :modules {:noon-widget {:init-fn noon.widget/init
+                                   :entries [noon.widget]}}
+           :output-dir "public/js/widget"
+           :asset-path "js/widget"
+           :js-options {:resolve {"highlight.js/lib/languages/isbl.js" false
+                                  "highlight.js/lib/languages/routeros.js" false}}
+           :compiler-options {:optimizations :advanced
+                              :output-feature-set :es8
+                              :output-wrapper false}}
+
+          :widget-dev
+          {:target :browser
+           :modules {:noon-widget {:init-fn noon.widget/init
+                                   :entries [noon.widget]}}
+           :devtools {:http-root "public"
+                      :http-port 8997}
+           :output-dir "public/js/widget"
+           :asset-path "js/widget"
+           :js-options {:resolve {"highlight.js/lib/languages/isbl.js" false
+                                  "highlight.js/lib/languages/routeros.js" false}}
+           :compiler-options {:optimizations :simple
+                              :output-feature-set :es8
+                              :output-wrapper false}}
+
           :test {:target :esm
                  :runtime :node
                  :output-dir "out"
