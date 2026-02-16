@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>noon widget test</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        max-width: 800px;
+        margin: 2em auto;
+        padding: 0 1em;
+        color: #1e293b;
+        line-height: 1.6;
+      }
+      h1 { font-size: 1.5em; }
+      h2 { font-size: 1.2em; color: #475569; }
+      p { color: #64748b; }
+    </style>
+  </head>
+  <body>
+    <h1>Noon Widget Test</h1>
+
+    <h2>Single widget</h2>
+    <p>An editable, playable noon code editor:</p>
+    <div data-noon-widget>
+      <pre class="noon-source">(play (tup s0 s1 s2 s3))</pre>
+    </div>
+
+    <h2>Another widget</h2>
+    <div data-noon-widget>
+      <pre class="noon-source">(score (lin I IV V I) (each (tup s0 s1 s2)))</pre>
+    </div>
+
+    <h2>Group widget</h2>
+    <div data-noon-widget-group
+         data-entries='[{"label":"chromatic — (tup c0 c1 c2 c3 c4 c5 c6)","source":"(score (tup c0 c1 c2 c3 c4 c5 c6))"},{"label":"diatonic — (tup d0 d1 d2 d3 d4 d5 d6)","source":"(score (tup d0 d1 d2 d3 d4 d5 d6))"},{"label":"structural — (tup s0 s1 s2 s3)","source":"(score (tup s0 s1 s2 s3))"},{"label":"tonic — (tup t0 t1 t2)","source":"(score (tup t0 t1 t2))"}]'>
+    </div>
+
+    <h2>Scale comparison group</h2>
+    <div data-noon-widget-group
+         data-entries='[{"label":"major (default)","source":"(score dur:4 (lin d0 d1 d2 d3 d4 d5 d6 d7))"},{"label":"dorian","source":"(score dur:4 (scale :dorian) (lin d0 d1 d2 d3 d4 d5 d6 d7))"},{"label":"hungarian","source":"(score dur:4 (scale :hungarian) (lin d0 d1 d2 d3 d4 d5 d6 d7))"}]'>
+    </div>
+
+    <script src="js/widget/noon-widget.js"></script>
+  </body>
+</html>

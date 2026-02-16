@@ -53,8 +53,11 @@ jobs:
       - name: Build noon.client.doc namespace
         run: bb build-client-doc-ns
 
-      - name: Build with shadow-cljs
+      - name: Build client with shadow-cljs
         run: npx shadow-cljs release client
+
+      - name: Build widget with shadow-cljs
+        run: npx shadow-cljs release widget
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
