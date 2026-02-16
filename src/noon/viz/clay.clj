@@ -27,15 +27,6 @@
    Override with `binding` for local development."
   "https://pbaille.github.io/noon/js/widget")
 
-;; ── Helpers ─────────────────────────────────────────────────────
-
-(defn- html-escape [s]
-  (-> s
-      (str/replace "&" "&amp;")
-      (str/replace "<" "&lt;")
-      (str/replace ">" "&gt;")
-      (str/replace "\"" "&quot;")))
-
 ;; ── Public API ──────────────────────────────────────────────────
 
 (defn noon-editor
