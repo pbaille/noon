@@ -68,6 +68,14 @@
         (f))
       (reset! playing* false))
 
+    (defn ensure-audio-context!
+      "Resume the AudioContext if it's suspended (browser autoplay policy).
+       Returns a Promise that resolves when the context is running."
+      []
+      (if (and audio-context (= "suspended" (.-state audio-context)))
+        (.resume audio-context)
+        (js/Promise.resolve)))
+
     (defn play
       "Play a noon score using tone and smplr."
       [noon-data & {:keys [bpm id track->kit]}]
@@ -85,15 +93,15 @@
                           noon-data))
             by-instrument (group-by #(select-keys % [:patch :track]) score)]
 
-        (-> (js/Promise.all
-             (mapv (fn [[{:keys [patch track]} events]]
-                     (let [[_ instrument-val] patch
-                           instrument-name (gm/instrument-val->instrument-name instrument-val)]
-                       #_(log "loading: " instrument-name)
-                       (.then (get-instrument instrument-name (track->kit track))
-                              (fn [inst] [inst events]))))
-                   by-instrument))
-
+        (-> (ensure-audio-context!)
+            (.then (fn [_]
+                     (js/Promise.all
+                      (mapv (fn [[{:keys [patch track]} events]]
+                              (let [[_ instrument-val] patch
+                                    instrument-name (gm/instrument-val->instrument-name instrument-val)]
+                                (.then (get-instrument instrument-name (track->kit track))
+                                       (fn [inst] [inst events]))))
+                            by-instrument))))
             (.then (fn [xs]
                      (js/console.log "scheduling events...")
                      (let [t0 (.-currentTime audio-context)

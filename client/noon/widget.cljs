@@ -6,6 +6,7 @@
    Auto-mounts on elements with [data-noon-widget] attribute.
    Source code is read from a child <pre class='noon-source'> element."
   (:require [noon.eval :as eval]
+            [noon.output :as output]
             [noon.output.midi :as midi]
             [noon.score :as score]
             [noon.viz.piano-roll :as pr]
@@ -244,6 +245,13 @@
     (some-> (meta result) :score) (:score (meta result))
     :else nil))
 
+(defn- play-score!
+  "Play a score via noon.output and return the play id.
+   Used when eval result is a score (not a play result)."
+  [score]
+  (let [result (output/noon {:play true} score)]
+    (:id result)))
+
 (defn- mount-widget
   "Mount an interactive noon editor widget into the given DOM element.
 
@@ -323,12 +331,14 @@
           (add-style! error-el {:display "none"}))
 
         do-eval
-        (fn []
+        (fn [& {:keys [play?] :or {play? true}}]
           (when-not (:evaluating @state)
-            (swap! state assoc :evaluating true :error nil :score nil)
+            ;; Resume AudioContext within user gesture (before async work)
+            (when play? (midi/ensure-audio-context!))
+
+            (swap! state assoc :evaluating true :error nil)
             (set! (.-disabled eval-btn) true)
             (set! (.-innerHTML eval-btn) (str icon-loading " <span>Evaluating...</span>"))
-            (add-style! viz-el {:display "none"})
             (hide-error)
             (set! (.-textContent status-el) "")
 
@@ -344,20 +354,26 @@
                     (do
                       (show-error (.-message error))
                       (swap! state assoc :error (.-message error)))
-                    (do
-                      ;; Handle playback
-                      (when-let [id (:id result)]
+                    (let [;; Get score from result (works for both score and play results)
+                          s (result->score result)
+                          ;; Get play id — present for (play ...) results, nil for (score ...)
+                          play-id (when play?
+                                    (or (:id result)
+                                        ;; Auto-play if result is a score without play id
+                                        (when s (play-score! s))))]
+                      ;; Handle playback tracking
+                      (when play-id
                         (swap! state assoc :playing true)
                         (add-style! stop-btn {:display "inline-flex"})
                         (set! (.-textContent status-el) "Playing...")
                         (midi/on-done-playing
-                         id
+                         play-id
                          (fn []
                            (swap! state assoc :playing false)
                            (add-style! stop-btn {:display "none"})
                            (set! (.-textContent status-el) ""))))
                       ;; Render piano roll
-                      (when-let [s (result->score result)]
+                      (when s
                         (swap! state assoc :score s)
                         (render-piano-roll s)))))
                 (fn [{:keys [error]}]
@@ -388,18 +404,18 @@
                            (when (and (or (.-metaKey e) (.-ctrlKey e))
                                       (= (.-key e) "Enter"))
                              (.preventDefault e)
-                             (do-eval)))))
+                             (do-eval :play? true)))))
 
     ;; Button handlers
-    (.addEventListener eval-btn "click" (fn [_] (do-eval)))
+    (.addEventListener eval-btn "click" (fn [_] (do-eval :play? true)))
     (.addEventListener stop-btn "click" (fn [_] (do-stop)))
 
     ;; Mount
     (.appendChild container root)
 
-    ;; Auto-eval
+    ;; Auto-eval (render piano roll only, don't play audio)
     (when auto-eval
-      (js/setTimeout do-eval 100))
+      (js/setTimeout #(do-eval :play? false) 100))
 
     ;; Return handle
     {:root root
