@@ -14,7 +14,6 @@
             ["react-spinners/BeatLoader" :default spinner]
             ["@uiw/codemirror-themes-all" :as cm-themes]
             [noon.client.ui.misc :as ui.misc]
-            [noon.client.state :refer [<<]]
             ["react-highlight" :default Highlight]))
 
 (def EDITOR_EXTENSIONS
@@ -97,10 +96,10 @@
               :hover (when (not= state :visible) {:color "#64748b"})}
       :on-click on-click}
      (c :span {:style {:display :inline-block
-                        :width "7px" :height "7px"
-                        :border-radius "50%"
-                        :background color
-                        :opacity (case state :visible 1, :dimmed 0.4, 0.15)}})
+                       :width "7px" :height "7px"
+                       :border-radius "50%"
+                       :background color
+                       :opacity (case state :visible 1, :dimmed 0.4, 0.15)}})
      (str "ch " ch)))
 
 ;; ── Piano roll view ──────────────────────────────────────────────
@@ -159,7 +158,6 @@
                                                   (seq dimmed-chs) (assoc :dimmed-channels (set dimmed-chs))
                                                   channel-order (assoc :channel-order channel-order))))}})))))
 
-
 (defui code-editor [{:keys [source options]}]
   (let [input-editor-ref (uix/use-ref)
         [source set-source] (uix/use-state source)
@@ -168,9 +166,8 @@
         [editing set-editing] (uix/use-state false)
         [evaluating set-evaluating] (uix/use-state false)
         [playing set-playing] (uix/use-state false)
-        [local-piano-roll set-local-piano-roll] (uix/use-state nil) ;; nil = follow global, true/false = override
-        global-piano-rolls (<< [:piano-rolls.get])
-        show-piano-roll? (if (some? local-piano-roll) local-piano-roll global-piano-rolls)
+        [local-piano-roll set-local-piano-roll] (uix/use-state nil) ;; nil = follow option, true/false = override
+        show-piano-roll? (if (some? local-piano-roll) local-piano-roll (:show-piano-roll? options))
         color :light-skyblue
         error? (:error return)]
 
@@ -345,7 +342,6 @@
                           :title "Show piano roll"
                           :on-click (fn [_] (set-local-piano-roll true))}
                          (c TbPiano {:size 18})))
-
 
                     (if editing
 
