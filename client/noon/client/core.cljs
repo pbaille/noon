@@ -17,5 +17,4 @@
 
 (defn ^:export init []
   (stylefy/init {:dom (gdom/init)})
-  #_ (println guide/guide)
   (render))
