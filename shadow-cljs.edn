@@ -4,7 +4,7 @@
 
  :builds {:client
           {:target :browser
-           :modules {:main {:init-fn noon.client.core/init
+           :modules {:main {:entries [noon.client.core noon.widget]
                             :reload-fn noon.client.core/reload}}
            :devtools {:http-root "public"
                       :http-port 8999

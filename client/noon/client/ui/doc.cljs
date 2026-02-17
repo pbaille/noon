@@ -11,6 +11,10 @@
             [noon.client.ui.breadcrumbs :as ui.breadcrumbs]
             [noon.client.constants :as constants]))
 
+(defui connected-code-editor [props]
+  (let [show-piano-roll? (<< [:piano-rolls.get])]
+    (uix/$ ui.code-editor/code-editor (assoc-in props [:options :show-piano-roll?] show-piano-roll?))))
+
 (defn render-doc-node [node]
   (case (:type node)
     :section (uix/$ ui.section/section
@@ -21,7 +25,7 @@
                           (concat (:content node)
                                   (sort-by :idx (vals (:children node))))))
     :raw (uix/$ ui.misc/raw node)
-    :code (uix/$ ui.code-editor/code-editor node)))
+    :code (uix/$ connected-code-editor node)))
 
 (def doc-content
   (render-doc-node doc/doc-data))
