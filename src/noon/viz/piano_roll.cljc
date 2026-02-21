@@ -165,10 +165,54 @@
             (map (fn [ch] [ch kind-colors]))
             channels))))
 
-(def ^:private harmony-bg "rgba(99, 102, 241, 0.06)")
-(def ^:private harmony-line "rgba(99, 102, 241, 0.25)")
-(def ^:private harmony-bg-dark "rgba(129, 140, 248, 0.08)")
-(def ^:private harmony-line-dark "rgba(129, 140, 248, 0.3)")
+;; ── SVG theme maps ───────────────────────────────────────────────
+;; Centralized color definitions for the SVG layer.
+;; Resolved once and threaded through the layout — eliminates
+;; per-renderer `if dark?` branching.
+
+(def svg-themes
+  "Light and dark color maps for the SVG piano roll layer."
+  {:light {:grid-white      "#fff"
+           :grid-black      "#f5f5f5"
+           :grid-line        "#eeeeee"
+           :grid-line-octave "#d4d4d4"
+           :kb-white         "#f9fafb"
+           :kb-black         "#374151"
+           :kb-stroke        "#d1d5db"
+           :kb-text-white    "#6b7280"
+           :kb-text-black    "#e5e7eb"
+           :harmony-bg       "rgba(99, 102, 241, 0.06)"
+           :harmony-line     "rgba(99, 102, 241, 0.25)"
+           :border           "#ddd"
+           :note-text        "#475569"
+           :legend-text      "#555"
+           :label-text       "#444"
+           :title-text       "#333"
+           :separator        "#e5e7eb"
+           :wrapper-bg       nil}
+   :dark  {:grid-white       "#22223a"
+           :grid-black       "#1a1a2e"
+           :grid-line         "#2d2d42"
+           :grid-line-octave  "#3a3a52"
+           :kb-white          "#2a2a3c"
+           :kb-black          "#1a1a2e"
+           :kb-stroke         "#3a3a52"
+           :kb-text-white     "#a6adc8"
+           :kb-text-black     "#6c7086"
+           :harmony-bg        "rgba(129, 140, 248, 0.08)"
+           :harmony-line      "rgba(129, 140, 248, 0.3)"
+           :border            "#3a3a52"
+           :note-text         "#a6adc8"
+           :legend-text       "#a6adc8"
+           :label-text        "#a6adc8"
+           :title-text        "#cdd6f4"
+           :separator         "#313244"
+           :wrapper-bg        "#1e1e2e"}})
+
+(defn- resolve-svg-theme
+  "Resolve a theme keyword to an SVG color map."
+  [theme-key]
+  (get svg-themes (or theme-key :light) (:light svg-themes)))
 
 (def ^:private max-row-h 18)
 (def ^:private min-row-h 8)
@@ -189,7 +233,7 @@
    :color-mode     :kind      ;; :kind (palette-based) or :channel (hue per channel)
    :palette        :ocean     ;; palette name or custom map (used in :kind mode)
    :hues           nil        ;; custom hue vector (used in :channel mode)
-   :dark?          false})    ;; dark theme for SVG grid/keyboard
+   :theme          :light})   ;; :light or :dark
 
 ;; ── Helpers ──────────────────────────────────────────────────────
 
@@ -252,7 +296,7 @@
 (defn- compute-layout
   "Derive all spatial layout values from notes and options.
    Returns a map used by all rendering functions.
-   Includes channel-indexed :colors map."
+   Includes channel-indexed :colors map and resolved :svg-theme."
   [notes opts]
   (let [{:keys [target-width show-keyboard padding]} opts
         pitches   (mapv :pitch notes)
@@ -281,90 +325,73 @@
      :svg-h      (+ grid-h 1)
      :channels   (vec (sort channels))
      :color-mode (:color-mode opts)
-     :dark?      (:dark? opts)
+     :svg-theme  (resolve-svg-theme (:theme opts))
      :colors     (resolve-colors opts channels)}))
 
 ;; ── SVG renderers ────────────────────────────────────────────────
 ;; Each takes a layout map as first arg, plus its own data when needed.
 
 (defn- svg-grid-rows
-  "Background rows — white for natural keys, light grey for sharps/flats.
-   In dark mode, uses dark slate tones."
-  [{:keys [min-pitch max-pitch x0 grid-w row-h dark?]}]
-  (into [:g]
-        (mapcat
-         (fn [p]
-           (let [y (* (- max-pitch p 1) row-h)]
-             (if dark?
+  "Background rows — white for natural keys, light grey for sharps/flats."
+  [{:keys [min-pitch max-pitch x0 grid-w row-h svg-theme]}]
+  (let [{:keys [grid-white grid-black grid-line grid-line-octave]} svg-theme]
+    (into [:g]
+          (mapcat
+           (fn [p]
+             (let [y (* (- max-pitch p 1) row-h)]
                [[:rect {:x x0 :y y :width grid-w :height row-h
-                        :fill (if (black-key? p) "#1a1a2e" "#22223a")}]
+                        :fill (if (black-key? p) grid-black grid-white)}]
                 [:line {:x1 x0 :y1 (+ y row-h) :x2 (+ x0 grid-w 1) :y2 (+ y row-h)
-                        :stroke (if (= 11 (mod p 12)) "#3a3a52" "#2d2d42")
-                        :stroke-width 0.5}]]
-               [[:rect {:x x0 :y y :width grid-w :height row-h
-                        :fill (if (black-key? p) "#f5f5f5" "#fff")}]
-                [:line {:x1 x0 :y1 (+ y row-h) :x2 (+ x0 grid-w 1) :y2 (+ y row-h)
-                        :stroke (if (= 11 (mod p 12)) "#d4d4d4" "#eeeeee")
-                        :stroke-width 0.5}]]))))
-        (range min-pitch max-pitch)))
+                        :stroke (if (= 11 (mod p 12)) grid-line-octave grid-line)
+                        :stroke-width 0.5}]])))
+          (range min-pitch max-pitch))))
 
 (defn- svg-harmonies
   "Alternating tint + dashed vertical lines at harmony boundaries."
-  [{:keys [x0 time-scale grid-h dark?]} harmonies]
+  [{:keys [x0 time-scale grid-h svg-theme]} harmonies]
   (when (> (count harmonies) 1)
-    (into [:g]
-          (keep-indexed
-           (fn [i h]
-             (let [x (+ x0 (* (:position h) time-scale))
-                   w (* (:duration h) time-scale)
-                   bg   (if dark? harmony-bg-dark harmony-bg)
-                   line (if dark? harmony-line-dark harmony-line)
-                   children (cond-> []
-                              (odd? i)
-                              (conj [:rect {:x x :y 0 :width w :height grid-h
-                                            :fill bg}])
-                              (pos? i)
-                              (conj [:line {:x1 x :y1 0 :x2 x :y2 grid-h
-                                            :stroke line :stroke-width 1
-                                            :stroke-dasharray "4,3"}]))]
-               (when (seq children)
-                 (into [:g] children)))))
-          harmonies)))
+    (let [{:keys [harmony-bg harmony-line]} svg-theme]
+      (into [:g]
+            (keep-indexed
+             (fn [i h]
+               (let [x (+ x0 (* (:position h) time-scale))
+                     w (* (:duration h) time-scale)
+                     children (cond-> []
+                                (odd? i)
+                                (conj [:rect {:x x :y 0 :width w :height grid-h
+                                              :fill harmony-bg}])
+                                (pos? i)
+                                (conj [:line {:x1 x :y1 0 :x2 x :y2 grid-h
+                                              :stroke harmony-line :stroke-width 1
+                                              :stroke-dasharray "4,3"}]))]
+                 (when (seq children)
+                   (into [:g] children)))))
+            harmonies))))
 
 (defn- svg-keyboard
   "Piano keyboard labels on the left edge."
-  [{:keys [min-pitch max-pitch row-h dark?]}]
-  (into [:g]
-        (mapcat
-         (fn [p]
-           (let [y   (* (- max-pitch p 1) row-h)
-                 blk (black-key? p)]
-             (if dark?
+  [{:keys [min-pitch max-pitch row-h svg-theme]}]
+  (let [{:keys [kb-white kb-black kb-stroke kb-text-white kb-text-black]} svg-theme]
+    (into [:g]
+          (mapcat
+           (fn [p]
+             (let [y   (* (- max-pitch p 1) row-h)
+                   blk (black-key? p)]
                (cond-> [[:rect {:x 0 :y y :width kb-w :height row-h
-                                :fill (if blk "#1a1a2e" "#2a2a3c")
-                                :stroke "#3a3a52" :stroke-width 0.5}]]
+                                :fill (if blk kb-black kb-white)
+                                :stroke kb-stroke :stroke-width 0.5}]]
                  (or (zero? (mod p 12)) (= p min-pitch))
                  (conj [:text {:x (- kb-w 5) :y (+ y (/ row-h 2) 3.5)
                                :text-anchor "end"
                                :font-size (min 8.5 (- row-h 2))
                                :font-family mono-font
-                               :fill (if blk "#6c7086" "#a6adc8")}
-                        (note-name p)]))
-               (cond-> [[:rect {:x 0 :y y :width kb-w :height row-h
-                                :fill (if blk "#374151" "#f9fafb")
-                                :stroke "#d1d5db" :stroke-width 0.5}]]
-                 (or (zero? (mod p 12)) (= p min-pitch))
-                 (conj [:text {:x (- kb-w 5) :y (+ y (/ row-h 2) 3.5)
-                               :text-anchor "end"
-                               :font-size (min 8.5 (- row-h 2))
-                               :font-family mono-font
-                               :fill (if blk "#e5e7eb" "#6b7280")}
-                        (note-name p)]))))))
-        (range min-pitch max-pitch)))
+                               :fill (if blk kb-text-black kb-text-white)}
+                        (note-name p)])))))
+          (range min-pitch max-pitch))))
 
 (defn- render-note-rects
   "Render a single note as rect + optional label."
-  [{:keys [x0 time-scale max-pitch row-h colors dark?]} note opacity]
+  [{:keys [x0 time-scale max-pitch row-h colors svg-theme]} note opacity]
   (let [note-pad (min note-pad (* row-h 0.1))
         x     (+ x0 (* (:position note) time-scale))
         y     (+ (* (- max-pitch (:pitch note) 1) row-h) note-pad)
@@ -384,7 +411,7 @@
                     :font-family mono-font
                     :fill (if (#{:tonic :structural} (:kind note))
                             "#fff"
-                            (if dark? "#a6adc8" "#475569"))
+                            (:note-text svg-theme))
                     :font-weight 500
                     :opacity opacity}
              (nth note-names (mod (:pitch note) 12))]))))
@@ -409,9 +436,9 @@
 
 (defn- svg-border
   "Thin border around the grid area."
-  [{:keys [x0 grid-w grid-h dark?]}]
+  [{:keys [x0 grid-w grid-h svg-theme]}]
   [:rect {:x x0 :y 0 :width grid-w :height grid-h
-          :fill "none" :stroke (if dark? "#3a3a52" "#ddd") :stroke-width 1}])
+          :fill "none" :stroke (:border svg-theme) :stroke-width 1}])
 
 ;; ── HTML renderers ───────────────────────────────────────────────
 
@@ -421,8 +448,8 @@
      :kind    — shows kind swatches (tonic/structural/diatonic/chromatic)
      :channel — multi-channel: channel color labels
                 single-channel: single flat color"
-  [colors channels kinds color-mode dark?]
-  (let [text-color (if dark? "#a6adc8" "#555")]
+  [colors channels kinds color-mode svg-theme]
+  (let [text-color (:legend-text svg-theme)]
     (if (and (= color-mode :channel) (> (count channels) 1))
       ;; ── Channel mode, multi-channel ──
       (into [:div {:style {:display "flex" :gap "12px" :align-items "center"
@@ -446,36 +473,37 @@
 
 (defn- label-bar
   "Small monospace label above a roll."
-  [text dark?]
+  [text svg-theme]
   [:div {:style {:font-size     "11px"
                  :font-weight   500
-                 :color         (if dark? "#a6adc8" "#444")
+                 :color         (:label-text svg-theme)
                  :font-family   mono-font
                  :margin-bottom "2px"}}
    text])
 
 (defn- title-bar
   "Bold monospace title above a roll."
-  [text dark?]
+  [text svg-theme]
   [:div {:style {:font-size     "13px"
                  :font-weight   600
-                 :color         (if dark? "#cdd6f4" "#333")
+                 :color         (:title-text svg-theme)
                  :margin-bottom "6px"
                  :font-family   mono-font}}
    text])
 
-(defn- separator [dark?]
-  [:div {:style {:height "1px" :background (if dark? "#313244" "#e5e7eb") :margin "4px 0"}}])
+(defn- separator [svg-theme]
+  [:div {:style {:height "1px" :background (:separator svg-theme) :margin "4px 0"}}])
 
 (defn- wrap-hiccup
   "Outer wrapper div with kindly metadata."
-  [dark? & children]
+  [svg-theme & children]
   (with-meta
     (into [:div {:style (cond-> {:display     "inline-block"
                                  :padding     "20px"
                                  :font-family sans-font}
-                          dark? (assoc :background "#1e1e2e"
-                                       :border-radius "6px"))}]
+                          (:wrapper-bg svg-theme)
+                          (assoc :background (:wrapper-bg svg-theme)
+                                 :border-radius "6px"))}]
           (remove nil?)
           children)
     {:kindly/kind :kind/hiccup}))
@@ -530,7 +558,7 @@
      :hues           — custom hue vector (for :channel mode)"
   ([score] (piano-roll score {}))
   ([score opts]
-   (let [{:keys [show-legend title channels dark?]
+   (let [{:keys [show-legend title channels]
           :as   opts} (merge default-opts opts)
          all-notes (score->notes score)
          notes     (if channels
@@ -538,13 +566,14 @@
                      all-notes)
          harmonies (score->harmonies score)
          _         (assert (seq notes) "Score has no pitched events (after channel filter)")
-         layout    (compute-layout notes opts)]
+         layout    (compute-layout notes opts)
+         svg-theme (:svg-theme layout)]
      (wrap-hiccup
-      dark?
-      (when title (title-bar title dark?))
+      svg-theme
+      (when title (title-bar title svg-theme))
       (when show-legend
         (legend (:colors layout) (:channels layout)
-                (distinct (map :kind notes)) (:color-mode layout) dark?))
+                (distinct (map :kind notes)) (:color-mode layout) svg-theme))
       (build-roll layout notes harmonies opts)))))
 
 (defn piano-roll-group
@@ -567,7 +596,7 @@
      :hues               — custom hue vector (for :channel mode)"
   ([items] (piano-roll-group items {}))
   ([items opts]
-   (let [{:keys [shared-pitch-range show-legend channels dark?]
+   (let [{:keys [shared-pitch-range show-legend channels]
           :as   opts} (merge default-opts opts)
 
          chan-set  (when channels (set channels))
@@ -586,6 +615,8 @@
          shared-layout (when shared-pitch-range
                          (compute-layout all-notes opts))
 
+         svg-theme (resolve-svg-theme (:theme opts))
+
          rolls     (into [:div {:style {:display        "flex"
                                         :flex-direction "column"
                                         :gap            "6px"}}]
@@ -593,16 +624,16 @@
                           (fn [i {:keys [label notes harmonies]}]
                             (let [layout (or shared-layout (compute-layout notes opts))]
                               [:div {}
-                               (when (pos? i) (separator dark?))
-                               (when label (label-bar label dark?))
+                               (when (pos? i) (separator svg-theme))
+                               (when label (label-bar label svg-theme))
                                (build-roll layout notes harmonies opts)])))
                          all-data)
 
          ref (or shared-layout (compute-layout all-notes opts))]
 
      (wrap-hiccup
-      dark?
+      svg-theme
       (when show-legend
         (legend (:colors ref) (:channels ref)
-                (distinct (map :kind all-notes)) (:color-mode ref) dark?))
+                (distinct (map :kind all-notes)) (:color-mode ref) svg-theme))
       rolls))))

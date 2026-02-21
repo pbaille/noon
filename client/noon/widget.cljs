@@ -33,26 +33,45 @@
     (try (edn/read-string opts-str)
          (catch :default _ nil))))
 
-(defn- inject-dark-hljs-theme!
-  "Inject a minimal dark highlight.js theme for Clojure syntax when dark widgets are present."
-  []
-  (when-not (.getElementById js/document "_noon-hljs-dark_")
-    (let [style (.createElement js/document "style")]
-      (.setAttribute style "id" "_noon-hljs-dark_")
-      (set! (.-textContent style)
-            ".noon-dark .hljs { background: #1e1e2e; color: #cdd6f4; }
-             .noon-dark .hljs-keyword { color: #cba6f7; }
-             .noon-dark .hljs-built_in { color: #89b4fa; }
-             .noon-dark .hljs-string { color: #a6e3a1; }
-             .noon-dark .hljs-number { color: #fab387; }
-             .noon-dark .hljs-literal { color: #f38ba8; }
-             .noon-dark .hljs-symbol { color: #f9e2af; }
-             .noon-dark .hljs-comment { color: #6c7086; font-style: italic; }
-             .noon-dark .hljs-title { color: #89b4fa; }
-             .noon-dark .hljs-params { color: #cdd6f4; }
-             .noon-dark .hljs-attr { color: #89dceb; }
-             .noon-dark .hljs-name { color: #89b4fa; }")
-      (.appendChild js/document.head style))))
+(def ^:private light-hljs-css
+  "Light highlight.js theme for Clojure syntax in light widgets."
+  ".noon-light .hljs { background: #ffffff; color: #1e293b; }
+   .noon-light .hljs-keyword { color: #8959a8; font-weight: bold; }
+   .noon-light .hljs-built_in { color: #0086b3; }
+   .noon-light .hljs-string { color: #718c00; }
+   .noon-light .hljs-number { color: #f5871f; }
+   .noon-light .hljs-literal { color: #d14; }
+   .noon-light .hljs-symbol { color: #990073; }
+   .noon-light .hljs-comment { color: #8e908c; font-style: italic; }
+   .noon-light .hljs-title { color: #4271ae; }
+   .noon-light .hljs-params { color: #1e293b; }
+   .noon-light .hljs-attr { color: #008080; }
+   .noon-light .hljs-name { color: #4271ae; }")
+
+(def ^:private dark-hljs-css
+  "Minimal dark highlight.js theme for Clojure syntax in dark widgets."
+  ".noon-dark .hljs { background: #1e1e2e; color: #cdd6f4; }
+   .noon-dark .hljs-keyword { color: #cba6f7; }
+   .noon-dark .hljs-built_in { color: #89b4fa; }
+   .noon-dark .hljs-string { color: #a6e3a1; }
+   .noon-dark .hljs-number { color: #fab387; }
+   .noon-dark .hljs-literal { color: #f38ba8; }
+   .noon-dark .hljs-symbol { color: #f9e2af; }
+   .noon-dark .hljs-comment { color: #6c7086; font-style: italic; }
+   .noon-dark .hljs-title { color: #89b4fa; }
+   .noon-dark .hljs-params { color: #cdd6f4; }
+   .noon-dark .hljs-attr { color: #89dceb; }
+   .noon-dark .hljs-name { color: #89b4fa; }")
+
+(defn- inject-hljs-theme!
+  "Inject the highlight.js theme stylesheet for the given theme."
+  [theme-id css]
+  (let [style-id (str "_noon-hljs-" theme-id "_")]
+    (when-not (.getElementById js/document style-id)
+      (let [style (.createElement js/document "style")]
+        (.setAttribute style "id" style-id)
+        (set! (.-textContent style) css)
+        (.appendChild js/document.head style)))))
 
 (defn- mount-widgets! []
   (doseq [el (array-seq (.querySelectorAll js/document "[data-noon-widget]"))]
@@ -61,12 +80,15 @@
       (let [source-el (.querySelector el ".noon-source")
             source (when source-el (.-textContent source-el))
             options (parse-options el)
-            dark? (= :dark (keyword (:theme options)))]
+            theme (keyword (or (:theme options) :light))
+            dark? (= :dark theme)]
         (when source
           (when source-el (.removeChild el source-el))
-          (when dark?
-            (inject-dark-hljs-theme!)
-            (.add (.-classList el) "noon-dark"))
+          (if dark?
+            (do (inject-hljs-theme! "dark" dark-hljs-css)
+                (.add (.-classList el) "noon-dark"))
+            (do (inject-hljs-theme! "light" light-hljs-css)
+                (.add (.-classList el) "noon-light")))
           (let [root (uix.dom/create-root el)]
             (uix.dom/render-root
              ($ ui.code-editor/code-editor

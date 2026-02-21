@@ -67,9 +67,6 @@
            :toggle-active-bg "#313244"
            :badge-color     "#f38ba8"}})
 
-(defn- resolve-theme [options]
-  (get themes (keyword (or (:theme options) :light)) (:light themes)))
-
 (defn- result->score
   "Extract a noon score from an eval result, if present.
    `play` returns a map with {:score <score>} in metadata.
@@ -83,7 +80,7 @@
 ;; ── Mode toggle (Kind / Channel) ─────────────────────────────────
 
 (defui mode-toggle [{:keys [value options on-change theme-colors]}]
-  (let [t (or theme-colors (:light themes))]
+  (let [t theme-colors]
     (sc {:flex [:row {:items :center}]
          :rounded 0.5
          :overflow :hidden
@@ -127,7 +124,7 @@
       proposed)))
 
 (defui channel-toggle [{:keys [ch state color on-click theme-colors]}]
-  (let [t (or theme-colors (:light themes))]
+  (let [t theme-colors]
     (c :button
        {:style {:flex [:row {:items :center :gap 0.25}]
                 :p [0.25 0.5]
@@ -161,9 +158,8 @@
 
 ;; ── Piano roll view ──────────────────────────────────────────────
 
-(defui piano-roll-view [{:keys [score theme-colors]}]
-  (let [t (or theme-colors (:light themes))
-        dark? (= (:bg t) (:bg (:dark themes)))
+(defui piano-roll-view [{:keys [score theme-colors theme-key]}]
+  (let [t theme-colors
         all-channels (pr/score->channels score)
         multi? (> (count all-channels) 1)
         [color-mode set-color-mode] (uix/use-state :kind)
@@ -215,13 +211,14 @@
                                  (pr/piano-roll score
                                                 (cond-> {:target-width 500
                                                          :color-mode color-mode
-                                                         :dark? dark?}
+                                                         :theme theme-key}
                                                   channels      (assoc :channels channels)
                                                   (seq dimmed-chs) (assoc :dimmed-channels (set dimmed-chs))
                                                   channel-order (assoc :channel-order channel-order))))}})))))
 
 (defui code-editor [{:keys [source options]}]
-  (let [t (resolve-theme options)
+  (let [theme-key (keyword (or (:theme options) :light))
+        t (get themes theme-key (:light themes))
         input-editor-ref (uix/use-ref)
         [source set-source] (uix/use-state source)
         [return set-return] (uix/use-state nil)
@@ -292,42 +289,43 @@
                  return (c icons-vsc/VscChevronUp)
                  :else (c icons-vsc/VscDebugStart)))
 
-            (c :.code-editor-input_content
+            (sc :.code-editor-input_content
 
-               {:style {:overflow :scroll
-                        :position :relative
-                        :width :full}
-                :on-click (fn [_] (set-editing true))
-                :on-blur (fn [_] (set-editing false))}
+                {:overflow :scroll
+                 :position :relative
+                 :width :full
+                 :p [0 1]
+                 :on-click (fn [_] (set-editing true))
+                 :on-blur (fn [_] (set-editing false))}
 
-               (sc :.code-editor-input_overlay
+                (sc :.code-editor-input_overlay
 
-                   {:z-index (if evaluating 10000 -1)
-                    :position [:absolute [0 0 0 0]]
-                    :size :full
-                    :bg {:color (:bg-overlay t)}
-                    :flex :center}
+                    {:z-index (if evaluating 10000 -1)
+                     :position [:absolute [0 0 0 0]]
+                     :size :full
+                     :bg {:color (:bg-overlay t)}
+                     :flex :center}
 
-                   (c spinner {:color (:spinner-color t) :loading evaluating :size 15}))
+                    (c spinner {:color (:spinner-color t) :loading evaluating :size 15}))
 
-               (if editing
+                (if editing
 
-                 (c CodeMirror
-                    {:ref input-editor-ref
-                     :value source
-                     :on-change (fn [x] (set-source x))
-                     :autoFocus true
-                     :extensions EDITOR_EXTENSIONS
-                     :theme (:cm-theme t)
-                     :basic-setup #js {:lineNumbers false
-                                       :foldGutter false
-                                       :highlightActiveLine false}})
-                 (sc {"pre" {:m 0 :p 0}
-                      "code.hljs" {:bg {:color (:highlight-bg t)}
-                                   :color (:text-primary t)}}
-                     (c Highlight
-                        {:class "clojure"}
-                        (str source))))))
+                  (c CodeMirror
+                     {:ref input-editor-ref
+                      :value source
+                      :on-change (fn [x] (set-source x))
+                      :autoFocus true
+                      :extensions EDITOR_EXTENSIONS
+                      :theme (:cm-theme t)
+                      :basic-setup #js {:lineNumbers false
+                                        :foldGutter false
+                                        :highlightActiveLine false}})
+                  (sc {"pre" {:m 0 :p 0}
+                       "code.hljs" {:bg {:color (:highlight-bg t)}
+                                    :color (:text-primary t)}}
+                      (c Highlight
+                         {:class "clojure"}
+                         (str source))))))
         (when return
 
           (if (and score* show-piano-roll?)
@@ -359,7 +357,7 @@
                                 (set-local-piano-roll nil))}
                    (c icons-vsc/VscClose))
 
-                ($ piano-roll-view {:score score* :theme-colors t}))
+                ($ piano-roll-view {:score score* :theme-colors t :theme-key theme-key}))
 
             ;; ── Text output (errors / non-score results) ───
             (sc :code-editor-output
