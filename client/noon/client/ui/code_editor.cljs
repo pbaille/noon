@@ -289,43 +289,43 @@
                  return (c icons-vsc/VscChevronUp)
                  :else (c icons-vsc/VscDebugStart)))
 
-            (sc :.code-editor-input_content
+            (c :.code-editor-input_content
 
-                {:overflow :scroll
-                 :position :relative
-                 :width :full
-                 :p [0 1]
-                 :on-click (fn [_] (set-editing true))
-                 :on-blur (fn [_] (set-editing false))}
+               {:style {:overflow :scroll
+                        :position :relative
+                        :width :full
+                        :p [0 1]}
+                :on-click (fn [_] (set-editing true))
+                :on-blur (fn [_] (set-editing false))}
 
-                (sc :.code-editor-input_overlay
+               (sc :.code-editor-input_overlay
 
-                    {:z-index (if evaluating 10000 -1)
-                     :position [:absolute [0 0 0 0]]
-                     :size :full
-                     :bg {:color (:bg-overlay t)}
-                     :flex :center}
+                   {:z-index (if evaluating 10000 -1)
+                    :position [:absolute [0 0 0 0]]
+                    :size :full
+                    :bg {:color (:bg-overlay t)}
+                    :flex :center}
 
-                    (c spinner {:color (:spinner-color t) :loading evaluating :size 15}))
+                   (c spinner {:color (:spinner-color t) :loading evaluating :size 15}))
 
-                (if editing
+               (if editing
 
-                  (c CodeMirror
-                     {:ref input-editor-ref
-                      :value source
-                      :on-change (fn [x] (set-source x))
-                      :autoFocus true
-                      :extensions EDITOR_EXTENSIONS
-                      :theme (:cm-theme t)
-                      :basic-setup #js {:lineNumbers false
-                                        :foldGutter false
-                                        :highlightActiveLine false}})
-                  (sc {"pre" {:m 0 :p 0}
-                       "code.hljs" {:bg {:color (:highlight-bg t)}
-                                    :color (:text-primary t)}}
-                      (c Highlight
-                         {:class "clojure"}
-                         (str source))))))
+                 (c CodeMirror
+                    {:ref input-editor-ref
+                     :value source
+                     :on-change (fn [x] (set-source x))
+                     :autoFocus true
+                     :extensions EDITOR_EXTENSIONS
+                     :theme (:cm-theme t)
+                     :basic-setup #js {:lineNumbers false
+                                       :foldGutter false
+                                       :highlightActiveLine false}})
+                 (sc {"pre" {:m 0 :p 0}
+                      "code.hljs" {:bg {:color (:highlight-bg t)}
+                                   :color (:text-primary t)}}
+                     (c Highlight
+                        {:class "clojure"}
+                        (str source))))))
         (when return
 
           (if (and score* show-piano-roll?)
