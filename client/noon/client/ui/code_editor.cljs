@@ -44,7 +44,7 @@
            :spinner-color   "lightskyblue"
            :toggle-active-bg "#ffffff"
            :badge-color     "tomato"}
-   :dark  {:cm-theme        cm-themes/materialDarker
+   :dark  {:cm-theme        cm-themes/materialDark
            :accent          "#5eafd6"
            :accent-bg       "rgba(94,175,214,0.15)"
            :accent-bg-half  "rgba(94,175,214,0.08)"
