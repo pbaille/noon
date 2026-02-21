@@ -49,19 +49,19 @@
    .noon-light .hljs-name { color: #4271ae; }")
 
 (def ^:private dark-hljs-css
-  "Minimal dark highlight.js theme for Clojure syntax in dark widgets."
-  ".noon-dark .hljs { background: #1e1e2e; color: #cdd6f4; }
-   .noon-dark .hljs-keyword { color: #cba6f7; }
-   .noon-dark .hljs-built_in { color: #89b4fa; }
-   .noon-dark .hljs-string { color: #a6e3a1; }
-   .noon-dark .hljs-number { color: #fab387; }
-   .noon-dark .hljs-literal { color: #f38ba8; }
-   .noon-dark .hljs-symbol { color: #f9e2af; }
-   .noon-dark .hljs-comment { color: #6c7086; font-style: italic; }
-   .noon-dark .hljs-title { color: #89b4fa; }
-   .noon-dark .hljs-params { color: #cdd6f4; }
-   .noon-dark .hljs-attr { color: #89dceb; }
-   .noon-dark .hljs-name { color: #89b4fa; }")
+  "Dark highlight.js theme aligned with CodeMirror materialDark."
+  ".noon-dark .hljs { background: #2e3235; color: #bdbdbd; }
+   .noon-dark .hljs-keyword { color: #cf6edf; }
+   .noon-dark .hljs-built_in { color: #56c8d8; }
+   .noon-dark .hljs-string { color: #99d066; }
+   .noon-dark .hljs-number { color: #ffad42; }
+   .noon-dark .hljs-literal { color: #56c8d8; }
+   .noon-dark .hljs-symbol { color: #facf4e; }
+   .noon-dark .hljs-comment { color: #707d8b; font-style: italic; }
+   .noon-dark .hljs-title { color: #56c8d8; }
+   .noon-dark .hljs-params { color: #bdbdbd; }
+   .noon-dark .hljs-attr { color: #bdbdbd; }
+   .noon-dark .hljs-name { color: #56c8d8; }")
 
 (defn- inject-hljs-theme!
   "Inject the highlight.js theme stylesheet for the given theme."
