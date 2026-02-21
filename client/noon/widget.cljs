@@ -5,6 +5,7 @@
 
    Called explicitly via noon.widget.init() from a <script> tag."
   (:require [noon.client.ui.code-editor :as ui.code-editor]
+            [clojure.edn :as edn]
             [uix.core :refer [$]]
             [uix.dom]
             [stylefy.core :as stylefy]
@@ -25,17 +26,27 @@
           (.appendChild js/document.head style))))
     (stylefy/init {:dom (gdom/init)})))
 
+(defn- parse-options
+  "Parse widget options from the data-noon-options attribute."
+  [el]
+  (when-let [opts-str (.getAttribute el "data-noon-options")]
+    (try (edn/read-string opts-str)
+         (catch :default _ nil))))
+
 (defn- mount-widgets! []
   (doseq [el (array-seq (.querySelectorAll js/document "[data-noon-widget]"))]
     (when-not (.getAttribute el "data-noon-mounted")
       (.setAttribute el "data-noon-mounted" "true")
       (let [source-el (.querySelector el ".noon-source")
-            source (when source-el (.-textContent source-el))]
+            source (when source-el (.-textContent source-el))
+            options (parse-options el)]
         (when source
           (when source-el (.removeChild el source-el))
           (let [root (uix.dom/create-root el)]
             (uix.dom/render-root
-             ($ ui.code-editor/code-editor {:source source})
+             ($ ui.code-editor/code-editor
+                {:source source
+                 :options (merge {:show-piano-roll? true} options)})
              root)))))))
 
 (defn ^:export init []
