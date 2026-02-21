@@ -216,8 +216,8 @@
                                                   (seq dimmed-chs) (assoc :dimmed-channels (set dimmed-chs))
                                                   channel-order (assoc :channel-order channel-order))))}})))))
 
-(defui code-editor [{:keys [source options]}]
-  (let [theme-key (keyword (or (:theme options) :light))
+(defui code-editor [{:keys [source options theme-key]}]
+  (let [theme-key (or theme-key (keyword (or (:theme options) :light)))
         t (get themes theme-key (:light themes))
         input-editor-ref (uix/use-ref)
         [source set-source] (uix/use-state source)

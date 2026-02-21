@@ -28,9 +28,10 @@
 
    Options:
    - :show-piano-roll? — show piano roll on eval (default: true)
-   - :theme            — :light (default) or :dark"
+   - :theme            — :auto (default), :light, or :dark
+                         :auto uses prefers-color-scheme media query"
   ([source] (editor source {}))
-  ([source {:keys [show-piano-roll? theme] :or {show-piano-roll? true theme :light}}]
+  ([source {:keys [show-piano-roll? theme] :or {show-piano-roll? true theme :auto}}]
    (let [js-url *widget-js-url*]
      ^{:kindly/kind :kind/hiccup
        :kindly/hide-code true}

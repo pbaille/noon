@@ -6,7 +6,7 @@
    Called explicitly via noon.widget.init() from a <script> tag."
   (:require [noon.client.ui.code-editor :as ui.code-editor]
             [clojure.edn :as edn]
-            [uix.core :refer [$]]
+            [uix.core :as uix :refer [$ defui]]
             [uix.dom]
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]))
@@ -73,27 +73,77 @@
         (set! (.-textContent style) css)
         (.appendChild js/document.head style)))))
 
+;; ── System color scheme detection ────────────────────────────────
+
+(defn- detect-system-theme
+  "Detect the current system color scheme via prefers-color-scheme media query.
+   Returns :dark or :light."
+  []
+  (if (and js/window
+           (.matchMedia js/window "(prefers-color-scheme: dark)")
+           (.-matches (.matchMedia js/window "(prefers-color-scheme: dark)")))
+    :dark
+    :light))
+
+(defn- use-system-theme
+  "React hook that tracks the system color scheme.
+   Returns :dark or :light, updating reactively when the user toggles."
+  []
+  (let [[theme set-theme] (uix/use-state (detect-system-theme))]
+    (uix/use-effect
+     (fn []
+       (let [mq (.matchMedia js/window "(prefers-color-scheme: dark)")
+             handler (fn [e] (set-theme (if (.-matches e) :dark :light)))]
+         (.addEventListener mq "change" handler)
+         (fn [] (.removeEventListener mq "change" handler))))
+     [])
+    theme))
+
+;; ── Auto-themed widget wrapper ───────────────────────────────────
+
+(defui auto-widget
+  "Widget wrapper that resolves :auto theme to :light or :dark
+   based on prefers-color-scheme, then renders the code-editor."
+  [{:keys [source options container-el]}]
+  (let [requested-theme (keyword (or (:theme options) :auto))
+        system-theme (use-system-theme)
+        resolved-theme (if (= :auto requested-theme) system-theme requested-theme)
+        dark? (= :dark resolved-theme)]
+
+    ;; Sync the noon-light/noon-dark class on the container element
+    (uix/use-effect
+     (fn []
+       (let [cl (.-classList container-el)]
+         (if dark?
+           (do (.remove cl "noon-light") (.add cl "noon-dark"))
+           (do (.remove cl "noon-dark") (.add cl "noon-light")))))
+     [dark? container-el])
+
+    ($ ui.code-editor/code-editor
+       {:source source
+        :options (merge {:show-piano-roll? true} options)
+        :theme-key resolved-theme})))
+
+;; ── Widget mounting ──────────────────────────────────────────────
+
 (defn- mount-widgets! []
+  ;; Inject both hljs themes upfront — auto widgets may switch at any time
+  (inject-hljs-theme! "light" light-hljs-css)
+  (inject-hljs-theme! "dark" dark-hljs-css)
   (doseq [el (array-seq (.querySelectorAll js/document "[data-noon-widget]"))]
     (when-not (.getAttribute el "data-noon-mounted")
       (.setAttribute el "data-noon-mounted" "true")
       (let [source-el (.querySelector el ".noon-source")
             source (when source-el (.-textContent source-el))
-            options (parse-options el)
-            theme (keyword (or (:theme options) :light))
-            dark? (= :dark theme)]
+            options (parse-options el)]
         (when source
           (when source-el (.removeChild el source-el))
-          (if dark?
-            (do (inject-hljs-theme! "dark" dark-hljs-css)
-                (.add (.-classList el) "noon-dark"))
-            (do (inject-hljs-theme! "light" light-hljs-css)
-                (.add (.-classList el) "noon-light")))
           (let [root (uix.dom/create-root el)]
             (uix.dom/render-root
-             ($ ui.code-editor/code-editor
+             ($ auto-widget
                 {:source source
-                 :options (merge {:show-piano-roll? true} options)})
+                 :options options
+                 :container-el el})
              root)))))))
 
 (defn ^:export init []
