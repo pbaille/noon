@@ -134,7 +134,6 @@
 (defn- hsl [h s l]
   (str "hsl(" h ", " s "%, " l "%)"))
 
-
 ;; ── Unified color resolution ─────────────────────────────────────
 ;; Both modes produce the same shape: {channel -> {kind -> {:fill :stroke}}}
 ;; so svg-notes can be mode-agnostic.
@@ -168,6 +167,8 @@
 
 (def ^:private harmony-bg "rgba(99, 102, 241, 0.06)")
 (def ^:private harmony-line "rgba(99, 102, 241, 0.25)")
+(def ^:private harmony-bg-dark "rgba(129, 140, 248, 0.08)")
+(def ^:private harmony-line-dark "rgba(129, 140, 248, 0.3)")
 
 (def ^:private max-row-h 18)
 (def ^:private min-row-h 8)
@@ -187,7 +188,8 @@
    :channels       nil        ;; nil = all channels, or set/vec of ints e.g. #{0 2}
    :color-mode     :kind      ;; :kind (palette-based) or :channel (hue per channel)
    :palette        :ocean     ;; palette name or custom map (used in :kind mode)
-   :hues           nil})      ;; custom hue vector (used in :channel mode)
+   :hues           nil        ;; custom hue vector (used in :channel mode)
+   :dark?          false})    ;; dark theme for SVG grid/keyboard
 
 ;; ── Helpers ──────────────────────────────────────────────────────
 
@@ -201,8 +203,6 @@
 (defn- ceil [x]
   #?(:clj  (long (Math/ceil (double x)))
      :cljs (js/Math.ceil x)))
-
-
 
 ;; ── Score → data ─────────────────────────────────────────────────
 
@@ -281,41 +281,51 @@
      :svg-h      (+ grid-h 1)
      :channels   (vec (sort channels))
      :color-mode (:color-mode opts)
+     :dark?      (:dark? opts)
      :colors     (resolve-colors opts channels)}))
 
 ;; ── SVG renderers ────────────────────────────────────────────────
 ;; Each takes a layout map as first arg, plus its own data when needed.
 
 (defn- svg-grid-rows
-  "Background rows — white for natural keys, light grey for sharps/flats."
-  [{:keys [min-pitch max-pitch x0 grid-w row-h]}]
+  "Background rows — white for natural keys, light grey for sharps/flats.
+   In dark mode, uses dark slate tones."
+  [{:keys [min-pitch max-pitch x0 grid-w row-h dark?]}]
   (into [:g]
         (mapcat
          (fn [p]
            (let [y (* (- max-pitch p 1) row-h)]
-             [[:rect {:x x0 :y y :width grid-w :height row-h
-                      :fill (if (black-key? p) "#f5f5f5" "#fff")}]
-              [:line {:x1 x0 :y1 (+ y row-h) :x2 (+ x0 grid-w 1) :y2 (+ y row-h)
-                      :stroke (if (= 11 (mod p 12)) "#d4d4d4" "#eeeeee")
-                      :stroke-width 0.5}]])))
+             (if dark?
+               [[:rect {:x x0 :y y :width grid-w :height row-h
+                        :fill (if (black-key? p) "#1a1a2e" "#22223a")}]
+                [:line {:x1 x0 :y1 (+ y row-h) :x2 (+ x0 grid-w 1) :y2 (+ y row-h)
+                        :stroke (if (= 11 (mod p 12)) "#3a3a52" "#2d2d42")
+                        :stroke-width 0.5}]]
+               [[:rect {:x x0 :y y :width grid-w :height row-h
+                        :fill (if (black-key? p) "#f5f5f5" "#fff")}]
+                [:line {:x1 x0 :y1 (+ y row-h) :x2 (+ x0 grid-w 1) :y2 (+ y row-h)
+                        :stroke (if (= 11 (mod p 12)) "#d4d4d4" "#eeeeee")
+                        :stroke-width 0.5}]]))))
         (range min-pitch max-pitch)))
 
 (defn- svg-harmonies
   "Alternating tint + dashed vertical lines at harmony boundaries."
-  [{:keys [x0 time-scale grid-h]} harmonies]
+  [{:keys [x0 time-scale grid-h dark?]} harmonies]
   (when (> (count harmonies) 1)
     (into [:g]
           (keep-indexed
            (fn [i h]
              (let [x (+ x0 (* (:position h) time-scale))
                    w (* (:duration h) time-scale)
+                   bg   (if dark? harmony-bg-dark harmony-bg)
+                   line (if dark? harmony-line-dark harmony-line)
                    children (cond-> []
                               (odd? i)
                               (conj [:rect {:x x :y 0 :width w :height grid-h
-                                            :fill harmony-bg}])
+                                            :fill bg}])
                               (pos? i)
                               (conj [:line {:x1 x :y1 0 :x2 x :y2 grid-h
-                                            :stroke harmony-line :stroke-width 1
+                                            :stroke line :stroke-width 1
                                             :stroke-dasharray "4,3"}]))]
                (when (seq children)
                  (into [:g] children)))))
@@ -323,47 +333,60 @@
 
 (defn- svg-keyboard
   "Piano keyboard labels on the left edge."
-  [{:keys [min-pitch max-pitch row-h]}]
+  [{:keys [min-pitch max-pitch row-h dark?]}]
   (into [:g]
         (mapcat
          (fn [p]
            (let [y   (* (- max-pitch p 1) row-h)
                  blk (black-key? p)]
-             (cond-> [[:rect {:x 0 :y y :width kb-w :height row-h
-                              :fill (if blk "#374151" "#f9fafb")
-                              :stroke "#d1d5db" :stroke-width 0.5}]]
-               (or (zero? (mod p 12)) (= p min-pitch))
-               (conj [:text {:x (- kb-w 5) :y (+ y (/ row-h 2) 3.5)
-                             :text-anchor "end"
-                             :font-size (min 8.5 (- row-h 2))
-                             :font-family mono-font
-                             :fill (if blk "#e5e7eb" "#6b7280")}
-                      (note-name p)])))))
+             (if dark?
+               (cond-> [[:rect {:x 0 :y y :width kb-w :height row-h
+                                :fill (if blk "#1a1a2e" "#2a2a3c")
+                                :stroke "#3a3a52" :stroke-width 0.5}]]
+                 (or (zero? (mod p 12)) (= p min-pitch))
+                 (conj [:text {:x (- kb-w 5) :y (+ y (/ row-h 2) 3.5)
+                               :text-anchor "end"
+                               :font-size (min 8.5 (- row-h 2))
+                               :font-family mono-font
+                               :fill (if blk "#6c7086" "#a6adc8")}
+                        (note-name p)]))
+               (cond-> [[:rect {:x 0 :y y :width kb-w :height row-h
+                                :fill (if blk "#374151" "#f9fafb")
+                                :stroke "#d1d5db" :stroke-width 0.5}]]
+                 (or (zero? (mod p 12)) (= p min-pitch))
+                 (conj [:text {:x (- kb-w 5) :y (+ y (/ row-h 2) 3.5)
+                               :text-anchor "end"
+                               :font-size (min 8.5 (- row-h 2))
+                               :font-family mono-font
+                               :fill (if blk "#e5e7eb" "#6b7280")}
+                        (note-name p)]))))))
         (range min-pitch max-pitch)))
 
 (defn- render-note-rects
   "Render a single note as rect + optional label."
-  [{:keys [x0 time-scale max-pitch row-h colors]} note opacity]
+  [{:keys [x0 time-scale max-pitch row-h colors dark?]} note opacity]
   (let [note-pad (min note-pad (* row-h 0.1))
         x     (+ x0 (* (:position note) time-scale))
         y     (+ (* (- max-pitch (:pitch note) 1) row-h) note-pad)
         w     (max (- (* (:duration note) time-scale) 1) 3)
         h     (- row-h (* note-pad 2))
         color (get-in colors [(:channel note) (:kind note)]
-                     (get-in colors [(:channel note) :chromatic]
-                             {:fill "#d1d5db" :stroke "#9ca3af"}))]
+                      (get-in colors [(:channel note) :chromatic]
+                              {:fill "#d1d5db" :stroke "#9ca3af"}))]
     (cond-> [[:rect {:x x :y y :width w :height h
                      :rx 2.5 :ry 2.5
                      :fill (:fill color) :stroke (:stroke color)
                      :stroke-width 0.75 :opacity opacity}]]
       (> w 24)
       (conj [:text {:x (+ x (/ w 2)) :y (+ y (/ h 2) 3)
-                     :text-anchor "middle"
-                     :font-size (min 8 (- row-h 2))
-                     :font-family mono-font
-                     :fill (if (#{:tonic :structural} (:kind note)) "#fff" "#475569")
-                     :font-weight 500
-                     :opacity opacity}
+                    :text-anchor "middle"
+                    :font-size (min 8 (- row-h 2))
+                    :font-family mono-font
+                    :fill (if (#{:tonic :structural} (:kind note))
+                            "#fff"
+                            (if dark? "#a6adc8" "#475569"))
+                    :font-weight 500
+                    :opacity opacity}
              (nth note-names (mod (:pitch note) 12))]))))
 
 (defn- svg-notes
@@ -386,9 +409,9 @@
 
 (defn- svg-border
   "Thin border around the grid area."
-  [{:keys [x0 grid-w grid-h]}]
+  [{:keys [x0 grid-w grid-h dark?]}]
   [:rect {:x x0 :y 0 :width grid-w :height grid-h
-          :fill "none" :stroke "#ddd" :stroke-width 1}])
+          :fill "none" :stroke (if dark? "#3a3a52" "#ddd") :stroke-width 1}])
 
 ;; ── HTML renderers ───────────────────────────────────────────────
 
@@ -398,58 +421,61 @@
      :kind    — shows kind swatches (tonic/structural/diatonic/chromatic)
      :channel — multi-channel: channel color labels
                 single-channel: single flat color"
-  [colors channels kinds color-mode]
-  (if (and (= color-mode :channel) (> (count channels) 1))
-    ;; ── Channel mode, multi-channel ──
-    (into [:div {:style {:display "flex" :gap "12px" :align-items "center"
-                         :margin-bottom "10px" :font-size "10.5px" :color "#555"}}]
-          (map (fn [ch]
-                 [:div {:style {:display "flex" :align-items "center" :gap "5px"}}
-                  [:div {:style {:width "10px" :height "10px" :border-radius "2px"
-                                 :background (get-in colors [ch :tonic :fill])}}]
-                  [:span {} (str "ch " ch)]]))
-          (sort channels))
-    ;; ── Kind mode (or channel mode, single channel) ──
-    (let [ch (first channels)]
-      (into [:div {:style {:display "flex" :gap "14px" :margin-bottom "10px"
-                           :font-size "10.5px" :color "#555"}}]
-            (map (fn [kind]
-                   [:div {:style {:display "flex" :align-items "center" :gap "4px"}}
+  [colors channels kinds color-mode dark?]
+  (let [text-color (if dark? "#a6adc8" "#555")]
+    (if (and (= color-mode :channel) (> (count channels) 1))
+      ;; ── Channel mode, multi-channel ──
+      (into [:div {:style {:display "flex" :gap "12px" :align-items "center"
+                           :margin-bottom "10px" :font-size "10.5px" :color text-color}}]
+            (map (fn [ch]
+                   [:div {:style {:display "flex" :align-items "center" :gap "5px"}}
                     [:div {:style {:width "10px" :height "10px" :border-radius "2px"
-                                   :background (get-in colors [ch kind :fill])}}]
-                    [:span {} (get layer-labels kind)]]))
-            (sort-by layer-order kinds)))))
+                                   :background (get-in colors [ch :tonic :fill])}}]
+                    [:span {} (str "ch " ch)]]))
+            (sort channels))
+      ;; ── Kind mode (or channel mode, single channel) ──
+      (let [ch (first channels)]
+        (into [:div {:style {:display "flex" :gap "14px" :margin-bottom "10px"
+                             :font-size "10.5px" :color text-color}}]
+              (map (fn [kind]
+                     [:div {:style {:display "flex" :align-items "center" :gap "4px"}}
+                      [:div {:style {:width "10px" :height "10px" :border-radius "2px"
+                                     :background (get-in colors [ch kind :fill])}}]
+                      [:span {} (get layer-labels kind)]]))
+              (sort-by layer-order kinds))))))
 
 (defn- label-bar
   "Small monospace label above a roll."
-  [text]
+  [text dark?]
   [:div {:style {:font-size     "11px"
                  :font-weight   500
-                 :color         "#444"
+                 :color         (if dark? "#a6adc8" "#444")
                  :font-family   mono-font
                  :margin-bottom "2px"}}
    text])
 
 (defn- title-bar
   "Bold monospace title above a roll."
-  [text]
+  [text dark?]
   [:div {:style {:font-size     "13px"
                  :font-weight   600
-                 :color         "#333"
+                 :color         (if dark? "#cdd6f4" "#333")
                  :margin-bottom "6px"
                  :font-family   mono-font}}
    text])
 
-(defn- separator []
-  [:div {:style {:height "1px" :background "#e5e7eb" :margin "4px 0"}}])
+(defn- separator [dark?]
+  [:div {:style {:height "1px" :background (if dark? "#313244" "#e5e7eb") :margin "4px 0"}}])
 
 (defn- wrap-hiccup
   "Outer wrapper div with kindly metadata."
-  [& children]
+  [dark? & children]
   (with-meta
-    (into [:div {:style {:display     "inline-block"
-                         :padding     "20px"
-                         :font-family sans-font}}]
+    (into [:div {:style (cond-> {:display     "inline-block"
+                                 :padding     "20px"
+                                 :font-family sans-font}
+                          dark? (assoc :background "#1e1e2e"
+                                       :border-radius "6px"))}]
           (remove nil?)
           children)
     {:kindly/kind :kind/hiccup}))
@@ -504,7 +530,7 @@
      :hues           — custom hue vector (for :channel mode)"
   ([score] (piano-roll score {}))
   ([score opts]
-   (let [{:keys [show-legend title channels]
+   (let [{:keys [show-legend title channels dark?]
           :as   opts} (merge default-opts opts)
          all-notes (score->notes score)
          notes     (if channels
@@ -514,10 +540,11 @@
          _         (assert (seq notes) "Score has no pitched events (after channel filter)")
          layout    (compute-layout notes opts)]
      (wrap-hiccup
-      (when title (title-bar title))
+      dark?
+      (when title (title-bar title dark?))
       (when show-legend
         (legend (:colors layout) (:channels layout)
-                (distinct (map :kind notes)) (:color-mode layout)))
+                (distinct (map :kind notes)) (:color-mode layout) dark?))
       (build-roll layout notes harmonies opts)))))
 
 (defn piano-roll-group
@@ -540,7 +567,7 @@
      :hues               — custom hue vector (for :channel mode)"
   ([items] (piano-roll-group items {}))
   ([items opts]
-   (let [{:keys [shared-pitch-range show-legend channels]
+   (let [{:keys [shared-pitch-range show-legend channels dark?]
           :as   opts} (merge default-opts opts)
 
          chan-set  (when channels (set channels))
@@ -566,15 +593,16 @@
                           (fn [i {:keys [label notes harmonies]}]
                             (let [layout (or shared-layout (compute-layout notes opts))]
                               [:div {}
-                               (when (pos? i) (separator))
-                               (when label (label-bar label))
+                               (when (pos? i) (separator dark?))
+                               (when label (label-bar label dark?))
                                (build-roll layout notes harmonies opts)])))
                          all-data)
 
          ref (or shared-layout (compute-layout all-notes opts))]
 
      (wrap-hiccup
+      dark?
       (when show-legend
         (legend (:colors ref) (:channels ref)
-                (distinct (map :kind all-notes)) (:color-mode ref)))
+                (distinct (map :kind all-notes)) (:color-mode ref) dark?))
       rolls))))

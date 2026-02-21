@@ -27,15 +27,17 @@
    - Audio playback via Web Audio API
 
    Options:
-   - :show-piano-roll? — show piano roll on eval (default: true)"
+   - :show-piano-roll? — show piano roll on eval (default: true)
+   - :theme            — :light (default) or :dark"
   ([source] (editor source {}))
-  ([source {:keys [show-piano-roll?] :or {show-piano-roll? true}}]
+  ([source {:keys [show-piano-roll? theme] :or {show-piano-roll? true theme :light}}]
    (let [js-url *widget-js-url*]
      ^{:kindly/kind :kind/hiccup
        :kindly/hide-code true}
      [:div
       [:div {:data-noon-widget ""
-             :data-noon-options (pr-str {:show-piano-roll? show-piano-roll?})}
+             :data-noon-options (pr-str {:show-piano-roll? show-piano-roll?
+                                         :theme theme})}
        [:pre {:class "noon-source"
               :style {:display "none"}}
         source]]

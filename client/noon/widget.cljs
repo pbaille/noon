@@ -33,15 +33,40 @@
     (try (edn/read-string opts-str)
          (catch :default _ nil))))
 
+(defn- inject-dark-hljs-theme!
+  "Inject a minimal dark highlight.js theme for Clojure syntax when dark widgets are present."
+  []
+  (when-not (.getElementById js/document "_noon-hljs-dark_")
+    (let [style (.createElement js/document "style")]
+      (.setAttribute style "id" "_noon-hljs-dark_")
+      (set! (.-textContent style)
+            ".noon-dark .hljs { background: #1e1e2e; color: #cdd6f4; }
+             .noon-dark .hljs-keyword { color: #cba6f7; }
+             .noon-dark .hljs-built_in { color: #89b4fa; }
+             .noon-dark .hljs-string { color: #a6e3a1; }
+             .noon-dark .hljs-number { color: #fab387; }
+             .noon-dark .hljs-literal { color: #f38ba8; }
+             .noon-dark .hljs-symbol { color: #f9e2af; }
+             .noon-dark .hljs-comment { color: #6c7086; font-style: italic; }
+             .noon-dark .hljs-title { color: #89b4fa; }
+             .noon-dark .hljs-params { color: #cdd6f4; }
+             .noon-dark .hljs-attr { color: #89dceb; }
+             .noon-dark .hljs-name { color: #89b4fa; }")
+      (.appendChild js/document.head style))))
+
 (defn- mount-widgets! []
   (doseq [el (array-seq (.querySelectorAll js/document "[data-noon-widget]"))]
     (when-not (.getAttribute el "data-noon-mounted")
       (.setAttribute el "data-noon-mounted" "true")
       (let [source-el (.querySelector el ".noon-source")
             source (when source-el (.-textContent source-el))
-            options (parse-options el)]
+            options (parse-options el)
+            dark? (= :dark (keyword (:theme options)))]
         (when source
           (when source-el (.removeChild el source-el))
+          (when dark?
+            (inject-dark-hljs-theme!)
+            (.add (.-classList el) "noon-dark"))
           (let [root (uix.dom/create-root el)]
             (uix.dom/render-root
              ($ ui.code-editor/code-editor
