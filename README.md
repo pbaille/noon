@@ -26,7 +26,7 @@ Or this for latest version:
 
 ``` clojure
 com.pbaille/noon {:git/url "https://github.com/pbaille/noon.git"
-                  :sha "3dff70e5a7953dc079e81306c67fe0eaecec77f3"}
+                  :sha "97677727bff20243dc15d5cafb821d4af9019842"}
 ```
 
 Then you should be able to play something like this:
