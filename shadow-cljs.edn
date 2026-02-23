@@ -1,5 +1,7 @@
 {:deps {:aliases [:test :client]}
 
+ :jvm-opts ["-Xss4m"]
+
  :nrepl {:port 9000}
 
  :builds {:client
