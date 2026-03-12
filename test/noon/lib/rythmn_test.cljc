@@ -1,12 +1,11 @@
 (ns noon.lib.rythmn-test
   (:require [noon.lib.rythmn :as r]
             [clojure.test :refer [deftest testing]]
-            [noon.eval :refer [score]]
-            [noon.freeze :refer [freeze]]))
+            [noon.eval :refer [score]]))
 
 (deftest main
   (testing "various"
-    (freeze (score dur4
+    (score dur4
                    dorian
                    (chans [(patch :vibraphone) vel4 (par> d3 d3 d3)]
                           [(patch :taiko-drum) (r/gen-tup 9 3 :durations [1 2 3]) (each (one-of vel4 vel3) (maybe d3 d3-))]
@@ -20,47 +19,47 @@
                                   {:bintup 1} (each (one-of d3 d5 d7)))])
                    (append [rev lydian (transpose c4)] [lydian+2 (transpose c4-)] melodic-minor)
                    (append lydian)
-                   (dup 2)))
+                   (dup 2))
 
-    (freeze (score (patch :tinkle-bell)
+    (score (patch :tinkle-bell)
                    (r/gen-tup 8 5 :durations [2 (/ 1 2) 1])
-                   (dup 4)))
+                   (dup 4))
 
-    (freeze (score (patch :tinkle-bell)
+    (score (patch :tinkle-bell)
                    dur2
                    (par [o1- (dupt 2)]
                         (r/gen-tup 12 5 :durations [2 (/ 1 2) 1 3])
                         [o1 (r/gen-tup 12 7 :durations [2 (/ 1 2) 1 3])])
-                   (dup 4)))
+                   (dup 4))
 
     "shifted"
-    (freeze (score (patch :tinkle-bell)
+    (score (patch :tinkle-bell)
                    dur2
                    (par [o1- (dupt 2)]
                         (r/gen-tup 8 5 :shifted :durations [(/ 1 4) (/ 1 2) 1 2 4]))
-                   (dup 4)))
+                   (dup 4))
 
-    (freeze (score (patch :tinkle-bell)
+    (score (patch :tinkle-bell)
                    dur2
                    (par [o1- (dupt 2)]
                         (r/gen-tup 12 5 :shifted)
                         [o1 (r/gen-tup 12 5 :shifted)])
-                   (dup 4)))
+                   (dup 4))
 
-    (freeze (score (patch :tinkle-bell)
+    (score (patch :tinkle-bell)
                    dur2
                    (par [o1- (dupt 2)]
                         (r/gen-tup 12 5 :shifted :durations [1 2 3])
                         [o1 (r/gen-tup 12 7 :shifted :durations [2 1 3])])
-                   (dup 4)))
+                   (dup 4))
 
-    (freeze (score (chans
+    (score (chans
                     [(patch :woodblock) o2-]
                     [(patch :woodblock) (tup dur2 dur3 dur3)
                      (r/rotation :rand-sub 5)])
-                   (dup 4)))
+                   (dup 4))
 
-    (freeze (score (chans
+    (score (chans
                     ;; beat
                     [(patch :taiko-drum) vel5 (dup 4)]
                     ;; rythmic permutations
@@ -74,18 +73,18 @@
                      (par> d0 d3 d3 d3 d3)
                      (lin (root :C) (root :Eb) (root :Ab) (root :Db))])
                    ;; loop 4
-                   (dup 4)))
+                   (dup 4))
 
     :euclidean
 
-    (freeze (score (patch :tinkle-bell)
+    (score (patch :tinkle-bell)
                    dur2
                    (chans o1-
                           (r/gen-tup 12 5 :euclidean)
                           [o1 (r/gen-tup 12 7 :euclidean :shifted)])
-                   (dup 4)))
+                   (dup 4))
 
-    (freeze (score (patch :tinkle-bell)
+    (score (patch :tinkle-bell)
                    (let [rtup (! (r/gen-tup 16 5 :euclidean :shifted))]
                      (chans (ntup 2 o1-)
                             rtup
@@ -94,4 +93,4 @@
                             #_[oct3 rtup]))
 
                    (dup 4)
-                   (adjust {:duration 8})))))
+                   (adjust {:duration 8}))))

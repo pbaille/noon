@@ -17,7 +17,6 @@
             [noon.parse.harmony-test]
             [noon.score-test]
             [noon.updates-test]
-            [noon.freezer :refer [freezer]]
             [noon.output]
             #?(:clj [cognitect.test-runner.api :as test-runner]
                :cljs [clojure.test :as t])))
@@ -28,10 +27,8 @@
   #?(:cljs (t/run-all-tests #"^noon\..*test$")
      :clj (test-runner/test {:dirs ["test"]}))
 
-  #_(println @freezer))
+  )
 
 (comment
-  (reset! freezer {})
   (test-runner/test {:dirs ["test"]})
-  @freezer
   (run-all nil))

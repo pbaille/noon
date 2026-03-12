@@ -158,7 +158,7 @@
         (defn prepare-test-content [content target]
           (mapcat (fn [{:keys [exprs options]}]
                     (map (fn [expr]
-                           (let [expr `(t/is (noon.freeze/freeze ~expr))]
+                           (let [expr `(t/is (do (noon.eval/eval-and-return '~expr) true))]
                              (cond (:no-tests options) nil
                                    (:clj-only options) (when (= target :clj) expr)
                                    (:cljs-only options) (when (= target :cljs) expr)
@@ -194,8 +194,7 @@
                                                  :clj '[clojure.test :as t]
                                                  :cljs '[cljs.test :as t])
 
-                                      '[noon.eval :refer [play noon score]]
-                                      '[noon.freeze]))
+                                      '[noon.eval :refer [play noon score]]))
                           "\n"))]
             (if (= :cljs target)
               (replace-rational-literals code-str)
