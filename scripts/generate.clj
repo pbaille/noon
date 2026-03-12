@@ -194,7 +194,7 @@
                                                  :clj '[clojure.test :as t]
                                                  :cljs '[cljs.test :as t])
 
-                                      '[noon.eval :refer [play noon score]]))
+                                      '[noon.eval]))
                           "\n"))]
             (if (= :cljs target)
               (replace-rational-literals code-str)
