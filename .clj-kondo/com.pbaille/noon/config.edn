@@ -1,6 +1,5 @@
 {:lint-as {noon.utils.misc/source-str clojure.core/comment
-           noon.sci.namespaces/sci-namespaces clojure.core/comment
-           noon.freeze/freeze clojure.core/comment}
+           noon.sci.namespaces/sci-namespaces clojure.core/comment}
  :config-in-call {noon.eval/play {:ignore true}
                   noon.eval/score {:ignore true}
                   noon.eval/eval {:ignore true}}
